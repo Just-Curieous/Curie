@@ -47,8 +47,8 @@ def create_SchedNode(sched_tool, State, metadata_store):
         if "next_agent" in response and response["next_agent"] == END: # terminate experiment. Langgraph will call END based on next_agent as defined in our conditional_edge in main.py
             return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node"}
         if "next_agent" in response and response["next_agent"] == "supervisor": # next agent is the supervisor
-            if response["prev_agent"] == "exec_verifier":
-                intro_message = "The following experimental plan workflows (containing plan IDs, groups, partitions) have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility. Please review the results for each partition to determine if the results seem correct to you, within the context of this experimental plan & hypothesis. For partitions where you believe the results are not correct, mark it for redo using the 'redo_exp_partition' tool. Otherwise, leave its plan unchanged. Feel free to write new plans, or modify existing ones as needed.\n"
+            if response["prev_agent"] == "analyzer":
+                intro_message = "The following experimental plan partitions (with plan IDs, groups, and partitions) have completed execution, each run twice with the same inputs for reproducibility. Their results were analyzed, and next-step suggestions appended. Review each suggestion to assess result validity. If incorrect, mark for redo using 'redo_exp_partition'; otherwise, leave the plan unchanged. Modify or create new plans as needed.\n"
                 return {"messages": [
                             HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
                         ],
@@ -63,13 +63,9 @@ def create_SchedNode(sched_tool, State, metadata_store):
                     "prev_agent": "sched_node", 
                     "next_agent": response["next_agent"]
                 }
-            elif response["prev_agent"] == "supervisor":
+            elif response["prev_agent"] == "concluder":
                 intro_message = '''
-All partitions for all experimental plans have completed, and their results produced. Conclude the experiment, if you believe you have produced a rigorous and comprehensive answer to the question via experimentation, by doing the following:
-    - (4a) Review the results for each partition, available under the filename indicated by the 'all_control_experiment_results_filename' key in the respective plan's partitions. To do this, use 'exp_plan_get' to retrieve the filenames for all partitions, then call 'read_file_contents' for each of the filenames to access the file's contents.
-    - (4b) Analyze and summarize the results, and provide an answer to the user's question. 
-    - (4c) Call "exp_terminate_check" to conclude the experiment.
-However, if you believe that the results are not sufficient, or if you have more questions to answer, you can choose to create a new experimental plan.
+All partitions for all experimental plans have completed, with results produced and analyzed. A next-step suggestion is appended. Conclude the experiment if you believe it provides a rigorous and comprehensive answer. Otherwise, if results are insufficient or further questions remain, create a new experimental plan.
 '''
                 return {"messages": [
                             HumanMessage(content= intro_message, name="scheduler")
@@ -91,6 +87,21 @@ However, if you believe that the results are not sufficient, or if you have more
         elif "next_agent" in response and response["next_agent"] == "patch_verifier":
             return {"messages": [ 
                         HumanMessage(content=str(response["messages"]), name="scheduler")
+                    ],
+                "prev_agent": "sched_node", 
+                "next_agent": response["next_agent"]
+            }
+        elif "next_agent" in response and response["next_agent"] == "analyzer":
+            intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
+            return {"messages": [
+                        HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
+                    ],
+                "prev_agent": "sched_node", 
+                "next_agent": response["next_agent"]
+            }
+        elif "next_agent" in response and response["next_agent"] == "concluder":
+            return {"messages": [
+                        HumanMessage(content= str(response["messages"]), name="scheduler")
                     ],
                 "prev_agent": "sched_node", 
                 "next_agent": response["next_agent"]
@@ -144,6 +155,14 @@ def setup_sched(metadata_store):
     assignment_dict = {"patch_verifier": []}
     metadata_store.put(sched_namespace, memory_id, assignment_dict)
 
+    memory_id = str("analyzer_assignment_dict") # Format of this dict: {"verifier_name": [(exp_plan_id1, "experimental_group_partition_1"), (exp_plan_id2, "experimental_group_partition_1"), ...]}
+    assignment_dict = {"analyzer": []}
+    metadata_store.put(sched_namespace, memory_id, assignment_dict)
+
+    memory_id = str("concluder_assignment_dict") # Format of this dict: {"verifier_name": [(exp_plan_id1, "experimental_group_partition_1"), (exp_plan_id2, "experimental_group_partition_1"), ...]}
+    assignment_dict = {"concluder": []}
+    metadata_store.put(sched_namespace, memory_id, assignment_dict)
+
     memory_id = str("worker_queue") # Format of this queue: [(priority, exp_plan_id1, "experimental_group_partition_2"), (priority, exp_plan_id2, "experimental_group_partition_2")] # Priority queue implemented using min heap 
     metadata_store.put(sched_namespace, memory_id, [])
 
@@ -154,6 +173,12 @@ def setup_sched(metadata_store):
     metadata_store.put(sched_namespace, memory_id, [])
 
     memory_id = str("patch_verifier_wrote_list") # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
+    metadata_store.put(sched_namespace, memory_id, [])
+
+     memory_id = str("analyzer_wrote_list") # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
+    metadata_store.put(sched_namespace, memory_id, [])
+
+    memory_id = str("concluder_wrote_list") # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
     metadata_store.put(sched_namespace, memory_id, [])
 
     memory_id = str("supervisor_redo_partition_list") # Format of this list: [{"plan_id": 123, "group": "control_group", "partition_name": "partition_1", "error_feedback": "xtz"}, ...] This is to record down the calls to redo_exp_partition tool by supervisor.
@@ -384,7 +409,7 @@ class SchedTool(BaseTool):
         for assignment in assignments:
             plan_id, group, partition_name = assignment["plan_id"], assignment["group"], assignment["partition_name"]
             # Check if the verifier has written to the verifier_wrote_list:
-            item = self.get_llm_verifier_wrote_list_item(plan_id, group, partition_name)
+            item = self.get_verifier_wrote_list_item(plan_id, group, partition_name)
             if item is None:
                 print("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
                 return {"messages": assignments, "next_agent": "llm_verifier"}
@@ -396,7 +421,7 @@ class SchedTool(BaseTool):
         self.unassign_verifier_all(verifier_name)
 
         # Remove from verifier_wrote_list:
-        self.remove_llm_verifier_wrote_list_all()
+        self.remove_verifier_wrote_list_all(verifier_name)
 
         utils.print_workspace_contents()
 
@@ -413,7 +438,9 @@ class SchedTool(BaseTool):
                 item["control_experiment_results_filename"] = self.get_control_experiment_results_filename(item["plan_id"], item["group"], item["partition_name"])
             completion_messages = verifier.exec_verifier(completion_messages)
             self.write_all_control_experiment_results_filenames(completion_messages)
-            return {"messages": completion_messages, "prev_agent": "exec_verifier", "next_agent": "supervisor"}
+            for task_details in completion_messages:
+                self.assign_verifier("analyzer", task_details)
+            return {"messages": completion_messages, "prev_agent": "exec_verifier", "next_agent": "analyzer"}
 
     def handle_patch_verifier(self, verifier_name: str, plan_namespace: tuple):
         """
@@ -433,7 +460,7 @@ class SchedTool(BaseTool):
         for assignment in assignments:
             plan_id, group, partition_name = assignment["plan_id"], assignment["group"], assignment["partition_name"]
             # Check if the verifier has written to the verifier_wrote_list:
-            item = self.get_patch_verifier_wrote_list_item(plan_id, group, partition_name)
+            item = self.get_verifier_wrote_list_item(plan_id, group, partition_name)
             if item is None:
                 print("Warning: Patch verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun patch verifier.".format(plan_id, group, partition_name))
                 return {"messages": assignments, "next_agent": "patch_verifier"}
@@ -445,7 +472,7 @@ class SchedTool(BaseTool):
         self.unassign_verifier_all(verifier_name)
 
         # Remove from verifier_wrote_list:
-        self.remove_patch_verifier_wrote_list_all()
+        self.remove_verifier_wrote_list_all(verifier_name)
 
         utils.print_workspace_contents()
 
@@ -459,7 +486,85 @@ class SchedTool(BaseTool):
                 item["control_experiment_results_filename"] = self.get_control_experiment_results_filename(item["plan_id"], item["group"], item["partition_name"])
             completion_messages = verifier.exec_verifier(completion_messages)
             self.write_all_control_experiment_results_filenames(completion_messages)
-            return {"messages": completion_messages, "prev_agent": "exec_verifier", "next_agent": "supervisor"}
+            for task_details in completion_messages:
+                self.assign_verifier("analyzer", task_details)
+            return {"messages": completion_messages, "prev_agent": "exec_verifier", "next_agent": "analyzer"}
+
+    def handle_analyzer(self, verifier_name: str, plan_namespace: tuple):
+        """
+            Analyzer has completed a run. 
+            We will now:
+            - remove the analyzer from the analyzer assignment dict. 
+            - assign to concluder (conditionally).
+        """
+        print("------------Entering handle analyzer!!!------------")
+        # Get plan id and partition names assigned to verifier name:
+        assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
+
+        completion_messages = [] # format: [{"plan_id": plan_id1, "partition_name": partition_name1, "is_correct": True, "verifier_log_message": "no error"}, ...]
+
+        # Assert that all assigned partition names are now done
+        has_false = False # if there exist one workflow that is considered incorrect by the verifier.
+        for assignment in assignments:
+            plan_id, group, partition_name = assignment["plan_id"], assignment["group"], assignment["partition_name"]
+            # Check if the verifier has written to the verifier_wrote_list:
+            item = self.get_verifier_wrote_list_item(plan_id, group, partition_name)
+            if item is None:
+                print("Warning: Analyzer has not written plan_id {}, group {}, partition_name {} to analyzer_wrote_list yet. We will rerun analyzer.".format(plan_id, group, partition_name))
+                return {"messages": assignments, "next_agent": "analyzer"}
+            completion_messages.append(item)
+            if not item["no_change"]:
+                has_false = True
+
+        # Remove verifier from verifier assignment dict:
+        self.unassign_verifier_all(verifier_name)
+
+        # Remove from verifier_wrote_list:
+        self.remove_verifier_wrote_list_all(verifier_name)
+
+        utils.print_workspace_contents()
+
+        print("------------Exiting handle analyzer!!!------------")
+        # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
+        # Inform supervisor that verifier has completed a run:
+        is_terminate = self.check_exp_termination_condition()
+        if not has_false and is_terminate: # go to concluder -> supervisor 
+            self.assign_verifier("analyzer", [])
+            return {"messages": [], "prev_agent": "analyzer", "next_agent": "concluder"}
+        else:
+            return {"messages": completion_messages, "prev_agent": "analyzer", "next_agent": "supervisor"}
+
+    def handle_concluder(self, verifier_name: str, plan_namespace: tuple):
+        """
+            Concluder has completed a run. 
+            We will now:
+            - remove the concluder from the concluder assignment dict. 
+            - assign to supervisor.
+        """
+        print("------------Entering handle concluder!!!------------")
+        # Get plan id and partition names assigned to verifier name:
+        assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
+
+        completion_messages = [] # format: [{"plan_id": plan_id1, "partition_name": partition_name1, "is_correct": True, "verifier_log_message": "no error"}, ...]
+
+        # Assert that all assigned partition names are now done
+        item = self.get_concluder_wrote_list_item()
+        if item is None:
+            print("Warning: Concluder has not written to concluder_wrote_list yet. We will rerun concluder.")
+            return {"messages": [], "next_agent": "concluder"}
+
+        # Remove verifier from verifier assignment dict:
+        self.unassign_verifier_all(verifier_name)
+
+        # Remove from verifier_wrote_list:
+        self.remove_verifier_wrote_list_all(verifier_name)
+
+        utils.print_workspace_contents()
+
+        print("------------Exiting handle concluder!!!------------")
+        # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
+        # Inform supervisor that verifier has completed a run:
+        return {"messages": item, "prev_agent": "concluder", "next_agent": "supervisor"}
             
     def update_queues(
         self, 
@@ -637,6 +742,10 @@ class SchedTool(BaseTool):
             memory_id = "exec_verifier_assignment_dict"
         elif verifier_name == "patch_verifier":
             memory_id = "patch_verifier_assignment_dict"
+        elif verifier_name == "analyzer":
+            memory_id = "analyzer_assignment_dict"
+        elif verifier_name == "concluder":
+            memory_id = "concluder_assignment_dict"
         self._assign_to_entity(verifier_name, assignment_dict, memory_id)
 
     def _assign_to_entity(self, entity_name: str, assignment_dict: dict, memory_id: str):
@@ -662,6 +771,10 @@ class SchedTool(BaseTool):
             memory_id = "exec_verifier_assignment_dict"
         elif verifier_name == "patch_verifier":
             memory_id = "patch_verifier_assignment_dict"
+        elif verifier_name == "analyzer":
+            memory_id = "analyzer_assignment_dict"
+        elif verifier_name == "concluder":
+            memory_id = "concluder_assignment_dict"
         return self._get_entity_assignment(verifier_name, memory_id) # format: [(plan_id1, "experimental_group", "partition_1"), (plan_id2, "experimental_group", "partition_1"), ...]
 
     def _get_entity_assignment(self, entity_name, memory_id):
@@ -687,6 +800,10 @@ class SchedTool(BaseTool):
             memory_id = "exec_verifier_assignment_dict"
         elif verifier_name == "patch_verifier":
             memory_id = "patch_verifier_assignment_dict"
+        elif verifier_name == "analyzer":
+            memory_id = "analyzer_assignment_dict"
+        elif verifier_name == "concluder":
+            memory_id = "concluder_assignment_dict"
         self._unassign_entity_all(verifier_name, memory_id)
     
     def _unassign_entity_all(self, entity_name: str, memory_id: str):
@@ -813,42 +930,46 @@ class SchedTool(BaseTool):
         
         self.metadata_store.put(sched_namespace, "standby_exp_plan_list", standby_exp_plan_list)
 
-    def get_llm_verifier_wrote_list_item(self, plan_id: str, group: str, partition_name: str):
+    def get_verifier_wrote_list_item(self, verifier_name:str, plan_id: str, group: str, partition_name: str):
+        if verifier_name == "llm_verifier":
+            memory_id = str("llm_verifier_wrote_list") # check tool.LLMVerifierWriteTool for the format of this list
+        elif verifier_name == "patch_verifier":
+            memory_id = str("patch_verifier_wrote_list")
+        elif verifier_name == str("analyzer"):
+            memory_id = str("analyzer_wrote_list")
+
         user_id = "admin"
         application_context = "exp-sched"
         sched_namespace = (user_id, application_context)
-        memory_id = str("llm_verifier_wrote_list") # check tool.LLMVerifierWriteTool for the format of this list
-        llm_verifier_wrote_list = self.metadata_store.get(sched_namespace, memory_id).dict()["value"]
-        for item in llm_verifier_wrote_list:
+        verifier_wrote_list = self.metadata_store.get(sched_namespace, memory_id).dict()["value"]
+        for item in verifier_wrote_list:
             if item["plan_id"] == plan_id and item["group"] == group and item["partition_name"] == partition_name:
                 return item
         return None
 
-    def get_patch_verifier_wrote_list_item(self, plan_id: str, group: str, partition_name: str):
+    def get_concluder_wrote_list_item(self):
         user_id = "admin"
         application_context = "exp-sched"
         sched_namespace = (user_id, application_context)
-        memory_id = str("patch_verifier_wrote_list") # check tool.LLMVerifierWriteTool for the format of this list
-        llm_verifier_wrote_list = self.metadata_store.get(sched_namespace, memory_id).dict()["value"]
-        for item in llm_verifier_wrote_list:
-            if item["plan_id"] == plan_id and item["group"] == group and item["partition_name"] == partition_name:
-                return item
-        return None
+        memory_id = str("concluder_wrote_list")
+        verifier_wrote_list = self.metadata_store.get(sched_namespace, memory_id).dict()["value"]
+        return verifier_wrote_list
 
-    def remove_llm_verifier_wrote_list_all(self):
+    def remove_verifier_wrote_list_all(self, verifier_name: str):
+        if verifier_name == "llm_verifier":
+            memory_id = str("llm_verifier_wrote_list") # check tool.LLMVerifierWriteTool for the format of this list
+        elif verifier_name == "patch_verifier":
+            memory_id = str("patch_verifier_wrote_list")
+        elif verifier_name == str("analyzer"):
+            memory_id = str("analyzer_wrote_list")
+        elif verifier_name == str("concluder"):
+            memory_id = str("concluder_wrote_list")
+      
         user_id = "admin"
         application_context = "exp-sched"
         sched_namespace = (user_id, application_context)
-        memory_id = str("llm_verifier_wrote_list")
         self.metadata_store.put(sched_namespace, memory_id, [])
 
-    def remove_patch_verifier_wrote_list_all(self):
-        user_id = "admin"
-        application_context = "exp-sched"
-        sched_namespace = (user_id, application_context)
-        memory_id = str("patch_verifier_wrote_list")
-        self.metadata_store.put(sched_namespace, memory_id, [])
-    
     def get_control_experiment_filename(self, plan_id: str, group: str, partition_name: str) -> str:
         return "/workspace/control_experiment_{}_{}_{}.sh".format(plan_id, group, partition_name)
 

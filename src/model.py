@@ -17,7 +17,10 @@ def create_gpt_4(tools=None) -> AzureChatOpenAI:
     )
 
     if tools:
-        llm = llm.bind_tools(tools)
+        llm = llm.bind_tools(
+            tools, 
+            parallel_tool_calls=False # Avoid multi_tool_use.parallel in GPT-4o
+        )
 
     return llm
 

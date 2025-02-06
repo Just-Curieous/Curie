@@ -1094,3 +1094,152 @@ class PatchVerifierWriteTool(BaseTool):
         self.metadata_store.put(sched_namespace, memory_id, wrote_list)
 
         return "Successfully recorded the evaluation."
+
+class AnalyzerWriteInput(BaseModel):
+    plan_id: str = Field(
+        ...,
+        description="The plan_id that was passed to you as input."
+    )
+    group: str = Field(
+        ...,
+        description="This is either 'control_group' or 'experimental_group'."
+    )
+    partition_name: str = Field(
+        ...,
+        description="The partition_name that was passed to you as input."
+    )
+    no_change: bool = Field(
+        ...,
+        description="No change means that after analyzing the partition’s results, you determine that the existing plan and partitions remain valid, requiring no modifications or new plan creation."
+    )
+    analyzer_log_message: str = Field(
+        ...,
+        description="Log message detailing the analysis performed and decisions made along with justification."
+    )
+
+# Note: It's important that every field has type hints. BaseTool is a
+# Pydantic class and not having type hints can lead to unexpected behavior.
+class AnalyzerWriteTool(BaseTool):
+    name: str = "analyzer_record"
+    description: str = "Record partitions that you have analyzed to long term storage."
+    args_schema: Type[BaseModel] = AnalyzerWriteInput
+    # None of the following work:
+    # https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/#define-the-tools_1
+    # https://github.com/langchain-ai/langchain/discussions/24906
+    # and so on..
+    store: Optional[InMemoryStore] = None  # Declare store as an optional field
+    metadata_store: Optional[InMemoryStore] = None  # Declare store as an optional field. This is for storing sched related metadata. 
+
+    def __init__(self, store: InMemoryStore, metadata_store: InMemoryStore):
+        super().__init__()
+        self.store = store
+        self.metadata_store = metadata_store
+        # self.user_id = "admin"
+        # self.application_context = "exp-plans" 
+        # self.namespace = (self.user_id, self.application_context) # just a random namespace name for now
+    
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        # state: Annotated[dict, InjectedState], 
+        plan_id: str, 
+        group: str,
+        partition_name: str,
+        no_change: bool,
+        analyzer_log_message: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str:
+        """
+        Use the tool.
+        """
+        
+        user_id = "admin"
+        application_context = "exp-sched" 
+        sched_namespace = (user_id, application_context) # just a random namespace name for now
+
+        memory_id = str("analyzer_wrote_list")
+    
+        wrote_list = self.metadata_store.get(sched_namespace, memory_id)
+        wrote_list = wrote_list.dict()["value"] # https://langchain-ai.github.io/langgraph/cloud/reference/sdk/python_sdk_ref/?h=item#langgraph_sdk.schema.RunCreate.multitask_strategy
+        # print(wrote_list)
+
+        # Check if the plan_id and partition_name already exist in the list:
+        for item in wrote_list:
+            if item["plan_id"] == plan_id and item["group"] == group and item["partition_name"] == partition_name:
+                return "This plan_id and partition_name has already been evaluated by you."
+
+        wrote_list.append({
+            "plan_id": plan_id,
+            "group": group,
+            "partition_name": partition_name,
+            "no_change": no_change,
+            "analyzer_log_message": analyzer_log_message,
+        })
+        self.metadata_store.put(sched_namespace, memory_id, wrote_list)
+
+        return "Successfully recorded the evaluation."
+
+class ConcluderWriteInput(BaseModel):
+    is_conclude: bool = Field(
+        ...,
+        description="This means you decide to conclude the experiment, i.e. after analyzing all partitions results, you determine that the existing plans and partitions remain valid, requiring no modifications or new plan creation."
+    )
+    concluder_log_message: str = Field(
+        ...,
+        description="Log message detailing the analysis performed and decisions made along with justification."
+    )
+
+# Note: It's important that every field has type hints. BaseTool is a
+# Pydantic class and not having type hints can lead to unexpected behavior.
+class ConcluderWriteTool(BaseTool):
+    name: str = "concluder_record"
+    description: str = "Record partitions that you have analyzed to long term storage."
+    args_schema: Type[BaseModel] = ConcluderWriteInput
+    # None of the following work:
+    # https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/#define-the-tools_1
+    # https://github.com/langchain-ai/langchain/discussions/24906
+    # and so on..
+    store: Optional[InMemoryStore] = None  # Declare store as an optional field
+    metadata_store: Optional[InMemoryStore] = None  # Declare store as an optional field. This is for storing sched related metadata. 
+
+    def __init__(self, store: InMemoryStore, metadata_store: InMemoryStore):
+        super().__init__()
+        self.store = store
+        self.metadata_store = metadata_store
+        # self.user_id = "admin"
+        # self.application_context = "exp-plans" 
+        # self.namespace = (self.user_id, self.application_context) # just a random namespace name for now
+    
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        # state: Annotated[dict, InjectedState], 
+        is_conclude: bool,
+        concluder_log_message: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str:
+        """
+        Use the tool.
+        """
+        
+        user_id = "admin"
+        application_context = "exp-sched" 
+        sched_namespace = (user_id, application_context) # just a random namespace name for now
+
+        memory_id = str("concluder_wrote_list")
+    
+        wrote_list = self.metadata_store.get(sched_namespace, memory_id)
+        wrote_list = wrote_list.dict()["value"] # https://langchain-ai.github.io/langgraph/cloud/reference/sdk/python_sdk_ref/?h=item#langgraph_sdk.schema.RunCreate.multitask_strategy
+        # print(wrote_list)
+
+        wrote_list.append({
+            "is_conclude": is_conclude,
+            "concluder_log_message": concluder_log_message,
+        })
+        self.metadata_store.put(sched_namespace, memory_id, wrote_list)
+
+        return "Successfully recorded the evaluation."
