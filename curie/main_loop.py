@@ -89,7 +89,7 @@ def get_log_file_openhands(question_file, unique_id, iteration, folder_prefix="l
 def create_config_file(question_file, unique_id, iteration, task_config):
     log_dir = '../logs/configs' 
     log_filename = f"../logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
-    config_filename = f"{log_dir}/{task_config['category_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
+    config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
     task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file})
 
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
@@ -187,7 +187,7 @@ def execute_experiment_in_container(container_name, task_config, config_file):
 
         # Define source and destination directories
         container_log_dir = "../logs/"  # Directory in the container
-        host_log_dir = os.path.expanduser(f"../logs/{task_config['category_name']}")  # Host directory
+        host_log_dir = os.path.expanduser(f"../logs/temp_logs/{task_config.workspace_name}")  # Host directory
         
         # Ensure host log directory exists
         os.makedirs(host_log_dir, exist_ok=True)
