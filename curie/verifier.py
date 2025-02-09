@@ -107,7 +107,7 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             messages.insert(0, system_message)
         
-        response = model.query_model_safe(messages)
+        response = model.query_model_safe(messages, tools)
         print(f"FROM {node_name}:")
         print(utils.parse_langchain_llm_output(response))
         print("-----------------------------------")
@@ -142,7 +142,7 @@ def exec_verifier(llm_verified_wrote_list):
             for i in range(iterations):
 
                 print("Before iteration: {}".format(i))
-                utils.print_workspace_contents()
+                # utils.print_workspace_contents()
 
                 # Run the first iteration and rename the file
                 no_error, verifier_log_message, result_file_1_content = run_control_experiment_and_rename(1, control_experiment_filename, control_experiment_results_filename)
@@ -155,13 +155,13 @@ def exec_verifier(llm_verified_wrote_list):
                 result_file_contents.append(result_file_1_content)
 
                 print("After iteration: {}".format(i))
-                utils.print_workspace_contents()
+                # utils.print_workspace_contents()
 
             # # Compare the two result files
             # is_same_result = compare_results(result_file_1, result_file_2)
 
             # print("After comparison:")
-            # utils.print_workspace_contents()
+            # # utils.print_workspace_contents()
 
             results_block = "\n\n".join(
                 [f"Result {i + 1}:\n{content}" for i, content in enumerate(result_file_contents)]

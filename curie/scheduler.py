@@ -6,6 +6,7 @@ from langgraph.prebuilt import InjectedStore
 from langgraph.prebuilt import InjectedState
 from langgraph.graph import END
 import uuid
+import os
 from typing import Optional, Type, Dict
 import heapq
 
@@ -19,12 +20,16 @@ from pydantic import BaseModel, Field
 from collections import deque, defaultdict
 import re
 import json
+import subprocess
 
 import formatter
 import settings
 import utils
 import worker_agent
 import verifier
+from modified_deps.langchain_bash.tool import ShellTool
+
+shell_tool = ShellTool(timeout=1200)
 
 def create_SchedNode(sched_tool, State, metadata_store):    
     """
@@ -193,13 +198,15 @@ class SchedTool(BaseTool):
     metadata_store: Optional[InMemoryStore] = None  # Declare store as an optional field. This is for storing sched related metadata. 
     sched_namespace: Optional[tuple] = None
     plan_namespace: Optional[tuple] = None
+    config: Optional[dict] = None
 
-    def __init__(self, store: InMemoryStore, metadata_store: InMemoryStore):
+    def __init__(self, store: InMemoryStore, metadata_store: InMemoryStore, config: dict):
         super().__init__()
         self.store = store
         self.metadata_store = metadata_store
         self.sched_namespace = self.get_sched_namespace()
         self.plan_namespace = self.get_plan_namespace()
+        self.config = config
     
     class Config:
         arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
@@ -261,6 +268,10 @@ class SchedTool(BaseTool):
         print("Checking supervisor wrote list..")
         memory_id = str("supervisor_wrote_list")
         supervisor_wrote_list = self.metadata_store.get(self.sched_namespace, memory_id).dict()["value"]
+        # Create a new /workspace dir for each new plan_id, and other related inits for a new plan:
+        self.init_new_plan(supervisor_wrote_list)
+
+        # Update queues:
         for _ in range(len(supervisor_wrote_list)):
             # NOTE: currently, we ignore plan groups that are already executing in the worker.. 
             plan_id = supervisor_wrote_list.pop(0)
@@ -356,13 +367,14 @@ class SchedTool(BaseTool):
                 "plan_id": plan_id,
                 "group": group,
                 "partition_name": partition_name,
+                "workspace_dir": self.get_workspace_dirname(plan_id),
                 "control_experiment_filename": self.get_control_experiment_filename(plan_id, group, partition_name),
                 "control_experiment_results_filename": self.get_control_experiment_results_filename(plan_id, group, partition_name),
             }
             completion_messages.append(task_details)
             self.assign_verifier("llm_verifier", task_details)
 
-        utils.print_workspace_contents()
+        # utils.print_workspace_contents()
         print("------------Exiting handle worker!!!------------")
         # Inform supervisor that worker has completed a run:
         return {"messages": completion_messages, "next_agent": "llm_verifier"}
@@ -399,7 +411,7 @@ class SchedTool(BaseTool):
         # Remove from verifier_wrote_list:
         self.remove_verifier_wrote_list_all(verifier_name)
 
-        utils.print_workspace_contents()
+        # utils.print_workspace_contents()
 
         print("------------Exiting handle llm verifier!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
@@ -450,7 +462,7 @@ class SchedTool(BaseTool):
         # Remove from verifier_wrote_list:
         self.remove_verifier_wrote_list_all(verifier_name)
 
-        utils.print_workspace_contents()
+        # utils.print_workspace_contents()
 
         print("------------Exiting handle patch verifier!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
@@ -498,7 +510,7 @@ class SchedTool(BaseTool):
         # Remove from verifier_wrote_list:
         self.remove_verifier_wrote_list_all(verifier_name)
 
-        utils.print_workspace_contents()
+        # utils.print_workspace_contents()
 
         print("------------Exiting handle analyzer!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
@@ -535,7 +547,7 @@ class SchedTool(BaseTool):
         # Remove from verifier_wrote_list:
         self.remove_verifier_wrote_list_all(verifier_name)
 
-        utils.print_workspace_contents()
+        # utils.print_workspace_contents()
 
         print("------------Exiting handle concluder!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
@@ -571,6 +583,7 @@ class SchedTool(BaseTool):
                     "plan_id": plan_id,
                     "group": "control_group",
                     "partition_name": partition_name,
+                    "workspace_dir": self.get_workspace_dirname(plan_id),
                     "error_feedback": redo_details["error_feedback"]
                 }
             else:
@@ -578,6 +591,7 @@ class SchedTool(BaseTool):
                     "priority": int(plan["priority"]),
                     "plan_id": plan_id,
                     "group": "control_group",
+                    "workspace_dir": self.get_workspace_dirname(plan_id),
                     "partition_name": partition_name,
                 }
 
@@ -604,6 +618,7 @@ class SchedTool(BaseTool):
                     "plan_id": plan_id,
                     "group": "experimental_group",
                     "partition_name": redo_details["partition_name"],
+                    "workspace_dir": self.get_workspace_dirname(plan_id),
                     "error_feedback": redo_details["error_feedback"]
                 }
                 self.insert_worker_queue(task_details)
@@ -621,6 +636,7 @@ class SchedTool(BaseTool):
                         "priority": int(plan["priority"]),
                         "plan_id": plan_id,
                         "group": "experimental_group",
+                        "workspace_dir": self.get_workspace_dirname(plan_id),
                         "partition_name": partition_name,
                     }
                     self.insert_worker_queue(task_details)
@@ -844,14 +860,17 @@ class SchedTool(BaseTool):
         self.metadata_store.put(self.sched_namespace, memory_id, [])
 
     def get_control_experiment_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/control_experiment_{}_{}_{}.sh".format(plan_id, group, partition_name)
+        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
 
     def get_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/results_{}_{}_{}.txt".format(plan_id, group, partition_name)
+        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
 
     def get_all_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
         # results for multiple runs (i.e., a single run by exec verifier for now) for a single partition
-        return "/workspace/all_results_{}_{}_{}.txt".format(plan_id, group, partition_name)
+        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
+
+    def get_workspace_dirname(self, plan_id: str) -> str:
+        return "/workspace/{}_{}".format(self.config["workspace_name"], plan_id)
 
     def check_exp_termination_condition(self):
         """
@@ -909,3 +928,49 @@ class SchedTool(BaseTool):
         elif entity_name == "control":
             memory_id = str("control_worker_assignment_dict")
         return memory_id
+
+    def init_new_plan(self, plan_ids: list):
+        for plan_id in plan_ids:
+            new_plan = self.create_workspace_dir(plan_id)
+            if new_plan:
+                # Add "workspace_dir" attribute to plan
+                self.add_workspace_to_plan(plan_id)
+                # Edit plan question:
+                self.edit_plan_question(plan_id)
+    
+    def create_workspace_dir(self, plan_id: str):
+        # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
+        # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
+        new_starter_file_dir = f"../workspace/{self.config['workspace_name']}_{plan_id}"
+        old_starter_file_dir = f"../starter_file/{self.config['workspace_name']}" 
+        if not os.path.exists(new_starter_file_dir):
+            os.makedirs(new_starter_file_dir)
+            try:
+                if os.path.exists(old_starter_file_dir):
+                    # subprocess.run(["cp", "-r", old_starter_file_dir, new_starter_file_dir], check=True)
+                    output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
+                    print(f"Created {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
+                else:
+                    print(f"Created {new_starter_file_dir}. No starter files to copy.")
+            except Exception as e:
+                print(f"Error copying files: {e}")
+                raise
+
+            return True
+        else:
+            return False
+
+    def add_workspace_to_plan(self, plan_id: str):
+        plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
+        plan["workspace_dir"] = self.get_workspace_dirname(plan_id)
+        self.store.put(self.plan_namespace, plan_id, plan)
+
+    def edit_plan_question(self, plan_id: str):
+        """
+            Edit plan question to point to the correct writable workspace directory, that the technician agents are able to tweeak/modify. 
+        """
+        plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
+
+        plan["question"] = plan["question"].replace(f"/starter_file/{self.config['workspace_name']}", self.get_workspace_dirname(plan_id))
+
+        self.store.put(self.plan_namespace, plan_id, plan)

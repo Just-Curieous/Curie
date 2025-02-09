@@ -54,7 +54,7 @@ metadata_store = InMemoryStore()
 memory = MemorySaver()
 
 # Create scheduler:
-sched_tool = sched.SchedTool(store, metadata_store)
+sched_tool = sched.SchedTool(store, metadata_store, config)
 sched_node = sched.create_SchedNode(sched_tool, State, metadata_store)
 graph_builder.add_node("scheduler", sched_node)
 # Create supervisor graph:

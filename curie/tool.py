@@ -14,10 +14,12 @@ from langchain_core.callbacks import (
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from typing_extensions import Self
 
 import formatter
 import settings
+import utils
 
 import json
 import re
@@ -28,117 +30,101 @@ def test_search_tool(a: Annotated[str, "search string"]) -> str:
     """Searches for useful information"""
     return "University of Michigan!"
 
+# @tool
+# def browse_web(query: Annotated[str, "search string"]) -> str:
+#     # Other options: https://langchain-ai.github.io/langgraph/tutorials/web-navigation/web_voyager/
+#     return True
+
 shell_tool = ShellTool(timeout=1200)
 
-def extract_plan_id(prompt: str) -> str:
-    """
-    Extracts the plan ID from the given prompt.
+class CodeAgentInput(BaseModel):
+    plan_id: str = Field(
+        ...,
+        description="The plan_id that was passed to you as input."
+    )
+    group: str = Field(
+        ...,
+        description="This was the group that was passed to you as input, it is either 'control_group' or 'experimental_group'."
+    )
+    partition_name: str = Field(
+        ...,
+        description="The partition_name that was passed to you as input."
+    )
+    workspace_dir: str = Field(
+        ...,
+        description="Extract this from the plan JSON's 'workspace' key."
+    )
+    prompt: str = Field(
+        ...,
+        description="Clear guidelines on generating workflow/programs."
+    )
 
-    Args:
-        prompt (str): The input text containing a plan ID.
+    @model_validator(mode="after")
+    def partition_name_check(self) -> Self:
+        print("Entering custom model validator: partition_name_check")
+        if not utils.extract_partition_name(self.partition_name):
+            raise ValueError("partition_name is not specified correctly.")
+        return self
 
-    Returns:
-        str: The extracted plan ID if found, else an empty string.
-    """
-    # Regular expression to match UUID-like patterns (plan_id format)
-    pattern = r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+    @model_validator(mode="after")
+    def plan_id_check(self) -> Self:
+        print("Entering custom model validator: plan_id_check")
+        if not utils.extract_plan_id(self.plan_id):
+            raise ValueError("plan_id is not specified correctly.")
+        return self
 
-    # Search for the pattern in the prompt
-    match = re.search(pattern, prompt)
-    
-    # Return the matched plan ID if found, else return an empty string
-    return match.group(0) if match else int(time.time())
+    @model_validator(mode="after")
+    def workspace_dir_check(self) -> Self:
+        print("Entering custom model validator: workspace_dir_check")
+        if not utils.extract_workspace_dir(self.workspace_dir):
+            raise ValueError("workspace_dir is not specified correctly.")
+        return self
 
-def extract_partition_name(prompt: str) -> str:
-    """
-    Extracts the partition name from a given prompt.
-
-    Args:
-        prompt (str): The input text that may contain a partition name.
-
-    Returns:
-        str: The extracted partition name if found, else an empty string.
-    """
-    # Regular expression to match partition names (e.g., 'partition_1')
-    pattern = r"['\"]?(partition_\d+)['\"]?"
-    
-    # Search for the pattern in the prompt
-    match = re.search(pattern, prompt)
-    
-    # Return the matched partition name if found, else return an empty string
-    return match.group(1) if match else "partition_0"
-
-def extract_workspace_dir(text: str) -> str:
-    """
-    Extracts the directory name that appears after '/workspace/' in the given text,
-    excluding any surrounding single quotes.
-
-    Args:
-        text (str): The input string containing the workspace path.
-
-    Returns:
-        str: The directory name after '/workspace/', or an empty string if not found.
-    """
-    match = re.search(r"/workspace/([^\s'/]+)", text)  # Excludes single quotes
-    return match.group(1) if match else ""
-
-@tool
-def codeagent_openhands(prompt: Annotated[str, "The prompt to generate code for"] = 'Write a function print Hi.') -> str:
-    """Write/Modify code and write the script for a given experimentation plan, and return experimental workflow script."""
+@tool("codeagent_openhands", args_schema=CodeAgentInput)
+def codeagent_openhands(plan_id: str, group: str, partition_name: str, workspace_dir: str, prompt: str) -> str:
+    """Coding agent that can generate/modify workflow scripts for a given experimentation plan."""
     # given the code workspace 
     # wait; return log and result script 
     try:  
         # TODO: remove the hardcoded path
         # TODO: inform the new work dir
-    
-        current_dir = extract_workspace_dir(prompt)
-        if not current_dir:
-            return "Failed to extract the current workspace directory. please provide in the prompt in the format '/workspace/<workspace_dir>'"
-        plan_id = extract_plan_id(prompt)
-        partition_name = extract_partition_name(prompt)
-        print(f"Plan ID: {plan_id}. Partition Name: {partition_name}")
-
-        new_starter_file_dir = f"../workspace/{current_dir}_{plan_id}"
-        old_starter_file_dir = f"../starter_file/{current_dir}" 
-        if not os.path.exists(new_starter_file_dir):
-            os.makedirs(new_starter_file_dir)
-            output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
-            print(f"Output: {output}")
-        else:
-            print(f"Working on the existing directory: {new_starter_file_dir}")
+        
         # TODO: Put the system prompt into a file
-        system_prompt = f'''You are a Coding Agent tasked with generating a fully reproducible experimental workflow based on the provided experiment plan. 
-        Your working directory is /workspace/{current_dir}_{plan_id}, you should not touch files outside this directory.
-        Key Requirements for OpenHands:
-        - (1) Control Group:
-            - Your primary responsibility is to construct the workflow, including the environment setup, and produce results for the control group.
-        - (2) Experimental Group:
-            - Represents test conditions where one or more independent variables differ from the control group.
-            - Ensure the workflow supports seamless substitution of variables for experimental groups without requiring further modifications.
-            - Achieve this by either: (i) Writing additional scripts or functions for the experimental groups. (ii) Modifying reusable parts of the workflow to parameterize control and experimental variables.
+        system_prompt = f'''
+You are a Coding Agent tasked with generating a reproducible experimental workflow program based on the provided experiment plan below. 
+Your working directory is {workspace_dir}. Do not touch files outside this directory.
 
-        Program Requirement: 
-        The entire controlled experiment workflow (which may involve multiple scripts) must be callable through a single script named as "/workspace/control_experiment_{plan_id}_control_group_{partition_name}.sh", 
-        This program must take no arguments and should handle the execution of the entire workflow for the control group. Include neccesary explanation assiciated with the plan in the script comment.
-        The program must store the control group results in a single file named "/workspace/results_{plan_id}_control_group_{partition_name}.txt", 
-        and what the results mean should be easily understood (e.g., including measurement units). You may develop and test smaller standalone programs initially, 
-        Don't try to execute commands like "ls -R".
-        Here is the experiment plan: '''
+Program Requirement: 
+The entire controlled experiment workflow (which may involve multiple scripts) must be callable through a single script named as "{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh".
+This program must take no arguments and should handle the execution of the entire workflow for the control group. Include neccesary explanation assiciated with the plan in the script comment.
+The program must store the control group results in a single file named "{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt", and what the results mean should be easily understood (e.g., including measurement units). You may develop and test smaller standalone programs initially. 
+
+Reminders: 
+- DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
+- DO NOT execute commands like "ls -R", as it may cause you to exceed context length.
+Here is the experiment plan: \n
+'''
 
         prompt = f'''{system_prompt}\n{prompt}'''
         # write to a file
         prompt_file = f"../logs/tmp_prompt.txt"
         with open(prompt_file, "w") as file:
             file.write(prompt)
+
+        # openhands_dir = os.path.abspath("../workspace")
+        # print("my openhands dir is:", openhands_dir)
+
+        # FIXME: remove hardcoded path
+        openhands_dir = "/home/patkon/Curie/workspace"
         
-        # FIXME, remove organization for public use
+        # FIXME, remove organization for public use. workspace_base is still hardcoded to home/ubuntu
         output = shell_tool.run({
             "commands": [
                 f"export LOG_ALL_EVENTS=true; "
                 f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
-                f"export WORKSPACE_BASE=/home/ubuntu/Curie/starter_file/; " # 
-                f"chmod 777 -R {new_starter_file_dir}; "
-                f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} 2>&1 | tee -a /logs/openhands_{plan_id}_logging.txt; "
+                f"chmod 777 -R {workspace_dir}; "
+                f"export WORKSPACE_BASE={openhands_dir}; " 
+                f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file setup/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
             ]
         })
 
@@ -149,11 +135,10 @@ def codeagent_openhands(prompt: Annotated[str, "The prompt to generate code for"
     except BaseException as e:
         print(f"Error for openhands agent: {repr(e)}")
         return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
-    return (f"Update the workspace dir to be /workspace/{current_dir}_{plan_id}\n"
-            f"Design plan ID: {plan_id}, Partition Name: {partition_name}"
-            f"The experiment workflow can be found in '/workspace/control_experiment_{plan_id}_control_group_{partition_name}.sh'\n"
-            f"Control group results are stored in '/workspace/results_{plan_id}_control_group_{partition_name}.txt'\n"
-            f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_logging.txt'"
+    return (f"Workflow and results have been produced, for plan_id: {plan_id}, group: {group}, partition_name: {partition_name} \n"
+            f"control_experiment_filename is at: '{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh'\n"
+            f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
+            f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
             )
  
     # TODO: return the concise logs.
@@ -303,6 +288,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
             Example modified plan: # this is the only plan format ever saved in long term store. 
             {...all fields except for control and experimental group, 
                 "question": "What is the best instance type for a CPU workload?", # original user_input
+                "workspace_dir": /workspace/{config["workspace_name"]}_{plan_id},
                 "control_group": {
                     "partition_1": {
                         "independent_vars": [{
@@ -351,7 +337,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
         question = self.metadata_store.get(sched_namespace, memory_id)
         question = question.dict()["value"]
 
-        partitioned_plan_data = {"control_group": {}, "experimental_group": {}, "question": question}
+        partitioned_plan_data = {"control_group": {}, "experimental_group": {}, "question": question, "workspace_dir": ""} # note: workspace will be assigned in sched later
         # Partition applied to experimental groups only for now:
         for key, value in plan_data.items():
             if key != "experimental_group" and key != "control_group":

@@ -6,6 +6,72 @@ import re
 import ast
 import os
 
+def extract_plan_id(prompt: str) -> str:
+    """
+    Extracts the plan ID from the given prompt.
+
+    Args:
+        prompt (str): The input text containing a plan ID.
+
+    Returns:
+        str: The extracted plan ID if found, else an empty string.
+    """
+    # Regular expression to match UUID-like patterns (plan_id format)
+    pattern = r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+
+    # Search for the pattern in the prompt
+    match = re.search(pattern, prompt)
+
+    if match:
+        return True
+    else:
+        return False
+    
+    # # Return the matched plan ID if found, else return an empty string
+    # return match.group(0) if match else ""
+
+def extract_partition_name(prompt: str) -> str:
+    """
+    Extracts the partition name from a given prompt.
+
+    Args:
+        prompt (str): The input text that may contain a partition name.
+
+    Returns:
+        str: The extracted partition name if found, else an empty string.
+    """
+    # Regular expression to match partition names (e.g., 'partition_1')
+    pattern = r"['\"]?(partition_\d+)['\"]?"
+    
+    # Search for the pattern in the prompt
+    match = re.search(pattern, prompt)
+
+    if match:
+        return True
+    else:
+        return False
+    
+    # Return the matched partition name if found, else return an empty string
+    # return match.group(1) if match else ""
+
+def extract_workspace_dir(text: str) -> str:
+    """
+    Extracts the directory name that appears after '/workspace/' in the given text,
+    excluding any surrounding single quotes.
+
+    Args:
+        text (str): The input string containing the workspace path.
+
+    Returns:
+        str: The directory name after '/workspace/', or an empty string if not found.
+    """
+    match = re.search(r"/workspace/([^\s'/]+)", text)  # Excludes single quotes
+    if match:
+        return True
+    else:
+        return False
+    # return match.group(1) if match else ""
+
 def print_workspace_contents():
     workspace_dir = "/workspace"
 
