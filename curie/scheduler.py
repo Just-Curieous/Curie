@@ -942,13 +942,16 @@ class SchedTool(BaseTool):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
         new_starter_file_dir = f"../workspace/{self.config['workspace_name']}_{plan_id}"
+        new_starter_file_dir = os.path.abspath(new_starter_file_dir) + "/"
         old_starter_file_dir = f"../starter_file/{self.config['workspace_name']}" 
+        old_starter_file_dir = os.path.abspath(old_starter_file_dir) + "/"
         if not os.path.exists(new_starter_file_dir):
             os.makedirs(new_starter_file_dir)
             try:
-                if os.path.exists(old_starter_file_dir):
-                    # subprocess.run(["cp", "-r", old_starter_file_dir, new_starter_file_dir], check=True)
-                    output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
+                if os.path.exists(old_starter_file_dir): 
+                    # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
+                    subprocess.run(["cp", "-r", old_starter_file_dir + ".", new_starter_file_dir], check=True)
+                    # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
                     print(f"Created {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
                 else:
                     print(f"Created {new_starter_file_dir}. No starter files to copy.")

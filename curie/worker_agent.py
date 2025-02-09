@@ -29,7 +29,7 @@ def create_all_worker_graphs(State, store, metadata_store, memory, config_filena
         "type": "experimental_worker",
         "config_filename": config_filename
     }
-    experiment_worker_graph = _create_WorkerGraph(State, store, metadata_store, memory, worker_details)
+    experiment_worker_graph = _create_WorkerGraph(State, store, metadata_store, memory, worker_details, config)
 
     worker_details = {
         "system_prompt_file": control_worker_system_prompt_filename,
@@ -38,11 +38,11 @@ def create_all_worker_graphs(State, store, metadata_store, memory, config_filena
         "type": "control_worker",
         "config_filename": config_filename
     }
-    control_worker_graph = _create_WorkerGraph(State, store, metadata_store, memory, worker_details)
+    control_worker_graph = _create_WorkerGraph(State, store, metadata_store, memory, worker_details, config)
 
     return experiment_worker_graph, control_worker_graph
 
-def _create_WorkerGraph(State, store, metadata_store, memory, worker_details):
+def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, config_dict):
     """ Creates a Worker graph that runs experimental groups given a working controlled experiment setup that was created by a controlled worker earlier. """
     # TODO: only creating one worker now. Later, we will create multiple workers.
     worker_builder = StateGraph(State)
@@ -55,7 +55,8 @@ def _create_WorkerGraph(State, store, metadata_store, memory, worker_details):
     assert len(worker_names) == 1 
     store_write_tool = tool.ExpPlanCompletedWriteTool(store, metadata_store)
     store_get_tool = tool.StoreGetTool(store)
-    tools = [tool.codeagent_openhands, tool.execute_shell_command, store_write_tool, store_get_tool] # Only tool is code execution for now
+    codeagent_openhands = tool.CodeAgentTool(config_dict)
+    tools = [codeagent_openhands, tool.execute_shell_command, store_write_tool, store_get_tool] # Only tool is code execution for now
     worker_node = create_Worker(tools, system_prompt_file, config_file, State, worker_names[0]) 
 
     worker_builder.add_node(worker_names[0], worker_node)

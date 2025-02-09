@@ -80,19 +80,42 @@ class CodeAgentInput(BaseModel):
             raise ValueError("workspace_dir is not specified correctly.")
         return self
 
-@tool("codeagent_openhands", args_schema=CodeAgentInput)
-def codeagent_openhands(plan_id: str, group: str, partition_name: str, workspace_dir: str, prompt: str) -> str:
-    """Coding agent that can generate/modify workflow scripts for a given experimentation plan."""
+# Note: It's important that every field has type hints. BaseTool is a
+# Pydantic class and not having type hints can lead to unexpected behavior.
+class CodeAgentTool(BaseTool):
+    name: str = "codeagent_openhands"
+    description: str = "Coding agent that can generate/modify workflow scripts for a given experimentation plan."
+    args_schema: Type[BaseModel] = CodeAgentInput
+    config: Optional[dict] = None
+
+    def __init__(self, config_dict: dict):
+        super().__init__()
+        self.config = config_dict
+    
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        plan_id: str, 
+        group: str, 
+        partition_name: str, 
+        workspace_dir: str, 
+        prompt: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str:
     # given the code workspace 
     # wait; return log and result script 
-    try:  
-        # TODO: remove the hardcoded path
-        # TODO: inform the new work dir
-        
-        # TODO: Put the system prompt into a file
-        system_prompt = f'''
-You are a Coding Agent tasked with generating a reproducible experimental workflow program based on the provided experiment plan below. 
+        try:  
+            # TODO: remove the hardcoded path
+            # TODO: inform the new work dir
+            
+            # TODO: Put the system prompt into a file
+            system_prompt = f'''
+You are a Coding Agent tasked with generating a reproducible experimental workflow program based on the provided experiment plan below. You must run the workflow program to generate actual results before terminating.
 Your working directory is {workspace_dir}. Do not touch files outside this directory.
+
+Instructions: First, run individual commands step by step to produce the required results. Once confident, generate the workflow program based on your experience and produce the final results.
 
 Program Requirement: 
 The entire controlled experiment workflow (which may involve multiple scripts) must be callable through a single script named as "{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh".
@@ -105,43 +128,56 @@ Reminders:
 Here is the experiment plan: \n
 '''
 
-        prompt = f'''{system_prompt}\n{prompt}'''
-        # write to a file
-        prompt_file = f"../logs/tmp_prompt.txt"
-        with open(prompt_file, "w") as file:
-            file.write(prompt)
+            prompt = f'''{system_prompt}\n{prompt}'''
+            # write to a file
+            prompt_file = f"../logs/tmp_prompt.txt"
+            with open(prompt_file, "w") as file:
+                file.write(prompt)
 
-        # openhands_dir = os.path.abspath("../workspace")
-        # print("my openhands dir is:", openhands_dir)
+            # openhands_dir = os.path.abspath("../workspace")
+            # print("my openhands dir is:", openhands_dir)
 
-        # FIXME: remove hardcoded path
-        openhands_dir = "/home/patkon/Curie/workspace"
-        
-        # FIXME, remove organization for public use. workspace_base is still hardcoded to home/ubuntu
-        output = shell_tool.run({
-            "commands": [
-                f"export LOG_ALL_EVENTS=true; "
-                f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
-                f"chmod 777 -R {workspace_dir}; "
-                f"export WORKSPACE_BASE={openhands_dir}; " 
-                f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file setup/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
-            ]
-        })
+            openhands_dir = self.config["base_dir"] + "/workspace"
+            
+            # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
+            output = shell_tool.run({
+                "commands": [
+                    f"export LOG_ALL_EVENTS=true; "
+                    f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
+                    f"chmod 777 -R {workspace_dir}; "
+                    f"export WORKSPACE_BASE={openhands_dir}; " 
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file setup/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                ]
+            })
 
-        # copy the starter file outside the container to the new directory inside the container
-        # FIXME: this does not support running outside the container.
-        print(f"Output: {output}") 
+            # copy the starter file outside the container to the new directory inside the container
+            # FIXME: this does not support running outside the container.
+            # print(f"Output: {output}") 
+            # print("me is here")
 
-    except BaseException as e:
-        print(f"Error for openhands agent: {repr(e)}")
-        return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
-    return (f"Workflow and results have been produced, for plan_id: {plan_id}, group: {group}, partition_name: {partition_name} \n"
-            f"control_experiment_filename is at: '{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh'\n"
-            f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
-            f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
-            )
- 
-    # TODO: return the concise logs.
+        except BaseException as e:
+            print(f"Error for openhands agent: {repr(e)}")
+            return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
+        # return (f"Workflow and results have been produced, for plan_id: {plan_id}, group: {group}, partition_name: {partition_name} \n"
+        #         f"control_experiment_filename is at: '{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh'\n"
+        #         f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
+        #         f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
+        #         )
+        print("I am her enow")
+        print("Code Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Code Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"))
+        return "Code Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Code Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
+
+        # TODO: return the concise logs.
+
+    def extract_codeagent_output_snippet(self, filename: str) -> str:
+        """
+            Extracts bottom 10% of text within the log filename. 
+        """
+
+        with open(filename, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
+            return "".join(bottom_10_percent)
 
 # Note: shell_tool itself can in theory be passed into the agent as a tool already https://python.langchain.com/docs/integrations/tools/bash/ https://www.youtube.com/watch?v=-ybgQK0BE-I
 @tool
