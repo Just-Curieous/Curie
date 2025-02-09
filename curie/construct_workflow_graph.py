@@ -31,9 +31,8 @@ config_filename = sys.argv[1]
 # Read config_file which is a json file:
 with open(config_filename, 'r') as file:
     config = json.load(file)
-    question_filename = config["question_filename"]
-
-    log_filename = config["log_filename"]
+    question_filename = f"../{config['question_filename']}"
+    log_filename = f"../{config['log_filename']}"
     log_file = open(log_filename, 'w')
     sys.stdout = log_file
     sys.stderr = log_file

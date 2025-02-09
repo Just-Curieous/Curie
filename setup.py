@@ -13,7 +13,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'curie=curie.main:main',  # Adjust this line to point to your main function
+            'curie=curie.main:main',  
         ],
     },
     author="Jiachen Liu",

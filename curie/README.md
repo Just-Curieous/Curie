@@ -9,6 +9,7 @@
 ```bash
 cd Curie
 git submodule update --init --recursive 
+pip install -e .
 cd curie
 sudo docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default ..
 ```
@@ -35,7 +36,8 @@ Config `curie/configs/base_config.json`
 - [ ] change the execution path to its parent
 ```bash
 cd Curie
-python3 -m curie.main --iterations 1 --pipeline curie --timeout 600 --question_file benchmark/llm_reasoning/q1_simple_relation.txt --task_config curie/configs/base_config.json
+
+python3 -m curie.main --iterations 1 --question_file benchmark/llm_reasoning/q1_simple_relation.txt --task_config curie/configs/llm_reasoning_config.json
 ```
 
 To clean up the dockers

@@ -57,10 +57,10 @@ RUN apt-get update && apt-get install -y \
     containerd.io \
     docker-compose-plugin 
     
-# COPY ./starter_file/OpenHands /starter_file/OpenHands
 RUN mkdir -p /helper
 # WORKDIR /helper
 RUN cd /helper && git clone https://github.com/All-Hands-AI/OpenHands.git
+# && cd OpenHands && git checkout 1c7267648327524be3ddfaf4fe340c71c08d845f 
 RUN cd /helper/OpenHands && make build
 
 # Activate the Conda virtual environment and install dependencies
@@ -71,6 +71,7 @@ RUN echo "source /curie/setup/env.sh" >> ~/.bashrc
 
 # Update the Azure configuration
 RUN sed -i '457i \          "organization": "499023",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py
+# To support docker initialization from Curie
 RUN sed -i '237i \                "/var/run/docker.sock": {"bind": "/var/run/docker.sock", "mode": "rw"},' /helper/OpenHands/openhands/runtime/impl/docker/docker_runtime.py
 RUN sed -i '36i\    user_id = 123 if user_id == 0 else user_id' /helper/OpenHands/openhands/runtime/utils/runtime_init.py
 
