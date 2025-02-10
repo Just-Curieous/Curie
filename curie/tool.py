@@ -103,13 +103,10 @@ class CodeAgentTool(BaseTool):
         workspace_dir: str, 
         prompt: str,
         run_manager: Optional[CallbackManagerForToolRun] = None
-    ) -> str:
-    # given the code workspace 
-    # wait; return log and result script 
+    ) -> str: 
+
         try:  
-            # TODO: remove the hardcoded path
-            # TODO: inform the new work dir
-            
+            utils.setup_openhands_credential() 
             # TODO: Put the system prompt into a file
             system_prompt = f'''
 You are a Coding Agent tasked with generating a reproducible experimental workflow program based on the provided experiment plan below. You must run the workflow program to generate actual results before terminating.
@@ -146,7 +143,7 @@ Here is the experiment plan: \n
                     f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
                     f"chmod 777 -R {workspace_dir}; "
                     f"export WORKSPACE_BASE={openhands_dir}; " 
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file setup/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
                 ]
             })
 
@@ -163,7 +160,7 @@ Here is the experiment plan: \n
         #         f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
         #         f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
         #         )
-        print("I am her enow")
+        
         print("Code Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Code Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"))
         return "Code Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Code Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
 

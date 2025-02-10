@@ -169,3 +169,97 @@ def parse_langchain_llm_output(input_string):
         except Exception as e:
             return f"Error parsing LangChain LLM output. \nError: {e}. \nRaw output: {input_string}"
 
+
+import re
+import toml
+
+def parse_env_string(env_string):
+    """Parse environment string and return a dictionary of key-value pairs."""
+    env_vars = {}
+    for line in env_string.strip().split("\n"):
+        # Skip empty lines or comments
+        if not line.strip() or line.strip().startswith('#'):
+            continue
+
+        # Remove 'export' and split by first '='
+        line = line.replace('export', '').strip()
+        if '=' in line:
+            key, value = line.split('=', 1)
+            # Clean up key and value
+            key = key.strip()
+            value = value.strip().strip('"\'')
+            env_vars[key] = value
+
+    return env_vars
+
+def categorize_variables(env_vars):
+    """Categorize environment variables into config sections."""
+    config = {
+        'core': {
+            'file_store': 'local',
+            'jwt_secret': 'secretpass',
+        },
+        'llm': {},
+    }
+
+    # Define patterns for categorization
+    patterns = {
+        'core': [
+            r'FILE_STORE',
+            r'DATABASE',
+            r'PORT',
+            r'HOST'
+        ], 
+        'llm': [
+            r'.*_API_BASE',
+            r'.*_API_VERSION',
+            r'.*MODEL',
+            r'EMBEDDING',
+            r'DEPLOYMENT',
+            r'.*_SECRET',
+            r'.*_KEY',
+            r'.*_TOKEN'
+        ]
+    }
+
+    for key, value in env_vars.items():
+        categorized = False
+
+        # Check each pattern category
+        for section, pattern_list in patterns.items():
+            if any(re.match(pattern, key, re.IGNORECASE) for pattern in pattern_list):
+                # Convert key to lowercase for consistency
+                config_key = key.lower()
+
+                # Standardize naming for common keys
+                if '_API_KEY' in key:
+                    config_key = 'api_key'
+                elif '_API_BASE' in key or '_API_URL' in key:
+                    config_key = 'base_url'
+                elif '_API_VERSION' in key:
+                    config_key = 'api_version'
+                elif 'ORGANIZATION' in key:
+                    continue  # Skip organization key
+
+                config[section][config_key] = value
+                categorized = True
+                break
+
+        # If not categorized, put in core section
+        if not categorized:
+            config['core'][key.lower()] = value
+
+    # Remove empty sections
+    return {k: v for k, v in config.items() if v}
+
+def setup_openhands_credential():
+    """Convert an environment string to a TOML configuration."""
+    with open("setup/env.sh", "r") as f:
+        env_string = f.read()
+    env_vars = parse_env_string(env_string)
+    config = categorize_variables(env_vars)
+    # write to config.toml
+    with open("../workspace/config.toml", "w") as f:
+        f.write(toml.dumps(config))
+    print(f'Set up OpenHands credentials in config.toml: {config}')
+    return toml.dumps(config)  # Returns TOML as a string

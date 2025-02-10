@@ -60,7 +60,6 @@ def prune_openhands_docker():
 def create_config_file(question_file, unique_id, iteration, task_config):
     log_dir = 'logs/configs' 
     log_filename = f"logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
-    print(f"Check log file: {log_filename}")
     config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
     task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file})
 
@@ -68,6 +67,7 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     with open(config_filename, "w") as f:
         json.dump(task_config, f, indent=4)
     print(f"Config file created: {config_filename}")
+    print(f">>>>>> Check log file: {log_filename} <<<<<<<")
     return task_config, config_filename
 
 
@@ -153,7 +153,7 @@ def execute_experiment_in_container(container_name, task_config, config_file):
                 "source ~/.bashrc && "
                 "source setup/env.sh && "
                 "conda activate curie && "
-                # "pip install litellm && "
+                "pip install toml && "
                 "sed -i '474i \\    \"organization\": \"499023\",' /opt/conda/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py && "
                 f"python3 construct_workflow_graph.py /{config_file}"
             )
