@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 import model
 import utils
 import tool
-
+import os
 import json
 
 def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filename):
@@ -46,7 +46,8 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
     supervisor_builder.add_edge("tools", "supervisor")
     
     supervisor_graph = supervisor_builder.compile(checkpointer=memory)
-    utils.save_langgraph_graph(supervisor_graph, "misc/supervisor_graph_image.png") 
+    os.makedirs("../logs/misc") if not os.path.exists("../logs/misc") else None
+    utils.save_langgraph_graph(supervisor_graph, "../logs/misc/supervisor_graph_image.png") 
 
     def call_supervisor_graph(state: State) -> State:
         response = supervisor_graph.invoke({"messages": state["messages"][-1]}, {"configurable": {"thread_id": "supervisor_graph_id"}})

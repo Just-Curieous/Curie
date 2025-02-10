@@ -72,7 +72,7 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
     verifier_builder.add_edge("tools", node_name)
     
     verifier_graph = verifier_builder.compile()
-    utils.save_langgraph_graph(verifier_graph, f"misc/{node_name}_graph_image.png")
+    utils.save_langgraph_graph(verifier_graph, f"../logs/misc/{node_name}_graph_image.png")
 
     def call_verifier_graph(state: State) -> State:
         response = verifier_graph.invoke({"messages": state["messages"][-1]})

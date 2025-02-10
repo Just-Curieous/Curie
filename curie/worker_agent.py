@@ -24,7 +24,7 @@ def create_all_worker_graphs(State, store, metadata_store, memory, config_filena
     """Entry point for creating all workers. Call this."""
     worker_details = {
         "system_prompt_file": "prompts/exp-worker.txt",
-        "graph_image_name": "misc/worker_graph_image.png",
+        "graph_image_name": "../logs/misc/worker_graph_image.png",
         "graph_name": "worker_graph",
         "type": "experimental_worker",
         "config_filename": config_filename
@@ -33,7 +33,7 @@ def create_all_worker_graphs(State, store, metadata_store, memory, config_filena
 
     worker_details = {
         "system_prompt_file": control_worker_system_prompt_filename,
-        "graph_image_name": "misc/control_worker_graph_image.png",
+        "graph_image_name": "../logs/misc/control_worker_graph_image.png",
         "graph_name": "control_worker_graph",
         "type": "control_worker",
         "config_filename": config_filename
