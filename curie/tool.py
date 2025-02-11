@@ -323,7 +323,7 @@ Here is the experiment plan: \n
                     f"chmod 777 -R {workspace_dir}; "
                     f"export WORKSPACE_BASE={openhands_dir}; "
                     f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file setup/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
                 ]
             })
 
