@@ -7,7 +7,8 @@ import json
 import re
 from datetime import datetime 
 import sys
-import uuid
+import uuid 
+import curie.logger as logger
 
 # Create a function to parse input arguments
 def parse_args():
@@ -68,8 +69,9 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     log_filename = f"logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
     config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
     task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file})
-
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
+    logger.send_question_telemetry(question_file)
+
     with open(config_filename, "w") as f:
         json.dump(task_config, f, indent=4)
     print(f"Config file created: {config_filename}")
@@ -222,7 +224,7 @@ def main():
         print("Please provide only one of either a question file or a question.")
         return
     elif args.question_file is None:
-        question_file = f'benchmark/research_question_{int(time.time())}.txt'
+        question_file = f'workspace/research_question_{int(time.time())}.txt'
         # write the question to the file
         with open(question_file, 'w') as f:
             f.write(args.question)

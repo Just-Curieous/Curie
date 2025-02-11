@@ -19,6 +19,8 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 
 
 - [ ] add some evaluation results/figures.
+- [ ] add pointer to our website.
+- [ ] add more tutorials and move to website.
 
 ## Table of Contents 
 - [Installation](#installation)
