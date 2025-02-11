@@ -223,7 +223,7 @@ def categorize_variables(env_vars):
     }
 
     for key, value in env_vars.items():
-        categorized = False
+        # categorized = False
 
         # Check each pattern category
         for section, pattern_list in patterns.items():
@@ -242,12 +242,12 @@ def categorize_variables(env_vars):
                     continue  # Skip organization key
 
                 config[section][config_key] = value
-                categorized = True
+                # categorized = True
                 break
 
         # If not categorized, put in core section
-        if not categorized:
-            config['core'][key.lower()] = value
+        # if not categorized:
+        #     config['core'][key.lower()] = value
 
     # Remove empty sections
     return {k: v for k, v in config.items() if v}
