@@ -4,13 +4,19 @@
 ![Discord](https://img.shields.io/discord/discord-id?label=Discord&logo=discord&link=https://discord.gg/uCEbmG7EKU)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 
-Welcome to Curie, an open-source AI agent framework designed to bring rigor and automation to scientific experimentation. Curie is built to ensure reliability, methodical control, and interpretability in the experimentation process, making it an invaluable tool for researchers and developers alike.
+Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. As a first step in this direction, Curie focuses on the kinds of experimentation a human developer would conduct—any process involving code execution, from running simulations to testing hypotheses in real-time environments.
+
+![Curie Overview](./docs/static/img/curie-overview.png)
 
 ## Key Features
+On a high-level, Curie is composed of two types of LLM-based agents (an Architect and a host of Technicians). Sandwiched between them is Curie's **Experimental Rigor Engine** that injects rigor throughout the experimental process. It consists of 3 main modules:
 
 - **Intra-Agent Rigor Module**: Ensures the reliability of experiments by maintaining consistency and accuracy within individual agents.
 - **Inter-Agent Rigor Module**: Provides methodical control across multiple agents, ensuring systematic and controlled experimentation.
-- **Experiment Knowledge Module**: Enhances the interpretability of results, making it easier to derive meaningful insights from experiments.
+- **Experiment Knowledge Module**: Enhances the interpretability of results, making it easier to derive meaningful insights from experiments, while enabling seamless collaboration between all components during large-scale experiments. 
+
+Curie also consists of a novel **Experimentation Benchmark** composed of 46 questions across 4 Computer Science domains,  derived from influential research papers, and widely adopted open-source projects. 
+- Compared to the strongest baseline tested, we achieve a 3.4× improvement in correctly answering experimental questions.
 
 ## Codebase Overview
 
@@ -21,9 +27,9 @@ Welcome to Curie, an open-source AI agent framework designed to bring rigor and 
 - **docs**: Documentation files for installation and usage instructions.
 - **starter_file**: Contains starter files and examples to help you get started quickly.
 
-## Benchmark and Evaluation
+<!-- ## Benchmark and Evaluation
 
-Curie has been evaluated using a novel benchmark consisting of 46 questions across four computer science domains. The results demonstrate a significant improvement in experiment design correctness, execution reproducibility, and conclusion accuracy compared to existing baselines.
+Curie has been evaluated using a novel benchmark consisting of 46 questions across four computer science domains. The results demonstrate a significant improvement in experiment design correctness, execution reproducibility, and conclusion accuracy compared to existing baselines. -->
 
 ## Installation
 
@@ -70,7 +76,7 @@ python3 -m curie.main --iterations 1 --question_file benchmark/llm_reasoning/q1_
 
 ## Contribute
 
-We welcome contributions! Please read our `CONTRIBUTING.md` to learn how you can help improve Curie.
+Any contributions are welcome! Please read our `CONTRIBUTING.md` to learn how you can help improve Curie.
 
 ## Community and Support
 
