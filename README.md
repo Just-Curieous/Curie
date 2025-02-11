@@ -30,35 +30,42 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 ## Installation
 
 1. Install docker: https://docs.docker.com/engine/install/ubuntu/. 
-Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. Run `docker ps` to check the permission with the Docker daemon. 
+Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. Run `docker ps` to check the permission with the Docker daemon.
 
-2. Build the container image. Whenever changes have been made: delete the current mounted volume (after backing up necessary data, of course), and rebuild the container image.
+2. Clone the repository:
+```
+git clone https://github.com/Just-Curieous/Curie.git
+```
+
+3. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
+
+```
+export MODEL="azure/gpt-4o"
+export AZURE_API_VERSION="2024-06-01"
+export AZURE_API_KEY="your-key"
+export ORGANIZATION='your-org'
+export AZURE_API_BASE='your-base'
+```
+
+4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
 
 ```bash
-git clone https://github.com/Just-Curieous/Curie.git
 cd Curie
 pip install -e .
 cd curie && sudo docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
 ```
 
 ## Quick Start
-
-1. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
-
+1. Update the `base_dir` key in `curie/configs/base_config.json` to point to where this repository lives. For instance:
 ```
-export MODEL="gpt-4o"
-export API_VERSION="2024-06-01"
-export OPENAI_API_KEY= 
-export OPENAI_ORGANIZATION= 
-export OPENAI_API_BASE= 
+"base_dir": "/home/ubuntu/Curie"
 ```
-
 
 2. Input your research problem
 ```bash
 python3 -m curie.main -q "How does the choice of sorting algorithm impact runtime performance across different input distributions?" --task_config curie/configs/base_config.json
 ```
-- You can check the logging under `logs/research_question_<ID>.log`.
+- You can monitor the logs in real-time at `logs/research_question_<ID>.log`, as they are continuously streamed.
 
 - You can check the reproducible experimentation process under `workspace/research_<ID>`.
 
