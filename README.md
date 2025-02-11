@@ -4,54 +4,48 @@
 ![Discord](https://img.shields.io/discord/discord-id?label=Discord&logo=discord&link=https://discord.gg/uCEbmG7EKU)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 
-Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. As a first step in this direction, Curie focuses on the kinds of experimentation a human developer would conduct—any process involving code execution, from running simulations to testing hypotheses in real-time environments.
+Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
+Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
+<p align="center">
+  <img src="./docs/static/img/curie-overview.png" width="600px"/>
+</p>
 
-![Curie Overview](./docs/static/img/curie-overview.png)
+**Key Features**
+- 🚀 Automated Experimentation – End-to-end workflow management: hypothesis formulation, experiment setup, experiment execution, result analysis and finding reflection.
+- 📊 Data-Driven Insights – Systematic analysis and structured result documentation.
+- 🔄 Iterative Refinement – Adapts hypotheses and re-executes experiments based on findings.
+- 🔬 Broad Applicability – Supports ML research, system analysis, and scientific discovery.
+- 📖 Experimentation Benchmark - Provide 46 questions from 4 Computer Science domains, based on influential papers and open-source projects (`benchmark/`).
 
-## Key Features
-On a high-level, Curie is composed of two types of LLM-based agents (an Architect and a host of Technicians). Sandwiched between them is Curie's **Experimental Rigor Engine** that injects rigor throughout the experimental process. It consists of 3 main modules:
 
-- **Intra-Agent Rigor Module**: Ensures the reliability of experiments by maintaining consistency and accuracy within individual agents.
-- **Inter-Agent Rigor Module**: Provides methodical control across multiple agents, ensuring systematic and controlled experimentation.
-- **Experiment Knowledge Module**: Enhances the interpretability of results, making it easier to derive meaningful insights from experiments, while enabling seamless collaboration between all components during large-scale experiments. 
+- [ ] add some evaluation results/figures.
 
-Curie also consists of a novel **Experimentation Benchmark** composed of 46 questions across 4 Computer Science domains,  derived from influential research papers, and widely adopted open-source projects. 
-- Compared to the strongest baseline tested, we achieve a 3.4× improvement in correctly answering experimental questions.
-
-## Codebase Overview
-
-- **analyze_log**: Contains scripts for analyzing and summarizing experiment logs.
-- **baselines**: Includes baseline models and methods for comparison.
-- **benchmark**: Provides a set of benchmarks across various domains like cloud infrastructure, machine learning training, and vector indexing.
-- **curie**: The core framework containing modules for experiment setup, execution, and verification.
-- **docs**: Documentation files for installation and usage instructions.
-- **starter_file**: Contains starter files and examples to help you get started quickly.
-
-<!-- ## Benchmark and Evaluation
-
-Curie has been evaluated using a novel benchmark consisting of 46 questions across four computer science domains. The results demonstrate a significant improvement in experiment design correctness, execution reproducibility, and conclusion accuracy compared to existing baselines. -->
+## Table of Contents 
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Use Cases](#use-cases)
+- [Tutorial](#tutorial-for-reproducing-large-language-monkeys-results)
+- [Customize Your Experiment Agents](#develop-your-customized-experimentation-agents) 
 
 ## Installation
 
-1. Install Docker: Follow the instructions at [Docker Installation](https://docs.docker.com/engine/install/ubuntu/).
+1. Install docker: https://docs.docker.com/engine/install/ubuntu/. 
+Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. Run `docker ps` to check the permission with the Docker daemon. 
 
-2. Build the container image. If changes have been made, delete the current mounted volume (after backing up necessary data) and rebuild the container image.
+2. Build the container image. Whenever changes have been made: delete the current mounted volume (after backing up necessary data, of course), and rebuild the container image.
 
-   ```bash
-   cd Curie
-   git submodule update --init --recursive 
-   pip install -e .
-   cd curie
-   sudo docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default ..
-   ```
+```bash
+git clone https://github.com/Just-Curieous/Curie.git
+cd Curie
+pip install -e .
+cd curie && sudo docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
+```
 
 ## Quick Start
 
-### Add your LLM API keys:
+1. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
 
-Set up your environment variables for the LLM API:
-
-```bash
+```
 export MODEL="gpt-4o"
 export API_VERSION="2024-06-01"
 export OPENAI_API_KEY= 
@@ -59,28 +53,56 @@ export OPENAI_ORGANIZATION=
 export OPENAI_API_BASE= 
 ```
 
-### Specify your research problem
 
-Configure `curie/configs/base_config.json` to specify your research problem.
+2. Input your research problem
+```bash
+python3 -m curie.main -q "How does the choice of sorting algorithm impact runtime performance across different input distributions?" --task_config curie/configs/base_config.json
+```
+- You can check the logging under `logs/research_question_<ID>.log`.
 
-### Start experiments:
+- You can check the reproducible experimentation process under `workspace/research_<ID>`.
 
-Change the execution path to its parent and run:
+## Use Cases
+Curie is designed for scientific discovery across multiple domains:
+
+- 🔬 Machine Learning & AI Research – Hyperparameter tuning, algorithm behavior and 
+- 💻 System Performance Analysis – Benchmarking systems, optimizing configurations, investigating system trade-offs.
+- 🧪 Algorithmic & Scientific Discovery – Validating hypotheses, automating computational simulations.
+ 
+
+## Tutorial for Reproducing 'Large Language Monkeys' Results
+
+The paper [Large Language Monkeys: Scaling Inference Compute with Repeated Sampling](https://arxiv.org/abs/2407.21787) explores repeated sampling as a method to enhance reasoning performance in large language models (LLMs) by increasing inference compute. 
+
+Download the related starter files under `workspace`.
+```bash
+cd Curie
+git submodule update --init --recursive 
+```
+- [ ] TODO: need update the credential for large language monkey.
+
+As a LLM researcher, you are just curious about how does the number of repeatedly generated samples per question impact the overall success? (The concrete question can be found in our benchmark `benchmark/llm_reasoning/q1_simple_relation.txt`, which specify the location of corresponding starter files.)
 
 ```bash
 cd Curie
-
 python3 -m curie.main --iterations 1 --question_file benchmark/llm_reasoning/q1_simple_relation.txt --task_config curie/configs/llm_reasoning_config.json
 ```
- 
 
-## Contribute
+- You can check the logging under `logs/q1_simple_relation_<ID>.log`.
 
-Any contributions are welcome! Please read our `CONTRIBUTING.md` to learn how you can help improve Curie.
+- You can check the reproducible experimentation process under `workspace/large_language_monkeys_<ID>`.
+
+
+## Customize Your Experimentation Agents
+
+Config `curie/configs/base_config.json`.
+- You can add your domain-specific instructions for the supervisor by customizing `supervisor_system_prompt_filename` and worker `control_worker_system_prompt_filename`
+- TODO
+
 
 ## Community and Support
 
-Join our community on [Discord](https://discord.gg/yourdiscordlink) to connect with other users and developers. For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
+Join our community on [Discord](https://discord.gg/uCEbmG7EKU) to connect with other users and developers. For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
 
 ## License
 
