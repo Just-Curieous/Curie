@@ -1,8 +1,6 @@
 import subprocess
 import time
 import os
-import shutil  # Import for deleting directories
-import psutil
 import argparse
 from enum import Enum
 import json
@@ -19,7 +17,7 @@ def parse_args():
     parser.add_argument(
         "--iterations",
         type=int,
-        required=True,
+        default=1,
         help="Number of iterations (must be an integer)."
     )
     
@@ -27,8 +25,16 @@ def parse_args():
         "--question_file",
         "-f",
         type=str,
-        required=True,
+        required=False,
         help="Question file to run"
+    )
+
+    parser.add_argument(
+        "--question",
+        "-q",
+        type=str,
+        required=False,
+        help="Question to run"
     )
 
     parser.add_argument(
@@ -118,8 +124,6 @@ def run_docker_container(unique_id, iteration, task_config):
         "-v", f"{os.environ['HOME']}/Curie/logs:/logs",
         "-v", f"{os.environ['HOME']}/Curie/starter_file:/starter_file:ro",
         "-v", f"{os.environ['HOME']}/Curie/workspace:/workspace",
-        "--cpus=4",
-        "--memory=8g",
         "--network=host",
         "-d",
         "--name", container_name,
@@ -153,7 +157,6 @@ def execute_experiment_in_container(container_name, task_config, config_file):
                 "source ~/.bashrc && "
                 "source setup/env.sh && "
                 "conda activate curie && "
-                "pip install toml && "
                 "sed -i '474i \\    \"organization\": \"499023\",' /opt/conda/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py && "
                 f"python3 construct_workflow_graph.py /{config_file}"
             )
@@ -188,9 +191,9 @@ def run_prune_commands():
             print(e.stderr.decode())  # Print the standard error
     prune_openhands_docker()
 
-def execute_curie(question_file, unique_id, iteration, task_config):
+def execute_curie(question_filename, unique_id, iteration, task_config):
     # Create configuration file
-    task_config, config_filename = create_config_file(question_file, unique_id, iteration, task_config)
+    task_config, config_filename = create_config_file(question_filename, unique_id, iteration, task_config)
 
     # Run Docker container for this iteration
     container_name = None
@@ -212,7 +215,20 @@ def main():
     
     print(f"Iterations: {args.iterations}")
     config_file = args.task_config
-    question_file = args.question_file
+    if args.question_file is None and args.question is None:
+        print("Please provide either a question file or a question.")
+        return
+    elif args.question_file is not None and args.question is not None:
+        print("Please provide only one of either a question file or a question.")
+        return
+    elif args.question_file is None:
+        question_file = f'benchmark/research_question_{int(time.time())}.txt'
+        # write the question to the file
+        with open(question_file, 'w') as f:
+            f.write(args.question)
+    else:
+        question_file = args.question_file
+    
     # read from config
     try:
         with open(config_file, 'r') as f:
