@@ -22,16 +22,17 @@ def create_LLMVerifierGraph(State, store, metadata_store):
     system_prompt_file = "prompts/llm-verifier.txt"
     verifier_write_tool = tool.LLMVerifierWriteTool(store, metadata_store)
     store_get_tool = tool.StoreGetTool(store)
-    tools = [tool.execute_shell_command, store_get_tool, verifier_write_tool] # Only tool is code execution for now
+    tools = [tool.execute_shell_command, store_get_tool, verifier_write_tool]
     verifier_graph = create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools, "llm_verifier")
     return verifier_graph
 
-def create_PatchVerifierGraph(State, store, metadata_store):
+def create_PatchVerifierGraph(State, store, metadata_store, config_dict):
     """ Creates a patcher graph consisting of the LLM-based patcher/debugger that debugs the experimental workflow to ensure that actual data is produced. """
     system_prompt_file = "prompts/exp-patcher.txt"
     patcher_record_tool = tool.PatchVerifierWriteTool(store, metadata_store)
+    patch_agent_tool = tool.PatcherAgentTool(config_dict)
     store_get_tool = tool.StoreGetTool(store)
-    tools = [tool.execute_shell_command, patcher_record_tool, store_get_tool] # Only tool is code execution for now
+    tools = [patch_agent_tool, tool.execute_shell_command, patcher_record_tool, store_get_tool] 
     verifier_graph = create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools, "patch_verifier")
     return verifier_graph
 

@@ -111,7 +111,7 @@ def create_worker_nodes(State, store, metadata_store, memory, config_filename):
     return (experimental_worker_name, experiment_worker_graph), \
            (control_worker_name, control_worker_graph)
 
-def create_verification_nodes(State, store, metadata_store):
+def create_verification_nodes(State, store, metadata_store, config):
     """
     Create verification nodes for the graph.
     
@@ -119,13 +119,14 @@ def create_verification_nodes(State, store, metadata_store):
         State: Graph state type
         store: InMemoryStore for data storage
         metadata_store: InMemoryStore for metadata
+        config: Configuration dictionary
     
     Returns:
         list: Verification nodes with their names
     """
     return [
         ("llm_verifier", verifier.create_LLMVerifierGraph(State, store, metadata_store)),
-        ("patch_verifier", verifier.create_PatchVerifierGraph(State, store, metadata_store)),
+        ("patch_verifier", verifier.create_PatchVerifierGraph(State, store, metadata_store, config)),
         ("analyzer", verifier.create_AnalyzerGraph(State, store, metadata_store)),
         ("concluder", verifier.create_ConcluderGraph(State, store, metadata_store))
     ]
@@ -169,7 +170,7 @@ def build_graph(State, config_filename):
     graph_builder.add_node(control_worker[0], control_worker[1])
     
     # Add verification nodes
-    verification_nodes = create_verification_nodes(State, store, metadata_store)
+    verification_nodes = create_verification_nodes(State, store, metadata_store, config)
     for name, node in verification_nodes:
         graph_builder.add_node(name, node)
     

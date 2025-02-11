@@ -72,6 +72,18 @@ def extract_workspace_dir(text: str) -> str:
         return False
     # return match.group(1) if match else ""
 
+def check_file_exists(file_path: str) -> bool:
+    """
+    Checks if a file exists at the given path.
+
+    Args:
+        file_path (str): The path to the file.
+
+    Returns:
+        bool: True if the file exists, False otherwise.
+    """
+    return os.path.isfile(file_path)
+
 def print_workspace_contents():
     workspace_dir = "/workspace"
 

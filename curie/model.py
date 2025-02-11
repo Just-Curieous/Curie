@@ -113,6 +113,8 @@ def query_model_safe(
                 messages_to_prune = messages[len(messages) // 3: -len(messages) // 3]
                 
                 j = len(messages_to_prune) - 1
+                if messages[-len(messages) // 3].type == "tool": # edge case where the first message following the last message in messages_to_prune is a tool message. So that means we DO NOT want to prune the last message in messages_to_prune. 
+                    j -= 1
                 while j >= 0:
                     if messages_to_prune[j].type == "tool":
                         j -= 2
@@ -136,13 +138,17 @@ def query_model_safe(
                         print(f"Processing chunk {i + 1} of {len(chunks)}")
                         summary_messages = [
                             messages[0].__class__(
-                                content="Summarize the following text. Be concise, but maintain structure: \n" + chunk
+                                content="Summarize the following text. Be concise, but maintain structure. Don't output anything other than the summarized text.\n" + chunk
                             )
                         ]
                         response = create_completion(summary_messages)
                         summarized_text += response.content + "\n"
+                        print(f"Chunk {i + 1} summary: {response.content}")
                     
                     messages[-1].content = summarized_text.strip()
+
+                token_counts = token_counter.count_messages_tokens(messages)
+                print(f"After summarizing - Tokens: {token_counts['input_tokens']}")
 
             # Execute final completion
             response = create_completion(messages, tools=tools)

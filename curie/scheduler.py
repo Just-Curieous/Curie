@@ -76,7 +76,7 @@ def create_SchedNode(sched_tool, State, metadata_store):
 All partitions for all experimental plans have completed, with results produced and analyzed. A next-step suggestion is appended. Conclude the experiment if you believe it provides a rigorous and comprehensive answer. Otherwise, if results are insufficient or further questions remain, create a new experimental plan.
 '''
                 return {"messages": [
-                            HumanMessage(content= intro_message, name="scheduler")
+                            HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
                         ],
                     "prev_agent": "sched_node", 
                     "next_agent": response["next_agent"], 
