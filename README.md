@@ -37,6 +37,7 @@ Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. Run `docke
 2. Clone the repository:
 ```
 git clone https://github.com/Just-Curieous/Curie.git
+cd Curie
 ```
 
 3. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
@@ -52,18 +53,13 @@ export AZURE_API_BASE='your-base'
 4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
 
 ```bash
-cd Curie
 pip install -e .
 cd curie && sudo docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
 ```
 
 ## Quick Start
-1. Update the `base_dir` key in `curie/configs/base_config.json` to point to where this repository lives. For instance:
-```
-"base_dir": "/home/ubuntu/Curie"
-```
 
-2. Input your research problem
+1. Input your research problem
 ```bash
 python3 -m curie.main -q "How does the choice of sorting algorithm impact runtime performance across different input distributions?" --task_config curie/configs/base_config.json
 ```

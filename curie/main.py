@@ -68,7 +68,9 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     log_dir = 'logs/configs' 
     log_filename = f"logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
     config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
-    task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file})
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file, 'base_dir': base_dir})
+    
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
     logger.send_question_telemetry(question_file)
 
@@ -152,7 +154,6 @@ def execute_experiment_in_container(container_name, task_config, config_file):
     print(f"Starting experiment in container {container_name} with config in {config_file}")
     try:
         # Run the experiment inside the container
-
         subprocess.run([
             "docker", "exec", container_name,
             "bash", "-c", (
