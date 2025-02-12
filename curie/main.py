@@ -226,6 +226,7 @@ def main():
         return
     elif args.question_file is None:
         question_file = f'workspace/research_question_{int(time.time())}.txt'
+        os.makedirs(os.path.dirname(question_file), exist_ok=True)
         # write the question to the file
         with open(question_file, 'w') as f:
             f.write(args.question)
