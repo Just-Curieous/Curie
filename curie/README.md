@@ -28,6 +28,7 @@ export OPENAI_API_BASE=
 
 
 2. Input your research problem
+Execute this command in the repo root directory `Curie/`. 
 ```
 python3 -m curie.main -q "How does the choice of sorting algorithm impact runtime performance across different input distributions?" --task_config curie/configs/base_config.json
 ```
