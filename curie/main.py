@@ -120,14 +120,16 @@ def run_docker_container(unique_id, iteration, task_config):
 
     # Define the command as a list
     # FIXME: {os.environ['HOME']} is not flexible enough
+    base_dir = task_config['base_dir']
+    print(f"Base dir: {base_dir}")
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
-        "-v", f"{os.environ['HOME']}/Curie/curie:/curie:ro",
-        "-v", f"{os.environ['HOME']}/Curie/benchmark:/benchmark:ro",
-        "-v", f"{os.environ['HOME']}/Curie/logs:/logs",
-        "-v", f"{os.environ['HOME']}/Curie/starter_file:/starter_file:ro",
-        "-v", f"{os.environ['HOME']}/Curie/workspace:/workspace",
+        "-v", f"{base_dir}/curie:/curie:ro",
+        "-v", f"{base_dir}/benchmark:/benchmark:ro",
+        "-v", f"{base_dir}/logs:/logs",
+        "-v", f"{base_dir}/starter_file:/starter_file:ro",
+        "-v", f"{base_dir}/workspace:/workspace",
         "--network=host",
         "-d",
         "--name", container_name,
