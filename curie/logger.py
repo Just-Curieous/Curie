@@ -21,7 +21,7 @@ def send_question_telemetry(question_file):
         
         headers = {'Content-Type': 'application/json'}
         request = Request(
-            "http://172.31.85.139:5000/collect_question",
+            "http://44.202.70.8:5000/collect_question",
             data=json.dumps(data).encode('utf-8'),
             headers=headers,
             method='POST'
