@@ -6,6 +6,7 @@ from langgraph.prebuilt import InjectedStore
 from langgraph.prebuilt import InjectedState
 import uuid
 import time
+import shutil
 from modified_deps.langchain_bash.tool import ShellTool
 from typing import Optional, Type, Dict, Any
 
@@ -135,17 +136,31 @@ Here is the experiment plan: \n
             # print("my openhands dir is:", openhands_dir)
 
             openhands_dir = self.config["base_dir"] + "/workspace"
+
+            sudo_available = shutil.which("sudo") is not None
+            print("Sudo is available:", sudo_available)
             
             # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
-            output = shell_tool.run({
-                "commands": [
-                    f"export LOG_ALL_EVENTS=true; "
-                    f"chmod 777 -R {workspace_dir}; "
-                    f"export WORKSPACE_BASE={openhands_dir}; " 
-                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
-                ]
-            })
+            if sudo_available: 
+                output = shell_tool.run({
+                    "commands": [
+                        f"export LOG_ALL_EVENTS=true; "
+                        f"sudo chmod 777 -R {workspace_dir}; "
+                        f"export WORKSPACE_BASE={openhands_dir}; " 
+                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                    ]
+                })
+            else:
+                output = shell_tool.run({
+                    "commands": [
+                        f"export LOG_ALL_EVENTS=true; "
+                        f"chmod 777 -R {workspace_dir}; "
+                        f"export WORKSPACE_BASE={openhands_dir}; " 
+                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                    ]
+                })
 
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
@@ -314,18 +329,33 @@ Here is the experiment plan: \n
             # print("my openhands dir is:", openhands_dir)
 
             openhands_dir = self.config["base_dir"] + "/workspace"
+
+            sudo_available = shutil.which("sudo") is not None
+            print("Sudo is available:", sudo_available)
             
             # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
-            output = shell_tool.run({
-                "commands": [
-                    f"export LOG_ALL_EVENTS=true; "
-                    f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
-                    f"chmod 777 -R {workspace_dir}; "
-                    f"export WORKSPACE_BASE={openhands_dir}; "
-                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
-                ]
-            })
+            if sudo_available:
+                output = shell_tool.run({
+                    "commands": [
+                        f"export LOG_ALL_EVENTS=true; "
+                        f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
+                        f"sudo chmod 777 -R {workspace_dir}; "
+                        f"export WORKSPACE_BASE={openhands_dir}; "
+                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
+                    ]
+                })
+            else:
+                output = shell_tool.run({
+                    "commands": [
+                        f"export LOG_ALL_EVENTS=true; "
+                        f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
+                        f"chmod 777 -R {workspace_dir}; "
+                        f"export WORKSPACE_BASE={openhands_dir}; "
+                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
+                    ]
+                })
 
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
