@@ -183,24 +183,38 @@ def parse_langchain_llm_output(input_string):
             return json.dumps(structured_data, indent=4)
         except Exception as e:
             return f"Error parsing LangChain LLM output. \nError: {e}. \nRaw output: {input_string}"
+import re
+import toml
+from pathlib import Path
 
 def parse_env_string(env_string):
     """Parse environment string and return a dictionary of key-value pairs."""
     env_vars = {}
-    for line in env_string.strip().split("\n"):
-        # Skip empty lines or comments
-        if not line.strip() or line.strip().startswith('#'):
+    for line in env_string.splitlines():
+        # Skip empty lines or comment-only lines
+        line = line.strip()
+        if not line or line.startswith('#'):
             continue
-
-        # Remove 'export' and split by first '='
-        line = line.replace('export', '').strip()
+            
+        # Remove 'export' if present
+        if line.startswith('export'):
+            line = line.replace('export', '', 1).strip()
+            
+        # Split on first '=' and handle inline comments
         if '=' in line:
-            key, value = line.split('=', 1)
+            # Split on first '#' to remove comments
+            line_without_comment = line.split('#')[0].strip()
+            
+            # Now split on first '=' to get key-value
+            key, value = line_without_comment.split('=', 1)
+            
             # Clean up key and value
             key = key.strip()
             value = value.strip().strip('"\'')
-            env_vars[key] = value
-
+            
+            if key:  # Only add if key is not empty
+                env_vars[key] = value
+                
     return env_vars
 
 def categorize_variables(env_vars):
@@ -234,8 +248,6 @@ def categorize_variables(env_vars):
     }
 
     for key, value in env_vars.items():
-        # categorized = False
-
         # Check each pattern category
         for section, pattern_list in patterns.items():
             if any(re.match(pattern, key, re.IGNORECASE) for pattern in pattern_list):
@@ -253,25 +265,31 @@ def categorize_variables(env_vars):
                     continue  # Skip organization key
 
                 config[section][config_key] = value
-                # categorized = True
                 break
-
-        # If not categorized, put in core section
-        # if not categorized:
-        #     config['core'][key.lower()] = value
 
     # Remove empty sections
     return {k: v for k, v in config.items() if v}
 
 def setup_openhands_credential():
     """Convert an environment string to a TOML configuration."""
-    with open("setup/env.sh", "r") as f:
-        env_string = f.read()
-    env_vars = parse_env_string(env_string)
-    config = categorize_variables(env_vars)
-    # write to config.toml
-    with open("../workspace/config.toml", "w") as f:
-        f.write(toml.dumps(config))
-    print(f'Set up OpenHands credentials in config.toml: {config}')
-    return toml.dumps(config)  # Returns TOML as a string
-
+    try:
+        with open("setup/env.sh", "r") as f:
+            env_string = f.read()
+        
+        env_vars = parse_env_string(env_string)
+        config = categorize_variables(env_vars)
+        
+        # Ensure directory exists
+        output_path = Path("../workspace/config.toml")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # write to config.toml
+        with open(output_path, "w") as f:
+            f.write(toml.dumps(config))
+            
+        print(f'Set up OpenHands credentials in config.toml: {config}')
+        return toml.dumps(config)  # Returns TOML as a string
+        
+    except Exception as e:
+        print(f"Error setting up credentials: {str(e)}")
+        raise
