@@ -947,6 +947,7 @@ class SchedTool(BaseTool):
         old_starter_file_dir = os.path.abspath(old_starter_file_dir) + "/"
         if not os.path.exists(new_starter_file_dir):
             os.makedirs(new_starter_file_dir)
+            os.chmod(new_starter_file_dir, 0o777)
             try:
                 if os.path.exists(old_starter_file_dir): 
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
