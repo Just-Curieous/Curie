@@ -529,7 +529,6 @@ class SchedTool(BaseTool):
         # Inform supervisor that verifier has completed a run:
         is_terminate = self.check_exp_termination_condition()
         if not has_false and is_terminate: # go to concluder -> supervisor 
-            self.assign_verifier("analyzer", [])
             return {"messages": [], "prev_agent": "analyzer", "next_agent": "concluder"}
         else:
             return {"messages": completion_messages, "prev_agent": "analyzer", "next_agent": "supervisor"}
