@@ -55,7 +55,15 @@ def create_SchedNode(sched_tool, State, metadata_store):
         if "next_agent" in response and response["next_agent"] == END: # terminate experiment. Langgraph will call END based on next_agent as defined in our conditional_edge in main.py
             return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node"}
         if "next_agent" in response and response["next_agent"] == "supervisor": # next agent is the supervisor
-            if response["prev_agent"] == "analyzer":
+            if response["prev_agent"] == "supervisor":
+                intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s):\n"
+                return {"messages": [
+                            HumanMessage(content=intro_message + str(response["messages"]), name="scheduler")
+                        ],
+                    "prev_agent": "sched_node",
+                    "next_agent": response["next_agent"]
+                }
+            elif response["prev_agent"] == "analyzer":
                 intro_message = "The following experimental plan partitions (with plan IDs, groups, and partitions) have completed execution, each run twice with the same inputs for reproducibility. Their results were analyzed, and next-step suggestions appended. Review each suggestion to assess result validity. If incorrect, mark for redo using 'redo_exp_partition'; otherwise, leave the plan unchanged. Modify or create new plans as needed.\n"
                 return {"messages": [
                             HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
@@ -251,6 +259,10 @@ class SchedTool(BaseTool):
                 or add to queue.
         """
         print("------------Entering handle supervisor!!!------------")
+
+        # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
+        if self.is_no_plan_exists():
+            return {"messages": self.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
         # First, check for exp termination condition:
         is_terminate = self.check_exp_termination_condition()
@@ -872,6 +884,15 @@ class SchedTool(BaseTool):
     def get_workspace_dirname(self, plan_id: str) -> str:
         return "/workspace/{}_{}".format(self.config["workspace_name"], plan_id)
 
+    def is_no_plan_exists(self):
+        items = self.store.search(self.plan_namespace)
+        print("ITEMS SIS: ", items, "with len: ", len(items))
+        plans_list = [item.dict()["value"] for item in items]
+        if len(plans_list) == 0:
+            return True
+        else:
+            return False
+
     def check_exp_termination_condition(self):
         """
         If all control and experimental groups are done for all plans, return True. Otherwise, return False.
@@ -978,3 +999,9 @@ class SchedTool(BaseTool):
         plan["question"] = plan["question"].replace(f"/starter_file/{self.config['workspace_name']}", self.get_workspace_dirname(plan_id))
 
         self.store.put(self.plan_namespace, plan_id, plan)
+
+    def get_question(self):
+        memory_id = str("question")
+        question = self.metadata_store.get(self.sched_namespace, memory_id)
+        question = question.dict()["value"]
+        return question
