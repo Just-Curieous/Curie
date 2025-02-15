@@ -8,7 +8,7 @@ import re
 from datetime import datetime 
 import sys
 import uuid 
-import curie.logger as logger
+from curie.logger import init_logger, send_question_telemetry
 
 # Create a function to parse input arguments
 def parse_args():
@@ -72,12 +72,16 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file, 'base_dir': base_dir})
     
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
-    logger.send_question_telemetry(question_file)
+    send_question_telemetry(question_file)
 
     with open(config_filename, "w") as f:
         json.dump(task_config, f, indent=4)
-    print(f"Config file created: {config_filename}")
-    print(f">>>>>> Check log file: {log_filename} <<<<<<<")
+    
+    global curie_logger
+    curie_logger = init_logger(log_filename)
+
+    curie_logger.info(f"Config file created: {config_filename}")
+    curie_logger.info(f">>>>>> Check log file: {log_filename} <<<<<<<")
     return task_config, config_filename
 
 
@@ -98,13 +102,13 @@ def docker_image_exists(image):
 def run_docker_container(unique_id, iteration, task_config):
     rand_uuid = uuid.uuid4()
     container_name = f"exp-agent-container-{unique_id}-{rand_uuid}-iter{iteration}"
-    print(f"Building Docker image for iteration {iteration}...")
+    curie_logger.info(f"Building Docker image for iteration {iteration}...")
     
     image_name = task_config["docker_image"]
     docker_filename = task_config["dockerfile_name"]
 
     if docker_image_exists(image_name):
-        print(f"Using existing Docker image: {image_name}")
+        curie_logger.info(f"Using existing Docker image: {image_name}")
     else:
         # FIXME: the dir is hardcoded
         command = [
@@ -116,7 +120,7 @@ def run_docker_container(unique_id, iteration, task_config):
         ] 
         subprocess.run(command, check=True)
     
-    print(f"Running Docker container: {container_name}") 
+    curie_logger.info(f"Running Docker container: {container_name}") 
 
     base_dir = task_config['base_dir']
     command = [
@@ -132,7 +136,7 @@ def run_docker_container(unique_id, iteration, task_config):
         "--name", container_name,
         image_name
     ]
-    print(f"Running command: {' '.join(command)}")
+    curie_logger.info(f"Running command: {' '.join(command)}")
 
     # Run the command
     subprocess.run(command, check=True) 
@@ -150,7 +154,7 @@ def execute_experiment_in_container(container_name, task_config, config_file):
     Raises:
         Exception: If any subprocess command fails.
     """
-    print(f"Starting experiment in container {container_name} with config in {config_file}")
+    curie_logger.info(f"Starting experiment in container {container_name} with config in {config_file}")
     try:
         # Run the experiment inside the container
         subprocess.run([
@@ -165,7 +169,7 @@ def execute_experiment_in_container(container_name, task_config, config_file):
         ], check=True)  # This will block until main.py finishes.
 
     except subprocess.CalledProcessError as e:
-        print(f"Experiment failed with exit code {e.returncode}. Error: {e}")
+        curie_logger.error(f"Experiment failed with exit code {e.returncode}. Error: {e}")
         raise
 
 # Function to stop and remove the Docker container

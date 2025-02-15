@@ -17,6 +17,11 @@ import model
 import utils
 import tool
 
+from logger import init_logger
+def setup_verifier_logging(log_filename: str):
+    global curie_logger 
+    curie_logger = init_logger(log_filename)
+
 def create_LLMVerifierGraph(State, store, metadata_store):
     """ Creates a verifier graph consisting of the LLM-based verifier that checks through the experimental workflow to verify that actual data is produced. """
     system_prompt_file = "prompts/llm-verifier.txt"
@@ -86,8 +91,6 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
     return call_verifier_graph
 
 def create_Verifier(tools, system_prompt_file, State, node_name):    
-    # print(tool.test_search_tool.invoke("What's a 'node' in LangGraph?"))
-    import os
     gpt_4_llm = os.environ.get("MODEL")
     def Verifier(state: State):
         # Read from prompt file:
@@ -109,9 +112,9 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
             messages.insert(0, system_message)
         
         response = model.query_model_safe(messages, tools)
-        print(f"FROM {node_name}:")
-        print(utils.parse_langchain_llm_output(response))
-        print("-----------------------------------")
+        curie_logger.info(f"FROM {node_name}:")
+        curie_logger.info(utils.parse_langchain_llm_output(response))
+        curie_logger.info("-----------------------------------")
         return {"messages": [response], "prev_agent": node_name}
     
     return Verifier
@@ -119,7 +122,7 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
 def exec_verifier(llm_verified_wrote_list):
     # This version is meant to be called directly as a function, not wrapped within langgraph abstractions. 
 
-    print("------------Entering Exec Verifier function!!!------------")
+    curie_logger.info("------------Entering Exec Verifier function!!!------------")
 
     for item in llm_verified_wrote_list:
         try:
@@ -137,12 +140,12 @@ def exec_verifier(llm_verified_wrote_list):
             with open(control_experiment_results_filename, "r") as file:
                 file_content = file.read()  # Read the file content
                 result_file_contents.append(file_content)  # Append file content to the string
-                print(f"ExecVerifier: Successfully read content from pre-existing {control_experiment_results_filename}.")
+                curie_logger.info(f"ExecVerifier: Successfully read content from pre-existing {control_experiment_results_filename}.")
             
             iterations = 1
             for i in range(iterations):
 
-                print("Before iteration: {}".format(i))
+                curie_logger.info("Before iteration: {}".format(i))
                 # utils.print_workspace_contents()
 
                 # Run the first iteration and rename the file
@@ -155,7 +158,7 @@ def exec_verifier(llm_verified_wrote_list):
                 
                 result_file_contents.append(result_file_1_content)
 
-                print("After iteration: {}".format(i))
+                curie_logger.info("After iteration: {}".format(i))
                 # utils.print_workspace_contents()
 
             # # Compare the two result files
@@ -177,12 +180,12 @@ Here are the results from {iterations+1} separate runs of this workflow:
             item["verifier_log_message"] = verifier_log_message
 
         except Exception as e:
-            print(f"ExecVerifier: Error: {e}")
+            curie_logger.error(f"ExecVerifier: Error: {e}")
             verifier_log_message = str(e)
             item["is_correct"] = False
             item["verifier_log_message"] = verifier_log_message
 
-    print("------------Exiting Exec Verifier function!!!------------")
+    curie_logger.info("------------Exiting Exec Verifier function!!!------------")
 
     return llm_verified_wrote_list
 
@@ -199,42 +202,38 @@ def run_control_experiment_and_rename(iteration, control_experiment_filename, co
 
     while attempt < max_retries:
         attempt += 1
-        print(f"ExecVerifier: Attempt {attempt} for iteration {iteration}...")
+        curie_logger.info(f"ExecVerifier: Attempt {attempt} for iteration {iteration}...")
         try:
             # Run the control_experiment.sh script
-            print(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
+            curie_logger.info(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
             result = subprocess.run(["bash", control_experiment_filename], capture_output=True, text=True, timeout=timeout)
 
             if result.returncode != 0:
-                print(f"ExecVerifier: Error running {control_experiment_filename}: {result.stderr}")
+                curie_logger.info(f"ExecVerifier: Error running {control_experiment_filename}: {result.stderr}")
                 no_error = False
                 verifier_log_message = f"Error running {control_experiment_filename}: {result.stderr}"
                 return no_error, verifier_log_message, result_file_content
 
             # Check if control_group_results.txt exists
             if not os.path.exists(control_experiment_results_filename):
-                print(f"ExecVerifier: Error: {control_experiment_results_filename} was not generated.")
+                curie_logger.info(f"ExecVerifier: Error: {control_experiment_results_filename} was not generated.")
                 no_error = False
                 verifier_log_message = f"Error: {control_experiment_filename} executed successfully but {control_experiment_results_filename} was not generated."
                 return no_error, verifier_log_message, result_file_content
 
-            # # Rename the results file
-            # renamed_file = f"/workspace/exp_repeat_results_{iteration}.txt"
-            # os.rename(control_experiment_results_filename, renamed_file)
-            # print(f"ExecVerifier: Renamed {control_experiment_results_filename} to {renamed_file}.")
             with open(control_experiment_results_filename, "r") as file:
                 file_content = file.read()  # Read the file content
                 result_file_content += file_content  # Append file content to the string
-                print(f"ExecVerifier: Successfully read content from {control_experiment_results_filename}.")
+                curie_logger.info(f"ExecVerifier: Successfully read content from {control_experiment_results_filename}.")
 
             break
             
         except Exception as e:
-            print(f"ExecVerifier: Error on attempt {attempt}: {e}")
+            curie_logger.info(f"ExecVerifier: Error on attempt {attempt}: {e}")
             verifier_log_message = str(e)
             # If we've exhausted all retries, re-raise the last exception
             if attempt == max_retries:
-                print(f"ExecVerifier: All {max_retries} attempts failed.")
+                curie_logger.info(f"ExecVerifier: All {max_retries} attempts failed.")
                 no_error = False
 
     return no_error, verifier_log_message, result_file_content
@@ -243,10 +242,10 @@ def compare_results(file1, file2):
     """
     Compares two result files and asserts they are identical. TODO: exact comparison is probably not the best way to go about this, need to account for acceptable range.
     """
-    print(f"Comparing {file1} and {file2}...")
+    curie_logger.info(f"Comparing {file1} and {file2}...")
     if filecmp.cmp(file1, file2, shallow=False):
-        print("ExecVerifier: The files are identical.")
+        curie_logger.info("ExecVerifier: The files are identical.")
         return True
     else:
-        print("ExecVerifier: Error: The files are not identical.")
+        curie_logger.info("ExecVerifier: Error: The files are not identical.")
         return False

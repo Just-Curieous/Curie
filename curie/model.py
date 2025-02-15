@@ -7,6 +7,11 @@ from openai import BadRequestError
 from typing import List, Dict, Any
 from langchain_core.messages import BaseMessage
 
+from logger import init_logger
+def setup_model_logging(log_filename: str):
+    global curie_logger 
+    curie_logger = init_logger(log_filename)
+
 class TokenCounter:
     # Pricing per 1k tokens (as of March 2024)
     PRICE_PER_1K_TOKENS = { 
@@ -87,7 +92,7 @@ def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
             chat = chat.bind_tools(tools, parallel_tool_calls=False)
         return chat.invoke(messages)
     except Exception as e:
-        print(f"Error in LLM API create_completion: {e}")
+        curie_logger.error(f"Error in LLM API create_completion: {e}")
         raise e
 
 def query_model_safe(
@@ -109,7 +114,7 @@ def query_model_safe(
             
             # Case 1: Prune messages if total tokens exceed context length
             if token_counts["input_tokens"] > max_tokens:
-                print(f"Total tokens ({token_counts['input_tokens']}) exceed limit ({max_tokens}). Pruning messages.")
+                curie_logger.info(f"Total tokens ({token_counts['input_tokens']}) exceed limit ({max_tokens}). Pruning messages.")
                 messages_to_prune = messages[len(messages) // 3: -len(messages) // 3]
                 
                 j = len(messages_to_prune) - 1
@@ -124,18 +129,18 @@ def query_model_safe(
                 
                 messages = messages[:len(messages) // 3] + messages_to_prune + messages[-len(messages) // 3:]
                 token_counts = token_counter.count_messages_tokens(messages)
-                print(f"After pruning - Tokens: {token_counts['input_tokens']}")
+                curie_logger.info(f"After pruning - Tokens: {token_counts['input_tokens']}")
 
             # Case 2: Handle large last message
             last_message_tokens = token_counter.count_message_tokens(messages[-1])
             if last_message_tokens > max_tokens // 2:
-                print(f"Last message too large ({last_message_tokens} tokens). Splitting and summarizing.")
+                curie_logger.info(f"Last message too large ({last_message_tokens} tokens). Splitting and summarizing.")
                 chunks = text_splitter_by_tokens(messages[-1].content, max_tokens // 2, token_counter)
                 
                 if len(chunks) > 1:
                     summarized_text = ""
                     for i, chunk in enumerate(chunks):
-                        print(f"Processing chunk {i + 1} of {len(chunks)}")
+                        curie_logger.info(f"Processing chunk {i + 1} of {len(chunks)}")
                         summary_messages = [
                             messages[0].__class__(
                                 content="Summarize the following text. Be concise, but maintain structure. Don't output anything other than the summarized text.\n" + chunk
@@ -143,45 +148,45 @@ def query_model_safe(
                         ]
                         response = create_completion(summary_messages)
                         summarized_text += response.content + "\n"
-                        print(f"Chunk {i + 1} summary: {response.content}")
+                        curie_logger.info(f"Chunk {i + 1} summary: {response.content}")
                     
                     messages[-1].content = summarized_text.strip()
 
                 token_counts = token_counter.count_messages_tokens(messages)
-                print(f"After summarizing - Tokens: {token_counts['input_tokens']}")
+                curie_logger.info(f"After summarizing - Tokens: {token_counts['input_tokens']}")
 
             # Execute final completion
             response = create_completion(messages, tools=tools)
-            print(f"Response: {response}")
+            curie_logger.info(f"Response: {response}")
 
             # use tiktoken to count output tokens
             token_counts["output_tokens"] = len(token_counter.encoding.encode(response.content))
-            print(f"token_counts: {token_counts}")
+            curie_logger.info(f"token_counts: {token_counts}")
             token_counter.update_usage(token_counts)            
             # Get current costs
             costs = token_counter.estimate_cost(token_counts)
             accumulated_stats = TokenCounter.get_accumulated_stats()
             # FIXME: this does not count external tool API cost
-            print("\n===== Cost Estimation =====")
-            print(f"  Total Tokens Used: {token_counts}")
-            print(f"  Cost for This Round: ${sum(costs.values()):.4f}")
-            print(f"  Cumulative Cost: ${accumulated_stats['total_cost']:.4f}")
+            curie_logger.info("\n===== Cost Estimation =====")
+            curie_logger.info(f"  Total Tokens Used: {token_counts}")
+            curie_logger.info(f"  Cost for This Round: ${sum(costs.values()):.4f}")
+            curie_logger.info(f"  Cumulative Cost: ${accumulated_stats['total_cost']:.4f}")
 
             return response
 
         except BadRequestError as e:
-            print(f"Bad request error: {e}")
+            curie_logger.error(f"Bad request error: {e}")
             attempt += 1
             if attempt < max_retries:
-                print(f"Retrying in {delay} seconds...")
+                curie_logger.error(f"Retrying in {delay} seconds...")
                 time.sleep(delay)
             else:
                 raise e
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            curie_logger.error(f"Unexpected error: {e}")
             attempt += 1
             if attempt < max_retries:
-                print(f"Retrying in {delay} seconds...")
+                curie_logger.error(f"Retrying in {delay} seconds...")
                 time.sleep(delay)
             else:
                 raise e

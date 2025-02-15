@@ -10,7 +10,12 @@ import model
 from settings import list_worker_names, list_control_worker_names
 import utils
 import tool
-import json
+import json 
+
+from logger import init_logger
+def setup_worker_logging(log_filename: str):
+    global curie_logger 
+    curie_logger = init_logger(log_filename)
 
 def create_all_worker_graphs(State, store, metadata_store, memory, config_filename):
 
@@ -74,7 +79,8 @@ def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, co
     utils.save_langgraph_graph(worker_graph, worker_details["graph_image_name"]) 
 
     def call_worker_graph(state: State) -> State:
-        response = worker_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 200}) # Give a very lenient recursion limit since we expect control experiment construction to take more trials https://langchain-ai.github.io/langgraph/how-tos/recursion-limit/#use-the-graph
+        response = worker_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 20}) 
+        # Give a very lenient recursion limit since we expect control experiment construction to take more trials https://langchain-ai.github.io/langgraph/how-tos/recursion-limit/#use-the-graph
         return {
             "messages": [
                 HumanMessage(content=response["messages"][-1].content, name=worker_details["graph_name"])
@@ -86,11 +92,6 @@ def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, co
 def create_Worker(tools, system_prompt_file, config_file, State, worker_name):  
     """ Normal worker that runs experimental groups given a working controlled experiment setup that was created by a controlled worker earlier. """
 
-    # print(tool.test_search_tool.invoke("What's a 'node' in LangGraph?"))
-    import os
-    gpt_4_llm = os.environ.get("MODEL")
-    summarizer_llm = os.environ.get("MODEL")
-    
     def Worker(state: State):
         # Read from prompt file:
         with open(system_prompt_file, "r") as file:
@@ -119,17 +120,11 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
         # Ensure the system prompt is included at the start of the conversation
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             messages.insert(0, system_message)
-        # print(messages)
 
-        # response = gpt_4_llm.invoke(messages)
         response = model.query_model_safe(messages, tools)
-        print("FROM worker: " + worker_name)
-        # print("Worker prompt and prior messages: ")
-        # print(messages)
-        # print("\n\n")
-        # print("Worker response: ")
-        print(utils.parse_langchain_llm_output(response))
-        print("-----------------------------------")
+        curie_logger.info(f"FROM worker: {worker_name}")
+        curie_logger.info(utils.parse_langchain_llm_output(response))
+        curie_logger.info("-----------------------------------")
         return {"messages": [response], "prev_agent": worker_name}
     
     return Worker

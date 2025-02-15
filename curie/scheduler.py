@@ -21,6 +21,7 @@ from collections import deque, defaultdict
 import re
 import json
 import subprocess
+import logging
 
 import formatter
 import settings
@@ -28,6 +29,8 @@ import utils
 import worker_agent
 import verifier
 from modified_deps.langchain_bash.tool import ShellTool
+from logger import init_logger
+
 
 shell_tool = ShellTool(timeout=1200)
 
@@ -46,11 +49,8 @@ def create_SchedNode(sched_tool, State, metadata_store):
     setup_sched(metadata_store, sched_namespace)
 
     def SchedNode(state: State):
-
-        print("------------Entering sched node!!!------------")
         # Invoke sched_tool: 
         response = sched_tool.invoke({"state":state}) # response is guaranteed to be a dict
-        print("------------Exiting sched tool!!!------------")
         # Based on sched_tool, response, we decide which node to call next:
         if "next_agent" in response and response["next_agent"] == END: # terminate experiment. Langgraph will call END based on next_agent as defined in our conditional_edge in main.py
             return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node"}
@@ -207,6 +207,7 @@ class SchedTool(BaseTool):
     sched_namespace: Optional[tuple] = None
     plan_namespace: Optional[tuple] = None
     config: Optional[dict] = None
+    curie_logger: Optional[logging.Logger] = None
 
     def __init__(self, store: InMemoryStore, metadata_store: InMemoryStore, config: dict):
         super().__init__()
@@ -215,6 +216,8 @@ class SchedTool(BaseTool):
         self.sched_namespace = self.get_sched_namespace()
         self.plan_namespace = self.get_plan_namespace()
         self.config = config
+        log_filename = f'../{config["log_filename"]}'
+        self.curie_logger = init_logger(log_filename)
     
     class Config:
         arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
@@ -228,7 +231,7 @@ class SchedTool(BaseTool):
         Note: we are guaranteed that plan will conform to the required format
         """
 
-        print("------------Executing sched tool!!!------------")
+        self.curie_logger.info("------------Executing sched tool!!!------------")
         # print(state)
 
         if state["prev_agent"] == "supervisor":
@@ -258,7 +261,7 @@ class SchedTool(BaseTool):
                 we simply add to worker if some are idle, 
                 or add to queue.
         """
-        print("------------Entering handle supervisor!!!------------")
+        self.curie_logger.info("------------Entering handle supervisor!!!------------")
 
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.is_no_plan_exists():
@@ -270,14 +273,14 @@ class SchedTool(BaseTool):
             return {"next_agent": END}
 
         # Second, for control groups that are done, move their experimental groups to the worker queue:
-        print("Checking control group done..")
+        self.curie_logger.info("Checking control group done..")
         memory_id = str("standby_exp_plan_list")
         standby_exp_plan_list = self.metadata_store.get(self.sched_namespace, memory_id).dict()["value"]
         for plan_id in standby_exp_plan_list[:]: # iterate over a copy of standby_exp_plan_list
             self.update_queues(plan_id, assert_new_control=True)
 
         # Third, for plans that were written/modified by the supervisor, add them to the correct queue:
-        print("Checking supervisor wrote list..")
+        self.curie_logger.info("Checking supervisor wrote list..")
         memory_id = str("supervisor_wrote_list")
         supervisor_wrote_list = self.metadata_store.get(self.sched_namespace, memory_id).dict()["value"]
         # Create a new /workspace dir for each new plan_id, and other related inits for a new plan:
@@ -293,7 +296,7 @@ class SchedTool(BaseTool):
         self.metadata_store.put(self.sched_namespace, memory_id, supervisor_wrote_list)
 
         # Fourth, for partition's that need to be redone, add them to the correct queue: the difference here is that an explicit error feedback is provided by the supervisor.
-        print("Checking supervisor redo partition list..")
+        self.curie_logger.info("Checking supervisor redo partition list..")
         memory_id = str("supervisor_redo_partition_list")
         supervisor_redo_partition_list = self.metadata_store.get(self.sched_namespace, memory_id).dict()["value"]
         for _ in range(len(supervisor_redo_partition_list)):
@@ -303,7 +306,7 @@ class SchedTool(BaseTool):
         assert len(supervisor_redo_partition_list) == 0
         self.metadata_store.put(self.sched_namespace, memory_id, supervisor_redo_partition_list)
 
-        print("------------Exiting handle supervisor!!!------------")
+        self.curie_logger.info("------------Exiting handle supervisor!!!------------")
         # Fifth, Assign to control and experimental workers if there are idle workers: according to priority
         # TODO: currently since we have NOT implemented ASYNC, we will only run 1 worker at a time (i.e., either control or normal worker). Note that we also only have 1 control and 1 normal worker only. Since there is no async I did not implement parallelism yet. 
         assignment_messages = self.assign_worker("control")
@@ -332,7 +335,7 @@ class SchedTool(BaseTool):
             - set the executed group to done. NOTE: update, this will be handled by the worker itself instead.
             - return information back to supervisor.
         """
-        print("------------Entering handle worker!!!------------")
+        self.curie_logger.info("------------Entering handle worker!!!------------")
         # Get plan id and partition names assigned to worker name:
         assignments = self.get_worker_assignment(worker_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -346,9 +349,10 @@ class SchedTool(BaseTool):
         for assignment in assignments:
             plan_id, group, partition_name = assignment["plan_id"], assignment["group"], assignment["partition_name"]
             plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
-            print("Plan ID: ", plan_id)
-            print("Partition Name: ", partition_name)
-            print("Plan details: ", plan)
+            self.curie_logger.info(f'Plan ID: {plan_id}')
+            
+            self.curie_logger.info(f"Partition Name: {partition_name}")
+            self.curie_logger.info(f"Plan details: {plan}")
             # if plan_id not in completion_messages:
             #     completion_messages[plan_id] = plan
             if plan[group][partition_name]["done"] != True:
@@ -387,7 +391,7 @@ class SchedTool(BaseTool):
             self.assign_verifier("llm_verifier", task_details)
 
         # utils.print_workspace_contents()
-        print("------------Exiting handle worker!!!------------")
+        self.curie_logger.info("------------Exiting handle worker!!!------------")
         # Inform supervisor that worker has completed a run:
         return {"messages": completion_messages, "next_agent": "llm_verifier"}
 
@@ -398,7 +402,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        print("------------Entering handle llm verifier!!!------------")
+        self.curie_logger.info("------------Entering handle llm verifier!!!------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -411,7 +415,7 @@ class SchedTool(BaseTool):
             # Check if the verifier has written to the verifier_wrote_list:
             item = self.get_verifier_wrote_list_item(verifier_name, plan_id, group, partition_name)
             if item is None:
-                print("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
+                self.curie_logger.info("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
                 return {"messages": assignments, "next_agent": "llm_verifier"}
             completion_messages.append(item)
             if not item["is_correct"]:
@@ -425,7 +429,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        print("------------Exiting handle llm verifier!!!------------")
+        self.curie_logger.info("------------Exiting handle llm verifier!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         if has_false: # go to patch verifier
@@ -449,7 +453,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        print("------------Entering handle patch verifier!!!------------")
+        self.curie_logger.info("------------Entering handle patch verifier!!!------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -462,7 +466,7 @@ class SchedTool(BaseTool):
             # Check if the verifier has written to the verifier_wrote_list:
             item = self.get_verifier_wrote_list_item(verifier_name, plan_id, group, partition_name)
             if item is None:
-                print("Warning: Patch verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun patch verifier.".format(plan_id, group, partition_name))
+                self.curie_logger.info("Warning: Patch verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun patch verifier.".format(plan_id, group, partition_name))
                 return {"messages": assignments, "next_agent": "patch_verifier"}
             completion_messages.append(item)
             if not item["is_correct"]:
@@ -476,7 +480,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        print("------------Exiting handle patch verifier!!!------------")
+        self.curie_logger.info("------------Exiting handle patch verifier!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         if has_false: # go to supervisor
@@ -497,7 +501,7 @@ class SchedTool(BaseTool):
             - remove the analyzer from the analyzer assignment dict. 
             - assign to concluder (conditionally).
         """
-        print("------------Entering handle analyzer!!!------------")
+        self.curie_logger.info("------------Entering handle analyzer!!!------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -510,7 +514,7 @@ class SchedTool(BaseTool):
             # Check if the verifier has written to the verifier_wrote_list:
             item = self.get_verifier_wrote_list_item(verifier_name, plan_id, group, partition_name)
             if item is None:
-                print("Warning: Analyzer has not written plan_id {}, group {}, partition_name {} to analyzer_wrote_list yet. We will rerun analyzer.".format(plan_id, group, partition_name))
+                self.curie_logger.info("Warning: Analyzer has not written plan_id {}, group {}, partition_name {} to analyzer_wrote_list yet. We will rerun analyzer.".format(plan_id, group, partition_name))
                 return {"messages": assignments, "next_agent": "analyzer"}
             completion_messages.append(item)
             if not item["no_change"]:
@@ -524,7 +528,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        print("------------Exiting handle analyzer!!!------------")
+        self.curie_logger.info("------------Exiting handle analyzer!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         is_terminate = self.check_exp_termination_condition()
@@ -540,7 +544,7 @@ class SchedTool(BaseTool):
             - remove the concluder from the concluder assignment dict. 
             - assign to supervisor.
         """
-        print("------------Entering handle concluder!!!------------")
+        self.curie_logger.info("------------Entering handle concluder!!!------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -549,7 +553,7 @@ class SchedTool(BaseTool):
         # Assert that all assigned partition names are now done
         item = self.get_concluder_wrote_list_item()
         if item is None:
-            print("Warning: Concluder has not written to concluder_wrote_list yet. We will rerun concluder.")
+            self.curie_logger.info("Warning: Concluder has not written to concluder_wrote_list yet. We will rerun concluder.")
             return {"messages": [], "next_agent": "concluder"}
 
         # Remove verifier from verifier assignment dict:
@@ -560,7 +564,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        print("------------Exiting handle concluder!!!------------")
+        self.curie_logger.info("------------Exiting handle concluder!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         return {"messages": item, "prev_agent": "concluder", "next_agent": "supervisor"}
@@ -575,14 +579,13 @@ class SchedTool(BaseTool):
             - if control group is done: add experimental groups that don't yet exist in the worker queue, or modify existing groups as needed. Remove plan from standy list if exist. 
             - if control group is not done: add control group that don't yet exist in the control worker queue, or modify existing control group as needed. Add plan to standby list, or modify existing as needed. 
         """
-        print("------------Entering update queues!!!------------")
+        self.curie_logger.info("------------Entering update queues!!!------------")
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
-
-        print("Plan is: ", utils.pretty_json(plan))
+        self.curie_logger.info(f"Plan is: {utils.pretty_json(plan)} ")
 
         # First, if control group is not done:
         if plan["control_group"]['partition_1']["done"] == False: # only 1 partition for now in control group
-            print("Control group is not done..")
+            self.curie_logger.info("Control group is not done..")
             # Add plan to control queue if not exist or modify existing control group in queue as needed:
             partition_name = "partition_1" # Only 1 partition for now in control group
             if redo_details:
@@ -610,9 +613,9 @@ class SchedTool(BaseTool):
 
             # Add plan to standby list if not exist: 
             self.insert_standby_exp_plan_list(plan_id)
-            print("Current control group worker queue: ", self.get_control_worker_queue())
+            self.curie_logger.info(f"Current control group worker queue: {self.get_control_worker_queue()}")
         else: # Second, if control group is done:
-            print("Control group is done..")
+            self.curie_logger.info("Control group is done..")
             # Remove plan from standby list if exist:
             self.remove_standby_exp_plan_list(plan_id)
 
@@ -621,7 +624,7 @@ class SchedTool(BaseTool):
             
             all_groups = self.get_groups_from_plan(plan["experimental_group"])
 
-            print("All experimental group's partitions are: ", all_groups)
+            self.curie_logger.info(f"All experimental group's partitions are: {all_groups}")
 
             if redo_details: # if redo partition, only the partition needs to be added to queue
                 task_details = {
@@ -651,9 +654,9 @@ class SchedTool(BaseTool):
                         "partition_name": partition_name,
                     }
                     self.insert_worker_queue(task_details)
-            print("Current worker queue: ", self.get_worker_queue())
+            self.curie_logger.info(f"Current worker queue: {self.get_worker_queue()}")
         
-        print("------------Exiting update queues!!!------------")
+        self.curie_logger.info("------------Exiting update queues!!!------------")
 
     def get_groups_from_plan(self, group_dict: dict) -> int:
         # Obtains group (either experimental_group or control_group) partitions from the plan
@@ -702,7 +705,7 @@ class SchedTool(BaseTool):
         return assignment_messages
 
     def augment_redo_partition_error_feedback(self, task_details: dict) -> str:
-        print("------------Entering augment redo partition error feedback!!!------------")
+        self.curie_logger.info("------------Entering augment redo partition error feedback!!!------------")
         plan_id = task_details["plan_id"]
         group = task_details["group"]
         partition_name = task_details["partition_name"]
@@ -711,7 +714,7 @@ class SchedTool(BaseTool):
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         # Get control experiment filename:
         control_experiment_filename = plan[group][partition_name]["control_experiment_filename"]
-        print("------------Exiting augment redo partition error feedback!!!------------")
+        self.curie_logger.info("------------Exiting augment redo partition error feedback!!!------------")
         # Return augmented error feedback:
         if not control_experiment_filename:
             return error_feedback
@@ -885,7 +888,7 @@ class SchedTool(BaseTool):
 
     def is_no_plan_exists(self):
         items = self.store.search(self.plan_namespace)
-        print("ITEMS SIS: ", items, "with len: ", len(items))
+        self.curie_logger.info(f"ITEMS SIS: {items}, with len: {len(items)}")
         plans_list = [item.dict()["value"] for item in items]
         if len(plans_list) == 0:
             return True
@@ -973,11 +976,11 @@ class SchedTool(BaseTool):
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
                     subprocess.run(["cp", "-r", old_starter_file_dir + ".", new_starter_file_dir], check=True)
                     # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
-                    print(f"Created {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
+                    self.curie_logger.info(f"Created {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
                 else:
-                    print(f"Created {new_starter_file_dir}. No starter files to copy.")
+                    self.curie_logger.info(f"Created {new_starter_file_dir}. No starter files to copy.")
             except Exception as e:
-                print(f"Error copying files: {e}")
+                self.curie_logger.info(f"Error copying files: {e}")
                 raise
 
             return True

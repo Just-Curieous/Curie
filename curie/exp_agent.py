@@ -13,6 +13,11 @@ import tool
 import os
 import json
 
+from logger import init_logger
+def setup_supervisor_logging(log_filename: str):
+    global curie_logger 
+    curie_logger = init_logger(log_filename)
+
 def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filename):
     """ Creates a Supervisor graph that proposes experimental plans, and makes experimental progress. """
     # TODO: only creating one worker now. Later, we will create multiple workers.
@@ -50,7 +55,7 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
     utils.save_langgraph_graph(supervisor_graph, "../logs/misc/supervisor_graph_image.png") 
 
     def call_supervisor_graph(state: State) -> State:
-        response = supervisor_graph.invoke({"messages": state["messages"][-1]}, {"configurable": {"thread_id": "supervisor_graph_id"}})
+        response = supervisor_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 20, "configurable": {"thread_id": "supervisor_graph_id"}})
         return {
             "messages": [
                 HumanMessage(content=response["messages"][-1].content, name="supervisor_graph")
@@ -60,14 +65,8 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
     return call_supervisor_graph
 
 def create_ExpSupervisor(tools, system_prompt_file, State):    
-    # print(tool.test_search_tool.invoke("What's a 'node' in LangGraph?"))
-
     # FIXME: better way to get model names; from config?
-    # FIXME: can move model name to model.py
-    import os
-    gpt_4_llm = os.environ.get("MODEL")
-    summarizer_llm = os.environ.get("MODEL")
-
+    # FIXME: can move model name to model.py 
     def ExpSupervisor(state: State):
         # Read from prompt file:
         with open(system_prompt_file, "r") as file:
@@ -84,11 +83,10 @@ def create_ExpSupervisor(tools, system_prompt_file, State):
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             messages.insert(0, system_message)
         
-        # response = gpt_4_llm.invoke(messages)
         response = model.query_model_safe(messages, tools=tools)
-        print("FROM SUPERVISOR:")
-        print(utils.parse_langchain_llm_output(response))
-        print("-----------------------------------")
+        curie_logger.info("FROM SUPERVISOR:")
+        curie_logger.info(utils.parse_langchain_llm_output(response))
+        curie_logger.info("-----------------------------------")
         return {"messages": [response], "prev_agent": "supervisor"}
     
     return ExpSupervisor

@@ -7,6 +7,7 @@ import ast
 import os
 import re
 import toml
+from pathlib import Path
 
 
 def extract_plan_id(prompt: str) -> str:
@@ -183,9 +184,6 @@ def parse_langchain_llm_output(input_string):
             return json.dumps(structured_data, indent=4)
         except Exception as e:
             return f"Error parsing LangChain LLM output. \nError: {e}. \nRaw output: {input_string}"
-import re
-import toml
-from pathlib import Path
 
 def parse_env_string(env_string):
     """Parse environment string and return a dictionary of key-value pairs."""
@@ -293,7 +291,7 @@ def setup_openhands_credential():
         with open(output_path, "w") as f:
             f.write(toml.dumps(config))
             
-        print(f'Set up OpenHands credentials in config.toml: {config}')
+        print(f'Set up OpenHands credentials in workspace/config.toml')
         return toml.dumps(config)  # Returns TOML as a string
         
     except Exception as e:

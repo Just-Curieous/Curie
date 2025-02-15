@@ -20,8 +20,14 @@ import settings
 import scheduler as sched
 import verifier
 
+from logger import init_logger
+from model import setup_model_logging
+from worker_agent import setup_worker_logging
+from verifier import setup_verifier_logging
+from exp_agent import setup_supervisor_logging
+
 if len(sys.argv) < 2:
-    print("Usage: python script.py <config_file>")
+    curie_logger.error("Usage: python script.py <config_file>")
     sys.exit(1)
 
 config_filename = sys.argv[1]
@@ -32,8 +38,12 @@ with open(config_filename, 'r') as file:
     question_filename = f"../{config['question_filename']}"
     log_filename = f"../{config['log_filename']}"
     log_file = open(log_filename, 'w')
-    sys.stdout = log_file
-    sys.stderr = log_file
+    
+    curie_logger = init_logger(log_filename)
+    setup_model_logging(log_filename)
+    setup_worker_logging(log_filename)
+    setup_verifier_logging(log_filename)
+    setup_supervisor_logging(log_filename)
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -212,21 +222,23 @@ def stream_graph_updates(graph, user_input: str):
         graph: Compiled LangGraph workflow
         user_input (str): User's input question
     """
+    step = 0
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
         {"recursion_limit": 200, "configurable": {"thread_id": "main_graph_id"}}
-    ):
-        print("Event:", event)
+    ):  
+        step += 1
+        curie_logger.info(f"------------------------- Global Step {step} ------------------------")    
+        curie_logger.info(f"Event: {event}")
         for value in event.values():
-            print("Event value:", value["messages"][-1].content)
-        print("--------------------------------------------------")
+            curie_logger.info(f"Event value: {value['messages'][-1].content}")
 
 def main():
     """
     Main execution function for the LangGraph workflow.
     """
     if len(sys.argv) < 2:
-        print("Usage: python script.py <config_file>")
+        curie_logger.error("Usage: python script.py <config_file>")
         sys.exit(1)
 
     config_filename = sys.argv[1]
@@ -251,7 +263,7 @@ def main():
         stream_graph_updates(graph, user_input)
 
     except Exception as e:
-        print(f"Execution error: {e}")
+        curie_logger.error(f"Execution error: {e}")
         traceback.print_exc()
         sys.exit(1)
 
