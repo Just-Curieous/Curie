@@ -191,8 +191,13 @@ def query_model_safe(
 # Keep these helper functions unchanged
 def get_model_context_length() -> int:
     """Get the context length for the current model."""
-    chat = ChatLiteLLM(model=os.environ.get("MODEL"))
-    return chat.context_length if hasattr(chat, 'context_length') else 8192
+    # FIXME: add more models as needed
+    context_length_dict = {
+        "gpt-4o": 128000,
+        "azure/gpt-4o": 128000,
+    }
+    model_name = os.environ.get("MODEL")
+    return context_length_dict.get(model_name, 32000)
 
 def text_splitter_by_tokens(text: str, chunk_size: int, token_counter: TokenCounter) -> List[str]:
     """Split text based on token count instead of characters."""
