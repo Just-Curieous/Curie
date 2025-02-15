@@ -15,7 +15,7 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 - 📊 Data-Driven Insights – Systematic analysis and structured result documentation.
 - 🔄 Iterative Refinement – Adapts hypotheses and re-executes experiments based on findings.
 - 🔬 Broad Applicability – Supports ML research, system analysis, and scientific discovery.
-- 📖 Experimentation Benchmark - Provide 46 questions from 4 Computer Science domains, based on influential papers and open-source projects (`benchmark/`).
+- 📖 Experimentation Benchmark - Provide 46 questions from 4 Computer Science domains, based on influential papers and open-source projects (`benchmark/experimentation_bench`).
 
 
 - [ ] add some evaluation results/figures.
@@ -59,13 +59,17 @@ cd curie && sudo docker build --no-cache --progress=plain -t exp-agent-image -f 
 
 ## Quick Start
 
-1. Input your research problem
+1. Input your research question or problem statement (processing time: 5-10 minutes).
 ```bash
 python3 -m curie.main -q "How does the choice of sorting algorithm impact runtime performance across different input distributions?" --task_config curie/configs/base_config.json
 ```
 - You can monitor the logs in real-time at `logs/research_question_<ID>.log`, as they are continuously streamed.
 
 - You can check the reproducible experimentation process under `workspace/research_<ID>`.
+
+## Tutorial
+- [How to reproduce the results in `Large Language Monkeys'. ](./docs/tutorial-large-language-monkey.md)
+
 
 ## Use Cases
 Curie is designed for scientific discovery across multiple domains:
@@ -74,28 +78,9 @@ Curie is designed for scientific discovery across multiple domains:
 - 💻 System Performance Analysis – Benchmarking systems, optimizing configurations, investigating system trade-offs.
 - 🧪 Algorithmic & Scientific Discovery – Validating hypotheses, automating computational simulations.
  
-
-## Tutorial for Reproducing 'Large Language Monkeys' Results
-
-The paper [Large Language Monkeys: Scaling Inference Compute with Repeated Sampling](https://arxiv.org/abs/2407.21787) explores repeated sampling as a method to enhance reasoning performance in large language models (LLMs) by increasing inference compute. 
-
-Download the related starter files under `workspace`.
-```bash
-cd Curie
-git submodule update --init --recursive 
-```
-- [ ] TODO: need update the credential for large language monkey.
-
-As a LLM researcher, you are just curious about how does the number of repeatedly generated samples per question impact the overall success? (The concrete question can be found in our benchmark `benchmark/llm_reasoning/q1_simple_relation.txt`, which specify the location of corresponding starter files.)
-
-```bash
-cd Curie
-python3 -m curie.main --iterations 1 --question_file benchmark/llm_reasoning/q1_simple_relation.txt --task_config curie/configs/llm_reasoning_config.json
-```
-
-- You can check the logging under `logs/q1_simple_relation_<ID>.log`.
-
-- You can check the reproducible experimentation process under `workspace/large_language_monkeys_<ID>`.
+<p align="center">
+  <img src="./docs/static/img/case_study.png" width="600px"/>
+</p>
 
 
 ## Customize Your Experimentation Agents

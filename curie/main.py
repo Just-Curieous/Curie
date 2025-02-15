@@ -118,10 +118,7 @@ def run_docker_container(unique_id, iteration, task_config):
     
     print(f"Running Docker container: {container_name}") 
 
-    # Define the command as a list
-    # FIXME: {os.environ['HOME']} is not flexible enough
     base_dir = task_config['base_dir']
-    print(f"Base dir: {base_dir}")
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
