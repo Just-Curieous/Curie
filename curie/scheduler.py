@@ -56,7 +56,7 @@ def create_SchedNode(sched_tool, State, metadata_store):
             return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node"}
         if "next_agent" in response and response["next_agent"] == "supervisor": # next agent is the supervisor
             if response["prev_agent"] == "supervisor":
-                intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s):\n"
+                intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
                 return {"messages": [
                             HumanMessage(content=intro_message + str(response["messages"]), name="scheduler")
                         ],
