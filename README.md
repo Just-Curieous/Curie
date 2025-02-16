@@ -79,7 +79,7 @@ Curie is designed for scientific discovery across multiple domains:
 - 🧪 Algorithmic & Scientific Discovery – Validating hypotheses, automating computational simulations.
  
 <p align="center">
-  <img src="./docs/static/img/case_study.png" width="600px"/>
+  <img src="./docs/static/img/case_study.png" width="1000px"/>
 </p>
 
 
