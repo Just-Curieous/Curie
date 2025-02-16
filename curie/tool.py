@@ -17,6 +17,7 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
+from model import update_tool_costs
 
 import formatter
 import settings
@@ -86,6 +87,24 @@ class CodeAgentInput(BaseModel):
             raise ValueError("workspace_dir is not specified correctly.")
         return self
 
+
+def _collect_openhands_cost():
+    total_cost = 0
+    # read all openhands log json files under ../logs
+    for filename in os.listdir("../logs/openhands"):
+        if filename.endswith(".json"):
+            remove_flag = False
+            with open(f"../logs/openhands/{filename}", "r") as f:
+                data = json.load(f)
+                if "cost" in data:
+                    remove_flag = True
+                    total_cost += data["cost"]
+            if remove_flag:
+                os.remove(f"../logs/openhands/{filename}")
+    curie_logger.info(f"$$$$ Total cost of OpenHands: {total_cost} $$$$") 
+    update_tool_costs(total_cost)
+
+
 # Note: It's important that every field has type hints. BaseTool is a
 # Pydantic class and not having type hints can lead to unexpected behavior.
 class CodeAgentTool(BaseTool):
@@ -137,9 +156,6 @@ Here is the experiment plan: \n
             with open(prompt_file, "w") as file:
                 file.write(prompt)
 
-            # openhands_dir = os.path.abspath("../workspace")
-            # print("my openhands dir is:", openhands_dir)
-
             openhands_dir = self.config["base_dir"] + "/workspace"
 
             sudo_available = shutil.which("sudo") is not None
@@ -171,17 +187,25 @@ Here is the experiment plan: \n
             # FIXME: this does not support running outside the container.
 
         except BaseException as e:
-            print(f"Error for openhands agent: {repr(e)}")
+            curie_logger.error(f"Error for openhands agent: {repr(e)}")
             return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
         # return (f"Workflow and results have been produced, for plan_id: {plan_id}, group: {group}, partition_name: {partition_name} \n"
         #         f"control_experiment_filename is at: '{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh'\n"
         #         f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
         #         f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
         #         )
-        
-        print("Code Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Code Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"))
-        return "Code Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Code Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
 
+        _collect_openhands_cost()
+
+        return f"""
+            Code Agent has completed. Here's a snippet of the latest logs—
+            use this along with the workflow script and results file to assess success.
+            Re-run the Code Agent with feedback if needed.
+
+            {self.extract_codeagent_output_snippet(
+                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+            )}
+            """.strip()
         # TODO: return the concise logs.
 
     def extract_codeagent_output_snippet(self, filename: str) -> str:
@@ -372,11 +396,18 @@ Here is the experiment plan: \n
         #         f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
         #         f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
         #         )
-        print("I am her enow")
-        print("Patch Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Patch Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"))
-        return "Patch Agent has completed. Here’s a snippet of the latest logs—use this along with the workflow script and results file to assess success. Re-run the Patch Agent with feedback if needed. \n\n" + self.extract_codeagent_output_snippet(f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
+        _collect_openhands_cost()
 
-        # TODO: return the concise logs.
+        return f"""
+            Patch Agent has completed. Here's a snippet of the latest logs—
+            use this along with the workflow script and results file to assess success.
+            Re-run the Patch Agent with feedback if needed.
+
+            {self.extract_codeagent_output_snippet(
+                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+            )}
+            """.strip()
+
 
     def extract_codeagent_output_snippet(self, filename: str) -> str:
         """

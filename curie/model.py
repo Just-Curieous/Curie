@@ -23,7 +23,7 @@ class TokenCounter:
 
     # Class-level variables to track accumulated usage across all instances
     _accumulated_tokens = {"input": 0, "output": 0}
-    _accumulated_cost = {"input": 0.0, "output": 0.0}
+    _accumulated_cost = {"input": 0.0, "output": 0.0, "tool_cost": 0.0}
 
     def __init__(self):
         self.current_model = os.environ.get("MODEL", "gpt-4o")
@@ -85,7 +85,7 @@ class TokenCounter:
         costs = self.estimate_cost(token_counts)
         self._accumulated_cost["input"] += costs["input"]
         self._accumulated_cost["output"] += costs["output"]
-
+    
 def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
     """Create a completion using LiteLLM"""
     try:
@@ -96,6 +96,10 @@ def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
     except Exception as e:
         curie_logger.error(f"Error in LLM API create_completion: {e}")
         raise e
+
+def update_tool_costs(costs: float):
+    """Update accumulated tool usage statistics."""
+    TokenCounter._accumulated_cost["tool_cost"] += costs
 
 def query_model_safe(
     messages: List[BaseMessage],
@@ -169,7 +173,7 @@ def query_model_safe(
             costs = token_counter.estimate_cost(token_counts)
             accumulated_stats = TokenCounter.get_accumulated_stats()
             # FIXME: this does not count external tool API cost
-            curie_logger.info("===== Cost Estimation =====")
+            curie_logger.info("$$$$ Cost Estimation $$$$")
             curie_logger.info(f"  Total Tokens Used: {token_counts}")
             curie_logger.info(f"  Cost for This Round: ${sum(costs.values()):.4f}")
             curie_logger.info(f"  Cumulative Cost: ${accumulated_stats['total_cost']:.4f}")

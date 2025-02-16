@@ -227,7 +227,7 @@ def categorize_variables(env_vars):
             'input_cost_per_token': 2.5e-06,
             'output_cost_per_token': 1e-05,
             'log_completions': True,
-            'log_completions_folder': '../logs', 
+            'log_completions_folder': '../logs/openhands', 
         }
     }
 

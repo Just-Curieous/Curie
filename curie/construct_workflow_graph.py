@@ -9,6 +9,7 @@ from langgraph.graph.message import add_messages
 from langgraph.store.memory import InMemoryStore
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.managed.is_last_step import RemainingSteps
 
 # Local module imports
 import model
@@ -52,6 +53,7 @@ class State(TypedDict):
     prev_agent: Literal[*settings.AGENT_LIST]
     next_agent: Literal[*settings.AGENT_LIST]
     is_terminate: bool 
+    remaining_steps: RemainingSteps
 
 def setup_logging(log_filename: str):
     """
