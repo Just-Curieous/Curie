@@ -17,6 +17,8 @@ class TokenCounter:
     PRICE_PER_1K_TOKENS = { 
         "gpt-4o": {"input": 0.0025, "output": 0.01}, 
         "azure/gpt-4o": {"input": 0.0025, "output": 0.01}, 
+        "gpt-4o-mini": {"input": 0.00015, "output": 0.000075},
+        "azure/gpt-4o-mini": {"input": 0.00015, "output": 0.000075},
     }
 
     # Class-level variables to track accumulated usage across all instances
@@ -167,7 +169,7 @@ def query_model_safe(
             costs = token_counter.estimate_cost(token_counts)
             accumulated_stats = TokenCounter.get_accumulated_stats()
             # FIXME: this does not count external tool API cost
-            curie_logger.info("\n===== Cost Estimation =====")
+            curie_logger.info("===== Cost Estimation =====")
             curie_logger.info(f"  Total Tokens Used: {token_counts}")
             curie_logger.info(f"  Cost for This Round: ${sum(costs.values()):.4f}")
             curie_logger.info(f"  Cumulative Cost: ${accumulated_stats['total_cost']:.4f}")

@@ -222,30 +222,62 @@ class SchedTool(BaseTool):
     class Config:
         arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
 
+
     def _run(
-        self, state: Annotated[dict, InjectedState], run_manager: Optional[CallbackManagerForToolRun] = None
-    ) -> str:
-        """
-        Use the tool.
+        self,
+        state: Annotated[dict, InjectedState],
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str: 
+        prev_agent = state["prev_agent"]
+        next_agent = self._handle_agent(prev_agent)
+        next_agent_name = 'N/A'
+        for k, v in next_agent.items():
+            if k == 'next_agent':
+                next_agent_name = v
+                break
+            if 'next_agent' in v:
+                next_agent_name = v['next_agent']
+                break
         
-        Note: we are guaranteed that plan will conform to the required format
+        self.curie_logger.info(
+            f"------- Scheduling {prev_agent} --> {next_agent_name} ---------"
+        )
+        if next_agent_name == 'N/A':
+            self.curie_logger.info(
+                f"------- No next agent found for {next_agent} ---------"
+            )
+        
+        return next_agent
+    
+    def _handle_agent(self, prev_agent: str) -> str:
         """
-
-        self.curie_logger.info("------------Executing sched tool!!!------------")
-        # print(state)
-
-        if state["prev_agent"] == "supervisor":
-            return self.handle_supervisor() # supervisor may have written new plans or modified existing plans, and wants to relinquish control to scheduler so that the scheduler can assign the plans to workers.
-        elif "worker" in state["prev_agent"]:
-            return self.handle_worker(state["prev_agent"]) # a worker has completed a run
-        elif "llm_verifier" in state["prev_agent"]:
-            return self.handle_llm_verifier(state["prev_agent"])
-        elif "patch_verifier" in state["prev_agent"]:
-            return self.handle_patch_verifier(state["prev_agent"])
-        elif "analyzer" in state["prev_agent"]:
-            return self.handle_analyzer(state["prev_agent"])
-        elif "concluder" in state["prev_agent"]:
-            return self.handle_concluder(state["prev_agent"])
+        Route to appropriate handler based on previous agent.
+        
+        Args:
+            prev_agent (str): Name of the previous agent
+            
+        Returns:
+            str: Response from the appropriate handler
+        """
+        handlers = {
+            "supervisor": self.handle_supervisor,
+            "worker": lambda: self.handle_worker(prev_agent),
+            "llm_verifier": lambda: self.handle_llm_verifier(prev_agent),
+            "patch_verifier": lambda: self.handle_patch_verifier(prev_agent),
+            "analyzer": lambda: self.handle_analyzer(prev_agent),
+            "concluder": lambda: self.handle_concluder(prev_agent)
+        }
+        
+        # Handle special case for worker which has a prefix
+        if "worker" in prev_agent:
+            return handlers["worker"]()
+        
+        # Get the appropriate handler or raise an error if not found
+        handler = handlers.get(prev_agent)
+        if not handler:
+            raise ValueError(f"No handler found for agent: {prev_agent}")
+            
+        return handler()
 
     def is_init_run(self):
         memory_id = str("worker_assignment_dict")
@@ -261,7 +293,7 @@ class SchedTool(BaseTool):
                 we simply add to worker if some are idle, 
                 or add to queue.
         """
-        self.curie_logger.info("------------Entering handle supervisor!!!------------")
+        self.curie_logger.info("------------ Supervisor ------------")
 
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.is_no_plan_exists():
@@ -579,7 +611,7 @@ class SchedTool(BaseTool):
             - if control group is done: add experimental groups that don't yet exist in the worker queue, or modify existing groups as needed. Remove plan from standy list if exist. 
             - if control group is not done: add control group that don't yet exist in the control worker queue, or modify existing control group as needed. Add plan to standby list, or modify existing as needed. 
         """
-        self.curie_logger.info("------------Entering update queues!!!------------")
+        self.curie_logger.info("------------ Update Queues ------------")
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         self.curie_logger.info(f"Plan is: {utils.pretty_json(plan)} ")
 
@@ -656,8 +688,6 @@ class SchedTool(BaseTool):
                     self.insert_worker_queue(task_details)
             self.curie_logger.info(f"Current worker queue: {self.get_worker_queue()}")
         
-        self.curie_logger.info("------------Exiting update queues!!!------------")
-
     def get_groups_from_plan(self, group_dict: dict) -> int:
         # Obtains group (either experimental_group or control_group) partitions from the plan
         # pattern = r"experimental_group_partition_\d+(?!_done)"

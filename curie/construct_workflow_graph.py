@@ -25,6 +25,7 @@ from model import setup_model_logging
 from worker_agent import setup_worker_logging
 from verifier import setup_verifier_logging
 from exp_agent import setup_supervisor_logging
+from tool import setup_tool_logging
 
 if len(sys.argv) < 2:
     curie_logger.error("Usage: python script.py <config_file>")
@@ -44,6 +45,7 @@ with open(config_filename, 'r') as file:
     setup_worker_logging(log_filename)
     setup_verifier_logging(log_filename)
     setup_supervisor_logging(log_filename)
+    setup_tool_logging(log_filename)
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -228,7 +230,7 @@ def stream_graph_updates(graph, user_input: str):
         {"recursion_limit": 200, "configurable": {"thread_id": "main_graph_id"}}
     ):  
         step += 1
-        curie_logger.info(f"------------------------- Global Step {step} ------------------------")    
+        curie_logger.info(f"============================ Global Step {step} ============================")    
         curie_logger.info(f"Event: {event}")
         for value in event.values():
             curie_logger.info(f"Event value: {value['messages'][-1].content}")

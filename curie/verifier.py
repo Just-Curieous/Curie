@@ -81,7 +81,7 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
     utils.save_langgraph_graph(verifier_graph, f"../logs/misc/{node_name}_graph_image.png")
 
     def call_verifier_graph(state: State) -> State:
-        response = verifier_graph.invoke({"messages": state["messages"][-1]})
+        response = verifier_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 20})
         return {
             "messages": [
                 HumanMessage(content=response["messages"][-1].content, name=f"{node_name}_graph")
@@ -91,7 +91,6 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
     return call_verifier_graph
 
 def create_Verifier(tools, system_prompt_file, State, node_name):    
-    gpt_4_llm = os.environ.get("MODEL")
     def Verifier(state: State):
         # Read from prompt file:
         with open(system_prompt_file, "r") as file:
@@ -112,9 +111,9 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
             messages.insert(0, system_message)
         
         response = model.query_model_safe(messages, tools)
-        curie_logger.info(f"FROM {node_name}:")
+        curie_logger.info(f"<> FROM {node_name}:")
         curie_logger.info(utils.parse_langchain_llm_output(response))
-        curie_logger.info("-----------------------------------")
+        curie_logger.info("----------------- END Verifier ------------------")
         return {"messages": [response], "prev_agent": node_name}
     
     return Verifier
@@ -185,7 +184,7 @@ Here are the results from {iterations+1} separate runs of this workflow:
             item["is_correct"] = False
             item["verifier_log_message"] = verifier_log_message
 
-    curie_logger.info("------------Exiting Exec Verifier function!!!------------")
+    curie_logger.info("------------ Exiting Exec Verifier ------------")
 
     return llm_verified_wrote_list
 

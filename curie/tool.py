@@ -26,6 +26,11 @@ import json
 import re
 import os
 
+from logger import init_logger
+def setup_tool_logging(log_filename: str):
+    global curie_logger 
+    curie_logger = init_logger(log_filename)
+
 @tool
 def test_search_tool(a: Annotated[str, "search string"]) -> str:
     """Searches for useful information"""
@@ -164,8 +169,6 @@ Here is the experiment plan: \n
 
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
-            # print(f"Output: {output}") 
-            # print("me is here")
 
         except BaseException as e:
             print(f"Error for openhands agent: {repr(e)}")
@@ -223,35 +226,35 @@ class PatcherAgentInput(BaseModel):
 
     @model_validator(mode="after")
     def partition_name_check(self) -> Self:
-        print("Entering custom model validator: partition_name_check")
+        curie_logger.info("Entering custom model validator: partition_name_check")
         if not utils.extract_partition_name(self.partition_name):
             raise ValueError("partition_name is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def plan_id_check(self) -> Self:
-        print("Entering custom model validator: plan_id_check")
+        curie_logger.info("Entering custom model validator: plan_id_check")
         if not utils.extract_plan_id(self.plan_id):
             raise ValueError("plan_id is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def workspace_dir_check(self) -> Self:
-        print("Entering custom model validator: workspace_dir_check")
+        curie_logger.info("Entering custom model validator: workspace_dir_check")
         if not utils.extract_workspace_dir(self.workspace_dir):
             raise ValueError("workspace_dir is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def workflow_file_check(self) -> Self:
-        print("Entering custom model validator: workflow_file_check")
+        curie_logger.info("Entering custom model validator: workflow_file_check")
         if f"{self.workspace_dir}/control_experiment_{self.plan_id}_{self.group}_{self.partition_name}.sh" != self.control_experiment_filename:
             raise ValueError("control_experiment_filename is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def workflow_results_file_check(self) -> Self:
-        print("Entering custom model validator: workflow_results_file_check")
+        curie_logger.info("Entering custom model validator: workflow_results_file_check")
         if f"{self.workspace_dir}/results_{self.plan_id}_{self.group}_{self.partition_name}.txt" != self.control_experiment_results_filename:
             raise ValueError("control_experiment_results_filename is not specified correctly.")
         return self
@@ -331,7 +334,6 @@ Here is the experiment plan: \n
             openhands_dir = self.config["base_dir"] + "/workspace"
 
             sudo_available = shutil.which("sudo") is not None
-            print("Sudo is available:", sudo_available)
             
             # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
             if sudo_available:
@@ -363,7 +365,7 @@ Here is the experiment plan: \n
             # print("me is here")
 
         except BaseException as e:
-            print(f"Error for openhands agent: {repr(e)}")
+            curie_logger.info(f"Error for openhands agent: {repr(e)}")
             return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
         # return (f"Workflow and results have been produced, for plan_id: {plan_id}, group: {group}, partition_name: {partition_name} \n"
         #         f"control_experiment_filename is at: '{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh'\n"
@@ -404,8 +406,8 @@ def execute_shell_command(
         # print(f"Command executed: {command}")
         print(f"Output: {output}")
     except BaseException as e:
-        print(f"Error executing command: {command}")
-        print(f"Error: {repr(e)}")
+        curie_logger.error(f"Error executing command: {command}")
+        curie_logger.error(f"Error: {repr(e)}")
         return f"Failed to execute command: ```bash\n{command}\n```\nError: {repr(e)}"
     return f"Command executed: ```bash\n{command}\n```\nStdout: {output}"
 
@@ -428,8 +430,8 @@ def write_to_file(
 
         return f"String written successfully to {file_path}"
     except BaseException as e:
-        print(f"Error writing to file: {file_path}")
-        print(f"Error: {repr(e)}")
+        curie_logger.error(f"Error writing to file: {file_path}")
+        curie_logger.error(f"Error: {repr(e)}")
         return f"Failed to write to file: {file_path}\nError: {repr(e)}"
 
 @tool
@@ -571,7 +573,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
             (just for reference) Archived outdated plan format:
             {..., "experimental_group":{"vcpu":[1,2,3,4]}, "experimental_group_partition_1":{"vcpu":[1,2]}, "experimental_group_partition_2":{"vcpu":[3,4]}, "experimental_group_partition_1_done: False, "experimental_group_partition_2_done: False, control_group_done: False}
         """
-        print("---------Enter add_plan_metadata---------")
+        curie_logger.info("---------Enter add_plan_metadata---------")
 
         user_id = "admin"
         application_context = "exp-sched" 
@@ -610,7 +612,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
                     i += settings.VARS_PER_PARTITION
                     partition_count += 1
 
-        print("---------Exit add_plan_metadata---------")
+        curie_logger.info("---------Exit add_plan_metadata---------")
         return partitioned_plan_data
 
 class ExistingExpPlanStoreWriteInput(BaseModel):
@@ -659,7 +661,7 @@ class ExistingExpPlanStoreWriteTool(BaseTool):
         application_context = "exp-plans" 
         namespace = (user_id, application_context) # just a random namespace name for now
         
-        print("Modifying existing plan...")
+        curie_logger.info("Modifying existing plan...")
         memory_id = plan_id
         plan_data = plan.dict()
         # remove existing plan:
@@ -744,10 +746,8 @@ class RedoExpPartitionTool(BaseTool):
         user_id = "admin"
         application_context = "exp-plans" 
         plan_namespace = (user_id, application_context) # just a random namespace name for now
-
-        # print(state["prev_agent"])
         
-        print("Modifying existing plan...")
+        curie_logger.info("Modifying existing plan...")
 
         # Get plan from memory
         plan = self.store.get(plan_namespace, plan_id).dict()["value"]
@@ -783,10 +783,6 @@ class RedoExpPartitionTool(BaseTool):
             "error_feedback": error_feedback
         })
         self.metadata_store.put(sched_namespace, memory_id, wrote_list)
-
-        # wrote_list = self.metadata_store.get(sched_namespace, memory_id)
-        # wrote_list = wrote_list.dict()["value"]
-        # print(wrote_list)
 
 class RemoveExpPartitionInput(BaseModel):
     plan_id: str = Field(
@@ -844,9 +840,7 @@ class RemoveExpPartitionTool(BaseTool):
         application_context = "exp-plans" 
         plan_namespace = (user_id, application_context) # just a random namespace name for now
 
-        # print(state["prev_agent"])
-        
-        print("Modifying existing plan...")
+        curie_logger.info("Modifying existing plan...")
 
         # Get plan from memory
         plan = self.store.get(plan_namespace, plan_id).dict()["value"]
@@ -920,9 +914,7 @@ class ArchiveExpPlanTool(BaseTool):
         application_context = "exp-plans" 
         plan_namespace = (user_id, application_context) # just a random namespace name for now
 
-        # print(state["prev_agent"])
-        
-        print("Modifying existing plan...")
+        curie_logger.info("Modifying existing plan...")
 
         # Get plan from memory
         try:
@@ -1032,7 +1024,7 @@ class EditExpPriorityTool(BaseTool):
 
         # print(state["prev_agent"])
         
-        print("Modifying existing plan...")
+        curie_logger.info("Modifying existing plan...")
 
         # Get plan from memory
         plan = self.store.get(plan_namespace, plan_id).dict()["value"]
