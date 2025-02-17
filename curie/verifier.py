@@ -64,7 +64,7 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
     # TODO: only creating one worker now. Not sure if we will create multiple workers.
     # NOTE: since there is no parallelization now we assume that there is only one control_experiment.sh that we need to look into. We can hardcode this for now. 
     
-    def router(state: State):
+    def router(state):
         if state["remaining_steps"] <= 2:
             return END
         return node_name

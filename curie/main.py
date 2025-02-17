@@ -105,7 +105,7 @@ def run_docker_container(unique_id, iteration, task_config):
     curie_logger.info(f"Building Docker image for iteration {iteration}...")
     
     image_name = task_config["docker_image"]
-    docker_filename = task_config["dockerfile_name"]
+    docker_filename = task_config["base_dir"] + "/curie/" + task_config["dockerfile_name"]
 
     if docker_image_exists(image_name):
         curie_logger.info(f"Using existing Docker image: {image_name}")
@@ -116,7 +116,7 @@ def run_docker_container(unique_id, iteration, task_config):
             "--no-cache", "--progress=plain",
             "-t",  image_name,
             "-f",  docker_filename,
-            ".."
+            "."
         ] 
         subprocess.run(command, check=True)
     

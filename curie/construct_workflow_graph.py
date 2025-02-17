@@ -147,7 +147,7 @@ def create_verification_nodes(State, store, metadata_store, config):
 
 def router(state: State):
     # Force the agent to end
-    if state["remaining_steps"] <= 10:
+    if state["remaining_steps"] <= 20:
         return END
         # FIXME: force to concluder
     if state["is_terminate"] == True:
