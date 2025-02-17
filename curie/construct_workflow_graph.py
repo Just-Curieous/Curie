@@ -54,7 +54,7 @@ class State(TypedDict):
     next_agent: Literal[*settings.AGENT_LIST]
     is_terminate: bool 
     remaining_steps: RemainingSteps
-
+ 
 def setup_logging(log_filename: str):
     """
     Configure logging to redirect stdout and stderr to a log file.
@@ -145,6 +145,16 @@ def create_verification_nodes(State, store, metadata_store, config):
         ("concluder", verifier.create_ConcluderGraph(State, store, metadata_store))
     ]
 
+def router(state: State):
+    # Force the agent to end
+    if state["remaining_steps"] <= 10:
+        return END
+        # FIXME: force to concluder
+    if state["is_terminate"] == True:
+        return END
+    else:
+        return "scheduler"
+
 def build_graph(State, config_filename):
     """
     Build the complete LangGraph workflow.
@@ -178,8 +188,13 @@ def build_graph(State, config_filename):
     graph_builder.add_node("supervisor", supervisor_graph)
     
     # Add worker nodes
-    experimental_worker = create_worker_nodes(State, store, metadata_store, memory, config_filename)[0]
-    control_worker = create_worker_nodes(State, store, metadata_store, memory, config_filename)[1]
+    experimental_worker, control_worker = create_worker_nodes(
+                                            State, 
+                                            store, 
+                                            metadata_store, 
+                                            memory, 
+                                            config_filename
+                                        )
     graph_builder.add_node(experimental_worker[0], experimental_worker[1])
     graph_builder.add_node(control_worker[0], control_worker[1])
     
@@ -190,7 +205,8 @@ def build_graph(State, config_filename):
     
     # Add graph edges
     graph_builder.add_edge(START, "supervisor")
-    graph_builder.add_edge("supervisor", "scheduler")
+    # graph_builder.add_edge("supervisor", "scheduler")
+    graph_builder.add_conditional_edges("supervisor", router, ["scheduler", END])
     graph_builder.add_edge(experimental_worker[0], "scheduler")
     graph_builder.add_edge(control_worker[0], "scheduler")
     
@@ -229,7 +245,7 @@ def stream_graph_updates(graph, user_input: str):
     step = 0
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
-        {"recursion_limit": 200, "configurable": {"thread_id": "main_graph_id"}}
+        {"recursion_limit": 100, "configurable": {"thread_id": "main_graph_id"}}
     ):  
         step += 1
         curie_logger.info(f"============================ Global Step {step} ============================")    
@@ -246,12 +262,6 @@ def main():
         sys.exit(1)
 
     config_filename = sys.argv[1]
-
-    class State(TypedDict):
-        messages: Annotated[list, add_messages]
-        prev_agent: Literal[*settings.AGENT_LIST]
-        next_agent: Literal[*settings.AGENT_LIST]
-        is_terminate: bool
 
     try:
         # Build graph

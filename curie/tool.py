@@ -533,7 +533,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
         application_context = "exp-plans" 
         namespace = (user_id, application_context) # just a random namespace name for now
         
-        print("Writing new plan...")
+        curie_logger.info("Writing new plan...")
 
         memory_id = str(uuid.uuid4())
         # Add metadata and reformat plan:
@@ -604,7 +604,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
             (just for reference) Archived outdated plan format:
             {..., "experimental_group":{"vcpu":[1,2,3,4]}, "experimental_group_partition_1":{"vcpu":[1,2]}, "experimental_group_partition_2":{"vcpu":[3,4]}, "experimental_group_partition_1_done: False, "experimental_group_partition_2_done: False, control_group_done: False}
         """
-        curie_logger.info("---------Enter add_plan_metadata---------")
+        curie_logger.info("---------Add Plan Metadata--------")
 
         user_id = "admin"
         application_context = "exp-sched" 
@@ -643,7 +643,6 @@ class NewExpPlanStoreWriteTool(BaseTool):
                     i += settings.VARS_PER_PARTITION
                     partition_count += 1
 
-        curie_logger.info("---------Exit add_plan_metadata---------")
         return partitioned_plan_data
 
 class ExistingExpPlanStoreWriteInput(BaseModel):

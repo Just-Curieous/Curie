@@ -434,7 +434,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        self.curie_logger.info("------------Entering handle llm verifier!!!------------")
+        self.curie_logger.info("------------ LLM Verifier ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -460,8 +460,6 @@ class SchedTool(BaseTool):
         self.remove_verifier_wrote_list_all(verifier_name)
 
         # utils.print_workspace_contents()
-
-        self.curie_logger.info("------------Exiting handle llm verifier!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         if has_false: # go to patch verifier

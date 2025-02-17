@@ -50,6 +50,12 @@ def create_all_worker_graphs(State, store, metadata_store, memory, config_filena
 def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, config_dict):
     """ Creates a Worker graph that runs experimental groups given a working controlled experiment setup that was created by a controlled worker earlier. """
     # TODO: only creating one worker now. Later, we will create multiple workers.
+    
+    def router(state: State):
+        if state["remaining_steps"] <= 2:
+            return END
+        return worker_names[0]
+    
     worker_builder = StateGraph(State)
     system_prompt_file = worker_details["system_prompt_file"]
     config_file = worker_details["config_filename"]
@@ -73,13 +79,21 @@ def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, co
         worker_names[0],
         tools_condition,
     )
-    worker_builder.add_edge("tools", worker_names[0])
+    worker_builder.add_conditional_edges("tools", router, [worker_names[0], END])
     
     worker_graph = worker_builder.compile()
     utils.save_langgraph_graph(worker_graph, worker_details["graph_image_name"]) 
 
     def call_worker_graph(state: State) -> State:
-        response = worker_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 20}) 
+        response = worker_graph.invoke({
+                                        "messages": state["messages"][-1]
+                                    },
+                                    {
+                                        "recursion_limit": 20,
+                                        "configurable": {
+                                            "thread_id": "worker_graph_thread"
+                                        }
+                                    })
         # Give a very lenient recursion limit since we expect control experiment construction to take more trials https://langchain-ai.github.io/langgraph/how-tos/recursion-limit/#use-the-graph
         return {
             "messages": [

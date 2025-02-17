@@ -63,6 +63,12 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
     """ Creates a verifier graph consisting of the LLM-based verifier that checks through the experimental workflow to verify that actual data is produced. """
     # TODO: only creating one worker now. Not sure if we will create multiple workers.
     # NOTE: since there is no parallelization now we assume that there is only one control_experiment.sh that we need to look into. We can hardcode this for now. 
+    
+    def router(state: State):
+        if state["remaining_steps"] <= 2:
+            return END
+        return node_name
+        
     verifier_builder = StateGraph(State)
     verifier_node = create_Verifier(tools, system_prompt_file, State, node_name) 
 
@@ -75,13 +81,13 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
         node_name,
         tools_condition,
     )
-    verifier_builder.add_edge("tools", node_name)
+    verifier_builder.add_conditional_edges("tools", router, [node_name, END])
     
     verifier_graph = verifier_builder.compile()
     utils.save_langgraph_graph(verifier_graph, f"../logs/misc/{node_name}_graph_image.png")
 
     def call_verifier_graph(state: State) -> State:
-        response = verifier_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 20})
+        response = verifier_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 10})
         return {
             "messages": [
                 HumanMessage(content=response["messages"][-1].content, name=f"{node_name}_graph")
