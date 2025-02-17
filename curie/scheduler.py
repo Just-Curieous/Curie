@@ -229,6 +229,8 @@ class SchedTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str: 
         prev_agent = state["prev_agent"]
+        if state["remaining_steps"] <= 2: 
+            return self.handle_concluder(prev_agent)
         next_agent = self._handle_agent(prev_agent)
         next_agent_name = 'N/A'
         for k, v in next_agent.items():

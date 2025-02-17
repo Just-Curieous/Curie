@@ -29,7 +29,7 @@ from exp_agent import setup_supervisor_logging
 from tool import setup_tool_logging
 
 if len(sys.argv) < 2:
-    curie_logger.error("Usage: python script.py <config_file>")
+    print("Usage: python script.py <config_file>")
     sys.exit(1)
 
 config_filename = sys.argv[1]
@@ -147,7 +147,7 @@ def create_verification_nodes(State, store, metadata_store, config):
 
 def router(state: State):
     # Force the agent to end
-    if state["remaining_steps"] <= 20:
+    if state["remaining_steps"] <= 2:
         return END
         # FIXME: force to concluder
     if state["is_terminate"] == True:
@@ -245,7 +245,7 @@ def stream_graph_updates(graph, user_input: str):
     step = 0
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
-        {"recursion_limit": 100, "configurable": {"thread_id": "main_graph_id"}}
+        {"recursion_limit": 20, "configurable": {"thread_id": "main_graph_id"}}
     ):  
         step += 1
         curie_logger.info(f"============================ Global Step {step} ============================")    
