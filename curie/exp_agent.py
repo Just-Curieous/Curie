@@ -94,7 +94,7 @@ def create_ExpSupervisor(tools, system_prompt_file, State):
         
         response = model.query_model_safe(messages, tools=tools)
         curie_logger.info("<> FROM SUPERVISOR:")
-        curie_logger.info(utils.parse_langchain_llm_output(response))
+        print(utils.parse_langchain_llm_output(response))
         curie_logger.info("------------------ END Supervisor -----------------")
         return {"messages": [response], "prev_agent": "supervisor"}
     

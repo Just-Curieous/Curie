@@ -81,13 +81,14 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
         node_name,
         tools_condition,
     )
-    verifier_builder.add_conditional_edges("tools", router, [node_name, END])
-    
+    # verifier_builder.add_conditional_edges("tools", router, [node_name, END])
+    verifier_builder.add_edge("tools", node_name)
+
     verifier_graph = verifier_builder.compile()
     utils.save_langgraph_graph(verifier_graph, f"../logs/misc/{node_name}_graph_image.png")
 
     def call_verifier_graph(state: State) -> State:
-        response = verifier_graph.invoke({"messages": state["messages"][-1]}, {"recursion_limit": 10})
+        response = verifier_graph.invoke({"messages": state["messages"][-1]})
         return {
             "messages": [
                 HumanMessage(content=response["messages"][-1].content, name=f"{node_name}_graph")
@@ -118,7 +119,7 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
         
         response = model.query_model_safe(messages, tools)
         curie_logger.info(f"<> FROM {node_name}:")
-        curie_logger.info(utils.parse_langchain_llm_output(response))
+        print(utils.parse_langchain_llm_output(response))
         curie_logger.info("----------------- END Verifier ------------------")
         return {"messages": [response], "prev_agent": node_name}
     

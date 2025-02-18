@@ -137,7 +137,7 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
 
         response = model.query_model_safe(messages, tools)
         curie_logger.info(f"<> FROM worker: {worker_name}")
-        curie_logger.info(utils.parse_langchain_llm_output(response))
+        print(utils.parse_langchain_llm_output(response))
         curie_logger.info("------------------ END Worker -----------------")
         return {"messages": [response], "prev_agent": worker_name}
     

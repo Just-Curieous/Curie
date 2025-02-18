@@ -145,15 +145,15 @@ def create_verification_nodes(State, store, metadata_store, config):
         ("concluder", verifier.create_ConcluderGraph(State, store, metadata_store))
     ]
 
-def router(state: State):
-    # Force the agent to end
-    if state["remaining_steps"] <= 2:
-        return END
-        # FIXME: force to concluder
-    if state["is_terminate"] == True:
-        return END
-    else:
-        return "scheduler"
+# def router(state: State):
+#     # Force the agent to end
+#     if state["remaining_steps"] <= 2:
+#         return END
+#         # FIXME: force to concluder
+#     if state["is_terminate"] == True:
+#         return END
+#     else:
+#         return "scheduler"
 
 def build_graph(State, config_filename):
     """
@@ -205,8 +205,8 @@ def build_graph(State, config_filename):
     
     # Add graph edges
     graph_builder.add_edge(START, "supervisor")
-    # graph_builder.add_edge("supervisor", "scheduler")
-    graph_builder.add_conditional_edges("supervisor", router, ["scheduler", END])
+    graph_builder.add_edge("supervisor", "scheduler")
+    # graph_builder.add_conditional_edges("supervisor", router, ["scheduler", END])
     graph_builder.add_edge(experimental_worker[0], "scheduler")
     graph_builder.add_edge(control_worker[0], "scheduler")
     

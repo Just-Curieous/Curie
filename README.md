@@ -61,7 +61,7 @@ python3 -m curie.main -q "How does the choice of sorting algorithm impact runtim
 ```
 OR
 ```bash
-python3 -m curie.main -q "At what array size does binary search outperform linear search?" --task_config curie/configs/base_config.json
+python3 -m curie.main -q "At what array size does parallel sorting outperform single-threaded sorting?" --task_config curie/configs/base_config.json
 ```
 
 - While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>.log`.
