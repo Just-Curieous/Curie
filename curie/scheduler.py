@@ -230,6 +230,7 @@ class SchedTool(BaseTool):
     ) -> str: 
         prev_agent = state["prev_agent"]
         if state["remaining_steps"] <= 2: 
+            self.curie_logger.info("------------ Not enough remaining steps to continue the experimentation. EXITING!!!------------")
             return self.handle_concluder(prev_agent)
         next_agent = self._handle_agent(prev_agent)
         next_agent_name = 'N/A'
@@ -287,13 +288,13 @@ class SchedTool(BaseTool):
 
     def handle_supervisor(self):
         """
-            All of the plans that were edited/written by the supervisor will be scheduled for execution now or added to the queue. 
-            If the plan existed before, we check if the experimental groups have been modified: 
-                if yes, we will preempt the existing group (TODO: not implemented yet. this requires that we for instance also record the old plan to know if it has changed..) from the current worker, 
-                or modify within the queue. 
-            If the plan is new, 
-                we simply add to worker if some are idle, 
-                or add to queue.
+        All of the plans that were edited/written by the supervisor will be scheduled for execution now or added to the queue. 
+        If the plan existed before, we check if the experimental groups have been modified: 
+            if yes, we will preempt the existing group (TODO: not implemented yet. this requires that we for instance also record the old plan to know if it has changed..) from the current worker, 
+            or modify within the queue. 
+        If the plan is new, 
+            we simply add to worker if some are idle, 
+            or add to queue.
         """
         self.curie_logger.info("------------ Supervisor ------------")
 
@@ -485,7 +486,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        self.curie_logger.info("------------Entering handle patch verifier!!!------------")
+        self.curie_logger.info("------------ Handle patch verifier ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -512,7 +513,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        self.curie_logger.info("------------Exiting handle patch verifier!!!------------")
+        # self.curie_logger.info("------------Exiting handle patch verifier!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         if has_false: # go to supervisor
@@ -533,7 +534,7 @@ class SchedTool(BaseTool):
             - remove the analyzer from the analyzer assignment dict. 
             - assign to concluder (conditionally).
         """
-        self.curie_logger.info("------------Entering handle analyzer!!!------------")
+        self.curie_logger.info("------------ Handle Analyzer ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -560,7 +561,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        self.curie_logger.info("------------Exiting handle analyzer!!!------------")
+        # self.curie_logger.info("------------Exiting handle analyzer!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         is_terminate = self.check_exp_termination_condition()
@@ -576,7 +577,7 @@ class SchedTool(BaseTool):
             - remove the concluder from the concluder assignment dict. 
             - assign to supervisor.
         """
-        self.curie_logger.info("------------Entering handle concluder!!!------------")
+        self.curie_logger.info("------------ Handle concluder ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -596,7 +597,7 @@ class SchedTool(BaseTool):
 
         # utils.print_workspace_contents()
 
-        self.curie_logger.info("------------Exiting handle concluder!!!------------")
+        # self.curie_logger.info("------------Exiting handle concluder!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         return {"messages": item, "prev_agent": "concluder", "next_agent": "supervisor"}
