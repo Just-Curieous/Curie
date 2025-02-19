@@ -101,6 +101,10 @@ def update_tool_costs(costs: float):
     """Update accumulated tool usage statistics."""
     TokenCounter._accumulated_cost["tool_cost"] += costs
 
+def get_accumulated_cost() -> float:
+    """Get accumulated tool usage cost."""
+    return TokenCounter._accumulated_cost 
+
 def query_model_safe(
     messages: List[BaseMessage],
     tools: List = None,
@@ -163,20 +167,16 @@ def query_model_safe(
 
             # Execute final completion
             response = create_completion(messages, tools=tools)
-            curie_logger.info(f"Response: {response}")
+            curie_logger.debug(f"Response: {response}")
 
             # use tiktoken to count output tokens
             token_counts["output_tokens"] = len(token_counter.encoding.encode(response.content))
-            curie_logger.info(f"token_counts: {token_counts}")
             token_counter.update_usage(token_counts)            
             # Get current costs
             costs = token_counter.estimate_cost(token_counts)
             accumulated_stats = TokenCounter.get_accumulated_stats()
-            # FIXME: this does not count external tool API cost
-            curie_logger.info("$$$$ Cost Estimation $$$$")
-            curie_logger.info(f"  Total Tokens Used: {token_counts}")
-            curie_logger.info(f"  Cost for This Round: ${sum(costs.values()):.4f}")
-            curie_logger.info(f"  Cumulative Cost: ${accumulated_stats['total_cost']:.4f}")
+            # FIXME: this does not count external tool API cost 
+            curie_logger.info(f"Round Cost: ${sum(costs.values()):.4f}/ Total Cost: ${accumulated_stats['total_cost']:.4f}")
 
             return response
 

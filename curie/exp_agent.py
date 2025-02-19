@@ -28,12 +28,13 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
             return END
         return "supervisor"
     supervisor_builder = StateGraph(State)
-    system_prompt_file = "prompts/exp-supervisor.txt"
-    # Read config_file which is a json file:
+    
     with open(config_filename, 'r') as file:
         config = json.load(file)
-        if config["supervisor_system_prompt_filename"] != "none": # this happens only for base config
-            system_prompt_file = config["supervisor_system_prompt_filename"] 
+        
+    system_prompt_key = "supervisor_system_prompt_filename"
+    default_system_prompt_filename = "prompts/exp-supervisor.txt"
+    system_prompt_file = config.get(system_prompt_key, default_system_prompt_filename)
 
     store_write_tool = tool.NewExpPlanStoreWriteTool(store, metadata_store)
     store_write_tool_2 = tool.ExistingExpPlanStoreWriteTool(store, metadata_store) # TODO: make this more fine grained later
@@ -49,8 +50,9 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
     supervisor_builder.add_node("tools", tool_node)
 
     supervisor_builder.add_conditional_edges( "supervisor", tools_condition)
-    supervisor_builder.add_conditional_edges( "tools", router, ["supervisor", END])
-    
+    # supervisor_builder.add_conditional_edges( "tools", router, ["supervisor", END])
+    supervisor_builder.add_edge("tools", "supervisor")
+
     supervisor_graph = supervisor_builder.compile(checkpointer=memory)
     os.makedirs("../logs/misc") if not os.path.exists("../logs/misc") else None
     utils.save_langgraph_graph(supervisor_graph, "../logs/misc/supervisor_graph_image.png") 
@@ -60,7 +62,7 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
                                             "messages": state["messages"][-1]
                                             },
                                             {
-                                                "recursion_limit": 20,
+                                                # "recursion_limit": 20,
                                                 "configurable": {
                                                     "thread_id": "supervisor_graph_id"
                                                 }
@@ -93,9 +95,13 @@ def create_ExpSupervisor(tools, system_prompt_file, State):
             messages.insert(0, system_message)
         
         response = model.query_model_safe(messages, tools=tools)
-        curie_logger.info("<> FROM SUPERVISOR:")
-        print(utils.parse_langchain_llm_output(response))
-        curie_logger.info("------------------ END Supervisor -----------------")
+        curie_logger.info("<><><><><> 👑 SUPERVISOR 👑 <><><><><>")
+        curie_logger.debug(response)
+        if response.tool_calls:
+            curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
+            curie_logger.debug(f"Message: {response.content}")
+
+        curie_logger.debug(json.dumps(response, indent=4) )
         return {"messages": [response], "prev_agent": "supervisor"}
     
     return ExpSupervisor

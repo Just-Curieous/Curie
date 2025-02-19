@@ -20,15 +20,20 @@ def setup_worker_logging(log_filename: str):
 def create_all_worker_graphs(State, store, metadata_store, memory, config_filename):
 
     # Read config_file which is a json file:
-    control_worker_system_prompt_filename = "prompts/exp-controlled-setup-worker.txt"
+
     with open(config_filename, 'r') as file:
-        config = json.load(file)
-        if config["control_worker_system_prompt_filename"] != "none": # this happens only for base config
-            control_worker_system_prompt_filename = config["control_worker_system_prompt_filename"]          
+        config = json.load(file) 
+    system_prompt_key = "worker_system_prompt_filename"
+    default_system_prompt_filename = "prompts/exp-worker.txt"
+    worker_system_prompt_filename = config.get(system_prompt_key, default_system_prompt_filename)
+
+    system_prompt_key = "control_worker_system_prompt_filename"
+    default_system_prompt_filename = "prompts/controlled-worker.txt"
+    control_worker_system_prompt_filename = config.get(system_prompt_key, default_system_prompt_filename)
 
     """Entry point for creating all workers. Call this."""
     worker_details = {
-        "system_prompt_file": "prompts/exp-worker.txt",
+        "system_prompt_file": worker_system_prompt_filename,
         "graph_image_name": "../logs/misc/worker_graph_image.png",
         "graph_name": "worker_graph",
         "type": "experimental_worker",
@@ -89,7 +94,7 @@ def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, co
                                         "messages": state["messages"][-1]
                                     },
                                     {
-                                        "recursion_limit": 20,
+                                        # "recursion_limit": 20,
                                         "configurable": {
                                             "thread_id": "worker_graph_thread"
                                         }
@@ -136,9 +141,16 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
             messages.insert(0, system_message)
 
         response = model.query_model_safe(messages, tools)
-        curie_logger.info(f"<> FROM worker: {worker_name}")
-        print(utils.parse_langchain_llm_output(response))
-        curie_logger.info("------------------ END Worker -----------------")
+        curie_logger.info(f"👷 FROM Worker: {worker_name}")
+        curie_logger.debug(response.content)
+        if response.tool_calls:
+            curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
+            if 'prompt' in response.tool_calls[0]['args']:
+                curie_logger.info(f"Message received: {response.tool_calls[0]['args']['prompt']}")
+            else:
+                curie_logger.info(f"Message: {response.tool_calls[0]['args']}")
+        curie_logger.debug(json.dumps(response, indent=4) )
+
         return {"messages": [response], "prev_agent": worker_name}
     
     return Worker

@@ -224,7 +224,7 @@ def categorize_variables(env_vars):
             'max_iterations': 50,
         },
         'llm': {
-            'input_cost_per_token': 2.5e-06,
+            'input_cost_per_token': 2.5e-06, # gpt-4o
             'output_cost_per_token': 1e-05,
             'log_completions': True,
             'log_completions_folder': '../logs/openhands', 

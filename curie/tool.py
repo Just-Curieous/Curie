@@ -68,21 +68,21 @@ class CodeAgentInput(BaseModel):
 
     @model_validator(mode="after")
     def partition_name_check(self) -> Self:
-        print("Entering custom model validator: partition_name_check")
+        # print("Entering custom model validator: partition_name_check")
         if not utils.extract_partition_name(self.partition_name):
             raise ValueError("partition_name is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def plan_id_check(self) -> Self:
-        print("Entering custom model validator: plan_id_check")
+        # print("Entering custom model validator: plan_id_check")
         if not utils.extract_plan_id(self.plan_id):
             raise ValueError("plan_id is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def workspace_dir_check(self) -> Self:
-        print("Entering custom model validator: workspace_dir_check")
+        # print("Entering custom model validator: workspace_dir_check")
         if not utils.extract_workspace_dir(self.workspace_dir):
             raise ValueError("workspace_dir is not specified correctly.")
         return self
@@ -159,7 +159,7 @@ Here is the experiment plan: \n
             openhands_dir = self.config["base_dir"] + "/workspace"
 
             sudo_available = shutil.which("sudo") is not None
-            print("Sudo is available:", sudo_available)
+            # print("Sudo is available:", sudo_available)
             
             # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
             if sudo_available: 
@@ -264,21 +264,21 @@ class PatcherAgentInput(BaseModel):
 
     @model_validator(mode="after")
     def workspace_dir_check(self) -> Self:
-        curie_logger.info("Entering custom model validator: workspace_dir_check")
+        # curie_logger.info("Entering custom model validator: workspace_dir_check")
         if not utils.extract_workspace_dir(self.workspace_dir):
             raise ValueError("workspace_dir is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def workflow_file_check(self) -> Self:
-        curie_logger.info("Entering custom model validator: workflow_file_check")
+        # curie_logger.info("Entering custom model validator: workflow_file_check")
         if f"{self.workspace_dir}/control_experiment_{self.plan_id}_{self.group}_{self.partition_name}.sh" != self.control_experiment_filename:
             raise ValueError("control_experiment_filename is not specified correctly.")
         return self
 
     @model_validator(mode="after")
     def workflow_results_file_check(self) -> Self:
-        curie_logger.info("Entering custom model validator: workflow_results_file_check")
+        # curie_logger.info("Entering custom model validator: workflow_results_file_check")
         if f"{self.workspace_dir}/results_{self.plan_id}_{self.group}_{self.partition_name}.txt" != self.control_experiment_results_filename:
             raise ValueError("control_experiment_results_filename is not specified correctly.")
         return self
@@ -533,7 +533,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
         application_context = "exp-plans" 
         namespace = (user_id, application_context) # just a random namespace name for now
         
-        curie_logger.info("Writing new plan...")
+        curie_logger.info("Writing new plan 📖 ")
 
         memory_id = str(uuid.uuid4())
         # Add metadata and reformat plan:
@@ -604,7 +604,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
             (just for reference) Archived outdated plan format:
             {..., "experimental_group":{"vcpu":[1,2,3,4]}, "experimental_group_partition_1":{"vcpu":[1,2]}, "experimental_group_partition_2":{"vcpu":[3,4]}, "experimental_group_partition_1_done: False, "experimental_group_partition_2_done: False, control_group_done: False}
         """
-        curie_logger.info("---------Add Plan Metadata--------")
+        curie_logger.info("Add Plan Metadata. ")
 
         user_id = "admin"
         application_context = "exp-sched" 

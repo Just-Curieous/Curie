@@ -42,7 +42,7 @@ class NewExperimentalPlanResponseFormatter(BaseModel):
 
     @model_validator(mode="after")
     def control_group_has_vals(self) -> Self:
-        print("Entering custom model validator: control_group_has_vals")
+        # print("Entering custom model validator: control_group_has_vals")
         if len(self.control_group) == 0:
             raise ValueError("control_group must have values.")
         return self
@@ -50,14 +50,14 @@ class NewExperimentalPlanResponseFormatter(BaseModel):
     # TODO: we only support one partition in control group for now, but will extend it later. 
     @model_validator(mode="after")
     def control_group_has_one_vals(self) -> Self:
-        print("Entering custom model validator: control_group_has_one_vals")
+        # print("Entering custom model validator: control_group_has_one_vals")
         if len(self.control_group) != 1:
             raise ValueError("control_group must only have one value, put everything else in experimental_group.")
         return self
 
     @model_validator(mode="after")
     def exp_group_has_vals(self) -> Self:
-        print("Entering custom model validator: experimental_group_has_vals")
+        # print("Entering custom model validator: experimental_group_has_vals")
         if len(self.experimental_group) == 0:
             raise ValueError("experimental_group must have values.")
         return self

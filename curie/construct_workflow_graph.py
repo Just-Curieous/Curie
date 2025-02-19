@@ -139,10 +139,10 @@ def create_verification_nodes(State, store, metadata_store, config):
         list: Verification nodes with their names
     """
     return [
-        ("llm_verifier", verifier.create_LLMVerifierGraph(State, store, metadata_store)),
+        ("llm_verifier", verifier.create_LLMVerifierGraph(State, store, metadata_store, config)),
         ("patch_verifier", verifier.create_PatchVerifierGraph(State, store, metadata_store, config)),
-        ("analyzer", verifier.create_AnalyzerGraph(State, store, metadata_store)),
-        ("concluder", verifier.create_ConcluderGraph(State, store, metadata_store))
+        ("analyzer", verifier.create_AnalyzerGraph(State, store, metadata_store, config)),
+        ("concluder", verifier.create_ConcluderGraph(State, store, metadata_store, config))
     ]
 
 # def router(state: State):
@@ -249,7 +249,7 @@ def stream_graph_updates(graph, user_input: str):
     ):  
         step += 1
         curie_logger.info(f"============================ Global Step {step} ============================")    
-        curie_logger.info(f"Event: {event}")
+        curie_logger.debug(f"Event: {event}")
         for value in event.values():
             curie_logger.info(f"Event value: {value['messages'][-1].content}")
 

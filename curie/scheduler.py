@@ -243,7 +243,7 @@ class SchedTool(BaseTool):
                 break
         
         self.curie_logger.info(
-            f"------- Scheduling {prev_agent} --> {next_agent_name} ---------"
+            f"<<<<<<<< Scheduling {prev_agent} ⏩ {next_agent_name} >>>>>>>>"
         )
         if next_agent_name == 'N/A':
             self.curie_logger.info(
@@ -341,7 +341,7 @@ class SchedTool(BaseTool):
         assert len(supervisor_redo_partition_list) == 0
         self.metadata_store.put(self.sched_namespace, memory_id, supervisor_redo_partition_list)
 
-        self.curie_logger.info("------------Exiting handle supervisor!!!------------")
+        self.curie_logger.info("------------Finish handling supervisor------------")
         # Fifth, Assign to control and experimental workers if there are idle workers: according to priority
         # TODO: currently since we have NOT implemented ASYNC, we will only run 1 worker at a time (i.e., either control or normal worker). Note that we also only have 1 control and 1 normal worker only. Since there is no async I did not implement parallelism yet. 
         assignment_messages = self.assign_worker("control")
@@ -370,7 +370,7 @@ class SchedTool(BaseTool):
             - set the executed group to done. NOTE: update, this will be handled by the worker itself instead.
             - return information back to supervisor.
         """
-        self.curie_logger.info("------------Entering handle worker!!!------------")
+        self.curie_logger.info("------------Handle worker------------")
         # Get plan id and partition names assigned to worker name:
         assignments = self.get_worker_assignment(worker_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -426,7 +426,6 @@ class SchedTool(BaseTool):
             self.assign_verifier("llm_verifier", task_details)
 
         # utils.print_workspace_contents()
-        self.curie_logger.info("------------Exiting handle worker!!!------------")
         # Inform supervisor that worker has completed a run:
         return {"messages": completion_messages, "next_agent": "llm_verifier"}
 
@@ -437,7 +436,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        self.curie_logger.info("------------ LLM Verifier ------------")
+        self.curie_logger.info("------------ Handle LLM Verifier ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -534,7 +533,7 @@ class SchedTool(BaseTool):
             - remove the analyzer from the analyzer assignment dict. 
             - assign to concluder (conditionally).
         """
-        self.curie_logger.info("------------ Handle Analyzer ------------")
+        self.curie_logger.info("------------ Handle Analyzer 📊 ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -1007,9 +1006,9 @@ class SchedTool(BaseTool):
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
                     subprocess.run(["cp", "-r", old_starter_file_dir + ".", new_starter_file_dir], check=True)
                     # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
-                    self.curie_logger.info(f"Created {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
+                    self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
                 else:
-                    self.curie_logger.info(f"Created {new_starter_file_dir}. No starter files to copy.")
+                    self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
             except Exception as e:
                 self.curie_logger.info(f"Error copying files: {e}")
                 raise

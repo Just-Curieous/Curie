@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 import os
 import subprocess
 import filecmp
-import sys
+import json
 
 import model
 import utils
@@ -22,7 +22,7 @@ def setup_verifier_logging(log_filename: str):
     global curie_logger 
     curie_logger = init_logger(log_filename)
 
-def create_LLMVerifierGraph(State, store, metadata_store):
+def create_LLMVerifierGraph(State, store, metadata_store, config_dict):
     """ Creates a verifier graph consisting of the LLM-based verifier that checks through the experimental workflow to verify that actual data is produced. """
     system_prompt_file = "prompts/llm-verifier.txt"
     verifier_write_tool = tool.LLMVerifierWriteTool(store, metadata_store)
@@ -33,7 +33,9 @@ def create_LLMVerifierGraph(State, store, metadata_store):
 
 def create_PatchVerifierGraph(State, store, metadata_store, config_dict):
     """ Creates a patcher graph consisting of the LLM-based patcher/debugger that debugs the experimental workflow to ensure that actual data is produced. """
-    system_prompt_file = "prompts/exp-patcher.txt"
+    system_prompt_key = "patcher_system_prompt_filename"
+    default_prompt_path = "prompts/exp-patcher.txt"
+    system_prompt_file = config_dict.get(system_prompt_key, default_prompt_path)
     patcher_record_tool = tool.PatchVerifierWriteTool(store, metadata_store)
     patch_agent_tool = tool.PatcherAgentTool(config_dict)
     store_get_tool = tool.StoreGetTool(store)
@@ -41,18 +43,24 @@ def create_PatchVerifierGraph(State, store, metadata_store, config_dict):
     verifier_graph = create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools, "patch_verifier")
     return verifier_graph
 
-def create_AnalyzerGraph(State, store, metadata_store):
+def create_AnalyzerGraph(State, store, metadata_store, config_dict):
     """ Creates a analyzer graph consisting of the LLM-based analyzer that analyses results from the experimental workflow."""
-    system_prompt_file = "prompts/exp-analyzer.txt"
+    system_prompt_key = "analyzer_system_prompt_filename"
+    default_prompt_path = "prompts/exp-analyzer.txt"
+    system_prompt_file = config_dict.get(system_prompt_key, default_prompt_path)
+
     patcher_record_tool = tool.AnalyzerWriteTool(store, metadata_store)
     store_get_tool = tool.StoreGetTool(store)
     tools = [tool.read_file_contents, patcher_record_tool, store_get_tool] # Only tool is code execution for now
     verifier_graph = create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools, "analyzer")
     return verifier_graph
 
-def create_ConcluderGraph(State, store, metadata_store):
+def create_ConcluderGraph(State, store, metadata_store, config_dict):
     """ Creates a concluder graph consisting of the LLM-based concluder that is only activated when all results have been produced."""
-    system_prompt_file = "prompts/exp-concluder.txt"
+    system_prompt_key = "concluder_system_prompt_filename"
+    default_prompt_path = "prompts/exp-concluder.txt"
+    system_prompt_file = config_dict.get(system_prompt_key, default_prompt_path)
+
     patcher_record_tool = tool.ConcluderWriteTool(store, metadata_store)
     store_get_tool = tool.StoreGetTool(store)
     tools = [tool.read_file_contents, patcher_record_tool, store_get_tool] # Only tool is code execution for now
@@ -118,9 +126,16 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
             messages.insert(0, system_message)
         
         response = model.query_model_safe(messages, tools)
-        curie_logger.info(f"<> FROM {node_name}:")
-        print(utils.parse_langchain_llm_output(response))
-        curie_logger.info("----------------- END Verifier ------------------")
+        curie_logger.info(f"⭕⭕⭕ FROM {node_name} ✅✅✅") 
+        curie_logger.debug(response.content)
+        if response.tool_calls:
+            curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
+            if 'verifier_log_message' in response.tool_calls[0]['args']:
+                curie_logger.info(f"Message: {response.tool_calls[0]['args']['verifier_log_message']}")
+            else:
+                curie_logger.debug(f"Message: {response.tool_calls[0]['args']}")
+        curie_logger.debug(json.dumps(response.tool_calls, indent=4) )
+
         return {"messages": [response], "prev_agent": node_name}
     
     return Verifier

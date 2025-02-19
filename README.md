@@ -39,18 +39,15 @@ cd Curie
 3. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
 
 ```
-export MODEL="azure/gpt-4o"
-export AZURE_API_VERSION="2024-06-01"
-export AZURE_API_KEY="your-key"
-export ORGANIZATION='your-org'
-export AZURE_API_BASE='your-base'
+export MODEL="gpt-4o" 
+export OPENAI_API_KEY="sk-xxx" 
 ```
 
 4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
 
 ```bash
 pip install -e .
-cd curie && sudo docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
+cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
 ```
 
 ## Quick Start
@@ -64,7 +61,7 @@ OR
 python3 -m curie.main -q "At what array size does parallel sorting outperform single-threaded sorting?" --task_config curie/configs/base_config.json
 ```
 
-- While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>.log`.
+- While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>_verbose.log`.
 
 - You can check the reproducible experimentation process under `workspace/research_<ID>/`.
 
