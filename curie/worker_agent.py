@@ -149,7 +149,7 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
                 curie_logger.info(f"Message received: {response.tool_calls[0]['args']['prompt']}")
             else:
                 curie_logger.info(f"Message: {response.tool_calls[0]['args']}")
-        curie_logger.debug(json.dumps(response, indent=4) )
+        curie_logger.debug(json.dumps(response.content, indent=4) )
 
         return {"messages": [response], "prev_agent": worker_name}
     

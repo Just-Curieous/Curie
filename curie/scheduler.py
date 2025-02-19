@@ -296,7 +296,7 @@ class SchedTool(BaseTool):
             we simply add to worker if some are idle, 
             or add to queue.
         """
-        self.curie_logger.info("------------ Supervisor ------------")
+        self.curie_logger.info("------------ Handle Supervisor ------------")
 
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.is_no_plan_exists():
@@ -341,7 +341,6 @@ class SchedTool(BaseTool):
         assert len(supervisor_redo_partition_list) == 0
         self.metadata_store.put(self.sched_namespace, memory_id, supervisor_redo_partition_list)
 
-        self.curie_logger.info("------------Finish handling supervisor------------")
         # Fifth, Assign to control and experimental workers if there are idle workers: according to priority
         # TODO: currently since we have NOT implemented ASYNC, we will only run 1 worker at a time (i.e., either control or normal worker). Note that we also only have 1 control and 1 normal worker only. Since there is no async I did not implement parallelism yet. 
         assignment_messages = self.assign_worker("control")
