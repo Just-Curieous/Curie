@@ -307,7 +307,7 @@ class SchedTool(BaseTool):
         if is_terminate:
             return {"next_agent": END}
 
-        # Second, for control groups that are done, move their experimental groups to the worker queue:
+        # Second, for control groups that are done, move their experimental groups (if any exist) to the worker queue:
         self.curie_logger.info("Checking control group done..")
         memory_id = str("standby_exp_plan_list")
         standby_exp_plan_list = self.metadata_store.get(self.sched_namespace, memory_id).dict()["value"]

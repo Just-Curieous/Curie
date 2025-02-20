@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, Extra, model_validator
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 from typing_extensions import Self
 import re
 
@@ -31,8 +31,8 @@ class NewExperimentalPlanResponseFormatter(BaseModel):
         ...,
         description="A dictionary representing the control group. Example: [{'region': 'us-east-1', 'instance_type': 't2.micro'}]"
     )
-    experimental_group: List[Dict[str, Union[str, bool, int]]] = Field(
-        ...,
+    experimental_group: Optional[List[Dict[str, Union[str, bool, int]]]] = Field(
+        [],
         description="A dictionary representing the experimental group. Example: [{'region': 'us-east-2', 'instance_type': 't2.micro'}, {'region': 'us-west-2', 'instance_type': 't2.micro'}]"
     )
     priority: int = Field(
@@ -47,20 +47,20 @@ class NewExperimentalPlanResponseFormatter(BaseModel):
             raise ValueError("control_group must have values.")
         return self
     
-    # TODO: we only support one partition in control group for now, but will extend it later. 
-    @model_validator(mode="after")
-    def control_group_has_one_vals(self) -> Self:
-        # print("Entering custom model validator: control_group_has_one_vals")
-        if len(self.control_group) != 1:
-            raise ValueError("control_group must only have one value, put everything else in experimental_group.")
-        return self
+    # # TODO: we only support one partition in control group for now, but will extend it later. 
+    # @model_validator(mode="after")
+    # def control_group_has_one_vals(self) -> Self:
+    #     # print("Entering custom model validator: control_group_has_one_vals")
+    #     if len(self.control_group) != 1:
+    #         raise ValueError("control_group must only have one value, put everything else in experimental_group.")
+    #     return self
 
-    @model_validator(mode="after")
-    def exp_group_has_vals(self) -> Self:
-        # print("Entering custom model validator: experimental_group_has_vals")
-        if len(self.experimental_group) == 0:
-            raise ValueError("experimental_group must have values.")
-        return self
+    # @model_validator(mode="after")
+    # def exp_group_has_vals(self) -> Self:
+    #     # print("Entering custom model validator: experimental_group_has_vals")
+    #     if len(self.experimental_group) == 0:
+    #         raise ValueError("experimental_group must have values.")
+    #     return self
 
 class ExistingExperimentalPlanResponseFormatter(BaseModel):
     # TODO: Currently we ignore (default behaviour, see 2nd link) extra fields (i.e., our partitions, and done status fields, etc.), but ideally we want to validate them too, e.g., using a separate function for pattern matching. 
