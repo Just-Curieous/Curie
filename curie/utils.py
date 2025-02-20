@@ -297,3 +297,9 @@ def setup_openhands_credential():
     except Exception as e:
         print(f"Error setting up credentials: {str(e)}")
         raise
+
+def load_system_prompt(prompt_path, **kwargs):
+    with open(prompt_path, "r") as f:
+        template = f.read()
+    return template.format(**kwargs)
+    

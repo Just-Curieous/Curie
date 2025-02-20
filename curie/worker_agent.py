@@ -140,9 +140,13 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             messages.insert(0, system_message)
 
+        curie_logger.info(f"Messages TO Worker 👷: {messages}")
+
         response = model.query_model_safe(messages, tools)
         curie_logger.info(f"👷 FROM Worker: {worker_name}")
-        curie_logger.debug(response.content)
+        concise_msg = response.content.split('\n\n')[0]
+        if concise_msg:
+            curie_logger.info(f'Concise message: {concise_msg}')
         if response.tool_calls:
             curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
             if 'prompt' in response.tool_calls[0]['args']:

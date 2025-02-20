@@ -107,6 +107,7 @@ def _collect_openhands_cost():
 
 # Note: It's important that every field has type hints. BaseTool is a
 # Pydantic class and not having type hints can lead to unexpected behavior.
+from utils import load_system_prompt
 class CodeAgentTool(BaseTool):
     name: str = "codeagent_openhands"
     description: str = "Coding agent that can generate/modify workflow scripts for a given experimentation plan."
@@ -132,25 +133,20 @@ class CodeAgentTool(BaseTool):
 
         try:  
             utils.setup_openhands_credential() 
-            # TODO: Put the system prompt into a file
-            system_prompt = f'''
-You are a Coding Agent tasked with generating a reproducible experimental workflow program based on the provided experiment plan below. You must run the workflow program to generate actual results before terminating.
-Your working directory is {workspace_dir}. Do not touch files outside this directory.
-
-Instructions: First, run individual commands step by step to produce the required results. Once confident, generate the workflow program based on your experience and produce the final results.
-
-Program Requirement: 
-The entire controlled experiment workflow (which may involve multiple scripts) must be callable through a single script named as "{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh".
-This program must take no arguments and should handle the execution of the entire workflow for the control group. Include neccesary explanation assiciated with the plan in the script comment.
-The program must store the control group results in a single file named "{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt", and what the results mean should be easily understood (e.g., including measurement units). You may develop and test smaller standalone programs initially. 
-
-Reminders: 
-- DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
-- DO NOT execute commands like "ls -R", as it may cause you to exceed context length.
-Here is the experiment plan: \n
-'''
+            prompt_file_key = "coding_prompt_filename"
+            default_prompt_file =  "prompts/exp-coding.txt"
+            coding_agent_prompt = self.config.get(prompt_file_key, default_prompt_file)
+            system_prompt = load_system_prompt(
+                coding_agent_prompt,
+                workspace_dir=workspace_dir,
+                plan_id=plan_id,
+                group=group,
+                partition_name=partition_name
+            )
+            coding_max_iterations = self.config.get("coding_max_iterations", 50)
 
             prompt = f'''{system_prompt}\n{prompt}'''
+            curie_logger.info(f"👋👋 Trigger Coding Agent.")
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
             with open(prompt_file, "w") as file:
@@ -160,41 +156,25 @@ Here is the experiment plan: \n
 
             sudo_available = shutil.which("sudo") is not None
             # print("Sudo is available:", sudo_available)
-            
-            # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
-            if sudo_available: 
-                output = shell_tool.run({
-                    "commands": [
-                        f"export LOG_ALL_EVENTS=true; "
-                        f"sudo chmod 777 -R {workspace_dir}; "
-                        f"export WORKSPACE_BASE={openhands_dir}; " 
-                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
-                    ]
-                })
-            else:
-                output = shell_tool.run({
-                    "commands": [
-                        f"export LOG_ALL_EVENTS=true; "
-                        f"chmod 777 -R {workspace_dir}; "
-                        f"export WORKSPACE_BASE={openhands_dir}; " 
-                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
-                    ]
-                })
+            chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {workspace_dir}"
 
+            # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
+            output = shell_tool.run({
+                "commands": [
+                    f"export LOG_ALL_EVENTS=true; "
+                    f"{chmod_cmd}; "
+                    f"export WORKSPACE_BASE={openhands_dir}; " 
+                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                ]
+            }) 
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
 
         except BaseException as e:
             curie_logger.error(f"Error for openhands agent: {repr(e)}")
             return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
-        # return (f"Workflow and results have been produced, for plan_id: {plan_id}, group: {group}, partition_name: {partition_name} \n"
-        #         f"control_experiment_filename is at: '{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh'\n"
-        #         f"Control group results are stored in '{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt'\n"
-        #         f"[Minor] Openhands logging can be found in '/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt'"
-        #         )
-
+    
         _collect_openhands_cost()
 
         return f"""
@@ -311,77 +291,43 @@ class PatcherAgentTool(BaseTool):
     ) -> str:
     # given the code workspace 
     # wait; return log and result script 
-        try:  
-            # TODO: remove the hardcoded path
-            # TODO: inform the new work dir
+        try:   
+            coding_max_iterations = self.config.get("coding_max_iterations", 30)
+            prompt_file_key = "coding_patch_prompt_filename"
+            default_prompt_file =  "prompts/exp-patch-coding.txt"
+            coding_agent_prompt = self.config.get(prompt_file_key, default_prompt_file)
+            system_prompt = load_system_prompt(
+                coding_agent_prompt,
+                workspace_dir=workspace_dir,
+                plan_id=plan_id,
+                group=group,
+                partition_name=partition_name,
+                control_experiment_filename=control_experiment_filename,
+                control_experiment_results_filename=control_experiment_results_filename
+
+            )
             
-            # TODO: Put the system prompt into a file
-            system_prompt = f'''
-You are a Coding Agent responsible for patching an erroneous experimental workflow program based on the provided experiment plan, which includes potential error suggestions. You must execute the corrected workflow program to generate actual results before terminating. Your working directory is {workspace_dir}. Do not touch files outside this directory.
-
-Task Requirements:
-1. Initial Review of and error identification: 
-    - Review the script in {control_experiment_filename}, and its result file in {control_experiment_results_filename}.
-    - Display and analyze the content of any dependent or called scripts (including nested or recursive ones).
-    - While patching, you must ensure that the script solves what it is intended to.
-    - Note there may be additional issues not covered in the experimental plan.
-3. Debugging Guidelines
-    - Break down the workflow into smaller components for debugging. For instance: If a workload is suspected to be problematic, manually create a VM, upload the workload, execute it, observe logs, and debug directly on the VM before retrying the workflow.
-    - Maintain targeted and minimal edits, preserve the original structure and content of {control_experiment_filename} as much as possible.
-4. Patching and Verification
-    - Apply fixes to the workflow in {control_experiment_filename} based on the root cause of the issue.
-    - Run the patched workflow to ensure it produces the expected results, in {control_experiment_results_filename}.
-    - Remove any now-redundant code from the workflow after applying patches.
-
-Instructions: First, run individual commands step by step to produce the required results. Once confident, patch the workflow program based on your experience and produce the final results.
-
-Program Requirement:
-The entire controlled experiment workflow (which may involve multiple scripts) must be callable through a single script named as "{workspace_dir}/control_experiment_{plan_id}_{group}_{partition_name}.sh".
-This program must take no arguments and should handle the execution of the entire workflow for the control group. Include neccesary explanation assiciated with the plan in the script comment.
-The program must store the control group results in a single file named "{workspace_dir}/results_{plan_id}_{group}_{partition_name}.txt", and what the results mean should be easily understood (e.g., including measurement units). You may develop and test smaller standalone programs initially.
-
-Reminders: 
-- DO NOT mock or simulate results. Always generate real results using an actual workflow setup (e.g., scripts that can directly run with experimental/control group inputs to produce dependent variables).
-- DO NOT execute commands like "ls -R", as it may cause you to exceed context length.
-Here is the experiment plan: \n
-'''
-
             prompt = f'''{system_prompt}\n{prompt}'''
+            curie_logger.info(f"👋👋 Trigger Coding Patch Agent.")
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
             with open(prompt_file, "w") as file:
                 file.write(prompt)
 
-            # openhands_dir = os.path.abspath("../workspace")
-            # print("my openhands dir is:", openhands_dir)
-
             openhands_dir = self.config["base_dir"] + "/workspace"
-
             sudo_available = shutil.which("sudo") is not None
+            chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {workspace_dir}"
             
-            # FIXME: remove organization for public use. workspace_base is still hardcoded to home/ubuntu
-            if sudo_available:
-                output = shell_tool.run({
-                    "commands": [
-                        f"export LOG_ALL_EVENTS=true; "
-                        f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
-                        f"sudo chmod 777 -R {workspace_dir}; "
-                        f"export WORKSPACE_BASE={openhands_dir}; "
-                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
-                    ]
-                })
-            else:
-                output = shell_tool.run({
-                    "commands": [
-                        f"export LOG_ALL_EVENTS=true; "
-                        f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
-                        f"chmod 777 -R {workspace_dir}; "
-                        f"export WORKSPACE_BASE={openhands_dir}; "
-                        f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                        f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
-                    ]
-                })
+            output = shell_tool.run({
+                "commands": [
+                    f"export LOG_ALL_EVENTS=true; "
+                    f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
+                    f"{chmod_cmd}; "
+                    f"export WORKSPACE_BASE={openhands_dir}; "
+                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
+                ]
+            }) 
 
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.

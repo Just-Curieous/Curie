@@ -435,7 +435,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        self.curie_logger.info("------------ Handle LLM Verifier ------------")
+        self.curie_logger.info(f"------------ Handle LLM Verifier {verifier_name} ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -484,7 +484,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        self.curie_logger.info("------------ Handle patch verifier ------------")
+        self.curie_logger.info(f"------------ Handle patch verifier {verifier_name} ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -575,7 +575,7 @@ class SchedTool(BaseTool):
             - remove the concluder from the concluder assignment dict. 
             - assign to supervisor.
         """
-        self.curie_logger.info("------------ Handle concluder ------------")
+        self.curie_logger.info("------------ Handle Concluder 🔚 ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 

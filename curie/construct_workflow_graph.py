@@ -245,7 +245,7 @@ def stream_graph_updates(graph, user_input: str):
     step = 0
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
-        {"recursion_limit": 150, "configurable": {"thread_id": "main_graph_id"}}
+        {"recursion_limit": 15, "configurable": {"thread_id": "main_graph_id"}}
     ):  
         step += 1
         curie_logger.info(f"============================ Global Step {step} ============================")    

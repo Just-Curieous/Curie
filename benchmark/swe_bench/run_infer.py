@@ -1,9 +1,7 @@
 import os
 import pandas as pd
-import toml
 from datasets import load_dataset
-import logging
-import subprocess
+import logging 
 import re
 import json
 
@@ -24,22 +22,21 @@ def system_prompt(workspace_dir_name, problem_statement):
 
         <issue_description>
         {problem_statement}
-        </issue_description>
-
-        Can you help me implement the necessary changes to the repository so that the requirements specified in the <issue_description> are met?
-        I've already taken care of all changes to any of the test files described in the <issue_description>. This means you DON'T have to modify the testing logic or any of the tests in any way!
-        Your task is to make the minimal changes to non-test files in the /workspace directory to ensure the requirements are satisfied.
-
-        Follow these steps to resolve the issue:
-        1. First, explore the repo to familiarize yourself with its structure
-        2. Create a script to reproduce the error and execute it with `python <filename.py>` using the BashTool to confirm the error
-        3. Edit the source code of the repo to resolve the issue
-        4. Rerun your reproduce script and confirm that the error is fixed
-        5. Think about edge cases and make sure your fix handles them as well
-
+        </issue_description> 
+        
         Make sure to formulate this as an experimental plan.
     '''
     return instructions
+ 
+
+def clean_diff_content(diff_content: str) -> str: 
+    # Define a regex pattern to match the unwanted block
+    pattern = r"^similarity index 100%\nrename from .*\nrename to .*\ndiff --git .*\n(old mode \d+\n)?(new mode \d+\n)?"
+    
+    # Substitute the pattern with an empty string
+    cleaned_content = re.sub(pattern, '', diff_content, flags=re.MULTILINE)
+    
+    return cleaned_content
 
 dataset = "princeton-nlp/SWE-bench_Lite"
 split = "test"
@@ -64,55 +61,57 @@ for row in dataset:
 
     
     # print all the details
-    print(f"<> Repo URL: {repo_url}")
+    print(f"<><><><><><><><><><><><> Repo {repo_name} - Issue {issue_number} <><><><><><><><><><><><>")
     print(f"<> Commit Hash: {commit_hash}")
-    # print(f"<> Problem Statement: {problem_statement}")
-    print(f"<> Issue Number: {issue_number}")
-    print(f"<> Repo Name: {repo_name}")
+    print(f"<> Problem Statement: {problem_statement}")
     # git clone to workspace/
     workspace_dir_name = f"starter_file/{repo_name}"
     if not os.path.exists(workspace_dir_name):
         os.system(f"git clone {repo_url} {workspace_dir_name}")
     # # reset to commit 'commit_hash'
-    # os.system(f"cd {workspace_dir_name} && git reset --hard {commit_hash}")
+    os.system(f"cd {workspace_dir_name} && git reset --hard {commit_hash}")
 
-    # # system prompt
-    # instructions = system_prompt(f'{workspace_dir_name}', problem_statement)
-    # # write instructions to a file
-    # file_name = f"workspace/SWE-task-{repo_name}-{issue_number}.txt"
-    # with open(file_name, 'w') as f:
-    #     f.write(instructions)
+    # system prompt
+    instructions = system_prompt(f'{workspace_dir_name}', problem_statement)
+    # write instructions to a file
+    file_name = f"workspace/SWE-task-{repo_name}-{issue_number}.txt"
+    with open(file_name, 'w') as f:
+        f.write(instructions)
     
-    # logfile_name = f"workspace/SWE-config-{repo_name}-{issue_number}.txt"
-    # # load the config file curie/configs/swe_config.json 
-    # with open("curie/configs/swe_config.json", 'r') as f:
-    #     curie_config = json.load(f)
-    # curie_config['workspace_name'] = repo_name
-    # # dump the config file
-    # with open("curie/configs/swe_config.json", 'w') as f:
-    #     json.dump(curie_config, f, indent=4)
- 
-    # os.system(f"python3 -m curie.main --iterations 1 --question_file {file_name} --task_config curie/configs/swe_config.json > {logfile_name}")    
+    logfile_name = f"workspace/SWE-config-{repo_name}-{issue_number}.txt"
+    # load the config file curie/configs/swe_config.json 
+    with open("curie/configs/swe_config.json", 'r') as f:
+        curie_config = json.load(f)
+
+    curie_config['workspace_name'] = repo_name
+    # dump the config file
+    with open("curie/configs/swe_config.json", 'w') as f:
+        json.dump(curie_config, f, indent=4)
+
+    try:   
+        os.system(f"python3 -m curie.main --iterations 1 --question_file {file_name} --task_config curie/configs/swe_config.json > {logfile_name}")
+    except Exception as e:
+        print(f"<> Error: {e}")    
     
-    # # # read the log file
-    # # logfile_name='starter_file/astropy/SWE-config-astropy-12907.txt'
-    # curie_logfile = None
-    # with open(logfile_name, 'r') as f:
-    #     lines = f.readlines()
-    #     for log_text in lines:
-    #         if 'Check log file' in log_text:
-    #             match = re.search(r'logs/[\w\-.]+', log_text)
-    #             if match:
-    #                 curie_logfile = match.group(0)  # Extract the log file name
-    #                 print(f'<> curie_logfile: {curie_logfile}')
-    #                 break
+    # # read the log file
+    # logfile_name='starter_file/astropy/SWE-config-astropy-12907.txt'
+    curie_logfile = None
+    with open(logfile_name, 'r') as f:
+        lines = f.readlines()
+        for log_text in lines:
+            if 'Check log file' in log_text:
+                match = re.search(r'logs/[\w\-.]+', log_text)
+                if match:
+                    curie_logfile = match.group(0)  # Extract the log file name
+                    print(f'<> curie_logfile: {curie_logfile}')
+                    break
     
-    # if curie_logfile is None:
-    #     print("Error: Could not find the log file")
-    #     break
-    # if not os.path.exists(logfile_name):
-    #     print("Error: Log file does not exist")
-    #     break    
+    if curie_logfile is None:
+        print("Error: Could not find the log file")
+        break
+    if not os.path.exists(logfile_name):
+        print("Error: Log file does not exist")
+        break    
 
     curie_logfile = 'logs/SWE-task-scikit-learn-10297_20250214223259_iter1.log'
     new_starter_file_dir = None
@@ -139,13 +138,17 @@ for row in dataset:
     with open(patch_file, 'r') as f:
         patch_content = f.read()
 
+
     results = {
         "instance_id": f'{instance_id}',
         "model_patch": f'{patch_content}',
-        "model_name_or_path": f"Curie_{os.environ.get('MODEL')}",
+        "model_name_or_path": f"curie_{os.environ.get('MODEL')}",
     }
 
-    result_path = f'logs/swe_results/{instance_id}.json'
+    patch_content = clean_diff_content(patch_content)
+    patch_content = patch_content.replace('\n', '\\n')
+
+    result_path = f'logs/swe_results/{instance_id}.jsonl'
     os.makedirs(os.path.dirname(result_path), exist_ok=True)
     with open(result_path, "a") as file:
         file.write(json.dumps(results) + "\n")

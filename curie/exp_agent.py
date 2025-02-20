@@ -101,8 +101,9 @@ def create_ExpSupervisor(tools, system_prompt_file, State):
             curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
 
         concise_msg = response.content.split('\n\n')[0]
-        curie_logger.info(f'Concise message: {concise_msg}')
-        curie_logger.debug(response.content)
+        if concise_msg:
+            curie_logger.info(f'Concise message: {concise_msg}')
+
         return {"messages": [response], "prev_agent": "supervisor"}
     
     return ExpSupervisor

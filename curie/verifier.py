@@ -24,7 +24,10 @@ def setup_verifier_logging(log_filename: str):
 
 def create_LLMVerifierGraph(State, store, metadata_store, config_dict):
     """ Creates a verifier graph consisting of the LLM-based verifier that checks through the experimental workflow to verify that actual data is produced. """
-    system_prompt_file = "prompts/llm-verifier.txt"
+    default_prompt_path = "prompts/llm-verifier.txt"
+    system_prompt_key = "llm_verifier_system_prompt_filename"
+    system_prompt_file = config_dict.get(system_prompt_key, default_prompt_path)
+
     verifier_write_tool = tool.LLMVerifierWriteTool(store, metadata_store)
     store_get_tool = tool.StoreGetTool(store)
     tools = [tool.execute_shell_command, store_get_tool, verifier_write_tool]
@@ -127,14 +130,15 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
         
         response = model.query_model_safe(messages, tools)
         curie_logger.info(f"⭕⭕⭕ FROM {node_name} ✅✅✅") 
-        curie_logger.debug(response.content)
+        if response.content:
+            curie_logger.info(response.content)
         if response.tool_calls:
             curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
             if 'verifier_log_message' in response.tool_calls[0]['args']:
                 curie_logger.info(f"Message: {response.tool_calls[0]['args']['verifier_log_message']}")
             else:
                 curie_logger.debug(f"Message: {response.tool_calls[0]['args']}")
-        curie_logger.debug(json.dumps(response.tool_calls, indent=4) )
+            curie_logger.debug(json.dumps(response.tool_calls, indent=4) )
 
         return {"messages": [response], "prev_agent": node_name}
     
@@ -143,7 +147,7 @@ def create_Verifier(tools, system_prompt_file, State, node_name):
 def exec_verifier(llm_verified_wrote_list):
     # This version is meant to be called directly as a function, not wrapped within langgraph abstractions. 
 
-    curie_logger.info("------------Entering Exec Verifier function!!!------------")
+    curie_logger.info("------------Execution Verifier------------")
 
     for item in llm_verified_wrote_list:
         try:
@@ -205,8 +209,6 @@ Here are the results from {iterations+1} separate runs of this workflow:
             verifier_log_message = str(e)
             item["is_correct"] = False
             item["verifier_log_message"] = verifier_log_message
-
-    curie_logger.info("------------ Exiting Exec Verifier ------------")
 
     return llm_verified_wrote_list
 
