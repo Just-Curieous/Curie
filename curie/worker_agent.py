@@ -140,7 +140,7 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             messages.insert(0, system_message)
 
-        curie_logger.info(f"Messages TO Worker 👷: {messages}")
+        curie_logger.debug(f"Messages TO Worker 👷: {messages}")
 
         response = model.query_model_safe(messages, tools)
         curie_logger.info(f"👷 FROM Worker: {worker_name}")

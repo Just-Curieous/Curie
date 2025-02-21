@@ -29,15 +29,6 @@ def system_prompt(workspace_dir_name, problem_statement):
     return instructions
  
 
-def clean_diff_content(diff_content: str) -> str: 
-    # Define a regex pattern to match the unwanted block
-    pattern = r"^similarity index 100%\nrename from .*\nrename to .*\ndiff --git .*\n(old mode \d+\n)?(new mode \d+\n)?"
-    
-    # Substitute the pattern with an empty string
-    cleaned_content = re.sub(pattern, '', diff_content, flags=re.MULTILINE)
-    
-    return cleaned_content
-
 dataset = "princeton-nlp/SWE-bench_Lite"
 split = "test"
 
@@ -78,7 +69,7 @@ for row in dataset:
     with open(file_name, 'w') as f:
         f.write(instructions)
     
-    logfile_name = f"workspace/SWE-config-{repo_name}-{issue_number}.txt"
+    logfile_name = f"workspace/SWE-log-{repo_name}-{issue_number}.txt"
     # load the config file curie/configs/swe_config.json 
     with open("curie/configs/swe_config.json", 'r') as f:
         curie_config = json.load(f)
@@ -96,10 +87,11 @@ for row in dataset:
     # # read the log file
     # logfile_name='starter_file/astropy/SWE-config-astropy-12907.txt'
     curie_logfile = None
+
     with open(logfile_name, 'r') as f:
         lines = f.readlines()
         for log_text in lines:
-            if 'Check log file' in log_text:
+            if 'Check out the log file' in log_text:
                 match = re.search(r'logs/[\w\-.]+', log_text)
                 if match:
                     curie_logfile = match.group(0)  # Extract the log file name
@@ -113,7 +105,7 @@ for row in dataset:
         print("Error: Log file does not exist")
         break    
 
-    curie_logfile = 'logs/SWE-task-scikit-learn-10297_20250214223259_iter1.log'
+    # curie_logfile = 'logs/SWE-task-scikit-learn-10297_20250214223259_iter1.log'
     new_starter_file_dir = None
     with open(curie_logfile, 'r') as f:
         lines = f.readlines()
@@ -128,16 +120,33 @@ for row in dataset:
     if new_starter_file_dir is None or not os.path.exists(new_starter_file_dir):
         print("Error: Could not find the new starter file directory")
         break
+
+    # get the abs path of the new_starter_file_dir
+    new_starter_file_dir = os.path.abspath(new_starter_file_dir)
+
+    # find . -type f -exec chmod 644 {} +
+    command = f"sudo find {new_starter_file_dir} -type f -exec chmod 644 {{}} +"
+    os.system(command)
+
+    original_dir = os.getcwd()
+    os.chdir(new_starter_file_dir)
+    # git config --global --add safe.directory /home/ubuntu/Curie/workspace/scikit-learn_a0ce6175-0d95-407c-afd1-055d1ede4eed
+    print(f"<> Setting safe.directory to {new_starter_file_dir}")
+    os.system(f"git config --global --add safe.directory {new_starter_file_dir}")
+    print(f"<> Setting core.fileMode to false")
+    os.system("git config core.fileMode false")    
     # git diff to get the .patch file
     patch_file = f"logs/swe_results/curie_{repo_name}_{issue_number}_{instance_id}.patch"
-    command = f"git diff --no-index {new_starter_file_dir} {workspace_dir_name} > {patch_file}"
-    os.system(command)
+    patch_file = os.path.abspath(patch_file)
+    # command = f"git diff --no-index {new_starter_file_dir} {workspace_dir_name} > {patch_file}"
     print(f'<> Patch command: {command}')
-    print(f'<> Patch file: {patch_file}')
+    command = f"git diff | grep -v '^diff --git' | grep -v '^index' > {patch_file}"
+    
+    os.system(command)
+    os.chdir(original_dir)
     # Read the patch file
     with open(patch_file, 'r') as f:
         patch_content = f.read()
-
 
     results = {
         "instance_id": f'{instance_id}',
@@ -145,8 +154,7 @@ for row in dataset:
         "model_name_or_path": f"curie_{os.environ.get('MODEL')}",
     }
 
-    patch_content = clean_diff_content(patch_content)
-    patch_content = patch_content.replace('\n', '\\n')
+    # patch_content = patch_content.replace('\n', '\\n')
 
     result_path = f'logs/swe_results/{instance_id}.jsonl'
     os.makedirs(os.path.dirname(result_path), exist_ok=True)

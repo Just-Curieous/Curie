@@ -234,7 +234,7 @@ def get_question(question_file_path: str) -> str:
     with open(question_file_path, "r") as question_file:
         return question_file.read().strip()
 
-def stream_graph_updates(graph, user_input: str):
+def stream_graph_updates(graph, user_input: str, config: dict):
     """
     Stream graph updates during workflow execution.
 
@@ -243,9 +243,10 @@ def stream_graph_updates(graph, user_input: str):
         user_input (str): User's input question
     """
     step = 0
+    max_global_steps = config.get("max_global_steps", 50)
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
-        {"recursion_limit": 15, "configurable": {"thread_id": "main_graph_id"}}
+        {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}
     ):  
         step += 1
         curie_logger.info(f"============================ Global Step {step} ============================")    
@@ -274,7 +275,7 @@ def main():
         metadata_store.put(sched_namespace, "question", user_input)
 
         # Stream graph updates
-        stream_graph_updates(graph, user_input)
+        stream_graph_updates(graph, user_input, config)
 
     except Exception as e:
         curie_logger.error(f"Execution error: {e}")

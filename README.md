@@ -87,8 +87,8 @@ Curie is designed for scientific discovery across multiple domains:
 
 ## Customize Your Experimentation Agents
 
-Config `curie/configs/base_config.json`.
-- You can add your domain-specific instructions for the supervisor by customizing `supervisor_system_prompt_filename` and worker `control_worker_system_prompt_filename`
+Config `curie/configs/base_config.json` to adapt to your own tasks:  
+- Add your domain-specific instructions by customizing `supervisor_system_prompt_filename` for the supervisor, `control_worker_system_prompt_filename` for the experimentation worker and so on.
 
 ## Community and Support
 

@@ -435,7 +435,7 @@ class SchedTool(BaseTool):
             - remove the verifier from the verifier assignment dict. 
             - return information back to supervisor.
         """
-        self.curie_logger.info(f"------------ Handle LLM Verifier {verifier_name} ------------")
+        self.curie_logger.info(f"------------ Handle LLM Verifier ------------")
         # Get plan id and partition names assigned to verifier name:
         assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
@@ -577,9 +577,9 @@ class SchedTool(BaseTool):
         """
         self.curie_logger.info("------------ Handle Concluder 🔚 ------------")
         # Get plan id and partition names assigned to verifier name:
-        assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
+        # assignments = self.get_verifier_assignment(verifier_name) # format: [(plan_id1, partition_name1), (plan_id2, partition_name2), ...]
 
-        completion_messages = [] # format: [{"plan_id": plan_id1, "partition_name": partition_name1, "is_correct": True, "verifier_log_message": "no error"}, ...]
+        # completion_messages = [] # format: [{"plan_id": plan_id1, "partition_name": partition_name1, "is_correct": True, "verifier_log_message": "no error"}, ...]
 
         # Assert that all assigned partition names are now done
         item = self.get_concluder_wrote_list_item()
@@ -977,8 +977,10 @@ class SchedTool(BaseTool):
             memory_id = "concluder_assignment_dict"
         elif entity_name == "experimental":
             memory_id = str("worker_assignment_dict")
-        elif entity_name == "control":
+        elif "control" in entity_name:
             memory_id = str("control_worker_assignment_dict")
+        else:
+            raise ValueError(f"Entity name not found for {entity_name}")
         return memory_id
 
     def init_new_plan(self, plan_ids: list):

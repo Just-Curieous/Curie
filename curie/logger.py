@@ -46,12 +46,6 @@ def init_logger(log_filename, level=logging.INFO):
     if logger.hasHandlers():
         logger.handlers.clear()
 
-    # Log format (includes filename)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s - %(name)s - %(filename)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-
     # Console Handler (Info and higher)
     console_formatter = ColorFormatter(
         datefmt="%Y-%m-%d %H:%M:%S"
@@ -63,12 +57,12 @@ def init_logger(log_filename, level=logging.INFO):
     # File Handler (Logs all levels)
     file_handler = logging.FileHandler(log_filename, mode='a')
     file_handler.setLevel(logging.INFO)  # Logs everything to file
-    file_handler.setFormatter(formatter)
+    file_handler.setFormatter(console_formatter)
 
     # Error Handler (Separate Stream for Errors)
     error_handler = logging.StreamHandler(sys.stderr)
     error_handler.setLevel(logging.ERROR)
-    error_handler.setFormatter(formatter)
+    error_handler.setFormatter(console_formatter)
 
 
     # Verbose File Handler (All details, all levels)
