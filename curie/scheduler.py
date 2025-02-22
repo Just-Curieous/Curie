@@ -53,7 +53,7 @@ def create_SchedNode(sched_tool, State, metadata_store):
         response = sched_tool.invoke({"state":state}) # response is guaranteed to be a dict
         # Based on sched_tool, response, we decide which node to call next:
         if "next_agent" in response and response["next_agent"] == END: # terminate experiment. Langgraph will call END based on next_agent as defined in our conditional_edge in main.py
-            return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node"}
+            return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node", "remaining_steps_display": state["remaining_steps"]}
         if "next_agent" in response and response["next_agent"] == "supervisor": # next agent is the supervisor
             if response["prev_agent"] == "supervisor":
                 intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
@@ -61,7 +61,8 @@ def create_SchedNode(sched_tool, State, metadata_store):
                             HumanMessage(content=intro_message + str(response["messages"]), name="scheduler")
                         ],
                     "prev_agent": "sched_node",
-                    "next_agent": response["next_agent"]
+                    "next_agent": response["next_agent"], 
+                    "remaining_steps_display": state["remaining_steps"]
                 }
             elif response["prev_agent"] == "analyzer":
                 intro_message = "The following experimental plan partitions (with plan IDs, groups, and partitions) have completed execution, each run twice with the same inputs for reproducibility. Their results were analyzed, and next-step suggestions appended. Review each suggestion to assess result validity. If incorrect, mark for redo using 'redo_exp_partition'; otherwise, leave the plan unchanged. Modify or create new plans as needed.\n"
@@ -69,7 +70,8 @@ def create_SchedNode(sched_tool, State, metadata_store):
                             HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
                         ],
                     "prev_agent": "sched_node", 
-                    "next_agent": response["next_agent"]
+                    "next_agent": response["next_agent"], 
+                    "remaining_steps_display": state["remaining_steps"]
                 }
             elif response["prev_agent"] == "patch_verifier":
                 intro_message = "The following experimental plan workflows (containing plan IDs, group, partitions) have been attempted to be patched by a code debugging agent but failed. Please review. You may re-execute partitions where the workflow is not correct using the 'redo_exp_partition' tool. Otherwise, you can leave the plans unchanged, write new plans, or modify existing ones as needed.\n"
@@ -77,7 +79,8 @@ def create_SchedNode(sched_tool, State, metadata_store):
                             HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
                         ],
                     "prev_agent": "sched_node", 
-                    "next_agent": response["next_agent"]
+                    "next_agent": response["next_agent"], 
+                    "remaining_steps_display": state["remaining_steps"]
                 }
             elif response["prev_agent"] == "concluder":
                 intro_message = '''
@@ -88,6 +91,7 @@ All partitions for all experimental plans have completed, with results produced 
                         ],
                     "prev_agent": "sched_node", 
                     "next_agent": response["next_agent"], 
+                    "remaining_steps_display": state["remaining_steps"], 
                 }
                 
             assert True == False # should never reach here
@@ -97,14 +101,16 @@ All partitions for all experimental plans have completed, with results produced 
                         HumanMessage(content=str(response["messages"]), name="scheduler")
                     ],
                 "prev_agent": "sched_node", 
-                "next_agent": response["next_agent"]
+                "next_agent": response["next_agent"],
+                "remaining_steps_display": state["remaining_steps"],
             }
         elif "next_agent" in response and response["next_agent"] == "patch_verifier":
             return {"messages": [ 
                         HumanMessage(content=str(response["messages"]), name="scheduler")
                     ],
                 "prev_agent": "sched_node", 
-                "next_agent": response["next_agent"]
+                "next_agent": response["next_agent"],
+                "remaining_steps_display": state["remaining_steps"],
             }
         elif "next_agent" in response and response["next_agent"] == "analyzer":
             intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
@@ -112,14 +118,16 @@ All partitions for all experimental plans have completed, with results produced 
                         HumanMessage(content= intro_message + str(response["messages"]), name="scheduler")
                     ],
                 "prev_agent": "sched_node", 
-                "next_agent": response["next_agent"]
+                "next_agent": response["next_agent"],
+                "remaining_steps_display": state["remaining_steps"],
             }
         elif "next_agent" in response and response["next_agent"] == "concluder":
             return {"messages": [
                         HumanMessage(content= str(response["messages"]), name="scheduler")
                     ],
                 "prev_agent": "sched_node", 
-                "next_agent": response["next_agent"]
+                "next_agent": response["next_agent"],
+                "remaining_steps_display": state["remaining_steps"]
             }
         else: # next agent is a worker, and we need to determine which worker it will be.
             # TODO: not doing parallelism for now, so we just assume for instances that messages will only contain one worker's name, and we will only need to call that one worker. Parallelism will be implemented later.
@@ -136,7 +144,8 @@ All partitions for all experimental plans have completed, with results produced 
                         HumanMessage(content=json.dumps(list(response[type_name]["messages"].values())[0]), name="scheduler")
                     ], 
                 "prev_agent": "sched_node", 
-                "next_agent": list(response[type_name]["messages"].keys())[0]
+                "next_agent": list(response[type_name]["messages"].keys())[0],
+                "remaining_steps_display": state["remaining_steps"],
             } # next_agent: worker_1
     
     return SchedNode
@@ -229,10 +238,13 @@ class SchedTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str: 
         prev_agent = state["prev_agent"]
-        if state["remaining_steps"] <= 2: 
-            self.curie_logger.info("------------ Not enough remaining steps to continue the experimentation. EXITING!!!------------")
-            return self.handle_concluder(prev_agent)
-        next_agent = self._handle_agent(prev_agent)
+        if state["remaining_steps"] <= 4:
+            if prev_agent != "concluder":
+                self.curie_logger.info("------------ Not enough remaining steps to continue with experimentation. Entering concluder now!------------")
+                return {"messages": [self.get_concluder_terminate_message()], "prev_agent": "analyzer", "next_agent": "concluder"} 
+            else:
+                self.curie_logger.info("------------ Not enough remaining steps to continue with experimentation. Handling concluder output before EXITING!!!------------")
+        next_agent = self._handle_agent(prev_agent, state)
         next_agent_name = 'N/A'
         for k, v in next_agent.items():
             if k == 'next_agent':
@@ -251,8 +263,8 @@ class SchedTool(BaseTool):
             )
         
         return next_agent
-    
-    def _handle_agent(self, prev_agent: str) -> str:
+
+    def _handle_agent(self, prev_agent: str, state: Annotated[dict, InjectedState]) -> str:
         """
         Route to appropriate handler based on previous agent.
         
@@ -268,7 +280,7 @@ class SchedTool(BaseTool):
             "llm_verifier": lambda: self.handle_llm_verifier(prev_agent),
             "patch_verifier": lambda: self.handle_patch_verifier(prev_agent),
             "analyzer": lambda: self.handle_analyzer(prev_agent),
-            "concluder": lambda: self.handle_concluder(prev_agent)
+            "concluder": lambda: self.handle_concluder(prev_agent, state)
         }
         
         # Handle special case for worker which has a prefix
@@ -568,7 +580,7 @@ class SchedTool(BaseTool):
         else:
             return {"messages": completion_messages, "prev_agent": "analyzer", "next_agent": "supervisor"}
 
-    def handle_concluder(self, verifier_name: str):
+    def handle_concluder(self, verifier_name: str, state: Annotated[dict, InjectedState]):
         """
             Concluder has completed a run. 
             We will now:
@@ -586,6 +598,16 @@ class SchedTool(BaseTool):
         if item is None:
             self.curie_logger.info("Warning: Concluder has not written to concluder_wrote_list yet. We will rerun concluder.")
             return {"messages": [], "next_agent": "concluder"}
+        if len(item) > 1:
+            self.curie_logger.info("Warning: Concluder has written more than one item to concluder_wrote_list. We will only use the last item written.")
+
+        if state["remaining_steps"] <= 4:
+            if item[-1]["is_conclude"] != True:
+                self.curie_logger.info("Warning: Concluder has not concluded the experiment yet, but we do not have enough iterations (i.e., must conclude). We will rerun concluder.")
+                self.remove_verifier_wrote_list_all(verifier_name)
+                return {"messages": [self.get_concluder_terminate_message()], "next_agent": "concluder"} # reset remaining steps to allow concluder to eventually exit. 
+            else:
+                return {"next_agent": END}
 
         # Remove verifier from verifier assignment dict:
         self.unassign_verifier_all(verifier_name)
@@ -917,7 +939,7 @@ class SchedTool(BaseTool):
 
     def is_no_plan_exists(self):
         items = self.store.search(self.plan_namespace)
-        self.curie_logger.info(f"ITEMS SIS: {items}, with len: {len(items)}")
+        self.curie_logger.info(f"Plans that exist: {items}, with len: {len(items)}")
         plans_list = [item.dict()["value"] for item in items]
         if len(plans_list) == 0:
             return True
@@ -1038,3 +1060,6 @@ class SchedTool(BaseTool):
         question = self.metadata_store.get(self.sched_namespace, memory_id)
         question = question.dict()["value"]
         return question
+
+    def get_concluder_terminate_message(self):
+        return "Your task: Some results are incomplete, but you must conclude the experiment now (make sure to set 'is_conclude' to True; 'concluder_log_message' must also make it clear that we must conclude now). Analyze the results per the instructions and provide a detailed breakdown of what the user could do on their own (e.g. propose follow-up experiments)."

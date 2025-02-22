@@ -105,11 +105,18 @@ def create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools
                 HumanMessage(content=response["messages"][-1].content, name=f"{node_name}_graph")
             ],
             "prev_agent": response["prev_agent"],
+            "remaining_steps_display": state["remaining_steps"],
         }
     return call_verifier_graph
 
 def create_Verifier(tools, system_prompt_file, State, node_name):    
     def Verifier(state: State):
+        if state["remaining_steps"] <= 4:
+            return {
+                "messages": [], 
+                "prev_agent": node_name,
+            }
+
         # Read from prompt file:
         with open(system_prompt_file, "r") as file:
             system_prompt = file.read()

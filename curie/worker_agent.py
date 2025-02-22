@@ -105,6 +105,7 @@ def _create_WorkerGraph(State, store, metadata_store, memory, worker_details, co
                 HumanMessage(content=response["messages"][-1].content, name=worker_details["graph_name"])
             ],
             "prev_agent": response["prev_agent"],
+            "remaining_steps_display": state["remaining_steps"]
         }
     return call_worker_graph
 
@@ -112,6 +113,12 @@ def create_Worker(tools, system_prompt_file, config_file, State, worker_name):
     """ Normal worker that runs experimental groups given a working controlled experiment setup that was created by a controlled worker earlier. """
 
     def Worker(state: State):
+        if state["remaining_steps"] <= 4:
+            return {
+                "messages": [], 
+                "prev_agent": worker_name,
+            }
+
         # Read from prompt file:
         with open(system_prompt_file, "r") as file:
             system_prompt = file.read()

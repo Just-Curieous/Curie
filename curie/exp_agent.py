@@ -72,6 +72,7 @@ def create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filen
                 HumanMessage(content=response["messages"][-1].content, name="supervisor_graph")
             ],
             "prev_agent": response["prev_agent"],
+            "remaining_steps_display": state["remaining_steps"],
         }
     return call_supervisor_graph
 
@@ -79,6 +80,12 @@ def create_ExpSupervisor(tools, system_prompt_file, State):
     # FIXME: better way to get model names; from config?
     # FIXME: can move model name to model.py 
     def ExpSupervisor(state: State):
+        if state["remaining_steps"] <= 4:
+            return {
+                "messages": [], 
+                "prev_agent": "supervisor",
+            }
+            
         # Read from prompt file:
         with open(system_prompt_file, "r") as file:
             system_prompt = file.read()

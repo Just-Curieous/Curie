@@ -54,6 +54,7 @@ class State(TypedDict):
     next_agent: Literal[*settings.AGENT_LIST]
     is_terminate: bool 
     remaining_steps: RemainingSteps
+    remaining_steps_display: int # remaining_steps cannot be seen in event.values since it is an Annotated value managed by RemainingStepsManager https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/managed/is_last_step.py
  
 def setup_logging(log_filename: str):
     """
@@ -242,13 +243,13 @@ def stream_graph_updates(graph, user_input: str, config: dict):
         graph: Compiled LangGraph workflow
         user_input (str): User's input question
     """
-    step = 0
     max_global_steps = config.get("max_global_steps", 50)
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
         {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}
     ):  
-        step += 1
+        event_vals = list(event.values())
+        step = max_global_steps - event_vals[0]["remaining_steps_display"] # if there are multiple event values, we believe they will have the same remaining steps (only possible in parallel execution?)..
         curie_logger.info(f"============================ Global Step {step} ============================")    
         curie_logger.debug(f"Event: {event}")
         for value in event.values():
