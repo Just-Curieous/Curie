@@ -595,7 +595,7 @@ class SchedTool(BaseTool):
 
         # Assert that all assigned partition names are now done
         item = self.get_concluder_wrote_list_item()
-        if item is None:
+        if len(item) == 0:
             self.curie_logger.info("Warning: Concluder has not written to concluder_wrote_list yet. We will rerun concluder.")
             return {"messages": [], "next_agent": "concluder"}
         if len(item) > 1:
