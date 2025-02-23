@@ -144,7 +144,6 @@ class CodeAgentTool(BaseTool):
                 partition_name=partition_name
             )
             coding_max_iterations = self.config.get("coding_max_iterations", 50)
-
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
             # write to a file
@@ -171,6 +170,10 @@ class CodeAgentTool(BaseTool):
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
 
+            openhands_log = self.extract_codeagent_output_snippet(
+                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+            )
+            curie_logger.info(f"💻 Openhands results: {openhands_log}")
         except BaseException as e:
             curie_logger.error(f"Error for openhands agent: {repr(e)}")
             return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
@@ -328,7 +331,11 @@ class PatcherAgentTool(BaseTool):
                     f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
                 ]
             }) 
-
+            # read log
+            openhands_log = self.extract_codeagent_output_snippet(
+                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+            )
+            curie_logger.info(f"💻 Openhands results: {openhands_log}")
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
             # print(f"Output: {output}") 
@@ -349,9 +356,7 @@ class PatcherAgentTool(BaseTool):
             use this along with the workflow script and results file to assess success.
             Re-run the Patch Agent with feedback if needed.
 
-            {self.extract_codeagent_output_snippet(
-                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
-            )}
+            {openhands_log}
             """.strip()
 
 
@@ -362,7 +367,8 @@ class PatcherAgentTool(BaseTool):
 
         with open(filename, "r", encoding="utf-8") as f:
             lines = f.readlines()
-            bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
+            bottom_10_percent = lines[-min(20, len(lines)):]  # Extract bottom 10% of the file
+            # bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
             return "".join(bottom_10_percent)
 
 # Note: shell_tool itself can in theory be passed into the agent as a tool already https://python.langchain.com/docs/integrations/tools/bash/ https://www.youtube.com/watch?v=-ybgQK0BE-I

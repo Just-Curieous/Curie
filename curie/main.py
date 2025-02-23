@@ -218,25 +218,7 @@ def execute_curie(question_filename, unique_id, iteration, task_config):
     
 def main():
     args = parse_args()
-    
-    print(f"Iterations: {args.iterations}")
     config_file = args.task_config
-    if args.question_file is None and args.question is None:
-        print("Please provide either a question file or a question.")
-        return
-    elif args.question_file is not None and args.question is not None:
-        print("Please provide only one of either a question file or a question.")
-        return
-    elif args.question_file is None:
-        question_file = f'workspace/research_question_{int(time.time())}.txt'
-        os.makedirs(os.path.dirname(question_file), exist_ok=True)
-        # write the question to the file
-        with open(question_file, 'w') as f:
-            f.write(args.question)
-    else:
-        question_file = args.question_file
-    
-    # read from config
     try:
         with open(config_file, 'r') as f:
             task_config = json.load(f)
@@ -245,6 +227,23 @@ def main():
         print(f"Error reading config file: {e}")
         return
     
+    print(f"Iterations: {args.iterations}")
+    if args.question_file is None and args.question is None:
+        print("Please provide either a question file or a question.")
+        return
+    elif args.question_file is not None and args.question is not None:
+        print("Please provide only one of either a question file or a question.")
+        return
+    elif args.question_file is None:
+        question_file = f'workspace/{task_config['workspace_name']}_{int(time.time())}.txt'
+        os.makedirs(os.path.dirname(question_file), exist_ok=True)
+        # write the question to the file
+        with open(question_file, 'w') as f:
+            f.write(args.question)
+    else:
+        question_file = args.question_file
+    
+    # read from config
     print(f"Processing {question_file} for {args.iterations} iterations...")
     for iteration in range(1, args.iterations + 1):
         # Perform the required operation for each iteration (to be provided later)

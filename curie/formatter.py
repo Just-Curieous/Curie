@@ -7,6 +7,7 @@ class NewExperimentalPlanResponseFormatter(BaseModel):
     # TODO: Currently we ignore (default behaviour, see 2nd link) extra fields (i.e., our partitions, and done status fields, etc.), but ideally we want to validate them too, e.g., using a separate function for pattern matching. 
     # UPDATE2: we have fixed this. UPDATE: currently, we allow additional fields, my previous understanding of ignore is incorrect, ignore means those fields will be silently removed from the input argument. I'm thinking of defining a separate formatter for subsequent writes to the plan, in the future, allows for better control since I think I've seen models hallucinate. 
     # References for the above: https://stackoverflow.com/questions/71837398/pydantic-validations-for-extra-fields-that-not-defined-in-schema https://stackoverflow.com/questions/69617489/can-i-get-incoming-extra-fields-from-pydantic
+    # TODO: adapt to other task.
     hypothesis: str = Field(
         ...,
         description="A hypothesis to be tested. Example: AWS EC2 VMs in us-east-1 are slower than those in us-east-2."
