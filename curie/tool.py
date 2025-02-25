@@ -23,6 +23,7 @@ import formatter
 import settings
 import utils
 
+from datetime import datetime 
 import json
 import re
 import os
@@ -59,7 +60,7 @@ class CodeAgentInput(BaseModel):
     )
     workspace_dir: str = Field(
         ...,
-        description="Extract this from the plan JSON's 'workspace' key."
+        description="Extract this from the plan JSON's 'workspace_dir' key."
     )
     prompt: str = Field(
         ...,
@@ -216,7 +217,7 @@ class PatcherAgentInput(BaseModel):
     )
     workspace_dir: str = Field(
         ...,
-        description="Extract this from the plan JSON's 'workspace' key."
+        description="Extract this from the plan JSON's 'workspace_dir' key."
     )
     control_experiment_filename: str = Field(
         ...,
@@ -370,6 +371,58 @@ class PatcherAgentTool(BaseTool):
             bottom_10_percent = lines[-min(20, len(lines)):]  # Extract bottom 10% of the file
             # bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
             return "".join(bottom_10_percent)
+
+class DiffGenInput(BaseModel):
+    workspace_dir: str = Field(
+        ...,
+        description="Extract this from the plan JSON's 'workspace_dir' key."
+    )
+
+    @model_validator(mode="after")
+    def workspace_dir_check(self) -> Self:
+        # print("Entering custom model validator: workspace_dir_check")
+        if not utils.extract_workspace_dir(self.workspace_dir):
+            raise ValueError("workspace_dir is not specified correctly.")
+        return self
+
+# Note: It's important that every field has type hints. BaseTool is a
+# Pydantic class and not having type hints can lead to unexpected behavior.
+class DiffGenTool(BaseTool):
+    name: str = "get_git_diff"
+    description: str = "Obtains the git diff for a given git repo directory (in workspace_dir)"
+    args_schema: Type[BaseModel] = DiffGenInput
+
+    def __init__(self):
+        super().__init__()
+    
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        workspace_dir: str, 
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str: 
+
+        try:  
+            # Configure git for the directory
+            unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
+            patch_file = os.path.abspath(f"{workspace_dir}/curie_{unique_id}.patch")
+            original_dir = os.getcwd()
+            os.chdir(workspace_dir)
+            os.system(f"git config --global --add safe.directory {workspace_dir}")
+            os.system("git config core.fileMode false")
+            os.system(f"git diff | grep -v '^diff --git' | grep -v '^index' > {patch_file}")
+            os.chdir(original_dir)
+
+            with open(patch_file, "r") as file1:
+                patch_content = file1.read()
+            curie_logger.debug(f"Git diff output:\n {patch_content}")
+            return f"""Git diff output:\n {patch_content}"""
+            
+        except BaseException as e:
+            curie_logger.error(f"Error for get_git_diff: {repr(e)}")
+            return f"Failed to obtain git diff for: {workspace_dir}\nError: {repr(e)}"
 
 # Note: shell_tool itself can in theory be passed into the agent as a tool already https://python.langchain.com/docs/integrations/tools/bash/ https://www.youtube.com/watch?v=-ybgQK0BE-I
 @tool

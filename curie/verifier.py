@@ -30,7 +30,8 @@ def create_LLMVerifierGraph(State, store, metadata_store, config_dict):
 
     verifier_write_tool = tool.LLMVerifierWriteTool(store, metadata_store)
     store_get_tool = tool.StoreGetTool(store)
-    tools = [tool.execute_shell_command, store_get_tool, verifier_write_tool]
+    get_diff_tool = tool.DiffGenTool()
+    tools = [tool.execute_shell_command, store_get_tool, verifier_write_tool, get_diff_tool]
     verifier_graph = create_VerifierGraph(State, store, metadata_store, system_prompt_file, tools, "llm_verifier")
     return verifier_graph
 
@@ -219,7 +220,76 @@ Here are the results from {iterations+1} separate runs of this workflow:
 
     return llm_verified_wrote_list
 
-def run_control_experiment_and_rename(iteration, control_experiment_filename, control_experiment_results_filename, timeout=1200):
+def exec_verifier_swe(llm_verified_wrote_list):
+    # Exec verifier for SWE-Bench.
+    # This version is meant to be called directly as a function, not wrapped within langgraph abstractions. 
+
+    curie_logger.info("------------Execution Verifier------------")
+
+    for item in llm_verified_wrote_list:
+        try:
+            control_experiment_results_filename = item["control_experiment_results_filename"]
+            control_experiment_filename = item["control_experiment_filename"]
+            if "verifier_log_message" in item:
+                verifier_log_message = item["verifier_log_message"]
+            elif "patcher_log_message" in item:
+                verifier_log_message = item["patcher_log_message"]
+            else:
+                assert False, "Error: verifier_log_message or patcher_log_message not found in item."
+
+            result_file_contents = []
+
+            with open(control_experiment_results_filename, "r") as file:
+                file_content = file.read()  # Read the file content
+                result_file_contents.append(file_content)  # Append file content to the string
+                curie_logger.info(f"ExecVerifier: Successfully read content from pre-existing {control_experiment_results_filename}.")
+            
+            iterations = 1
+            for i in range(iterations):
+
+                curie_logger.info("Before iteration: {}".format(i))
+                # utils.print_workspace_contents()
+
+                # Run the first iteration and rename the file
+                no_error, verifier_log_message, result_file_1_content = run_control_experiment_and_rename(1, control_experiment_filename, control_experiment_results_filename, custom_env=True)
+
+                if not no_error:
+                    item["is_correct"] = False
+                    item["verifier_log_message"] = "Failure encountered while repeating the control_experiment the 1st time:\n" + verifier_log_message
+                    break 
+                
+                result_file_contents.append(result_file_1_content)
+
+                curie_logger.info("After iteration: {}".format(i))
+                # utils.print_workspace_contents()
+
+            # # Compare the two result files
+            # is_same_result = compare_results(result_file_1, result_file_2)
+
+            # print("After comparison:")
+            # # utils.print_workspace_contents()
+
+            results_block = "\n\n".join(
+                [f"Result {i + 1}:\n{content}" for i, content in enumerate(result_file_contents)]
+            )
+
+            verifier_log_message = f'''
+Here are the results from {iterations+1} separate runs of this workflow:
+
+{results_block}
+'''
+
+            item["verifier_log_message"] = verifier_log_message
+
+        except Exception as e:
+            curie_logger.error(f"ExecVerifier: Error: {e}")
+            verifier_log_message = str(e)
+            item["is_correct"] = False
+            item["verifier_log_message"] = verifier_log_message
+
+    return llm_verified_wrote_list
+
+def run_control_experiment_and_rename(iteration, control_experiment_filename, control_experiment_results_filename, custom_env=False, timeout=1200):
     """
     Runs the control_experiment.sh script and renames the results file.
     """
@@ -234,9 +304,24 @@ def run_control_experiment_and_rename(iteration, control_experiment_filename, co
         attempt += 1
         curie_logger.info(f"ExecVerifier: Attempt {attempt} for iteration {iteration}...")
         try:
-            # Run the control_experiment.sh script
-            curie_logger.info(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
-            result = subprocess.run(["bash", control_experiment_filename], capture_output=True, text=True, timeout=timeout)
+            # If custom env is specified (currently used for SWE-Bench), activate it:
+            if custom_env:
+                working_dir = os.path.dirname(control_experiment_filename)
+                path_to_env = working_dir + "/my-venv"
+
+                # Run the control_experiment.sh script
+                curie_logger.info(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
+
+                result = subprocess.run(
+                    ["bash", "-c", f"source ~/miniconda3/bin/activate {path_to_env} && bash {control_experiment_filename}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
+                )
+            else:
+                # Run the control_experiment.sh script
+                curie_logger.info(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
+                result = subprocess.run(["bash", control_experiment_filename], capture_output=True, text=True, timeout=timeout)
 
             if result.returncode != 0:
                 curie_logger.info(f"ExecVerifier: Error running {control_experiment_filename}: {result.stderr}")
