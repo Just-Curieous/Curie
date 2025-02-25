@@ -1,7 +1,8 @@
 # Curie: Automate Rigorous Scientific Experimentation
 
 <!-- ![Documentation](https://img.shields.io/badge/docs-Just--Curieous.github.io-blue) -->
-[![Discord](https://img.shields.io/discord/1234567890?label=Discord&logo=discord)](https://discord.gg/uCEbmG7EKU)
+<!-- [![Discord](https://img.shields.io/discord/1234567890?label=Discord&logo=discord)](https://discord.gg/uCEbmG7EKU) -->
+[![arXiv](https://img.shields.io/badge/arXiv-2502.16069-b31b1b.svg)](https://arxiv.org/abs/2502.16069)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
@@ -9,8 +10,6 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 <p align="center">
   <img src="./docs/static/img/curie-overview.png" width="600px"/>
 </p>
-
-*Paper describing Curie's architecture and evaluation is coming soon.*
 
 **Key Features**
 - 🚀 Automated Experimentation – End-to-end workflow management: hypothesis formulation, experiment setup, experiment execution, result analysis and finding reflection.
@@ -92,7 +91,8 @@ Config `curie/configs/base_config.json` to adapt to your own tasks:
 
 ## Community and Support
 
-Join our community on [Discord](https://discord.gg/uCEbmG7EKU) to connect with other users and developers. For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
+<!-- Join our community on [Discord](https://discord.gg/uCEbmG7EKU) to connect with other users and developers.  -->
+For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
 
 ## License
 
