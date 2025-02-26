@@ -13,15 +13,16 @@ import model
 import utils
 import tool
 from logger import init_logger
+from scheduler import SchedNode
 
 class NodeConfig(BaseModel):
     name: str = Field(
         description="The name of the node, used for logging and debugging."
     )
 
-    node_intro_message: str = Field(
-        default="<><><><><> 👑 SUPERVISOR 👑 <><><><><>"
-        description="The introduction message for the node."
+    node_icon: str = Field( 
+        default="👑",
+        description="The icon for the node."
     )
 
     log_filename: str = Field(
@@ -48,8 +49,9 @@ class NodeConfig(BaseModel):
     )
 
 class BaseNode(ABC):
-    def __init__(self, config: NodeConfig, State, store, metadata_store, memory, tools: list):
+    def __init__(self, sched_node: SchedNode, config: NodeConfig, State, store, metadata_store, memory, tools: list):
         self.node_config = config
+        self.sched_node = sched_node # we will be using helper functions from scheduler within transition_handle_func
         self.curie_logger = init_logger(self.node_config.log_filename)
         self.State = State
         self.store = store
@@ -110,7 +112,7 @@ class BaseNode(ABC):
             if state["remaining_steps"] <= 4:
                 return {
                     "messages": [], 
-                    "prev_agent": "supervisor",
+                    "prev_agent": self.node_config.name,
                 }
                 
             # Read from prompt file:
@@ -127,22 +129,37 @@ class BaseNode(ABC):
             # Ensure the system prompt is included at the start of the conversation
             if not any(isinstance(msg, SystemMessage) for msg in messages):
                 messages.insert(0, system_message)
+
+            self.curie_logger.debug(f"Messages TO {self.node_config.name.upper()} {self.node_config.node_icon}: {messages}")
             
             response = model.query_model_safe(messages, tools=self.tools)
-            self.curie_logger.info(self.node_config.node_intro_message)
-            self.curie_logger.debug(response)
+
+            self.curie_logger.info(f"<><><><><> {self.node_config.node_icon} {self.node_config.name.upper()} {self.node_config.node_icon} <><><><><>")
+
             if response.tool_calls:
                 self.curie_logger.info(f"Tool calls: {response.tool_calls[0]['name']}")
-
+                if 'prompt' in response.tool_calls[0]['args']:
+                    self.curie_logger.info(f"Message received: {response.tool_calls[0]['args']['prompt']}")
+                elif 'verifier_log_message' in response.tool_calls[0]['args']:
+                    self.curie_logger.info(f"Message: {response.tool_calls[0]['args']['verifier_log_message']}")
+                else:
+                    self.curie_logger.info(f"Message: {response.tool_calls[0]['args']}")
+            
             concise_msg = response.content.split('\n\n')[0]
             if concise_msg:
-                self.curie_logger.info(f'Concise message: {concise_msg}')
+                self.curie_logger.info(f'Concise response: {concise_msg}')
+            self.curie_logger.debug(f"Full response from {self.node_config.name.upper()} {self.node_config.node_icon}: {response}")
 
             return {"messages": [response], "prev_agent": self.node_config.name}
         
         return Node
 
     @abstractmethod
-    def handle_func(self):
+    def transition_handle_func(self):
         """Handles transition logic and determines next action to take."""
+        pass
+
+    @abstractmethod
+    def create_transition_objs(self):
+        """Creates transition objects for the node."""
         pass
