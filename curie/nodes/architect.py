@@ -10,16 +10,16 @@ class Architect(BaseNode):
 
     def create_transition_objs(self):
         intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
-        self.node_config.transition_objs["no_plan"] = {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
+        self.node_config.transition_objs["no_plan"] = lambda: {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
-        self.node_config.transition_objs["is_terminate"] = {"next_agent": END}
+        self.node_config.transition_objs["is_terminate"] = lambda: {"next_agent": END}
 
         self.node_config.transition_objs["control_has_work"] = lambda assignment_messages: {
             "control_work": {"messages": assignment_messages, "next_agent": "control_worker"},
             "experimental_work": {"messages": [], "next_agent": "control_worker"}
         }
 
-        self.node_config.transition_objs["experimental_has_work"] = lambda assignment_messages: return {
+        self.node_config.transition_objs["experimental_has_work"] = lambda assignment_messages: {
             "control_work": {"messages": assignment_messages, "next_agent": "control_worker"},
             "experimental_work": {"messages": self.sched_node.assign_worker("experimental"), "next_agent": "worker"}
         }
@@ -38,12 +38,12 @@ class Architect(BaseNode):
 
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.sched_node.is_no_plan_exists():
-            return self.node_config.transition_objs["no_plan"]
+            return self.node_config.transition_objs["no_plan"]()
 
         # First, check for exp termination condition:
         is_terminate = self.sched_node.check_exp_termination_condition()
         if is_terminate:
-            return self.node_config.transition_objs["is_terminate"]
+            return self.node_config.transition_objs["is_terminate"]()
 
         # Second, for control groups that are done, move their experimental groups (if any exist) to the worker queue:
         self.curie_logger.info("Checking control group done..")

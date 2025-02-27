@@ -70,7 +70,7 @@ class LLMValidator(BaseNode):
             return self.node_config.transition_objs["has_false"](completion_messages)
         else: # go to exec verifier -> supervisor 
             for item in completion_messages:
-                item["control_experiment_results_filename"] = self.get_control_experiment_results_filename(item["plan_id"], item["group"], item["partition_name"])
+                item["control_experiment_results_filename"] = self.sched_node.get_control_experiment_results_filename(item["plan_id"], item["group"], item["partition_name"])
             completion_messages = exec_validator(completion_messages)
             self.sched_node.write_all_control_experiment_results_filenames(completion_messages)
             for task_details in completion_messages:

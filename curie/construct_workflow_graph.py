@@ -15,18 +15,13 @@ from langgraph.managed.is_last_step import RemainingSteps
 import model
 import utils
 import tool
-import exp_agent
-import worker_agent
 import settings
 import scheduler as sched
-import verifier
 
 from logger import init_logger
 from model import setup_model_logging
-from worker_agent import setup_worker_logging
-from verifier import setup_verifier_logging
-from exp_agent import setup_supervisor_logging
 from tool import setup_tool_logging
+from nodes.exec_validator import setup_exec_validator_logging
 
 from nodes.architect import Architect
 from nodes.technician import Technician
@@ -51,9 +46,7 @@ with open(config_filename, 'r') as file:
     
     curie_logger = init_logger(log_filename)
     setup_model_logging(log_filename)
-    setup_worker_logging(log_filename)
     setup_exec_validator_logging(log_filename)
-    setup_supervisor_logging(log_filename)
     setup_tool_logging(log_filename)
 
 class State(TypedDict):
@@ -92,12 +85,12 @@ class AllNodes():
 
         # Create sched tool, passing in other agent's transition funcs as a dict
         config_dict["transition_funcs"] = {
-            "supervisor": lambda: self.architect.transition_handle_func,
-            "worker": lambda: self.workers[0].transition_handle_func,
-            "control_worker": lambda: self.control_workers[0].transition_handle_func,
-            "llm_verifier": lambda: self.validators[0].transition_handle_func,
-            "patch_verifier": lambda: self.validators[1].transition_handle_func,
-            "analyzer": lambda: self.validators[2].transition_handle_func,
+            "supervisor": lambda: self.architect.transition_handle_func(),
+            "worker": lambda: self.workers[0].transition_handle_func(),
+            "control_worker": lambda: self.control_workers[0].transition_handle_func(),
+            "llm_verifier": lambda: self.validators[0].transition_handle_func(),
+            "patch_verifier": lambda: self.validators[1].transition_handle_func(),
+            "analyzer": lambda: self.validators[2].transition_handle_func(),
             "concluder": lambda state: self.validators[3].transition_handle_func(state)
         }
         self.sched_tool = sched.SchedTool(self.store, self.metadata_store, config_dict)
@@ -134,7 +127,7 @@ class AllNodes():
         return self.validators
 
     def create_sched_node(self, config_dict):
-        return sched_node = sched.SchedNode(self.store, self.metadata_store, self.State, config_dict)
+        return sched.SchedNode(self.store, self.metadata_store, self.State, config_dict)
 
     def create_architect_node(self):
         # Customizable node config 
@@ -167,7 +160,7 @@ class AllNodes():
 
         # Create 1 worker: 
         # Customizable node config 
-        worker_names = list_worker_names()
+        worker_names = settings.list_worker_names()
         assert len(worker_names) == 1
         node_config = NodeConfig(
             name=worker_names[0],
@@ -182,7 +175,7 @@ class AllNodes():
 
         # Create 1 control worker: 
         # Customizable node config 
-        worker_names = list_control_worker_names()
+        worker_names = settings.list_control_worker_names()
         assert len(worker_names) == 1
         node_config = NodeConfig(
             name=worker_names[0],
@@ -344,14 +337,16 @@ def build_graph(State, config_filename):
     
     # Add supervisor node
     supervisor_graph = all_nodes.get_architect_subgraph()
-    supervisor_name = all_nodes.get_architect_node.get_name()
+    supervisor_name = all_nodes.get_architect_node().get_name()
     graph_builder.add_node(supervisor_name, supervisor_graph)
     
     # Add worker nodes
     experimental_worker, control_worker = all_nodes.get_worker_subgraphs()
+    experimental_worker_name = all_nodes.get_worker_node().get_name()
+    control_worker_name = all_nodes.get_control_worker_node().get_name()
 
-    graph_builder.add_node(all_nodes.get_worker_node.get_name(), experimental_worker)
-    graph_builder.add_node(all_nodes.get_control_worker_node.get_name(), control_worker)
+    graph_builder.add_node(experimental_worker_name, experimental_worker)
+    graph_builder.add_node(control_worker_name, control_worker)
     
     # Add verification nodes
     verification_subgraphs = all_nodes.get_validator_subgraphs()
@@ -363,11 +358,11 @@ def build_graph(State, config_filename):
     graph_builder.add_edge(START, supervisor_name)
     graph_builder.add_edge(supervisor_name, "scheduler")
     # graph_builder.add_conditional_edges("supervisor", router, ["scheduler", END])
-    graph_builder.add_edge(experimental_worker[0], "scheduler")
-    graph_builder.add_edge(control_worker[0], "scheduler")
+    graph_builder.add_edge(experimental_worker_name, "scheduler")
+    graph_builder.add_edge(control_worker_name, "scheduler")
     
-    for name, _ in verification_nodes:
-        graph_builder.add_edge(name, "scheduler")
+    for _, node in enumerate(verification_nodes):
+        graph_builder.add_edge(node.get_name(), "scheduler")
     
     graph_builder.add_conditional_edges("scheduler", lambda state: state["next_agent"])
     

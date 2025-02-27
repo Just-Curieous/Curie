@@ -15,7 +15,7 @@ class Analyzer(BaseNode):
             "next_agent": "analyzer"
         }
 
-        self.node_config.transition_objs["correct_and_conclude"] = {
+        self.node_config.transition_objs["correct_and_conclude"] = lambda: {
             "messages": [], 
             "prev_agent": "analyzer", 
             "next_agent": "concluder"
@@ -67,6 +67,6 @@ class Analyzer(BaseNode):
         # Inform supervisor that verifier has completed a run:
         is_terminate = self.sched_node.check_exp_termination_condition()
         if not has_false and is_terminate: # go to concluder -> supervisor 
-            return self.node_config.transition_objs["correct_and_conclude"]
+            return self.node_config.transition_objs["correct_and_conclude"]()
         else:
             return self.node_config.transition_objs["otherwise"](completion_messages)

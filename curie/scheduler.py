@@ -26,8 +26,6 @@ import logging
 import formatter
 import settings
 import utils
-import worker_agent
-import verifier
 from modified_deps.langchain_bash.tool import ShellTool
 from logger import init_logger
 
@@ -110,7 +108,7 @@ class SchedNode():
             # Based on sched_tool, response, we decide which node to call next:
             if "next_agent" in response and response["next_agent"] == END: # terminate experiment. Langgraph will call END based on next_agent as defined in our conditional_edge in main.py
                 return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node", "remaining_steps_display": state["remaining_steps"]}
-            elif "next_agent" in response and "worker" in response["next_agent"]: # next agent is a worker, and we need to determine which worker it will be.
+            elif "next_agent" not in response: # next agent is a worker, and we need to determine which worker it will be.
                 # TODO: not doing parallelism for now, so we just assume for instances that messages will only contain one worker's name, and we will only need to call that one worker. Parallelism will be implemented later.
                 control_empty = not response["control_work"]["messages"]
                 experimental_empty = not response["experimental_work"]["messages"]
@@ -648,6 +646,7 @@ class SchedTool(BaseTool):
             str: Response from the appropriate handler
         """
         handlers = self.config["transition_funcs"]
+        print(handlers)
         
         # Handle special case for worker which has a prefix
         if "control_worker" in prev_agent:

@@ -64,7 +64,7 @@ class Technician(BaseNode):
             assert False # should not reach here
             
         # Remove worker from worker assignment dict:
-        self.sched_node.unassign_worker_all(worker_name) # NOTE: a worker will only return to the supervisor once all its groups are done. 
+        self.sched_node.unassign_worker_all(self.node_config.name) # NOTE: a worker will only return to the supervisor once all its groups are done. 
 
         # Pass all assignments to llm_verifier:
         for assignment in assignments:
