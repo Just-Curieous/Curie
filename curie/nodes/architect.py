@@ -9,7 +9,8 @@ class Architect(BaseNode):
         self.create_transition_objs()
 
     def create_transition_objs(self):
-        self.node_config.transition_objs["no_plan"] = {"messages": self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
+        intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
+        self.node_config.transition_objs["no_plan"] = {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
         self.node_config.transition_objs["is_terminate"] = {"next_agent": END}
 

@@ -9,8 +9,9 @@ class Analyzer(BaseNode):
         self.create_transition_objs()
 
     def create_transition_objs(self):
+        intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
         self.node_config.transition_objs["progress_not_recorded"] = lambda assignments: {
-            "messages": assignments, 
+            "messages": intro_message + str(assignments), 
             "next_agent": "analyzer"
         }
 
@@ -20,8 +21,9 @@ class Analyzer(BaseNode):
             "next_agent": "concluder"
         }
 
+        intro_message = "The following experimental plan partitions (with plan IDs, groups, and partitions) have completed execution, each run twice with the same inputs for reproducibility. Their results were analyzed, and next-step suggestions appended. Review each suggestion to assess result validity. If incorrect, mark for redo using 'redo_exp_partition'; otherwise, leave the plan unchanged. Modify or create new plans as needed.\n"
         self.node_config.transition_objs["otherwise"] = lambda completion_messages: {
-            "messages": completion_messages, 
+            "messages": intro_message + str(completion_messages), 
             "prev_agent": "analyzer", 
             "next_agent": "supervisor"
         }

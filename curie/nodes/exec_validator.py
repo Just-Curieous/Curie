@@ -18,11 +18,11 @@ import tool
 
 from logger import init_logger
 
-def setup_exec_verifier_logging(log_filename: str):
+def setup_exec_validator_logging(log_filename: str):
     global curie_logger 
     curie_logger = init_logger(log_filename)
 
-def exec_verifier(llm_verified_wrote_list):
+def exec_validator(llm_verified_wrote_list):
     # This version is meant to be called directly as a function, not wrapped within langgraph abstractions. 
 
     curie_logger.info("------------Execution Verifier------------")

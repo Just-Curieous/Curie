@@ -22,16 +22,12 @@ class Analyzer(BaseNode):
         }
 
         self.node_config.transition_objs["terminate"] = {"next_agent": END}
-        
 
-        self.node_config.transition_objs["otherwise"] = lambda completion_messages: {
-            "messages": completion_messages, 
-            "prev_agent": "analyzer", 
-            "next_agent": "supervisor"
-        }
-
+        intro_message = '''
+All partitions for all experimental plans have completed, with results produced and analyzed. A next-step suggestion is appended. Conclude the experiment if you believe it provides a rigorous and comprehensive answer. Otherwise, if results are insufficient or further questions remain, create a new experimental plan.\n
+'''
         self.node_config.transition_objs["after_concluder"] = lambda item: {
-            "messages": item, 
+            "messages": intro_message + str(item), 
             "prev_agent": "concluder", 
             "next_agent": "supervisor"
         }
@@ -76,4 +72,4 @@ class Analyzer(BaseNode):
         # self.curie_logger.info("------------Exiting handle concluder!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
-        return self.node_config.transition_objs["after_concluder"](item)
+        return self.node_config.transition_objs["after_concluder"]

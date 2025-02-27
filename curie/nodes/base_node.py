@@ -58,6 +58,9 @@ class BaseNode(ABC):
         self.metadata_store = metadata_store
         self.memory = memory
         self.tools = tools
+    
+    def get_name(self):
+        return self.node_config.name
 
     def create_subgraph(self):
         """ Creates a Node subgraph."""

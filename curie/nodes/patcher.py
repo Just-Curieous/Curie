@@ -1,5 +1,5 @@
 from nodes.base_node import BaseNode, NodeConfig
-from nodes.exec_verifier import exec_verifier
+from nodes.exec_validator import exec_validator
 from langgraph.graph import END
 from scheduler import SchedNode
 
@@ -15,14 +15,16 @@ class Patcher(BaseNode):
             "next_agent": "patch_verifier"
         }
 
+        intro_message = "The following experimental plan workflows (containing plan IDs, group, partitions) have been attempted to be patched by a code debugging agent but failed. Please review. You may re-execute partitions where the workflow is not correct using the 'redo_exp_partition' tool. Otherwise, you can leave the plans unchanged, write new plans, or modify existing ones as needed.\n"
         self.node_config.transition_objs["has_false"] = lambda completion_messages: {
-            "messages": completion_messages, 
+            "messages": intro_message + str(completion_messages), 
             "prev_agent": "patch_verifier", 
             "next_agent": "supervisor"
         }
 
+        intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
         self.node_config.transition_objs["after_patch_verifier"] = lambda completion_messages: {
-            "messages": completion_messages, 
+            "messages": intro_message + str(completion_messages),
             "prev_agent": "exec_verifier", 
             "next_agent": "analyzer"
         }
@@ -69,7 +71,7 @@ class Patcher(BaseNode):
         else: # go to exec verifier -> supervisor 
             for item in completion_messages:
                 item["control_experiment_results_filename"] = self.get_control_experiment_results_filename(item["plan_id"], item["group"], item["partition_name"])
-            completion_messages = exec_verifier(completion_messages)
+            completion_messages = exec_validator(completion_messages)
             self.sched_node.write_all_control_experiment_results_filenames(completion_messages)
             for task_details in completion_messages:
                 self.sched_node.assign_verifier("analyzer", task_details)
