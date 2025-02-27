@@ -15,18 +15,21 @@ from langgraph.managed.is_last_step import RemainingSteps
 import model
 import utils
 import tool
-import exp_agent
-import worker_agent
 import settings
 import scheduler as sched
-import verifier
 
 from logger import init_logger
 from model import setup_model_logging
-from worker_agent import setup_worker_logging
-from verifier import setup_verifier_logging
-from exp_agent import setup_supervisor_logging
 from tool import setup_tool_logging
+from nodes.exec_validator import setup_exec_validator_logging
+
+from nodes.architect import Architect
+from nodes.technician import Technician
+from nodes.base_node import NodeConfig
+from nodes.llm_validator import LLMValidator
+from nodes.patcher import Patcher
+from nodes.analyzer import Analyzer
+from nodes.concluder import Concluder
 
 if len(sys.argv) < 2:
     print("Usage: python script.py <config_file>")
@@ -43,9 +46,7 @@ with open(config_filename, 'r') as file:
     
     curie_logger = init_logger(log_filename)
     setup_model_logging(log_filename)
-    setup_worker_logging(log_filename)
-    setup_verifier_logging(log_filename)
-    setup_supervisor_logging(log_filename)
+    setup_exec_validator_logging(log_filename)
     setup_tool_logging(log_filename)
 
 class State(TypedDict):
@@ -55,6 +56,220 @@ class State(TypedDict):
     is_terminate: bool 
     remaining_steps: RemainingSteps
     remaining_steps_display: int # remaining_steps cannot be seen in event.values since it is an Annotated value managed by RemainingStepsManager https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/managed/is_last_step.py
+
+class AllNodes():
+    def __init__(self, log_filename: str, config_filename: str, state: State, store, metadata_store, memory):
+        self.nodes = {}
+        self.State = State
+        self.log_filename = log_filename
+        self.store = store
+        self.metadata_store = metadata_store
+        self.memory = memory
+        self.config_filename = config_filename
+        self.instantiate_nodes()
+        self.instantiate_subgraphs()
+    
+    def instantiate_nodes(self):
+        with open(self.config_filename, 'r') as file:
+            config_dict = json.load(file)
+
+        # Create scheduler node:
+        self.sched_node = self.create_sched_node(config_dict) # always create sched node first
+
+        # Create other nodes, passing in self.sched_node as a param:
+        self.architect = self.create_architect_node()
+        worker, control_worker = self.create_worker_nodes()
+        self.workers = [worker]
+        self.control_workers = [control_worker]
+        self.validators = self.create_validators() # list of validators
+
+        # Create sched tool, passing in other agent's transition funcs as a dict
+        config_dict["transition_funcs"] = {
+            "supervisor": lambda: self.architect.transition_handle_func(),
+            "worker": lambda: self.workers[0].transition_handle_func(),
+            "control_worker": lambda: self.control_workers[0].transition_handle_func(),
+            "llm_verifier": lambda: self.validators[0].transition_handle_func(),
+            "patch_verifier": lambda: self.validators[1].transition_handle_func(),
+            "analyzer": lambda: self.validators[2].transition_handle_func(),
+            "concluder": lambda state: self.validators[3].transition_handle_func(state)
+        }
+        self.sched_tool = sched.SchedTool(self.store, self.metadata_store, config_dict)
+
+    def instantiate_subgraphs(self):
+        self.sched_subgraph = self.sched_node.create_SchedNode_subgraph(self.sched_tool)
+        self.architect_subgraph = self.architect.create_subgraph()
+        self.worker_subgraph = self.workers[0].create_subgraph()
+        self.control_worker_subgraph = self.control_workers[0].create_subgraph()
+        self.validator_subgraphs = [validator.create_subgraph() for validator in self.validators]
+    
+    def get_sched_subgraph(self):
+        return self.sched_subgraph
+    
+    def get_architect_subgraph(self):
+        return self.architect_subgraph
+    
+    def get_worker_subgraphs(self):
+        return self.worker_subgraph, self.control_worker_subgraph
+    
+    def get_validator_subgraphs(self):
+        return self.validator_subgraphs
+
+    def get_architect_node(self):
+        return self.architect
+
+    def get_worker_node(self):
+        return self.workers[0]
+    
+    def get_control_worker_node(self):
+        return self.control_workers[0]
+    
+    def get_validator_nodes(self):
+        return self.validators
+
+    def create_sched_node(self, config_dict):
+        return sched.SchedNode(self.store, self.metadata_store, self.State, config_dict)
+
+    def create_architect_node(self):
+        # Customizable node config 
+        node_config = NodeConfig(
+            name="supervisor",
+            node_icon="👑",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="supervisor_system_prompt_filename",
+            default_system_prompt_filename="prompts/exp-supervisor.txt"
+        )
+        # Customizable tools
+        store_write_tool = tool.NewExpPlanStoreWriteTool(self.store, self.metadata_store)
+        redo_write_tool = tool.RedoExpPartitionTool(self.store, self.metadata_store)
+        store_get_tool = tool.StoreGetTool(self.store)
+        edit_priority_tool = tool.EditExpPriorityTool(self.store, self.metadata_store)
+        tools = [store_write_tool, edit_priority_tool, redo_write_tool, store_get_tool, tool.read_file_contents]
+
+        return Architect(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+    def create_worker_nodes(self):
+        # Create common tools:
+        # Customizable tools
+        store_write_tool = tool.ExpPlanCompletedWriteTool(self.store, self.metadata_store)
+        store_get_tool = tool.StoreGetTool(self.store)
+        with open(self.config_filename, 'r') as file:
+            config_dict = json.load(file) 
+        codeagent_openhands = tool.CodeAgentTool(config_dict)
+        tools = [codeagent_openhands, tool.execute_shell_command, store_write_tool, store_get_tool]
+
+        # Create 1 worker: 
+        # Customizable node config 
+        worker_names = settings.list_worker_names()
+        assert len(worker_names) == 1
+        node_config = NodeConfig(
+            name=worker_names[0],
+            node_icon="👷",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="worker_system_prompt_filename",
+            default_system_prompt_filename="prompts/exp-worker.txt"
+        )
+
+        worker = Technician(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        # Create 1 control worker: 
+        # Customizable node config 
+        worker_names = settings.list_control_worker_names()
+        assert len(worker_names) == 1
+        node_config = NodeConfig(
+            name=worker_names[0],
+            node_icon="👷",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="control_worker_system_prompt_filename",
+            default_system_prompt_filename="prompts/controlled-worker.txt"
+        )
+
+        control_worker = Technician(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        return worker, control_worker
+
+    def create_validators(self):
+        # Create LLM validator: 
+        # Customizable node config 
+        node_config = NodeConfig(
+            name="llm_verifier",
+            node_icon="✅",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="llm_verifier_system_prompt_filename",
+            default_system_prompt_filename="prompts/llm-verifier.txt"
+        )
+
+        # Customizable tools
+        verifier_write_tool = tool.LLMVerifierWriteTool(self.store, self.metadata_store)
+        store_get_tool = tool.StoreGetTool(self.store)
+        tools = [tool.execute_shell_command, store_get_tool, verifier_write_tool]
+        
+        llm_validator = LLMValidator(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        # Create Patcher: 
+        # Customizable node config 
+        node_config = NodeConfig(
+            name="patch_verifier",
+            node_icon="✅",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="patcher_system_prompt_filename",
+            default_system_prompt_filename="prompts/exp-patcher.txt"
+        )
+
+        # Customizable tools
+        patcher_record_tool = tool.PatchVerifierWriteTool(self.store, self.metadata_store)
+        with open(self.config_filename, 'r') as file:
+            config_dict = json.load(file) 
+        patch_agent_tool = tool.PatcherAgentTool(config_dict)
+        store_get_tool = tool.StoreGetTool(self.store)
+        tools = [patch_agent_tool, tool.execute_shell_command, patcher_record_tool, store_get_tool] 
+        
+        patcher = Patcher(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        # Create Analyer: 
+        # Customizable node config 
+        node_config = NodeConfig(
+            name="analyzer",
+            node_icon="✅",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="analyzer_system_prompt_filename",
+            default_system_prompt_filename="prompts/exp-analyzer.txt"
+        )
+
+        # Customizable tools
+        patcher_record_tool = tool.AnalyzerWriteTool(self.store, self.metadata_store)
+        store_get_tool = tool.StoreGetTool(self.store)
+        tools = [tool.read_file_contents, patcher_record_tool, store_get_tool]
+        
+        analyzer = Analyzer(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        # Create Concluder: 
+        # Customizable node config 
+        node_config = NodeConfig(
+            name="concluder",
+            node_icon="✅",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="concluder_system_prompt_filename",
+            default_system_prompt_filename="prompts/exp-concluder.txt"
+        )
+
+        # Customizable tools
+        patcher_record_tool = tool.ConcluderWriteTool(self.store, self.metadata_store)
+        store_get_tool = tool.StoreGetTool(self.store)
+        tools = [tool.read_file_contents, patcher_record_tool, store_get_tool] # Only tool is code execution for now
+        
+        concluder = Concluder(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        return [llm_validator, patcher, analyzer, concluder]
+
+    def get_all_nodes(self):
+        return self.nodes
  
 def setup_logging(log_filename: str):
     """
@@ -78,73 +293,6 @@ def create_graph_stores():
     metadata_store = InMemoryStore()
     memory = MemorySaver()
     return store, metadata_store, memory
-
-def create_scheduler_node(store, metadata_store, config, State):
-    """
-    Create scheduler node for the graph.
-    
-    Args:
-        store: InMemoryStore for data storage
-        metadata_store: InMemoryStore for metadata
-        config: Configuration dictionary
-        State: Graph state type
-    
-    Returns:
-        Node for the scheduler
-    """
-    sched_tool = sched.SchedTool(store, metadata_store, config)
-    return sched.create_SchedNode(sched_tool, State, metadata_store)
-
-def create_worker_nodes(State, store, metadata_store, memory, config_filename):
-    """
-    Create worker nodes for the graph.
-    
-    Args:
-        State: Graph state type
-        store: InMemoryStore for data storage
-        metadata_store: InMemoryStore for metadata
-        memory: MemorySaver for checkpointing
-        config_filename: Path to configuration file
-    
-    Returns:
-        tuple: Experimental and control worker nodes with their names
-    """
-    experiment_worker_graph, control_worker_graph = worker_agent.create_all_worker_graphs(
-        State, 
-        store, 
-        metadata_store, 
-        memory,
-        config_filename=config_filename
-    )
-    
-    worker_names = settings.list_worker_names()
-    experimental_worker_name = worker_names[0]
-    
-    worker_names = settings.list_control_worker_names()
-    control_worker_name = worker_names[0]
-    
-    return (experimental_worker_name, experiment_worker_graph), \
-           (control_worker_name, control_worker_graph)
-
-def create_verification_nodes(State, store, metadata_store, config):
-    """
-    Create verification nodes for the graph.
-    
-    Args:
-        State: Graph state type
-        store: InMemoryStore for data storage
-        metadata_store: InMemoryStore for metadata
-        config: Configuration dictionary
-    
-    Returns:
-        list: Verification nodes with their names
-    """
-    return [
-        ("llm_verifier", verifier.create_LLMVerifierGraph(State, store, metadata_store, config)),
-        ("patch_verifier", verifier.create_PatchVerifierGraph(State, store, metadata_store, config)),
-        ("analyzer", verifier.create_AnalyzerGraph(State, store, metadata_store, config)),
-        ("concluder", verifier.create_ConcluderGraph(State, store, metadata_store, config))
-    ]
 
 # def router(state: State):
 #     # Force the agent to end
@@ -179,40 +327,42 @@ def build_graph(State, config_filename):
     
     # Create graph builder
     graph_builder = StateGraph(State)
+
+    all_nodes = AllNodes(log_filename, config_filename, State, store, metadata_store, memory)
+
     
     # Add scheduler node
-    sched_node = create_scheduler_node(store, metadata_store, config, State)
-    graph_builder.add_node("scheduler", sched_node)
+    sched_subgraph = all_nodes.get_sched_subgraph()
+    graph_builder.add_node("scheduler", sched_subgraph)
     
     # Add supervisor node
-    supervisor_graph = exp_agent.create_ExpSupervisorGraph(State, store, metadata_store, memory, config_filename)
-    graph_builder.add_node("supervisor", supervisor_graph)
+    supervisor_graph = all_nodes.get_architect_subgraph()
+    supervisor_name = all_nodes.get_architect_node().get_name()
+    graph_builder.add_node(supervisor_name, supervisor_graph)
     
     # Add worker nodes
-    experimental_worker, control_worker = create_worker_nodes(
-                                            State, 
-                                            store, 
-                                            metadata_store, 
-                                            memory, 
-                                            config_filename
-                                        )
-    graph_builder.add_node(experimental_worker[0], experimental_worker[1])
-    graph_builder.add_node(control_worker[0], control_worker[1])
+    experimental_worker, control_worker = all_nodes.get_worker_subgraphs()
+    experimental_worker_name = all_nodes.get_worker_node().get_name()
+    control_worker_name = all_nodes.get_control_worker_node().get_name()
+
+    graph_builder.add_node(experimental_worker_name, experimental_worker)
+    graph_builder.add_node(control_worker_name, control_worker)
     
     # Add verification nodes
-    verification_nodes = create_verification_nodes(State, store, metadata_store, config)
-    for name, node in verification_nodes:
-        graph_builder.add_node(name, node)
+    verification_subgraphs = all_nodes.get_validator_subgraphs()
+    verification_nodes = all_nodes.get_validator_nodes()
+    for index, node in enumerate(verification_nodes):
+        graph_builder.add_node(node.get_name(), verification_subgraphs[index])
     
     # Add graph edges
-    graph_builder.add_edge(START, "supervisor")
-    graph_builder.add_edge("supervisor", "scheduler")
+    graph_builder.add_edge(START, supervisor_name)
+    graph_builder.add_edge(supervisor_name, "scheduler")
     # graph_builder.add_conditional_edges("supervisor", router, ["scheduler", END])
-    graph_builder.add_edge(experimental_worker[0], "scheduler")
-    graph_builder.add_edge(control_worker[0], "scheduler")
+    graph_builder.add_edge(experimental_worker_name, "scheduler")
+    graph_builder.add_edge(control_worker_name, "scheduler")
     
-    for name, _ in verification_nodes:
-        graph_builder.add_edge(name, "scheduler")
+    for _, node in enumerate(verification_nodes):
+        graph_builder.add_edge(node.get_name(), "scheduler")
     
     graph_builder.add_conditional_edges("scheduler", lambda state: state["next_agent"])
     
@@ -247,7 +397,7 @@ def stream_graph_updates(graph, user_input: str, config: dict):
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
         {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}
-    ):  
+    ):
         event_vals = list(event.values())
         step = max_global_steps - event_vals[0]["remaining_steps_display"] # if there are multiple event values, we believe they will have the same remaining steps (only possible in parallel execution?)..
         curie_logger.info(f"============================ Global Step {step} ============================")    

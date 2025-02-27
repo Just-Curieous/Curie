@@ -7,7 +7,6 @@ import logging
 import sys
 import os
 
-
 class ColorFormatter(logging.Formatter):
     GREY = '\033[38;5;240m'
     RESET = '\033[0m'
