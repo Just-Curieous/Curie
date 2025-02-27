@@ -1,5 +1,6 @@
-from nodes.base_node import BaseNode
+from nodes.base_node import BaseNode, NodeConfig
 from langgraph.graph import END
+from scheduler import SchedNode
 
 class Architect(BaseNode):
 

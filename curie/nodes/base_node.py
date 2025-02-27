@@ -62,7 +62,7 @@ class BaseNode(ABC):
     def create_subgraph(self):
         """ Creates a Node subgraph."""
 
-        subgraph_builder = StateGraph(State)
+        subgraph_builder = StateGraph(self.State)
         
         with open(self.node_config.config_filename, 'r') as file:
             config = json.load(file)
