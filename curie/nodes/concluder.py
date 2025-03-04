@@ -72,4 +72,4 @@ All partitions for all experimental plans have completed, with results produced 
         # self.curie_logger.info("------------Exiting handle concluder!!!------------")
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
-        return self.node_config.transition_objs["after_concluder"]()
+        return self.node_config.transition_objs["after_concluder"](item)
