@@ -52,26 +52,32 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 ```
 
 ## Quick Start
+Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
 
-Input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
-
-**Example 1**: Understand the sorting algorithm efficiency.
+**Example 1**: Understanding Sorting Algorithm Efficiency
 
 ```bash
 python3 -m curie.main \
-  -q "How does the choice of sorting algorithm impact runtime performance 
-  across different input distributions (random, nearly sorted, reverse sorted)?"
+  -q "How does the choice of sorting algorithm impact runtime performance across different \
+  input distributions (random, nearly sorted, reverse sorted)?"
 ``` 
-- Expected processing time: ~10 minutes.
-- While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>_verbose.log`.
+- **Estimated runtime**: ~10 minutes
+- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
+- **Log monitoring**:
+  - Real-time logs are streamed to the console.
+  - Logs are also stored in:
+    - `logs/research_question_<ID>.log` 
+    - `logs/research_question_<ID>_verbose.log`.
+- **Reproducibility**: The full experimentation process is saved in workspace/research_<ID>/.
 
-- You can check the reproducible experimentation process under `workspace/research_<ID>/`.
-
-**Example 2**: Find the best ML strategies on Iris dataset.
+**Example 2**: Optimizing ML Strategies for the Wine Dataset
 
 ```bash
 python3 -m curie.main \
-  -q "For the Wine dataset (identifying wine cultivars using chemical properties), using a genetic algorithm to select a subset of features will create a simpler, more interpretable model that, when combined with an ensemble classifier (e.g., Random Forest), outperforms models built on the full feature set. "
+  -q "For the Wine dataset (identifying wine cultivars using chemical properties),\
+   using a genetic algorithm to select a subset of features will create a simpler,\
+   more interpretable model that, when combined with an ensemble classifier \
+  (e.g., Random Forest), outperforms models built on the full feature set. "
 ```
 
 More example questions can be found [here](./docs/quick_start.md).

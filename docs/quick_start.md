@@ -6,8 +6,8 @@ Input your research question or problem statement: `python3 -m curie.main -q "<Y
 
 ```bash
 python3 -m curie.main \
-  -q "How does the choice of sorting algorithm impact runtime performance 
-  across different input distributions (random, nearly sorted, reverse sorted)?"
+  -q "How does the choice of sorting algorithm impact runtime performance across different \
+  input distributions (random, nearly sorted, reverse sorted)?"
 ``` 
 - Expected processing time: ~10 minutes.
 - While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>_verbose.log`.
@@ -39,9 +39,10 @@ python3 -m curie.main \
 
 ```bash
 python3 -m curie.main \
-  -q "For the Wine dataset (identifying wine cultivars using chemical properties), when using 
-  an ensemble classifier (e.g., Random Forest), what is the best subset of features that will create a simpler, more interpretable model that outperforms models  built on the full feature set. "
+  -q "For the Wine dataset (identifying wine cultivars using chemical properties), when using an ensemble classifier \
+  (e.g., Random Forest), what is the best subset of features that will create a simpler, more interpretable model that \
+  outperforms models  built on the full feature set. "
 ```
 
-- [] We will include the conclusion and loggings from Curie soon.
+- [ ] We will include the conclusion and loggings from Curie soon.
 

@@ -149,8 +149,11 @@ class BaseNode(ABC):
                     self.curie_logger.info(f"Message: {response.tool_calls[0]['args']}")
             
             concise_msg = response.content.split('\n\n')[0]
-            if concise_msg:
+            if self.node_config.name.upper() == "CONCLUDER":
+                self.curie_logger.info(f"✌️ Concluder response: {response.content}")
+            elif concise_msg:
                 self.curie_logger.info(f'Concise response: {concise_msg}')
+
             self.curie_logger.debug(f"Full response from {self.node_config.name.upper()} {self.node_config.node_icon}: {response}")
 
             return {"messages": [response], "prev_agent": self.node_config.name}
