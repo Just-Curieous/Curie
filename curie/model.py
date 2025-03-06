@@ -91,7 +91,10 @@ def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
     try:
         chat = ChatLiteLLM(model=os.environ.get("MODEL"))
         if tools:
-            chat = chat.bind_tools(tools, parallel_tool_calls=False)
+            if "anthropic" in os.environ.get("MODEL"):
+                chat = chat.bind_tools(tools)
+            else:
+                chat = chat.bind_tools(tools, parallel_tool_calls=False) # disabling for gpt models
         return chat.invoke(messages)
     except Exception as e:
         curie_logger.error(f"Error in LLM API create_completion: {e}")
