@@ -25,7 +25,7 @@ export OPENAI_API_KEY=
 export OPENAI_ORGANIZATION= 
 export OPENAI_API_BASE= 
 ```
-
+Note: `curie/setup/env.sh.tmp` contains more examples.
 
 2. Input your research problem
 Execute this command in the repo root directory `Curie/`. 
