@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument(
         "--task_config",
         type=str, 
-        default="configs/base_config.json",
+        default="curie/configs/base_config.json",
         help="Task configuration file"
     )
 

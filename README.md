@@ -4,6 +4,8 @@
 <!-- [![Discord](https://img.shields.io/discord/1234567890?label=Discord&logo=discord)](https://discord.gg/uCEbmG7EKU) -->
 [![arXiv](https://img.shields.io/badge/arXiv-2502.16069-b31b1b.svg)](https://arxiv.org/abs/2502.16069)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
+[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
+
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
 Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
@@ -51,18 +53,29 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 
 ## Quick Start
 
-1. Input your research question or problem statement (expected processing time: 5-10 minutes).
-```bash
-python3 -m curie.main -q "How does the choice of sorting algorithm impact runtime performance across different input distributions (random, nearly sorted, reverse sorted)?" --task_config curie/configs/base_config.json
-```
-OR
-```bash
-python3 -m curie.main -q "At what array size does parallel sorting outperform single-threaded sorting?" --task_config curie/configs/base_config.json
-```
+Input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
 
+**Example 1**: Understand the sorting algorithm efficiency.
+
+```bash
+python3 -m curie.main \
+  -q "How does the choice of sorting algorithm impact runtime performance 
+  across different input distributions (random, nearly sorted, reverse sorted)?"
+``` 
+- Expected processing time: ~10 minutes.
 - While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>_verbose.log`.
 
 - You can check the reproducible experimentation process under `workspace/research_<ID>/`.
+
+**Example 2**: Find the best ML strategies on Iris dataset.
+
+```bash
+python3 -m curie.main \
+  -q "For the Wine dataset (identifying wine cultivars using chemical properties), using a genetic algorithm to select a subset of features will create a simpler, more interpretable model that, when combined with an ensemble classifier (e.g., Random Forest), outperforms models built on the full feature set. "
+```
+
+More example questions can be found [here](./docs/quick_start.md).
+
 
 ## Tutorial
 - [How to reproduce the results in `Large Language Monkeys'. ](./docs/tutorial-large-language-monkey.md)
