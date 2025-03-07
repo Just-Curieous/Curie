@@ -6,6 +6,8 @@ import os
 from openai import BadRequestError
 from typing import List, Dict, Any
 from langchain_core.messages import BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage
+# import anthropic
 
 from logger import init_logger
 def setup_model_logging(log_filename: str):
@@ -128,19 +130,24 @@ def query_model_safe(
             # Case 1: Prune messages if total tokens exceed context length
             if token_counts["input_tokens"] > max_tokens:
                 curie_logger.info(f"Total tokens ({token_counts['input_tokens']}) exceed limit ({max_tokens}). Pruning messages.")
-                messages_to_prune = messages[len(messages) // 3: -len(messages) // 3]
-                
+                start = len(messages) // 3
+                end = -len(messages) // 3
+                messages_to_prune = messages[start:end]
                 j = len(messages_to_prune) - 1
-                if messages[-len(messages) // 3].type == "tool": # edge case where the first message following the last message in messages_to_prune is a tool message. So that means we DO NOT want to prune the last message in messages_to_prune. 
+                if messages[end].type == "tool": # edge case where the first message following the last message in messages_to_prune is a tool message. So that means we DO NOT want to prune the last message in messages_to_prune. 
+                    messages_to_prune = messages_to_prune[:-1]
+                    end -= 1
                     j -= 1
                 while j >= 0:
                     if messages_to_prune[j].type == "tool":
+                        if j > 0:
+                            messages_to_prune.pop()
+                            messages_to_prune.pop()
                         j -= 2
                     else:
                         messages_to_prune.pop()
                         j -= 1
-                
-                messages = messages[:len(messages) // 3] + messages_to_prune + messages[-len(messages) // 3:]
+                messages = messages[:start] + messages_to_prune + messages[end:]
                 token_counts = token_counter.count_messages_tokens(messages)
                 curie_logger.info(f"After pruning - Tokens: {token_counts['input_tokens']}")
 
@@ -155,7 +162,7 @@ def query_model_safe(
                     for i, chunk in enumerate(chunks):
                         curie_logger.info(f"Processing chunk {i + 1} of {len(chunks)}")
                         summary_messages = [
-                            messages[0].__class__(
+                            HumanMessage(
                                 content="Summarize the following text. Be concise, but maintain structure. Don't output anything other than the summarized text.\n" + chunk
                             )
                         ]
