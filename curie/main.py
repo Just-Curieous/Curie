@@ -45,6 +45,12 @@ def parse_args():
         help="Task configuration file"
     )
 
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Whether to write a formal experiment report."
+    )
+
     return parser.parse_args()
 
 def prune_openhands_docker(): 
@@ -69,7 +75,11 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     log_filename = f"logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
     config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    task_config.update({"unique_id": unique_id, "iteration": iteration, "log_filename": log_filename, "question_filename": question_file, 'base_dir': base_dir})
+    task_config.update({"unique_id": unique_id, 
+                        "iteration": iteration, 
+                        "log_filename": log_filename, 
+                        "question_filename": question_file, 
+                        'base_dir': base_dir})
     
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
     send_question_telemetry(question_file)
@@ -222,6 +232,7 @@ def main():
     try:
         with open(config_file, 'r') as f:
             task_config = json.load(f)
+            task_config['report'] = args.report
             print(f"Config: {task_config}")
     except Exception as e:
         print(f"Error reading config file: {e}")
@@ -252,7 +263,7 @@ def main():
         unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
 
         execute_curie(question_file, unique_id, iteration, task_config)
-
+        send_question_telemetry(task_config['log_filename'])
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"Iteration {iteration} for {question_file} completed in {elapsed_time:.2f} seconds.")

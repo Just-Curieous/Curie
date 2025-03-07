@@ -23,8 +23,8 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Use Cases](#use-cases)
-- [Tutorial](#tutorial-for-reproducing-large-language-monkeys-results)
-- [Customize Your Experiment Agents](#develop-your-customized-experimentation-agents) 
+- [Tutorial](#tutorial)
+- [Customize Your Experiment Agents](#customize-your-experimentation-agents) 
 
 ## Installation
 
@@ -54,28 +54,30 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 ## Quick Start
 Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
 
-**Example 1**: Understanding Sorting Algorithm Efficiency
+### **Example 1**: Understanding Sorting Algorithm Efficiency
 
 ```bash
 python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
-  input distributions (random, nearly sorted, reverse sorted)?"
+  input distributions (random, nearly sorted, reverse sorted)? --report"
 ``` 
+
 - **Estimated runtime**: ~10 minutes
 - **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
+- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306_report.md).
 - **Log monitoring**:
   - Real-time logs are streamed to the console.
   - Logs are also stored in:
     - `logs/research_question_<ID>.log` 
     - `logs/research_question_<ID>_verbose.log`.
-- **Reproducibility**: The full experimentation process is saved in workspace/research_<ID>/.
+- **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
 
-**Example 2**: Optimizing ML Strategies for the Wine Dataset
+### **Example 2**: Optimizing ML Strategies for the Wine Dataset
 
 ```bash
 python3 -m curie.main \
-  -q "For the Wine dataset (identifying wine cultivars using chemical properties),\
-   using a genetic algorithm to select a subset of features will create a simpler,\
+  -q "For the Wine dataset (identifying wine cultivars using chemical properties), \
+   using a genetic algorithm to select a subset of features will create a simpler, \
    more interpretable model that, when combined with an ensemble classifier \
   (e.g., Random Forest), outperforms models built on the full feature set. "
 ```

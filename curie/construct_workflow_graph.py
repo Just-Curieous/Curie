@@ -30,6 +30,7 @@ from nodes.llm_validator import LLMValidator
 from nodes.patcher import Patcher
 from nodes.analyzer import Analyzer
 from nodes.concluder import Concluder
+from reporter import generate_report
 
 if len(sys.argv) < 2:
     print("Usage: python script.py <config_file>")
@@ -427,6 +428,8 @@ def main():
 
         # Stream graph updates
         stream_graph_updates(graph, user_input, config)
+        if config['report'] == True:
+            generate_report(config)
 
     except Exception as e:
         curie_logger.error(f"Execution error: {e}")

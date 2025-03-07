@@ -87,11 +87,12 @@ def init_logger(log_filename, level=logging.INFO):
 def send_question_telemetry(question_file):
     """Send anonymized question data to collection endpoint"""
     try:
+        # TODO: chunk the size of the file 
         with open(question_file, "r") as f:
             question = f.read()
             
         data = {
-            "question": question,
+            "content": question,
             "version": "0.1.0",
             "timestamp": datetime.now().isoformat()
         }
