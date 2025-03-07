@@ -6,6 +6,10 @@ import os
 from openai import BadRequestError
 from typing import List, Dict, Any
 from langchain_core.messages import BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage
+# import anthropic
+
+import utils
 
 from logger import init_logger
 def setup_model_logging(log_filename: str):
@@ -14,27 +18,21 @@ def setup_model_logging(log_filename: str):
 
 class TokenCounter:
     # Pricing per 1k tokens (as of March 2024)
-    PRICE_PER_1K_TOKENS = { 
-        "gpt-4o": {"input": 0.0025, "output": 0.01}, 
-        "azure/gpt-4o": {"input": 0.0025, "output": 0.01}, 
-        "gpt-4o-mini": {"input": 0.00015, "output": 0.000075},
-        "azure/gpt-4o-mini": {"input": 0.00015, "output": 0.000075},
-    }
+    PRICE_PER_1K_TOKENS = utils.get_all_price_per_1k_tokens()
 
     # Class-level variables to track accumulated usage across all instances
     _accumulated_tokens = {"input": 0, "output": 0}
     _accumulated_cost = {"input": 0.0, "output": 0.0, "tool_cost": 0.0}
 
     def __init__(self):
-        self.current_model = os.environ.get("MODEL", "gpt-4o")
         # Strip provider prefix if present (e.g., "openai/gpt-4" -> "gpt-4")
-        self.model_name = self.current_model.split('/')[-1]
+        self.model_name = utils.get_model_name()
         
-        try:
-            self.encoding = tiktoken.encoding_for_model(self.model_name)
-        except KeyError:
-            # Fall back to cl100k_base for models not in tiktoken
-            self.encoding = tiktoken.get_encoding("cl100k_base")
+        # try:
+        #     self.encoding = tiktoken.encoding_for_model(self.model_name)
+        # except KeyError:
+        #     # Fall back to cl100k_base for models not in tiktoken
+        #     self.encoding = tiktoken.get_encoding("cl100k_base")
 
     @classmethod
     def get_accumulated_stats(cls) -> Dict[str, Dict[str, float]]:
@@ -45,9 +43,36 @@ class TokenCounter:
             "total_cost": sum(cls._accumulated_cost.values())
         }
 
+    def count_output_tokens(self, string: str) -> int:
+        """
+        MetaGPT anthropic client token counter does not work for anthropic>=0.39.0: https://github.com/geekan/MetaGPT/blob/main/metagpt/utils/token_counter.py#L479C1-L480C1
+        Use simple tokenizer instead, since that is what langchain_aws is doing: 
+            - https://github.com/langchain-ai/langchain-aws/commit/6355b0ff44c92b594ab8c3a5c50ac726904d716d
+            - https://github.com/langchain-ai/langchain-aws/issues/314
+            - https://python.langchain.com/api_reference/_modules/langchain_core/language_models/base.html#BaseLanguageModel
+
+        Returns the number of tokens in a text string.
+
+        Args:
+            string (str): The text string.
+
+        Returns:
+            int: The number of tokens in the text string.
+        """
+        # if "claude" in self.model_name:
+        #     vo = anthropic.Client()
+        #     num_tokens = vo.count_tokens(string)
+        #     return num_tokens
+        try:
+            encoding = tiktoken.encoding_for_model(self.model_name)
+        except KeyError:
+            curie_logger.debug(f"Warning: model {self.model_name} not found in tiktoken. Using cl100k_base encoding.")
+            encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(string))
+
     def count_message_tokens(self, message: BaseMessage) -> int:
         """Count tokens in a single message."""
-        num_tokens = len(self.encoding.encode(message.content))
+        num_tokens = self.count_output_tokens(message.content)
         # Add tokens for message format (role, etc.)
         num_tokens += 4  # Format tokens
         return num_tokens
@@ -116,7 +141,7 @@ def query_model_safe(
 ) -> Any:
     """Execute model query with token counting and cost estimation."""
     token_counter = TokenCounter()
-    context_length = get_model_context_length()
+    context_length = utils.get_model_context_length()
     max_tokens = context_length - 1000  # Reserve tokens for response
     
     attempt = 0
@@ -128,19 +153,24 @@ def query_model_safe(
             # Case 1: Prune messages if total tokens exceed context length
             if token_counts["input_tokens"] > max_tokens:
                 curie_logger.info(f"Total tokens ({token_counts['input_tokens']}) exceed limit ({max_tokens}). Pruning messages.")
-                messages_to_prune = messages[len(messages) // 3: -len(messages) // 3]
-                
+                start = len(messages) // 3
+                end = -len(messages) // 3
+                messages_to_prune = messages[start:end]
                 j = len(messages_to_prune) - 1
-                if messages[-len(messages) // 3].type == "tool": # edge case where the first message following the last message in messages_to_prune is a tool message. So that means we DO NOT want to prune the last message in messages_to_prune. 
+                if messages[end].type == "tool": # edge case where the first message following the last message in messages_to_prune is a tool message. So that means we DO NOT want to prune the last message in messages_to_prune. 
+                    messages_to_prune = messages_to_prune[:-1]
+                    end -= 1
                     j -= 1
                 while j >= 0:
                     if messages_to_prune[j].type == "tool":
+                        if j > 0:
+                            messages_to_prune.pop()
+                            messages_to_prune.pop()
                         j -= 2
                     else:
                         messages_to_prune.pop()
                         j -= 1
-                
-                messages = messages[:len(messages) // 3] + messages_to_prune + messages[-len(messages) // 3:]
+                messages = messages[:start] + messages_to_prune + messages[end:]
                 token_counts = token_counter.count_messages_tokens(messages)
                 curie_logger.info(f"After pruning - Tokens: {token_counts['input_tokens']}")
 
@@ -155,7 +185,7 @@ def query_model_safe(
                     for i, chunk in enumerate(chunks):
                         curie_logger.info(f"Processing chunk {i + 1} of {len(chunks)}")
                         summary_messages = [
-                            messages[0].__class__(
+                            HumanMessage(
                                 content="Summarize the following text. Be concise, but maintain structure. Don't output anything other than the summarized text.\n" + chunk
                             )
                         ]
@@ -173,7 +203,7 @@ def query_model_safe(
             curie_logger.debug(f"Response: {response}")
 
             # use tiktoken to count output tokens
-            token_counts["output_tokens"] = len(token_counter.encoding.encode(response.content))
+            token_counts["output_tokens"] = token_counter.count_output_tokens(response.content)
             token_counter.update_usage(token_counts)            
             # Get current costs
             costs = token_counter.estimate_cost(token_counts)
@@ -203,16 +233,6 @@ def query_model_safe(
     raise RuntimeError(f"Failed after {max_retries} retries.")
 
 # Keep these helper functions unchanged
-def get_model_context_length() -> int:
-    """Get the context length for the current model."""
-    # FIXME: add more models as needed
-    context_length_dict = {
-        "gpt-4o": 128000,
-        "azure/gpt-4o": 128000,
-    }
-    model_name = os.environ.get("MODEL")
-    return context_length_dict.get(model_name, 32000)
-
 def text_splitter_by_tokens(text: str, chunk_size: int, token_counter: TokenCounter) -> List[str]:
     """Split text based on token count instead of characters."""
     if isinstance(text, list):
@@ -221,7 +241,7 @@ def text_splitter_by_tokens(text: str, chunk_size: int, token_counter: TokenCoun
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=100,
-        length_function=lambda x: len(token_counter.encoding.encode(x)),
+        length_function=lambda x: token_counter.count_output_tokens(x),
         is_separator_regex=False,
     )
     return text_splitter.split_text(text)
