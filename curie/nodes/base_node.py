@@ -12,6 +12,7 @@ import json
 import model
 import utils
 import tool
+import settings
 from logger import init_logger
 from scheduler import SchedNode
 
@@ -112,7 +113,7 @@ class BaseNode(ABC):
         # FIXME: better way to get model names; from config?
         # FIXME: can move model name to model.py 
         def Node(state: self.State):
-            if state["remaining_steps"] <= 4:
+            if state["remaining_steps"] <= settings.CONCLUDER_BUFFER_STEPS:
                 return {
                     "messages": [], 
                     "prev_agent": self.node_config.name,
