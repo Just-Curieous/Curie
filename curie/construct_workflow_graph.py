@@ -394,6 +394,7 @@ def stream_graph_updates(graph, user_input: str, config: dict):
         user_input (str): User's input question
     """
     max_global_steps = config.get("max_global_steps", 50)
+    max_global_steps += settings.CONCLUDER_BUFFER_STEPS
     for event in graph.stream(
         {"messages": [("user", user_input)], "is_terminate": False}, 
         {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}

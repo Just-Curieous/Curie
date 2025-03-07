@@ -3,6 +3,7 @@ from langgraph.graph import END
 from scheduler import SchedNode
 from typing import Annotated, List
 from langgraph.prebuilt import InjectedState
+import settings
 
 class Concluder(BaseNode):
 
@@ -53,7 +54,7 @@ All partitions for all experimental plans have completed, with results produced 
         if len(item) > 1:
             self.curie_logger.info("Warning: Concluder has written more than one item to concluder_wrote_list. We will only use the last item written.")
 
-        if state["remaining_steps"] <= 4:
+        if state["remaining_steps"] <= settings.CONCLUDER_BUFFER_STEPS:
             if item[-1]["is_conclude"] != True:
                 self.curie_logger.info("Warning: Concluder has not concluded the experiment yet, but we do not have enough iterations (i.e., must conclude). We will rerun concluder.")
                 self.sched_node.remove_verifier_wrote_list_all(self.node_config.name)

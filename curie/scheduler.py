@@ -127,13 +127,15 @@ class SchedNode():
                     "remaining_steps_display": state["remaining_steps"],
                 } # next_agent: worker_1
             else:
-                return {"messages": [
-                            HumanMessage(content=str(response["messages"]), name="scheduler")
-                        ],
-                    "prev_agent": "sched_node",
-                    "next_agent": response["next_agent"], 
-                    "remaining_steps_display": state["remaining_steps"]
-                }
+                new_dict = response.copy()
+                new_dict["messages"] = [HumanMessage(content=str(response["messages"]), name="scheduler")]
+                new_dict["prev_agent"] = "sched_node"
+                new_dict["remaining_steps_display"] = state["remaining_steps"]
+                # print(new_dict)
+                # if "reset_steps" in response and response["reset_steps"] == True:
+                #     new_dict["remaining_steps"] = state["remaining_steps"] + 1
+                #     new_dict["remaining_steps_display"] = new_dict["remaining_steps"]
+                return new_dict
         
         return SchedNode
 
@@ -608,7 +610,7 @@ class SchedTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str: 
         prev_agent = state["prev_agent"]
-        if state["remaining_steps"] <= 4:
+        if state["remaining_steps"] <= settings.CONCLUDER_BUFFER_STEPS:
             if prev_agent != "concluder":
                 self.curie_logger.info("------------ Not enough remaining steps to continue with experimentation. Entering concluder now!------------")
                 return {"messages": [self.get_concluder_terminate_message()], "prev_agent": "analyzer", "next_agent": "concluder"} 

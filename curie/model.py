@@ -68,7 +68,12 @@ class TokenCounter:
         except KeyError:
             curie_logger.debug(f"Warning: model {self.model_name} not found in tiktoken. Using cl100k_base encoding.")
             encoding = tiktoken.get_encoding("cl100k_base")
-        return len(encoding.encode(string))
+        try:
+            token_count = len(encoding.encode(string))
+            return token_count
+        except Exception as e:
+            curie_logger.error(f"Error in token counting: {e}")
+            return 0
 
     def count_message_tokens(self, message: BaseMessage) -> int:
         """Count tokens in a single message."""

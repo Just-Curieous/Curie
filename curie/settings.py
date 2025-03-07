@@ -20,3 +20,6 @@ def list_control_worker_names() -> list:
 AGENT_LIST = ["supervisor"]
 AGENT_LIST.extend(list_worker_names()) # add worker agents to the agent list
 AGENT_LIST.extend(list_control_worker_names()) # add control worker agents to the agent list
+
+# Do not override the following variables:
+CONCLUDER_BUFFER_STEPS = 15
