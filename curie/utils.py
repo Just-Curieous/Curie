@@ -8,7 +8,45 @@ import os
 import re
 import toml
 from pathlib import Path
+from typing import List, Dict, Any
 
+def get_all_price_per_1k_tokens() -> Dict[str, Dict[str, float]]:
+    return {
+        "gpt-4o": {"input": 0.0025, "output": 0.01}, 
+        "gpt-4o-mini": {"input": 0.00015, "output": 0.000075},
+        "anthropic.claude-3-7-sonnet-20250219-v1:0": {"input": 0.003, "output": 0.015},
+    }
+
+def get_model_context_length() -> int:
+    """Get the context length for the current model."""
+    # FIXME: add more models as needed
+    context_length_dict = {
+        "gpt-4o": 128000,
+        "gpt-4o-mini": 128000,
+        "anthropic.claude-3-7-sonnet-20250219-v1:0": 200000,
+    }
+    model_name = get_model_name()
+    return context_length_dict.get(model_name, 30000)
+
+def get_input_price_per_token() -> float:
+    """Get the price per token for input text."""
+    model_name = get_model_name()
+    return get_all_price_per_1k_tokens()[model_name]["input"] / 1000
+
+def get_output_price_per_token() -> float:
+    """Get the price per token for output text."""
+    model_name = get_model_name()
+    return get_all_price_per_1k_tokens()[model_name]["output"] / 1000
+
+def get_model_name() -> str:
+    """Strip provider prefix if present (e.g., "openai/gpt-4" -> "gpt-4")"""
+    current_model = os.environ.get("MODEL", "gpt-4o")
+    # Strip provider prefix if present (e.g., "openai/gpt-4" -> "gpt-4")
+    model_name = current_model.split('/')[-1]
+    if "claude" in model_name and "us." in model_name: # example: "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+        # Remove "us." prefix:
+        model_name = model_name.split("us.")[1]
+    return model_name
 
 def extract_plan_id(prompt: str) -> str:
     """
@@ -224,8 +262,8 @@ def categorize_variables(env_vars):
             'max_iterations': 50,
         },
         'llm': {
-            'input_cost_per_token': 2.5e-06, # gpt-4o
-            'output_cost_per_token': 1e-05,
+            'input_cost_per_token': get_input_price_per_token(),
+            'output_cost_per_token': get_output_price_per_token(),
             'log_completions': True,
             'log_completions_folder': '../logs/openhands', 
         }
