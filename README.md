@@ -1,7 +1,5 @@
 # Curie: Automate Rigorous Scientific Experimentation
 
-<!-- ![Documentation](https://img.shields.io/badge/docs-Just--Curieous.github.io-blue) -->
-<!-- [![Discord](https://img.shields.io/discord/1234567890?label=Discord&logo=discord)](https://discord.gg/uCEbmG7EKU) -->
 [![arXiv](https://img.shields.io/badge/arXiv-2502.16069-b31b1b.svg)](https://arxiv.org/abs/2502.16069)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
@@ -72,14 +70,13 @@ python3 -m curie.main \
     - `logs/research_question_<ID>_verbose.log`.
 - **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
 
-### **Example 2**: Optimizing ML Strategies for the Wine Dataset
+## **Example 2**: Find good ML strategies for noisy data.
 
 ```bash
 python3 -m curie.main \
-  -q "For the Wine dataset (identifying wine cultivars using chemical properties), \
-   using a genetic algorithm to select a subset of features will create a simpler, \
-   more interpretable model that, when combined with an ensemble classifier \
-  (e.g., Random Forest), outperforms models built on the full feature set. "
+  -q "For binary classification task for breast cancer Wisconsin dataset, ensemble methods \
+  (e.g., Random Forests, Gradient Boosting) are more robust to added noise in the Breast Cancer \ 
+  dataset compared to linear models like logistic regression."
 ```
 
 More example questions can be found [here](./docs/quick_start.md).
@@ -112,7 +109,6 @@ Config `curie/configs/base_config.json` to adapt to your own tasks:
 
 ## Community and Support
 
-<!-- Join our community on [Discord](https://discord.gg/uCEbmG7EKU) to connect with other users and developers.  -->
 For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
 
 ## License
