@@ -1,6 +1,4 @@
 import model
-from openai import AzureOpenAI
-import os 
 from langchain_core.messages import HumanMessage, SystemMessage 
 
 # write a lab report
