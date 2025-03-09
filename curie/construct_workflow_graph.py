@@ -2,7 +2,7 @@ import sys
 import json
 import traceback
 from typing import Annotated, Literal
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict 
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -295,16 +295,6 @@ def create_graph_stores():
     memory = MemorySaver()
     return store, metadata_store, memory
 
-# def router(state: State):
-#     # Force the agent to end
-#     if state["remaining_steps"] <= 2:
-#         return END
-#         # FIXME: force to concluder
-#     if state["is_terminate"] == True:
-#         return END
-#     else:
-#         return "scheduler"
-
 def build_graph(State, config_filename):
     """
     Build the complete LangGraph workflow.
@@ -419,7 +409,7 @@ def main():
     try:
         # Build graph
         graph, metadata_store, config = build_graph(State, config_filename)
-        
+
         # Read question from file
         question_filename = f"../{config['question_filename']}"
         user_input = get_question(question_filename) 

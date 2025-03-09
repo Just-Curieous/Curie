@@ -57,7 +57,7 @@ Use the following command to input your research question or problem statement: 
 ```bash
 python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
-  input distributions (random, nearly sorted, reverse sorted)? --report"
+  input distributions (random, nearly sorted, reverse sorted)?" --report
 ``` 
 
 - **Estimated runtime**: ~10 minutes
@@ -74,9 +74,9 @@ python3 -m curie.main \
 
 ```bash
 python3 -m curie.main \
-  -q "For binary classification task for breast cancer Wisconsin dataset, ensemble methods \
-  (e.g., Random Forests, Gradient Boosting) are more robust to added noise in the Breast Cancer \ 
-  dataset compared to linear models like logistic regression."
+  -q "Are ensemble methods (e.g., Random Forests, Gradient Boosting) more robust to added noise \
+  in the Breast Cancer Wisconsin dataset compared to linear models like Logistic Regression \
+  for a binary classification task?"
 ```
 
 More example questions can be found [here](./docs/quick_start.md).
