@@ -158,5 +158,8 @@ class UserInputRouter(BaseNode):
             # Delete all existing plans:
             for plan in plans_list:
                 self.store.delete(self.plan_namespace, plan["plan_id"])
+            # Reset architect wrote list:
+            memory_id = str("supervisor_wrote_list")
+            self.metadata_store.put(self.sched_namespace, memory_id, [])
 
             return self.node_config.transition_objs["redo_architect"](feedback_msg)
