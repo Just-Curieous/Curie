@@ -21,9 +21,9 @@ class Analyzer(BaseNode):
             "next_agent": "concluder"
         }
 
-        intro_message = "The following experimental plan partitions (with plan IDs, groups, and partitions) have completed execution, each run twice with the same inputs for reproducibility. Their results were analyzed, and next-step suggestions appended. Review each suggestion to assess result validity. If incorrect, mark for redo using 'redo_exp_partition'; otherwise, leave the plan unchanged. Modify or create new plans as needed.\n"
+        intro_message2 = "The following experimental plan partitions (with plan IDs, groups, and partitions) have completed execution, each run twice with the same inputs for reproducibility. Their results were analyzed, and next-step suggestions appended. Review each suggestion to assess result validity. If incorrect, mark for redo using 'redo_exp_partition'; otherwise, leave the plan unchanged. Modify or create new plans as needed.\n"
         self.node_config.transition_objs["otherwise"] = lambda completion_messages: {
-            "messages": intro_message + str(completion_messages), 
+            "messages": intro_message2 + str(completion_messages), 
             "prev_agent": "analyzer", 
             "next_agent": "supervisor"
         }

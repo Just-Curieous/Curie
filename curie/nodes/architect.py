@@ -12,6 +12,11 @@ class Architect(BaseNode):
         intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
         self.node_config.transition_objs["no_plan"] = lambda: {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
+        self.node_config.transition_objs["get_user_input_first"] = lambda: {
+            "messages": "dummy_response", 
+            "next_agent": "user_input"
+        }
+
         self.node_config.transition_objs["is_terminate"] = lambda: {"next_agent": END}
 
         self.node_config.transition_objs["control_has_work"] = lambda assignment_messages: {
@@ -24,7 +29,7 @@ class Architect(BaseNode):
             "experimental_work": {"messages": self.sched_node.assign_worker("experimental"), "next_agent": "worker"}
         }
 
-    def transition_handle_func(self):
+    def transition_handle_func(self, state):
         """
         All of the plans that were edited/written by the supervisor will be scheduled for execution now or added to the queue. 
         If the plan existed before, we check if the experimental groups have been modified: 
@@ -39,6 +44,9 @@ class Architect(BaseNode):
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.sched_node.is_no_plan_exists():
             return self.node_config.transition_objs["no_plan"]()
+        # print("state['is_user_input_done']: ", state["is_user_input_done"])
+        if not state["is_user_input_done"]:
+            return self.node_config.transition_objs["get_user_input_first"]()
 
         # First, check for exp termination condition:
         is_terminate = self.sched_node.check_exp_termination_condition()

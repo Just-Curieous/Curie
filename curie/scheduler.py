@@ -77,7 +77,8 @@ class SchedNode():
             "analyzer_wrote_list", # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
             "concluder_wrote_list", # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
             "supervisor_redo_partition_list", # Format of this list: [{"plan_id": 123, "group": "control_group", "partition_name": "partition_1", "error_feedback": "xtz"}, ...] This is to record down the calls to redo_exp_partition tool by supervisor.
-            "standby_exp_plan_list"
+            "standby_exp_plan_list",
+            "user_router_wrote_list",
         ]
 
         queues = [
@@ -655,8 +656,14 @@ class SchedTool(BaseTool):
             return handlers["control_worker"]()
         if "worker" in prev_agent:
             return handlers["worker"]()
-        if "concluder" in prev_agent:
+        if "concluder" == prev_agent:
             return handlers["concluder"](state)
+        if "supervisor" == prev_agent:
+            return handlers["supervisor"](state)
+        if "user_input_router" == prev_agent:
+            return handlers["user_input_router"](state)
+        if "user_input" == prev_agent:
+            return handlers["user_input"](state)
         
         # Get the appropriate handler or raise an error if not found
         handler = handlers.get(prev_agent)
