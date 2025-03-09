@@ -60,7 +60,7 @@ class UserInput(BaseNode):
                     }
                 }
             )
-            user_input = input("User input: ")
+            user_input = input("Do you approve of the architect's proposed plan? If not, why? Provide your response here: ")
             response = subgraph.invoke(Command(resume=user_input),
                 {
                     # "recursion_limit": 20,

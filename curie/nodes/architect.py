@@ -13,7 +13,7 @@ class Architect(BaseNode):
         self.node_config.transition_objs["no_plan"] = lambda: {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
         self.node_config.transition_objs["get_user_input_first"] = lambda: {
-            "messages": "dummy_response", 
+            "messages": "[User input requested]", 
             "next_agent": "user_input"
         }
 
@@ -54,14 +54,14 @@ class Architect(BaseNode):
             return self.node_config.transition_objs["is_terminate"]()
 
         # Second, for control groups that are done, move their experimental groups (if any exist) to the worker queue:
-        self.curie_logger.info("Checking control group done..")
+        self.curie_logger.debug("Checking control group done..")
         memory_id = str("standby_exp_plan_list")
         standby_exp_plan_list = self.metadata_store.get(self.sched_node.sched_namespace, memory_id).dict()["value"]
         for plan_id in standby_exp_plan_list[:]: # iterate over a copy of standby_exp_plan_list
             self.sched_node.update_queues(plan_id, assert_new_control=True)
 
         # Third, for plans that were written/modified by the supervisor, add them to the correct queue:
-        self.curie_logger.info("Checking supervisor wrote list..")
+        self.curie_logger.debug("Checking supervisor wrote list..")
         memory_id = str("supervisor_wrote_list")
         supervisor_wrote_list = self.metadata_store.get(self.sched_node.sched_namespace, memory_id).dict()["value"]
         # Create a new /workspace dir for each new plan_id, and other related inits for a new plan:

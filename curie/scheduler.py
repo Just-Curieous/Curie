@@ -150,13 +150,13 @@ class SchedNode():
             - if control group is done: add experimental groups that don't yet exist in the worker queue, or modify existing groups as needed. Remove plan from standy list if exist. 
             - if control group is not done: add control group that don't yet exist in the control worker queue, or modify existing control group as needed. Add plan to standby list, or modify existing as needed. 
         """
-        self.curie_logger.info("------------ Update Queues ------------")
+        self.curie_logger.debug("------------ Update Queues ------------")
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         self.curie_logger.info(f"Plan is: {utils.pretty_json(plan)} ")
 
         # First, if control group is not done:
         if plan["control_group"]['partition_1']["done"] == False: # only 1 partition for now in control group
-            self.curie_logger.info("Control group is not done..")
+            self.curie_logger.debug("Control group is not done..")
             # Add plan to control queue if not exist or modify existing control group in queue as needed:
             partition_name = "partition_1" # Only 1 partition for now in control group
             if redo_details:
@@ -184,9 +184,9 @@ class SchedNode():
 
             # Add plan to standby list if not exist: 
             self.insert_standby_exp_plan_list(plan_id)
-            self.curie_logger.info(f"Current control group worker queue: {self.get_control_worker_queue()}")
+            self.curie_logger.debug(f"Current control group worker queue: {self.get_control_worker_queue()}")
         else: # Second, if control group is done:
-            self.curie_logger.info("Control group is done..")
+            self.curie_logger.debug("Control group is done..")
             # Remove plan from standby list if exist:
             self.remove_standby_exp_plan_list(plan_id)
 
@@ -195,7 +195,7 @@ class SchedNode():
             
             all_groups = self.get_groups_from_plan(plan["experimental_group"])
 
-            self.curie_logger.info(f"All experimental group's partitions are: {all_groups}")
+            self.curie_logger.debug(f"All experimental group's partitions are: {all_groups}")
 
             if redo_details: # if redo partition, only the partition needs to be added to queue
                 task_details = {
@@ -225,7 +225,7 @@ class SchedNode():
                         "partition_name": partition_name,
                     }
                     self.insert_worker_queue(task_details)
-            self.curie_logger.info(f"Current worker queue: {self.get_worker_queue()}")
+            self.curie_logger.debug(f"Current worker queue: {self.get_worker_queue()}")
         
     def get_groups_from_plan(self, group_dict: dict) -> int:
         # Obtains group (either experimental_group or control_group) partitions from the plan
@@ -457,7 +457,7 @@ class SchedNode():
 
     def is_no_plan_exists(self):
         items = self.store.search(self.plan_namespace)
-        self.curie_logger.info(f"Plans that exist: {items}, with len: {len(items)}")
+        self.curie_logger.debug(f"Plans that exist: {items}, with len: {len(items)}")
         plans_list = [item.dict()["value"] for item in items]
         if len(plans_list) == 0:
             return True
@@ -649,7 +649,7 @@ class SchedTool(BaseTool):
             str: Response from the appropriate handler
         """
         handlers = self.config["transition_funcs"]
-        print(handlers)
+        # print(handlers)
         
         # Handle special case for worker which has a prefix
         if "control_worker" in prev_agent:
