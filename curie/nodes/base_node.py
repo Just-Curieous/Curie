@@ -59,6 +59,8 @@ class BaseNode(ABC):
         self.metadata_store = metadata_store
         self.memory = memory
         self.tools = tools
+        self.sched_namespace = self.sched_node.sched_namespace
+        self.plan_namespace = self.sched_node.plan_namespace
     
     def get_name(self):
         return self.node_config.name

@@ -22,9 +22,9 @@ class Patcher(BaseNode):
             "next_agent": "supervisor"
         }
 
-        intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
+        intro_message2 = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
         self.node_config.transition_objs["after_patch_verifier"] = lambda completion_messages: {
-            "messages": intro_message + str(completion_messages),
+            "messages": intro_message2 + str(completion_messages),
             "prev_agent": "exec_verifier", 
             "next_agent": "analyzer"
         }

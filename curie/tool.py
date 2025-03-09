@@ -1646,3 +1646,66 @@ class ConcluderWriteTool(BaseTool):
         self.metadata_store.put(sched_namespace, memory_id, wrote_list)
 
         return "Successfully recorded the evaluation."
+
+class UserInputRouterWriteInput(BaseModel):
+    is_correct: bool = Field(
+        ...,
+        description="A value of True means the user decides that the architect's plan is good to proceed."
+    )
+    router_log_message: str = Field(
+        ...,
+        description="If plan is incorrect, describe in detail what the user wants changed."
+    )
+
+# Note: It's important that every field has type hints. BaseTool is a
+# Pydantic class and not having type hints can lead to unexpected behavior.
+class UserInputRouterWriteTool(BaseTool):
+    name: str = "user_router_record"
+    description: str = "Record your analysis of user input to long term storage."
+    args_schema: Type[BaseModel] = UserInputRouterWriteInput
+    # None of the following work:
+    # https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/#define-the-tools_1
+    # https://github.com/langchain-ai/langchain/discussions/24906
+    # and so on..
+    store: Optional[InMemoryStore] = None  # Declare store as an optional field
+    metadata_store: Optional[InMemoryStore] = None  # Declare store as an optional field. This is for storing sched related metadata. 
+
+    def __init__(self, store: InMemoryStore, metadata_store: InMemoryStore):
+        super().__init__()
+        self.store = store
+        self.metadata_store = metadata_store
+        # self.user_id = "admin"
+        # self.application_context = "exp-plans" 
+        # self.namespace = (self.user_id, self.application_context) # just a random namespace name for now
+    
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        # state: Annotated[dict, InjectedState], 
+        is_correct: bool,
+        router_log_message: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str:
+        """
+        Use the tool.
+        """
+        
+        user_id = "admin"
+        application_context = "exp-sched" 
+        sched_namespace = (user_id, application_context) # just a random namespace name for now
+
+        memory_id = str("user_router_wrote_list")
+    
+        wrote_list = self.metadata_store.get(sched_namespace, memory_id)
+        wrote_list = wrote_list.dict()["value"] # https://langchain-ai.github.io/langgraph/cloud/reference/sdk/python_sdk_ref/?h=item#langgraph_sdk.schema.RunCreate.multitask_strategy
+        # print(wrote_list)
+
+        wrote_list.append({
+            "is_correct": is_correct,
+            "router_log_message": router_log_message,
+        })
+        self.metadata_store.put(sched_namespace, memory_id, wrote_list)
+
+        return "Successfully recorded the evaluation."

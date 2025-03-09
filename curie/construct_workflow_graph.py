@@ -6,6 +6,7 @@ from typing_extensions import TypedDict
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
+from langgraph.types import interrupt, Command
 from langgraph.store.memory import InMemoryStore
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -30,6 +31,7 @@ from nodes.llm_validator import LLMValidator
 from nodes.patcher import Patcher
 from nodes.analyzer import Analyzer
 from nodes.concluder import Concluder
+from nodes.user_input import UserInput, UserInputRouter
 from reporter import generate_report
 
 if len(sys.argv) < 2:
@@ -55,6 +57,7 @@ class State(TypedDict):
     prev_agent: Literal[*settings.AGENT_LIST]
     next_agent: Literal[*settings.AGENT_LIST]
     is_terminate: bool 
+    is_user_input_done: bool
     remaining_steps: RemainingSteps
     remaining_steps_display: int # remaining_steps cannot be seen in event.values since it is an Annotated value managed by RemainingStepsManager https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/managed/is_last_step.py
 
@@ -83,16 +86,19 @@ class AllNodes():
         self.workers = [worker]
         self.control_workers = [control_worker]
         self.validators = self.create_validators() # list of validators
+        self.user_input_nodes = self.create_user_input_nodes()
 
         # Create sched tool, passing in other agent's transition funcs as a dict
         config_dict["transition_funcs"] = {
-            "supervisor": lambda: self.architect.transition_handle_func(),
+            "supervisor": lambda state: self.architect.transition_handle_func(state),
             "worker": lambda: self.workers[0].transition_handle_func(),
             "control_worker": lambda: self.control_workers[0].transition_handle_func(),
             "llm_verifier": lambda: self.validators[0].transition_handle_func(),
             "patch_verifier": lambda: self.validators[1].transition_handle_func(),
             "analyzer": lambda: self.validators[2].transition_handle_func(),
-            "concluder": lambda state: self.validators[3].transition_handle_func(state)
+            "concluder": lambda state: self.validators[3].transition_handle_func(state),
+            "user_input": lambda state: self.user_input_nodes[0].transition_handle_func(state),
+            "user_input_router": lambda state: self.user_input_nodes[1].transition_handle_func(state),
         }
         self.sched_tool = sched.SchedTool(self.store, self.metadata_store, config_dict)
 
@@ -102,6 +108,7 @@ class AllNodes():
         self.worker_subgraph = self.workers[0].create_subgraph()
         self.control_worker_subgraph = self.control_workers[0].create_subgraph()
         self.validator_subgraphs = [validator.create_subgraph() for validator in self.validators]
+        self.user_input_subgraphs = [user_input.create_subgraph() for user_input in self.user_input_nodes]
     
     def get_sched_subgraph(self):
         return self.sched_subgraph
@@ -115,6 +122,9 @@ class AllNodes():
     def get_validator_subgraphs(self):
         return self.validator_subgraphs
 
+    def get_user_input_subgraphs(self):
+        return self.user_input_subgraphs
+
     def get_architect_node(self):
         return self.architect
 
@@ -126,6 +136,9 @@ class AllNodes():
     
     def get_validator_nodes(self):
         return self.validators
+
+    def get_user_input_nodes(self):
+        return self.user_input_nodes
 
     def create_sched_node(self, config_dict):
         return sched.SchedNode(self.store, self.metadata_store, self.State, config_dict)
@@ -269,6 +282,35 @@ class AllNodes():
 
         return [llm_validator, patcher, analyzer, concluder]
 
+    def create_user_input_nodes(self):
+        # Customizable node config 
+        node_config = NodeConfig(
+            name="user_input",
+            node_icon="💬",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="dummy_prompt",
+            default_system_prompt_filename="prompts/exp-dummy-prompt.txt"
+        )
+        tools = []
+        user_input = UserInput(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        # Customizable node config
+        node_config = NodeConfig(
+            name="user_input_router",
+            node_icon="🔀",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="user_input_router_system_prompt_filename",
+            default_system_prompt_filename="prompts/exp-user-input-router.txt"
+        )
+        # Customizable tools
+        router_write_tool = tool.UserInputRouterWriteTool(self.store, self.metadata_store)
+        tools = [router_write_tool]
+        user_input_router = UserInputRouter(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        return [user_input, user_input_router]
+
     def get_all_nodes(self):
         return self.nodes
  
@@ -355,6 +397,12 @@ def build_graph(State, config_filename):
     for index, node in enumerate(verification_nodes):
         graph_builder.add_node(node.get_name(), verification_subgraphs[index])
     
+    # Add user input nodes
+    user_input_subgraphs = all_nodes.get_user_input_subgraphs()
+    user_input_nodes = all_nodes.get_user_input_nodes()
+    for index, node in enumerate(user_input_nodes):
+        graph_builder.add_node(node.get_name(), user_input_subgraphs[index])
+    
     # Add graph edges
     graph_builder.add_edge(START, supervisor_name)
     graph_builder.add_edge(supervisor_name, "scheduler")
@@ -363,6 +411,9 @@ def build_graph(State, config_filename):
     graph_builder.add_edge(control_worker_name, "scheduler")
     
     for _, node in enumerate(verification_nodes):
+        graph_builder.add_edge(node.get_name(), "scheduler")
+
+    for _, node in enumerate(user_input_nodes):
         graph_builder.add_edge(node.get_name(), "scheduler")
     
     graph_builder.add_conditional_edges("scheduler", lambda state: state["next_agent"])
@@ -396,16 +447,30 @@ def stream_graph_updates(graph, user_input: str, config: dict):
     """
     max_global_steps = config.get("max_global_steps", 50)
     max_global_steps += settings.CONCLUDER_BUFFER_STEPS
+    is_user_input_done = not config.get("is_user_interrupt_allowed", False) # true == no interrupt (at the architect plan design stage)
+    # Prior to user-input interrupt:
     for event in graph.stream(
-        {"messages": [("user", user_input)], "is_terminate": False}, 
+        {"messages": [("user", user_input)], "is_terminate": False, "is_user_input_done": is_user_input_done}, 
         {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}
     ):
-        event_vals = list(event.values())
-        step = max_global_steps - event_vals[0]["remaining_steps_display"] # if there are multiple event values, we believe they will have the same remaining steps (only possible in parallel execution?)..
-        curie_logger.info(f"============================ Global Step {step} ============================")    
-        curie_logger.debug(f"Event: {event}")
-        for value in event.values():
-            curie_logger.info(f"Event value: {value['messages'][-1].content}")
+        print_graph_updates(event, max_global_steps)
+    
+    # # Resume with user input everytime we are interrupted, until the recursion limit is hit:
+    # while True:
+    #     user_input = input("Enter your response: ")
+    #     for event in graph.stream(
+    #         Command(resume=user_input), 
+    #         {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}
+    #     ):
+    #         print_graph_updates(event, max_global_steps)
+
+def print_graph_updates(event, max_global_steps):
+    event_vals = list(event.values())
+    step = max_global_steps - event_vals[0]["remaining_steps_display"] # if there are multiple event values, we believe they will have the same remaining steps (only possible in parallel execution?)..
+    curie_logger.info(f"============================ Global Step {step} ============================")    
+    curie_logger.debug(f"Event: {event}")
+    for value in event.values():
+        curie_logger.info(f"Event value: {value['messages'][-1].content}")
 
 def main():
     """
