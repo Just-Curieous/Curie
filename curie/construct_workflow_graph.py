@@ -447,9 +447,10 @@ def stream_graph_updates(graph, user_input: str, config: dict):
     """
     max_global_steps = config.get("max_global_steps", 50)
     max_global_steps += settings.CONCLUDER_BUFFER_STEPS
+    is_user_input_done = not config.get("is_user_interrupt_allowed", False) # true == no interrupt (at the architect plan design stage)
     # Prior to user-input interrupt:
     for event in graph.stream(
-        {"messages": [("user", user_input)], "is_terminate": False, "is_user_input_done": False}, 
+        {"messages": [("user", user_input)], "is_terminate": False, "is_user_input_done": is_user_input_done}, 
         {"recursion_limit": max_global_steps, "configurable": {"thread_id": "main_graph_id"}}
     ):
         print_graph_updates(event, max_global_steps)
