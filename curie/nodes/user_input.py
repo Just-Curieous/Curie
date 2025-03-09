@@ -20,9 +20,9 @@ class UserInput(BaseNode):
         self.create_transition_objs()
 
     def create_transition_objs(self):
-        intro_message = "Here is the user's response:\n"
+        # intro_message = "Here is the user's response:\n"
         self.node_config.transition_objs["done"] = lambda user_response: {
-            "messages": intro_message + user_response, 
+            "messages": user_response, 
             "next_agent": "user_input_router"
         }
 
@@ -32,7 +32,12 @@ class UserInput(BaseNode):
         """
         self.curie_logger.info("------------ Handle User Input ------------")
 
-        return self.node_config.transition_objs["done"](state["messages"][-1].content)
+        items = self.store.search(self.plan_namespace)
+        plans_list = [item.dict()["value"] for item in items]
+
+        user_response = "Here are the previously proposed plans:\n" + str(plans_list) + "\n\nHere is the user's response: " + state["messages"][-1].content
+
+        return self.node_config.transition_objs["done"](user_response)
 
     def create_subgraph(self):
         """ Creates a Node subgraph specific to UserInput. Override BaseNode implementation."""
