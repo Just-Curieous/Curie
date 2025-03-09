@@ -45,6 +45,7 @@ export OPENAI_API_KEY="sk-xxx"
 4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
 
 ```bash
+python -m venv cuire/venv
 pip install -e .
 cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
 ```
@@ -57,8 +58,8 @@ Use the following command to input your research question or problem statement: 
 ```bash
 python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
-  input distributions (random, nearly sorted, reverse sorted)? --report"
-``` 
+  input distributions (random, nearly sorted, reverse sorted)?" --report
+```
 
 - **Estimated runtime**: ~10 minutes
 - **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
@@ -96,7 +97,7 @@ Curie is designed for scientific discovery across multiple domains:
   - [What configurations affects the energy consumption of LLM serving?](https://ml.energy/leaderboard/?__theme=light)
   - [How does the request bursty arrival pattern affects the user experience in LLM serving?](https://arxiv.org/abs/2404.16283)
 - 🧪 Algorithmic & Scientific Discovery – Validating hypotheses, automating computational simulations.
- 
+
 <p align="center">
   <img src="./docs/static/img/case_study.png" width="1000px"/>
 </p>
