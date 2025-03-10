@@ -67,7 +67,10 @@ python3 -m curie.main \
   - Real-time logs are streamed to the console.
   - Logs are also stored in:
     - `logs/research_question_<ID>.log` 
-    - `logs/research_question_<ID>_verbose.log`.
+    - `logs/research_question_<ID>_verbose.log`
+  - Experiment report details:
+    - Stored in: `logs/research_question_<ID>.md`
+    - Will only be produced when the `--report` flag is used.
 - **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
 
 ## **Example 2**: Find good ML strategies for noisy data.
