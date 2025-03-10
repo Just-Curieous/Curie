@@ -111,13 +111,11 @@ def run_control_experiment_and_rename(iteration, control_experiment_filename, co
             workspace_dir = os.path.dirname(control_experiment_filename) 
             
             command = f"""
-            conda init &&
-            source ~/.bashrc &&
-            export PATH="/opt/conda/bin:$PATH" &&
-            source /opt/conda/etc/profile.d/conda.sh &&
-            conda activate {workspace_dir}/venv &&
+            eval "$(micromamba shell hook --shell bash)" &&
+            micromamba activate {workspace_dir}/venv && 
             bash {control_experiment_filename}
-            """ 
+            """
+            # TODO: instruction to install package in micromamba
 
             result = subprocess.run(["bash", "-c", command], capture_output=True, text=True, timeout=timeout)
             curie_logger.info(f"ExecVerifier: {result.stdout}")

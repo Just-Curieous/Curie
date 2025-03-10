@@ -9,7 +9,7 @@ python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?"
 ``` 
-- **Estimated runtime**: ~10 minutes
+- **Estimated runtime**: ~5 minutes
 - **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
 - **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306_report.md).
 - **Log monitoring**:
@@ -30,6 +30,7 @@ python3 -m curie.main \
 ```
 
 - **Estimated runtime**: <5 minutes
+- **Estimated cost**: $0.55
 - **Sample log file**: Available [here](./docs/example_logs/research_noise_robustness_20250309.log)
 
 

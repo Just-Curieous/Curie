@@ -60,7 +60,7 @@ python3 -m curie.main \
   input distributions (random, nearly sorted, reverse sorted)?" --report
 ``` 
 
-- **Estimated runtime**: ~10 minutes
+- **Estimated runtime**: ~5 minutes
 - **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
 - **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
 - **Log monitoring**:
