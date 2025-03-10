@@ -150,9 +150,10 @@ class CodeAgentTool(BaseTool):
                 group=group,
                 partition_name=partition_name
             )
-            coding_max_iterations = self.config.get("coding_max_iterations", 50)
+            coding_max_iterations = self.config.get("coding_max_iterations", 30)
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
+            
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
             with open(prompt_file, "w") as file:
@@ -169,14 +170,18 @@ class CodeAgentTool(BaseTool):
                 "commands": [
                     f"export LOG_ALL_EVENTS=true; "
                     f"{chmod_cmd}; "
-                    f"export WORKSPACE_BASE={openhands_dir}; " 
+                    f"export WORKSPACE_BASE={openhands_dir}; "
                     f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python "
+                    f"-m openhands.core.main "
+                    f"-f {prompt_file} "
+                    f"--config-file ../workspace/config.toml "
+                    f"--max-iterations {coding_max_iterations} "
+                    f"2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
                 ]
-            }) 
+            })
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
-
             openhands_log = self.extract_codeagent_output_snippet(
                 f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
             )
