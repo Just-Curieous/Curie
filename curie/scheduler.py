@@ -532,17 +532,23 @@ class SchedNode():
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
     
-    def init_conda_env(self, work_dir: str, env_name: str='venv'):
+    def init_coding_env(self, work_dir: str, env_name: str='venv'):
         # FIXME: some use cases may need old versions of Python 
         env_path = work_dir + env_name
         # Redirect output to /dev/null to make it silent
-        command = ["conda", "create", "--prefix", env_path, "python=3.12", "-y", "--quiet"]
+        # command = ["conda", "create", "--prefix", env_path, "python=3.12", "-y", "--quiet"]
+        # subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # subprocess.run(["source", env_path + '/bin/activate'], 
+        #             shell=True, 
+        #             executable="/bin/bash",
+        #             stdout=subprocess.DEVNULL, 
+        #             stderr=subprocess.DEVNULL)
+
+        command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
         subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run(["source", env_path + '/bin/activate'], 
-                    shell=True, 
-                    executable="/bin/bash",
-                    stdout=subprocess.DEVNULL, 
-                    stderr=subprocess.DEVNULL)
+        # command = ["micromamba", "activate", env_path]
+        # subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
@@ -563,8 +569,8 @@ class SchedNode():
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
             
-                self.init_conda_env(new_starter_file_dir)
-                self.curie_logger.info(f"Conda environment created at {new_starter_file_dir}")
+                self.init_coding_env(new_starter_file_dir)
+                self.curie_logger.info(f"Micromamba environment created at {new_starter_file_dir}")
 
             except Exception as e:
                 self.curie_logger.info(f"Error copying files: {e}")
