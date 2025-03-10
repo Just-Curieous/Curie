@@ -87,7 +87,7 @@ class ShellTool(BaseTool):  # type: ignore[override, override]
     ) -> str:
         """Run commands and return final output."""
 
-        print(f"Executing command:\n {commands}")  # noqa: T201
+        logger.debug(f"Executing command:\n {commands}")  # noqa: T201
 
         try:
             if self.ask_human_input:
