@@ -535,20 +535,8 @@ class SchedNode():
     def init_coding_env(self, work_dir: str, env_name: str='venv'):
         # FIXME: some use cases may need old versions of Python 
         env_path = work_dir + env_name
-        # Redirect output to /dev/null to make it silent
-        # command = ["conda", "create", "--prefix", env_path, "python=3.12", "-y", "--quiet"]
-        # subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # subprocess.run(["source", env_path + '/bin/activate'], 
-        #             shell=True, 
-        #             executable="/bin/bash",
-        #             stdout=subprocess.DEVNULL, 
-        #             stderr=subprocess.DEVNULL)
-
         command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
         subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # command = ["micromamba", "activate", env_path]
-        # subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
 
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
