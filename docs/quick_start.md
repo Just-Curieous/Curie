@@ -30,6 +30,7 @@ python3 -m curie.main \
 ```
 
 - **Estimated runtime**: <5 minutes
+- **Estimated cost**: $0.55
 - **Sample log file**: Available [here](./docs/example_logs/research_noise_robustness_20250309.log)
 
 
