@@ -61,8 +61,8 @@ python3 -m curie.main \
 ``` 
 
 - **Estimated runtime**: ~10 minutes
-- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
-- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306_report.md).
+- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
+- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
 - **Log monitoring**:
   - Real-time logs are streamed to the console.
   - Logs are also stored in:
