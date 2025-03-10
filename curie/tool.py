@@ -136,6 +136,13 @@ class CodeAgentTool(BaseTool):
             prompt_file_key = "coding_prompt_filename"
             default_prompt_file =  "prompts/exp-coding.txt"
             coding_agent_prompt = self.config.get(prompt_file_key, default_prompt_file)
+
+            # Use a prompt specific to experimental groups, if the user config specifies it:
+            exp_prompt_file_key = "exp_group_coding_prompt_filename"
+            if exp_prompt_file_key in self.config and group == "experimental_group":
+                exp_group_coding_prompt = self.config[exp_prompt_file_key]
+                coding_agent_prompt = exp_group_coding_prompt
+
             system_prompt = load_system_prompt(
                 coding_agent_prompt,
                 workspace_dir=workspace_dir,
