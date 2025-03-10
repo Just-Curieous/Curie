@@ -109,23 +109,15 @@ def run_control_experiment_and_rename(iteration, control_experiment_filename, co
             curie_logger.info(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
             # enter the conda env
             workspace_dir = os.path.dirname(control_experiment_filename) 
-            # subprocess.run(["bash", "-c", "conda init"], check=True)
-            # subprocess.run(["bash", "-c", "source ~/.bashrc"], check=True) 
-            # subprocess.run(["bash", "-c", "export PATH=\"/opt/conda/bin:$PATH\""], check=True)
-            # subprocess.run(["bash", "-c", "source /opt/conda/etc/profile.d/conda.sh"], check=True)
-
-            # command = f"conda activate {workspace_dir}/venv"
-            # curie_logger.info(f"ExecVerifier: Enter conda environment: {command}")
-            # subprocess.run(["bash", "-c", command], check=True)
-            # result = subprocess.run(["bash", control_experiment_filename], capture_output=True, text=True, timeout=timeout)
-            command = """
+            
+            command = f"""
             conda init &&
             source ~/.bashrc &&
             export PATH="/opt/conda/bin:$PATH" &&
             source /opt/conda/etc/profile.d/conda.sh &&
-            conda activate /workspace/research_dd626af0-f1dd-4e69-9a49-2e0cf4869a1f/venv &&
-            bash {}
-            """.format(control_experiment_filename)
+            conda activate {workspace_dir}/venv &&
+            bash {control_experiment_filename}
+            """ 
 
             result = subprocess.run(["bash", "-c", command], capture_output=True, text=True, timeout=timeout)
             curie_logger.info(f"ExecVerifier: {result.stdout}")

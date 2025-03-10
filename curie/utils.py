@@ -261,14 +261,6 @@ def categorize_variables(env_vars):
             'jwt_secret': 'secretpass',
             'max_iterations': 30,
         },
-        'sandbox': {
-            'runtime_extra_deps': """apt-get update && apt-get install -y wget && \ 
-                                    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
-                                    bash /tmp/miniconda.sh -b -p $OH_INTERPRETER_PATH/miniconda && \
-                                    $OH_INTERPRETER_PATH/miniconda/bin/conda init
-"""
-            # 'base_container_image': "continuumio/miniconda3"
-        },
         'llm': {
             'input_cost_per_token': get_input_price_per_token(),
             'output_cost_per_token': get_output_price_per_token(),
