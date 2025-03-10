@@ -153,6 +153,7 @@ class CodeAgentTool(BaseTool):
             coding_max_iterations = self.config.get("coding_max_iterations", 30)
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
+            curie_logger.info(f"🕒 This may take awhile... See log file for details: logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
             
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
@@ -324,6 +325,7 @@ class PatcherAgentTool(BaseTool):
             
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Patch Agent.")
+            curie_logger.info(f"🕒 This may take awhile... See log file for details: logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
             with open(prompt_file, "w") as file:
