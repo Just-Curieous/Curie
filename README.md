@@ -1,120 +1,101 @@
-# Curie: Automate Rigorous Scientific Experimentation
+# Base image with Python and Conda
+FROM continuumio/miniconda3:latest
 
-[![arXiv](https://img.shields.io/badge/arXiv-2502.16069-b31b1b.svg)](https://arxiv.org/abs/2502.16069)
-[![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
-[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
+# Set the working directory inside the container
+WORKDIR /curie
 
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
-Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
-Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
-<p align="center">
-  <img src="./docs/static/img/curie-overview.png" width="600px"/>
-</p>
+# Update package index and install dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    build-essential \
+    vim \
+    make \
+    && rm -rf /var/lib/apt/lists/*
 
-**Key Features**
-- 🚀 Automated Experimentation – End-to-end workflow management: hypothesis formulation, experiment setup, experiment execution, result analysis and finding reflection.
-- 📊 Rigor Enhancement - Built-in verification modules enforce methodical procedure, reliability and interpretability.
-- 🔬 Broad Applicability – Supports ML research, system analysis, and scientific discovery.
-- 📖 Experimentation Benchmark - Provide 46 questions from 4 Computer Science domains, based on influential papers and open-source projects (`benchmark/experimentation_bench`).
+# Install Node.js 20.x and npm
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
 
-## Table of Contents 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Use Cases](#use-cases)
-- [Tutorial](#tutorial)
-- [Customize Your Experiment Agents](#customize-your-experimentation-agents) 
+# Verify Node.js version
+RUN node --version
 
-## Installation
+# Copy the environment specification
+COPY curie/environment.yml .
 
-1. Install docker: https://docs.docker.com/engine/install/ubuntu/. 
-Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. Run `docker ps` to check the permission with the Docker daemon.
+# Install micromamba
+ENV MAMBA_ROOT_PREFIX=/opt/micromamba
+ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
 
-2. Clone the repository:
-```
-git clone https://github.com/Just-Curieous/Curie.git
-cd Curie
-```
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "aarch64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-aarch64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "ppc64le" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-ppc64le/latest | tar -xvj bin/micromamba; \
+    else \
+    echo "Unsupported architecture: $arch"; exit 1; \
+    fi && \
+    mv bin/micromamba /usr/local/bin/ && \
+    rmdir bin
 
-3. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
+# Create base environment with micromamba
+RUN micromamba create -n curie -f environment.yml && \
+    micromamba clean --all --yes
 
-```
-export MODEL="gpt-4o" 
-export OPENAI_API_KEY="sk-xxx" 
-```
+ENV MAMBA_DEFAULT_ENV=curie
+ENV PATH=/opt/micromamba/envs/curie/bin:$PATH
 
-4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
+RUN micromamba install -y -c conda-forge python=3.12 "nodejs>=20" poetry && micromamba clean --all -y
 
-```bash
-python -m venv cuire/venv
-pip install -e .
-cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
-```
+# Create the keyrings directory and add Docker's official GPG key
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-## Quick Start
-Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
+# Set up the Docker repository
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+    | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-### **Example 1**: Understanding Sorting Algorithm Efficiency
+# Update package index again and install Docker Engine
+RUN apt-get update && apt-get install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-compose-plugin 
 
-```bash
-python3 -m curie.main \
-  -q "How does the choice of sorting algorithm impact runtime performance across different \
-  input distributions (random, nearly sorted, reverse sorted)?" --report
-```
+RUN mkdir -p /helper
+# Clone OpenHands repository
+RUN cd /helper && git clone https://github.com/All-Hands-AI/OpenHands.git && cd OpenHands && git checkout 1c7267648327524be3ddfaf4fe340c71c08d845f 
+RUN cd /helper/OpenHands && make build
 
-- **Estimated runtime**: ~10 minutes
-- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
-- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306_report.md).
-- **Log monitoring**:
-  - Real-time logs are streamed to the console.
-  - Logs are also stored in:
-    - `logs/research_question_<ID>.log` 
-    - `logs/research_question_<ID>_verbose.log`.
-- **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
+# Install additional Python packages using micromamba
+RUN micromamba run -n curie pip install langchain-core==0.3.29 langgraph==0.2.52
 
-## **Example 2**: Find good ML strategies for noisy data.
+RUN echo "source /curie/setup/env.sh" >> ~/.bashrc
 
-```bash
-python3 -m curie.main \
-  -q "For binary classification task for breast cancer Wisconsin dataset, ensemble methods \
-  (e.g., Random Forests, Gradient Boosting) are more robust to added noise in the Breast Cancer \ 
-  dataset compared to linear models like logistic regression."
-```
+# Update the Azure configuration
+RUN sed -i '474i \          "organization": "499023",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py
+# To support docker initialization from Curie
+RUN sed -i '237i \                "/var/run/docker.sock": {"bind": "/var/run/docker.sock", "mode": "rw"},' /helper/OpenHands/openhands/runtime/impl/docker/docker_runtime.py
+RUN sed -i '36i\    user_id = 123 if user_id == 0 else user_id' /helper/OpenHands/openhands/runtime/utils/runtime_init.py
 
-More example questions can be found [here](./docs/quick_start.md).
+# Create necessary directories
+RUN mkdir -p /workspace
 
+# Set PATH to activate the Conda environment automatically in the container
+ENV PATH=/opt/micromamba/envs/curie/bin:$PATH
 
-## Tutorial
-- [How to reproduce the results in `Large Language Monkeys'. ](./docs/tutorial-large-language-monkey.md)
+# Ensure bash is the default shell
+SHELL ["/bin/bash", "-c"]
 
-
-## Use Cases
-Curie is designed for scientific discovery across multiple domains:
-
-- 🔬 Machine Learning & AI Research – Hyperparameter tuning and algorithm behavior
-  - [How does the optimal learning rate change with the increase of model size?](https://github.com/microsoft/mup)
-  - [How does repeated sampling in LLM inference affect the quality of response?](https://arxiv.org/abs/2407.21787)
-- 💻 System Performance Analysis – Benchmarking systems, optimizing configurations, investigating system trade-offs.
-  - [What configurations affects the energy consumption of LLM serving?](https://ml.energy/leaderboard/?__theme=light)
-  - [How does the request bursty arrival pattern affects the user experience in LLM serving?](https://arxiv.org/abs/2404.16283)
-- 🧪 Algorithmic & Scientific Discovery – Validating hypotheses, automating computational simulations.
-
-<p align="center">
-  <img src="./docs/static/img/case_study.png" width="1000px"/>
-</p>
-
-
-## Customize Your Experimentation Agents
-
-Config `curie/configs/base_config.json` to adapt to your own tasks:  
-- Add your domain-specific instructions by customizing `supervisor_system_prompt_filename` for the supervisor, `control_worker_system_prompt_filename` for the experimentation worker, and so on.
-- Human interruption in the experiment design phase can be activated by setting the `is_user_interrupt_allowed` key to `true`.
-- Configure timeouts and maximum number of steps (global, and coding agent specific).
-
-## Community and Support
-
-For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
-
-## License
-
-Curie is released under the Apache 2.0 License. See `LICENSE` for more details.
-
+# Keep container running
+CMD ["tail", "-f", "/dev/null"]

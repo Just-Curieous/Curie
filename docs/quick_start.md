@@ -9,18 +9,30 @@ python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?"
 ``` 
-- Expected processing time: ~10 minutes.
-- While the logs are continuously streamed, you can also check the logs at `logs/research_question_<ID>_verbose.log`.
-- You can check the reproducible experimentation process under `workspace/research_<ID>/`.
+- **Estimated runtime**: ~5 minutes
+- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
+- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306_report.md).
+- **Log monitoring**:
+  - Real-time logs are streamed to the console.
+  - Logs are also stored in:
+    - `logs/research_question_<ID>.log` 
+    - `logs/research_question_<ID>_verbose.log`.
+- **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
+
 
 ## **Example 2**: Find good ML strategies for noisy data.
 
 ```bash
 python3 -m curie.main \
-  -q "For binary classification task for breast cancer Wisconsin dataset, ensemble methods \
-  (e.g., Random Forests, Gradient Boosting) are more robust to added noise in the Breast Cancer \ 
-  dataset compared to linear models like logistic regression."
+  -q "Are ensemble methods (e.g., Random Forests, Gradient Boosting) more robust to added noise \
+  in the Breast Cancer Wisconsin dataset compared to linear models like Logistic Regression \
+  for a binary classification task?"
 ```
+
+- **Estimated runtime**: <5 minutes
+- **Estimated cost**: $0.55
+- **Sample log file**: Available [here](./docs/example_logs/research_noise_robustness_20250309.log)
+
 
 ## **Example 3**: Optimize feature selection for classification tasks.
 - *Basic question*: whether feature selection helps the model performace.

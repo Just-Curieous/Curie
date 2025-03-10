@@ -532,6 +532,12 @@ class SchedNode():
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
     
+    def init_coding_env(self, work_dir: str, env_name: str='venv'):
+        # FIXME: some use cases may need old versions of Python 
+        env_path = work_dir + env_name
+        command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
@@ -550,6 +556,10 @@ class SchedNode():
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
+            
+                self.init_coding_env(new_starter_file_dir)
+                self.curie_logger.info(f"Micromamba environment created at {new_starter_file_dir}")
+
             except Exception as e:
                 self.curie_logger.info(f"Error copying files: {e}")
                 raise

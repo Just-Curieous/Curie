@@ -25,7 +25,7 @@ class Concluder(BaseNode):
         self.node_config.transition_objs["terminate"] = lambda: {"next_agent": END}
 
         intro_message = '''
-All partitions for all experimental plans have completed, with results produced and analyzed. A next-step suggestion is appended. Conclude the experiment if you believe it provides a rigorous and comprehensive answer. Repeat all neccessary experiment results/numbers for the conclusion. Otherwise, if results are insufficient or further questions remain, create a new experimental plan.\n
+All partitions for all experimental plans have completed, with results produced and analyzed. A next-step suggestion is appended. Conclude the experiment if you believe it provides a rigorous and comprehensive answer. Report all neccessary experiment results/numbers for the conclusion. Otherwise, if results are insufficient or further questions remain, create a new experimental plan.\n
 '''
         self.node_config.transition_objs["after_concluder"] = lambda item: {
             "messages": intro_message + str(item), 

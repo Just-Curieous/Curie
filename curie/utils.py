@@ -259,7 +259,7 @@ def categorize_variables(env_vars):
         'core': {
             'file_store': 'local',
             'jwt_secret': 'secretpass',
-            'max_iterations': 50,
+            'max_iterations': 30,
         },
         'llm': {
             'input_cost_per_token': get_input_price_per_token(),

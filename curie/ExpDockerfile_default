@@ -4,10 +4,6 @@ FROM continuumio/miniconda3:latest
 # Set the working directory inside the container
 WORKDIR /curie
 
-# Copy the current directory into the container
-COPY curie/environment.yml .
-# COPY curie/setup/env.sh setup/
-
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,18 +25,39 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg -
     apt-get install -y nodejs && \
     npm install -g npm@latest
 
+
 # Verify Node.js version
 RUN node --version
 
-# Install dependencies from the Conda environment file
-RUN conda env create -f environment.yml && \
-    conda clean -a && \
-    conda init bash && \
-    /bin/bash -c "source ~/.bashrc && conda activate curie" 
 
-RUN /opt/conda/bin/conda init bash
-# Install Python and other conda packages
-RUN conda install -y -c conda-forge python=3.12 "nodejs>=20" poetry && conda clean --all -y
+# Copy the environment specification
+COPY curie/environment.yml .
+
+# Install micromamba
+ENV MAMBA_ROOT_PREFIX=/opt/micromamba
+ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
+
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "aarch64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-aarch64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "ppc64le" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-ppc64le/latest | tar -xvj bin/micromamba; \
+    else \
+    echo "Unsupported architecture: $arch"; exit 1; \
+    fi && \
+    mv bin/micromamba /usr/local/bin/ && \
+    rmdir bin
+    
+# Create base environment with micromamba
+RUN micromamba create -n curie -f environment.yml && \
+    micromamba clean --all --yes
+
+ENV MAMBA_DEFAULT_ENV=curie
+ENV PATH=/opt/micromamba/envs/curie/bin:$PATH
+
+RUN micromamba install -y -c conda-forge python=3.12 "nodejs>=20" poetry && micromamba clean --all -y
 
 # Create the keyrings directory and add Docker's official GPG key
 RUN mkdir -p /etc/apt/keyrings && \
@@ -58,17 +75,16 @@ RUN apt-get update && apt-get install -y \
     docker-compose-plugin 
 
 RUN mkdir -p /helper
-# WORKDIR /helper
+# Clone OpenHands repository
 RUN cd /helper && git clone https://github.com/All-Hands-AI/OpenHands.git && cd OpenHands && git checkout 1c7267648327524be3ddfaf4fe340c71c08d845f 
 RUN cd /helper/OpenHands && make build
 
-# Activate the Conda virtual environment and install dependencies
-RUN /bin/bash -c "source /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/activate && \
-    pip install langchain-core==0.3.29 langgraph==0.2.52"
+# Install additional Python packages using micromamba
+RUN micromamba run -n curie pip install langchain-core==0.3.29 langgraph==0.2.52
 
 RUN echo "source /curie/setup/env.sh" >> ~/.bashrc
 
-# Update the Azure configuration FIXME: hardcoded org id
+# Update the Azure configuration
 RUN sed -i '474i \          "organization": "499023",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py
 # To support docker initialization from Curie
 RUN sed -i '237i \                "/var/run/docker.sock": {"bind": "/var/run/docker.sock", "mode": "rw"},' /helper/OpenHands/openhands/runtime/impl/docker/docker_runtime.py
@@ -76,10 +92,10 @@ RUN sed -i '36i\    user_id = 123 if user_id == 0 else user_id' /helper/OpenHand
 
 # Create necessary directories
 RUN mkdir -p /workspace
-RUN mkdir -p /temp/logs/
 
 # Set PATH to activate the Conda environment automatically in the container
-ENV PATH=/opt/conda/envs/langgraph/bin:$PATH
+ENV PATH=/opt/micromamba/envs/curie/bin:$PATH
+
 
 # Ensure bash is the default shell
 SHELL ["/bin/bash", "-c"]

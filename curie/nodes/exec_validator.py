@@ -107,7 +107,18 @@ def run_control_experiment_and_rename(iteration, control_experiment_filename, co
         try:
             # Run the control_experiment.sh script
             curie_logger.info(f"ExecVerifier: Running {control_experiment_filename}, iteration {iteration}...")
-            result = subprocess.run(["bash", control_experiment_filename], capture_output=True, text=True, timeout=timeout)
+            # enter the conda env
+            workspace_dir = os.path.dirname(control_experiment_filename) 
+            
+            command = f"""
+            eval "$(micromamba shell hook --shell bash)" &&
+            micromamba activate {workspace_dir}/venv && 
+            bash {control_experiment_filename}
+            """
+            # TODO: instruction to install package in micromamba
+
+            result = subprocess.run(["bash", "-c", command], capture_output=True, text=True, timeout=timeout)
+            curie_logger.info(f"ExecVerifier: {result.stdout}")
 
             if result.returncode != 0:
                 curie_logger.info(f"ExecVerifier: Error running {control_experiment_filename}: {result.stderr}")

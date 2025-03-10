@@ -65,7 +65,17 @@ class UserInput(BaseNode):
                     }
                 }
             )
-            user_input = input("Do you approve of the architect's proposed plan? If not, why? Provide your response here: ")
+            # ANSI escape codes for colors
+            RED = "\033[91m"
+            GREEN = "\033[92m"
+            CYAN = "\033[96m"
+            BOLD = "\033[1m"
+            RESET = "\033[0m"
+
+            # Custom input prompt
+            user_input = input(f"{BOLD}{GREEN}✅ Do you approve of the architect's proposed plan? {RESET}"
+                                f"{RED}❌ If not, why? {RESET}"
+                                f"{CYAN}💬 Provide your response here: {RESET}")
             response = subgraph.invoke(Command(resume=user_input),
                 {
                     # "recursion_limit": 20,
