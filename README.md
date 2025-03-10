@@ -119,4 +119,3 @@ For any issues or feature requests, please open an issue on our [GitHub Issues](
 ## License
 
 Curie is released under the Apache 2.0 License. See `LICENSE` for more details.
-

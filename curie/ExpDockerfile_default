@@ -29,6 +29,7 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg -
 # Verify Node.js version
 RUN node --version
 
+
 # Copy the environment specification
 COPY curie/environment.yml .
 
@@ -36,9 +37,18 @@ COPY curie/environment.yml .
 ENV MAMBA_ROOT_PREFIX=/opt/micromamba
 ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
 
-RUN wget -qO- https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba \
-    && mv bin/micromamba /usr/local/bin/ \
-    && rmdir bin
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "aarch64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-aarch64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "ppc64le" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-ppc64le/latest | tar -xvj bin/micromamba; \
+    else \
+    echo "Unsupported architecture: $arch"; exit 1; \
+    fi && \
+    mv bin/micromamba /usr/local/bin/ && \
+    rmdir bin
     
 # Create base environment with micromamba
 RUN micromamba create -n curie -f environment.yml && \
@@ -63,7 +73,7 @@ RUN apt-get update && apt-get install -y \
     docker-ce-cli \
     containerd.io \
     docker-compose-plugin 
-    
+
 RUN mkdir -p /helper
 # Clone OpenHands repository
 RUN cd /helper && git clone https://github.com/All-Hands-AI/OpenHands.git && cd OpenHands && git checkout 1c7267648327524be3ddfaf4fe340c71c08d845f 
