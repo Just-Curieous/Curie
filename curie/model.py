@@ -125,10 +125,17 @@ def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
                 chat = chat.bind_tools(tools)
             else:
                 chat = chat.bind_tools(tools, parallel_tool_calls=False) # disabling for gpt models
+        messages = format_messages(messages)
         return chat.invoke(messages)
     except Exception as e:
         curie_logger.error(f"Error in LLM API create_completion: {e}")
         raise e
+
+def format_messages(messages: List[BaseMessage]) -> List[BaseMessage]:
+    for msg in messages:
+        if msg.content == "":
+            msg.content = "Empty message."
+    return messages
 
 def update_tool_costs(costs: float):
     """Update accumulated tool usage statistics."""

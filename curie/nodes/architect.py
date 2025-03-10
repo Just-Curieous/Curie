@@ -12,6 +12,11 @@ class Architect(BaseNode):
         intro_message = "This is the question to answer, make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
         self.node_config.transition_objs["no_plan"] = lambda: {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
+        self.node_config.transition_objs["get_user_input_first"] = lambda: {
+            "messages": "[User input requested]", 
+            "next_agent": "user_input"
+        }
+
         self.node_config.transition_objs["is_terminate"] = lambda: {"next_agent": END}
 
         self.node_config.transition_objs["control_has_work"] = lambda assignment_messages: {
@@ -24,7 +29,7 @@ class Architect(BaseNode):
             "experimental_work": {"messages": self.sched_node.assign_worker("experimental"), "next_agent": "worker"}
         }
 
-    def transition_handle_func(self):
+    def transition_handle_func(self, state):
         """
         All of the plans that were edited/written by the supervisor will be scheduled for execution now or added to the queue. 
         If the plan existed before, we check if the experimental groups have been modified: 
@@ -39,6 +44,9 @@ class Architect(BaseNode):
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.sched_node.is_no_plan_exists():
             return self.node_config.transition_objs["no_plan"]()
+        # print("state['is_user_input_done']: ", state["is_user_input_done"])
+        if not state["is_user_input_done"]:
+            return self.node_config.transition_objs["get_user_input_first"]()
 
         # First, check for exp termination condition:
         is_terminate = self.sched_node.check_exp_termination_condition()
@@ -46,14 +54,14 @@ class Architect(BaseNode):
             return self.node_config.transition_objs["is_terminate"]()
 
         # Second, for control groups that are done, move their experimental groups (if any exist) to the worker queue:
-        self.curie_logger.info("Checking control group done..")
+        self.curie_logger.debug("Checking control group done..")
         memory_id = str("standby_exp_plan_list")
         standby_exp_plan_list = self.metadata_store.get(self.sched_node.sched_namespace, memory_id).dict()["value"]
         for plan_id in standby_exp_plan_list[:]: # iterate over a copy of standby_exp_plan_list
             self.sched_node.update_queues(plan_id, assert_new_control=True)
 
         # Third, for plans that were written/modified by the supervisor, add them to the correct queue:
-        self.curie_logger.info("Checking supervisor wrote list..")
+        self.curie_logger.debug("Checking supervisor wrote list..")
         memory_id = str("supervisor_wrote_list")
         supervisor_wrote_list = self.metadata_store.get(self.sched_node.sched_namespace, memory_id).dict()["value"]
         # Create a new /workspace dir for each new plan_id, and other related inits for a new plan:

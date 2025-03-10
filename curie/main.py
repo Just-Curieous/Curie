@@ -168,7 +168,7 @@ def execute_experiment_in_container(container_name, task_config, config_file):
     try:
         # Run the experiment inside the container
         subprocess.run([
-            "docker", "exec", container_name,
+            "docker", "exec", "-it", container_name,
             "bash", "-c", (
                 "source ~/.bashrc && "
                 "source setup/env.sh && "
@@ -246,7 +246,7 @@ def main():
         print("Please provide only one of either a question file or a question.")
         return
     elif args.question_file is None:
-        question_file = f'workspace/{task_config['workspace_name']}_{int(time.time())}.txt'
+        question_file = f'workspace/{task_config["workspace_name"]}_{int(time.time())}.txt'
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         # write the question to the file
         with open(question_file, 'w') as f:
