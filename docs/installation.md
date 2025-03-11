@@ -20,5 +20,6 @@ export OPENAI_API_KEY="sk-xxx"
 
 ```bash
 pip install -e .
+docker images -q exp-agent-image | xargs -r docker rmi -f # remove any existing conflict image
 cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
 ```
