@@ -43,7 +43,7 @@ config_filename = sys.argv[1]
 # Read config file
 with open(config_filename, 'r') as file:
     config = json.load(file)
-    question_filename = f"../{config['question_filename']}"
+    exp_plan_filename = f"../{config['exp_plan_filename']}"
     log_filename = f"../{config['log_filename']}"
     log_file = open(log_filename, 'w')
     
@@ -462,17 +462,16 @@ def print_graph_updates(event, max_global_steps):
     for value in event.values():
         curie_logger.info(f"Event value: {value['messages'][-1].content}")
 
-# logging all generated logs
 def report_all_logs(config_filename: str, config: dict):
     
     if config['report'] == True:
         report_filename = generate_report(config)
         curie_logger.info(f"📝 Experiment report saved to {report_filename}")
     
-    question_filename = f"../{config['question_filename']}"
-    with open(question_filename, 'r') as file:
+    exp_plan_filename = f"../{config['exp_plan_filename']}"
+    with open(exp_plan_filename, 'r') as file:
         plan = json.load(file)
-        curie_logger.info(f"📋 Raw experiment plan an be found in {question_filename.replace('../', '')}")
+        curie_logger.info(f"📋 Raw experiment plan an be found in {exp_plan_filename.replace('../', '')}")
         workspace_dir = plan['workspace_dir']
         curie_logger.info(f"📁 Workspace is located at {workspace_dir.replace('/', '', 1)}")
     curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace('/', '', 1)}")
@@ -496,8 +495,8 @@ def main():
         graph, metadata_store, config = build_graph(State, config_filename)
 
         # Read question from file
-        question_filename = f"../{config['question_filename']}"
-        user_input = get_question(question_filename) 
+        exp_plan_filename = f"../{config['exp_plan_filename']}"
+        user_input = get_question(exp_plan_filename) 
         sched_namespace = ("admin", "exp-sched")
         metadata_store.put(sched_namespace, "question", user_input)
 

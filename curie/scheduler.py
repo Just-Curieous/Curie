@@ -140,10 +140,15 @@ class SchedNode():
         
         return SchedNode
 
-    def write_down_exp_plan(self, plan: dict):
-        filename = self.config['question_filename']
+    def write_down_exp_plan(self):
+
+        items = self.store.search(self.plan_namespace)
+        plans = [item.dict()["value"] for item in items]
+
+        filename = self.config['exp_plan_filename']
         with open('/'+filename, 'w') as file:
-            file.write(utils.pretty_json(plan))
+            for plan in plans:
+                file.write(utils.pretty_json(plan) + "\n")
 
     def update_queues(
         self, 
@@ -158,7 +163,6 @@ class SchedNode():
         self.curie_logger.debug("------------ Update Queues ------------")
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         self.curie_logger.info(f"Plan is: {utils.pretty_json(plan)} ")
-        self.write_down_exp_plan(plan)
 
         # First, if control group is not done:
         if plan["control_group"]['partition_1']["done"] == False: # only 1 partition for now in control group
@@ -477,6 +481,7 @@ class SchedNode():
         items = self.store.search(self.plan_namespace)
 
         plans_list = [item.dict()["value"] for item in items]
+        # self.write_down_exp_plan(plans_list)
 
         for plan in plans_list:
             for partition_name in plan["control_group"]:

@@ -60,6 +60,8 @@ All partitions for all experimental plans have completed, with results produced 
                 self.sched_node.remove_verifier_wrote_list_all(self.node_config.name)
                 return self.node_config.transition_objs["need_terminate_but_not_concluding"]() # reset remaining steps to allow concluder to eventually exit. 
             else:
+                self.curie_logger.info("Concluder has concluded the experiment. Record the experiment plans.")
+                self.sched_node.write_down_exp_plan()
                 return self.node_config.transition_objs["terminate"]()
 
         # Remove verifier from verifier assignment dict:

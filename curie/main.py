@@ -42,7 +42,7 @@ def parse_args():
         "--task_config",
         type=str, 
         default="curie/configs/base_config.json",
-        help="Task configuration file"
+        help="Task configuration file for advanced developers."
     )
 
     parser.add_argument(
@@ -78,7 +78,7 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     task_config.update({"unique_id": unique_id, 
                         "iteration": iteration, 
                         "log_filename": log_filename, 
-                        "question_filename": question_file, 
+                        "exp_plan_filename": question_file, 
                         'base_dir': base_dir})
     
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
@@ -167,6 +167,11 @@ def execute_experiment_in_container(container_name, task_config, config_file):
     """
     curie_logger.info(f"Starting experiment in container {container_name} with config in {config_file}")
     try:
+        # check for the existence of curie/setup/env.sh
+        if not os.path.exists("curie/setup/env.sh"):
+            curie_logger.error("env.sh does not exist under curie/setup. Please input your API credentials.")
+            return
+
         # Run the experiment inside the container
         subprocess.run([
             "docker", "exec", "-it", container_name,
