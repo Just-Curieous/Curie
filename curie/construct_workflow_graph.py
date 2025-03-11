@@ -1,4 +1,5 @@
 import sys
+import re
 import json
 import traceback
 from typing import Annotated, Literal
@@ -462,6 +463,25 @@ def print_graph_updates(event, max_global_steps):
     for value in event.values():
         curie_logger.info(f"Event value: {value['messages'][-1].content}")
 
+# logging all generated logs
+def report_all_logs(config_filename: str, config: dict):
+    
+    if config['report'] == True:
+        report_filename = generate_report(config)
+        curie_logger.info(f"📝 Experiment report saved to {report_filename}")
+    
+    question_filename = f"../{config['question_filename']}"
+    with open(question_filename, 'r') as file:
+        plan = json.load(file)
+        curie_logger.info(f"📋 Raw experiment plan an be found in {question_filename.replace("../", "")}")
+        workspace_dir = plan['workspace_dir']
+        curie_logger.info(f"📁 Workspace is located at {workspace_dir.replace("/", "", 1)}")
+    curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace("/", "", 1)   }")
+    curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace("/", "", 1)   }")
+    curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
+    curie_logger.info("🎉 Experiment completed successfully!")
+    
+
 def main():
     """
     Main execution function for the LangGraph workflow.
@@ -484,8 +504,7 @@ def main():
 
         # Stream graph updates
         stream_graph_updates(graph, user_input, config)
-        if config['report'] == True:
-            generate_report(config)
+        report_all_logs(config_filename, config)
 
     except Exception as e:
         curie_logger.error(f"Execution error: {e}")

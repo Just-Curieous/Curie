@@ -39,4 +39,5 @@ def generate_report(config):
     with open(f"/logs/{report_name}.md", "w") as file:
         file.write(response.content)
     print(f"Report saved to logs/{report_name}.md")
+    return f'logs/{report_name}.md'
  

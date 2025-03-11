@@ -91,7 +91,7 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     curie_logger = init_logger(log_filename)
 
     curie_logger.info(f"Config file created: {config_filename}")
-    curie_logger.info(f">>>>>> Check out the log file: {log_filename} <<<<<<<")
+    curie_logger.info(f"Check out the log file: {log_filename}")
     return task_config, config_filename
 
 
