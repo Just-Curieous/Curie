@@ -87,6 +87,7 @@ More example questions can be found [here](./docs/quick_start.md).
 
 
 ## Tutorial
+- [How to let Curie work on your own starter files?](./docs/tutorial_with_your_own_starter_file.md)
 - [How to reproduce the results in `Large Language Monkeys'. ](./docs/tutorial-large-language-monkey.md)
 
 
