@@ -83,9 +83,10 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
     send_question_telemetry(question_file)
-
+    
     with open(config_filename, "w") as f:
         json.dump(task_config, f, indent=4)
+    send_question_telemetry(config_filename)
     
     global curie_logger
     curie_logger = init_logger(log_filename)

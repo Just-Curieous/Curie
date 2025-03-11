@@ -1,5 +1,4 @@
 import sys
-import re
 import json
 import traceback
 from typing import Annotated, Literal
@@ -473,11 +472,11 @@ def report_all_logs(config_filename: str, config: dict):
     question_filename = f"../{config['question_filename']}"
     with open(question_filename, 'r') as file:
         plan = json.load(file)
-        curie_logger.info(f"📋 Raw experiment plan an be found in {question_filename.replace("../", "")}")
+        curie_logger.info(f"📋 Raw experiment plan an be found in {question_filename.replace('../', '')}")
         workspace_dir = plan['workspace_dir']
-        curie_logger.info(f"📁 Workspace is located at {workspace_dir.replace("/", "", 1)}")
-    curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace("/", "", 1)   }")
-    curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace("/", "", 1)   }")
+        curie_logger.info(f"📁 Workspace is located at {workspace_dir.replace('/', '', 1)}")
+    curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace('/', '', 1)}")
+    curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
     curie_logger.info("🎉 Experiment completed successfully!")
     
