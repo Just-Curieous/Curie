@@ -479,7 +479,6 @@ def report_all_logs(config_filename: str, config: dict):
     curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
     curie_logger.info("🎉 Experiment completed successfully!")
     
-
 def main():
     """
     Main execution function for the LangGraph workflow.
