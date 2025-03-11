@@ -43,7 +43,7 @@ config_filename = sys.argv[1]
 # Read config file
 with open(config_filename, 'r') as file:
     config = json.load(file)
-    question_filename = f"../{config['question_filename']}"
+    exp_plan_filename = f"../{config['exp_plan_filename']}"
     log_filename = f"../{config['log_filename']}"
     log_file = open(log_filename, 'w')
     
@@ -462,6 +462,23 @@ def print_graph_updates(event, max_global_steps):
     for value in event.values():
         curie_logger.info(f"Event value: {value['messages'][-1].content}")
 
+def report_all_logs(config_filename: str, config: dict):
+    
+    if config['report'] == True:
+        report_filename = generate_report(config)
+        curie_logger.info(f"📝 Experiment report saved to {report_filename}")
+    
+    exp_plan_filename = f"../{config['exp_plan_filename']}"
+    with open(exp_plan_filename, 'r') as file:
+        plan = json.load(file)
+        curie_logger.info(f"📋 Raw experiment plan an be found in {exp_plan_filename.replace('../', '')}")
+        workspace_dir = plan['workspace_dir']
+        curie_logger.info(f"📁 Workspace is located at {workspace_dir.replace('/', '', 1)}")
+    curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace('/', '', 1)}")
+    curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace('/', '', 1)}")
+    curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
+    curie_logger.info("🎉 Experiment completed successfully!")
+    
 def main():
     """
     Main execution function for the LangGraph workflow.
@@ -477,15 +494,14 @@ def main():
         graph, metadata_store, config = build_graph(State, config_filename)
 
         # Read question from file
-        question_filename = f"../{config['question_filename']}"
-        user_input = get_question(question_filename) 
+        exp_plan_filename = f"../{config['exp_plan_filename']}"
+        user_input = get_question(exp_plan_filename) 
         sched_namespace = ("admin", "exp-sched")
         metadata_store.put(sched_namespace, "question", user_input)
 
         # Stream graph updates
         stream_graph_updates(graph, user_input, config)
-        if config['report'] == True:
-            generate_report(config)
+        report_all_logs(config_filename, config)
 
     except Exception as e:
         curie_logger.error(f"Execution error: {e}")

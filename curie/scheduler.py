@@ -108,6 +108,7 @@ class SchedNode():
             response = sched_tool.invoke({"state":state}) # response is guaranteed to be a dict
             # Based on sched_tool, response, we decide which node to call next:
             if "next_agent" in response and response["next_agent"] == END: # terminate experiment. Langgraph will call END based on next_agent as defined in our conditional_edge in main.py
+                self.write_down_exp_plan()
                 return {"messages": state["messages"], "next_agent": END, "prev_agent": "sched_node", "remaining_steps_display": state["remaining_steps"]}
             elif "next_agent" not in response: # next agent is a worker, and we need to determine which worker it will be.
                 # TODO: not doing parallelism for now, so we just assume for instances that messages will only contain one worker's name, and we will only need to call that one worker. Parallelism will be implemented later.
@@ -139,6 +140,16 @@ class SchedNode():
                 return new_dict
         
         return SchedNode
+
+    def write_down_exp_plan(self):
+
+        items = self.store.search(self.plan_namespace)
+        plans = [item.dict()["value"] for item in items]
+
+        filename = self.config['exp_plan_filename']
+        with open('/'+filename, 'w') as file:
+            for plan in plans:
+                file.write(utils.pretty_json(plan) + "\n")
 
     def update_queues(
         self, 
