@@ -17,7 +17,6 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock \
 
 # set up the environment inside docker container
 
+```bash
 docker exec -it exp-agent-container-test -c "source /curie/setup/env.sh"
-
 ```
-

@@ -27,7 +27,17 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 ## Installation
 
 1. Install docker: https://docs.docker.com/engine/install/ubuntu/. 
-Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. Run `docker ps` to check the permission with the Docker daemon.
+
+  - Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. 
+
+  - If you encounter an error that `/var/run/docker.sock` doesn’t exist, you may find the actual path to `docker.sock` and create a soft link. For example, docker desktop store this file at `~/.docker.desktop/docker.sock`, then you may use
+
+    ```bash
+    sudo chmod 666 ~/.docker.desktop/docker.sock
+    sudo ln -s ~/.docker.desktop/docker.sock /var/run/docker.sock
+    ```
+
+  - Run `docker ps` to check the permission with the Docker daemon.
 
 2. Clone the repository:
 ```
@@ -45,6 +55,7 @@ export OPENAI_API_KEY="sk-xxx"
 4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
 
 ```bash
+python -m venv curie/venv && source curie/venv/bin/activate # or use your own venv
 pip install -e .
 docker images -q exp-agent-image | xargs -r docker rmi -f # remove any existing conflict image
 cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
@@ -59,7 +70,7 @@ Use the following command to input your research question or problem statement: 
 python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?" --report
-``` 
+```
 
 - **Estimated runtime**: ~5 minutes
 - **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
@@ -101,7 +112,7 @@ Curie is designed for scientific discovery across multiple domains:
   - [What configurations affects the energy consumption of LLM serving?](https://ml.energy/leaderboard/?__theme=light)
   - [How does the request bursty arrival pattern affects the user experience in LLM serving?](https://arxiv.org/abs/2404.16283)
 - 🧪 Algorithmic & Scientific Discovery – Validating hypotheses, automating computational simulations.
- 
+
 <p align="center">
   <img src="./docs/static/img/case_study.png" width="1000px"/>
 </p>
