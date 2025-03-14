@@ -49,8 +49,11 @@ RUN arch=$(uname -m) && \
     rmdir bin
 
 # Create base environment with micromamba
-RUN micromamba create -n curie -f environment.yml && \
-    micromamba clean --all --yes
+RUN micromamba env create -f environment.yml
+RUN micromamba clean --all --yes
+
+# Special for setting up the LLM COT Reasoning Step environment
+RUN micromamba run -n curie pip install torch==2.0.0 torchtext==0.15.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # Set PATH to activate the Conda environment automatically in the container
 ENV PATH=/opt/micromamba/envs/curie/bin:$PATH
@@ -77,13 +80,6 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /helper
 RUN cd /helper && git clone https://github.com/All-Hands-AI/OpenHands.git && cd OpenHands && git checkout 02bc7de36dda10d890d39ac05fee16a0d55193f6
 RUN cd /helper/OpenHands && make build
-
-# Install additional Python packages using micromamba
-RUN micromamba run -n curie pip install langchain-core==0.3.29 langgraph==0.2.52
-
-
-# Special for setting up the LLM COT Reasoning Step environment
-RUN pip install torch==1.8.2+cu111 torchtext==0.9.2 -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
 
 RUN echo "source /curie/setup/env.sh" >> ~/.bashrc
 
