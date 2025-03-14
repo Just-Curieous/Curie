@@ -26,3 +26,19 @@ export WORKHOME=~/ # change this to your home repo
 cd $WORKHOME 
 git clone https://github.com/AE-W/The-Impact-of-Reasoning-Step-Length-on-Large-Language-Models.git
 ```
+
+This experiment requires a CUDA-supported machine. We recommend using our docker image to set up your experiment environment. You can build this image by running the following commands.
+
+```bash
+# bin/bash
+docker images -q exp-agent-cotsteps-image | xargs -r docker rmi -f # remove any existing conflict image
+cd curie && docker build --no-cache --progress=plain -t exp-agent-cotsteps-image -f ExpDockerfile_CotSteps .. && cd -
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+        -v $(pwd)/curie:/curie:ro \
+        -v $(pwd)/benchmark:/benchmark:ro \
+        -v $(pwd)/logs:/logs \
+        -v $(pwd)/starter_file:/starter_file:ro \
+        -v $(pwd)/workspace:/workspace \
+        --network=host -d --name exp-agent-cotsteps-container-test exp-agent-cotsteps-image
+```
+

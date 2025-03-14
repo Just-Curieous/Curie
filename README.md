@@ -4,9 +4,9 @@
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
 
-
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
 Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
+
 <p align="center">
   <img src="./docs/static/img/curie-overview.png" width="600px"/>
 </p>
@@ -52,7 +52,7 @@ export MODEL="gpt-4o"
 export OPENAI_API_KEY="sk-xxx" 
 ```
 
-4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
+4. Build the container image. This will take a few minutes. Some experiments may need other docker files, which may be automatically built according to the task configs during Curie execution.
 
 ```bash
 python -m venv curie/venv && source curie/venv/bin/activate # or use your own venv
