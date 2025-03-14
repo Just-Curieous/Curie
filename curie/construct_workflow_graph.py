@@ -352,9 +352,6 @@ def build_graph(State, config_filename):
     with open(config_filename, 'r') as file:
         config = json.load(file)
     
-    # Setup logging
-    # setup_logging(f"../{config['log_filename']}")
-    
     # Create stores
     store, metadata_store, memory = create_graph_stores()
     
@@ -424,8 +421,22 @@ def get_question(question_file_path: str) -> str:
     Returns:
         str: Question text
     """
+    with open('prompts/parse-input.txt', 'r') as file:
+        parse_input_prompt = file.read().strip()
+
     with open(question_file_path, "r") as question_file:
-        return question_file.read().strip()
+        question = question_file.read().strip()
+        # validate question, if it's feasible to answer through experimentation
+        # if not just return the answer via LLM call,  and prompt the user to input a researchß question
+        messages = [SystemMessage(content=parse_input_prompt),
+                HumanMessage(content=question)]
+
+        response = model.query_model_safe(messages)
+        print(response.content)
+        response_json = json.loads(response.content)
+        valid = response_json["valid"]
+        response = response_json["response"] if response_json["response"] else question
+        return valid, question
 
 def stream_graph_updates(graph, user_input: str, config: dict):
     """
@@ -495,7 +506,10 @@ def main():
 
         # Read question from file
         exp_plan_filename = f"../{config['exp_plan_filename']}"
-        user_input = get_question(exp_plan_filename) 
+        valid, user_input = get_question(exp_plan_filename) 
+        if not valid:
+            curie_logger.error(f"Invalid question. Please input a valid research question.\n{user_input}")
+            sys.exit(0)
         sched_namespace = ("admin", "exp-sched")
         metadata_store.put(sched_namespace, "question", user_input)
 

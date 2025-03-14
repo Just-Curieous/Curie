@@ -261,7 +261,7 @@ def main():
     else:
         question_file = args.question_file
     
-    # read from config
+
     print(f"Processing {question_file} for {args.iterations} iterations...")
     for iteration in range(1, args.iterations + 1):
         # Perform the required operation for each iteration (to be provided later)
@@ -274,6 +274,6 @@ def main():
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"Iteration {iteration} for {question_file} completed in {elapsed_time:.2f} seconds.")
-
+    
 if __name__ == "__main__": 
     main() 
