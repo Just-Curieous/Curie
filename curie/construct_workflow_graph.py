@@ -432,7 +432,10 @@ def get_question(question_file_path: str) -> str:
                 HumanMessage(content=question)]
 
         response = model.query_model_safe(messages)
-        response_json = json.loads(response.content)
+        try:
+            response_json = json.loads(response.content)
+        except json.JSONDecodeError:
+            response_json = {"valid": True, "response": None}
         valid = response_json["valid"]
         response = response_json["response"] if response_json["response"] else question
         return valid, question
