@@ -33,8 +33,8 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
   - If you encounter an error that `/var/run/docker.sock` doesn’t exist, you may find the actual path to `docker.sock` and create a soft link. For example, docker desktop store this file at `~/.docker.desktop/docker.sock`, then you may use
 
     ```bash
-    sudo chmod 666 ~/.docker.desktop/docker.sock
-    sudo ln -s ~/.docker.desktop/docker.sock /var/run/docker.sock
+    sudo chmod 666 ~/.docker/desktop/docker.sock
+    sudo ln -s ~/.docker/desktop/docker.sock /var/run/docker.sock
     ```
 
   - Run `docker ps` to check the permission with the Docker daemon.

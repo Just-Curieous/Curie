@@ -180,7 +180,6 @@ def execute_experiment_in_container(container_name, task_config, config_file):
                 "source setup/env.sh && "
                 '''eval "$(micromamba shell hook --shell bash)" && '''
                 "micromamba activate curie && "
-                "sed -i '474i \\    \"organization\": \"499023\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py && "
                 f"python3 construct_workflow_graph.py /{config_file}"
             )
         ], check=True)  # This will block until main.py finishes.
@@ -261,7 +260,7 @@ def main():
     else:
         question_file = args.question_file
     
-    # read from config
+
     print(f"Processing {question_file} for {args.iterations} iterations...")
     for iteration in range(1, args.iterations + 1):
         # Perform the required operation for each iteration (to be provided later)
@@ -274,6 +273,6 @@ def main():
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"Iteration {iteration} for {question_file} completed in {elapsed_time:.2f} seconds.")
-
+    
 if __name__ == "__main__": 
     main() 
