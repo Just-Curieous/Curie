@@ -3,16 +3,10 @@ The paper [Large Language Monkeys: Scaling Inference Compute with Repeated Sampl
 
 ## Common setup
 
-Put the API key into `env.sh` under each working directory.
-```bash
-export MODEL="gpt-4o"
-export API_VERSION="2024-06-01"
-export OPENAI_API_KEY=X
-export OPENAI_ORGANIZATION=Y
-export OPENAI_API_BASE=Z
-```
+1. Put the API key into `env.sh` under each working directory. See [Installation](../../../docs/installation.md) and [env.sh example](https://github.com/Just-Curieous/Curie/blob/main/curie/setup/env.sh.tmp).
 
-We put all starter file and our code base under `$WORKHOME` 
+2. We put all starter file and our code base under `$WORKHOME` 
+
 ```bash
 export WORKHOME=~/ # change this to your home repo
 ```

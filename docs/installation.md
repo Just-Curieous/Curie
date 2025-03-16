@@ -30,7 +30,6 @@ export OPENAI_API_KEY="sk-xxx"
 4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
 
 ```bash
-python -m venv curie/venv && source curie/venv/bin/activate # or use your own venv
 pip install -e .
 docker images -q exp-agent-image | xargs -r docker rmi -f # remove any existing conflict image
 cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
