@@ -180,7 +180,6 @@ def execute_experiment_in_container(container_name, task_config, config_file):
                 "source setup/env.sh && "
                 '''eval "$(micromamba shell hook --shell bash)" && '''
                 "micromamba activate curie && "
-                "sed -i '474i \\    \"organization\": \"499023\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py && "
                 f"python3 construct_workflow_graph.py /{config_file}"
             )
         ], check=True)  # This will block until main.py finishes.

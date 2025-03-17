@@ -313,7 +313,7 @@ class AllNodes():
 
     def get_all_nodes(self):
         return self.nodes
- 
+
 def setup_logging(log_filename: str):
     """
     Configure logging to redirect stdout and stderr to a log file.
@@ -436,6 +436,7 @@ def get_question(question_file_path: str) -> str:
             response_json = json.loads(response.content)
         except json.JSONDecodeError:
             response_json = {"valid": True, "response": None}
+
         valid = response_json["valid"]
         response = response_json["response"] if response_json["response"] else question
         return valid, question
@@ -491,7 +492,7 @@ def report_all_logs(config_filename: str, config: dict):
     curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
     curie_logger.info("🎉 Experiment completed successfully!")
-    
+
 def main():
     """
     Main execution function for the LangGraph workflow.

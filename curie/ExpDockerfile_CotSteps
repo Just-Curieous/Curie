@@ -1,0 +1,99 @@
+# Base image with Python and Conda
+FROM continuumio/miniconda3:latest
+
+# Set the working directory inside the container
+WORKDIR /curie
+
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package index and install dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    build-essential \
+    vim \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20.x and npm
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
+
+# Verify Node.js version
+RUN node --version
+
+# Copy the environment specification
+COPY curie/environment.yml .
+
+# Install micromamba
+ENV MAMBA_ROOT_PREFIX=/opt/micromamba
+ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
+
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "aarch64" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-aarch64/latest | tar -xvj bin/micromamba; \
+    elif [ "$arch" = "ppc64le" ]; then \
+    wget -qO- https://micro.mamba.pm/api/micromamba/linux-ppc64le/latest | tar -xvj bin/micromamba; \
+    else \
+    echo "Unsupported architecture: $arch"; exit 1; \
+    fi && \
+    mv bin/micromamba /usr/local/bin/ && \
+    rmdir bin
+
+# Create base environment with micromamba
+RUN micromamba env create -f environment.yml
+RUN micromamba clean --all --yes
+
+# Special for setting up the LLM COT Reasoning Step environment
+RUN micromamba run -n curie pip install torch==2.0.0 torchtext==0.15.1 -f https://download.pytorch.org/whl/torch_stable.html
+
+# Set PATH to activate the Conda environment automatically in the container
+ENV PATH=/opt/micromamba/envs/curie/bin:$PATH
+ENV MAMBA_DEFAULT_ENV=curie
+
+RUN micromamba install -y -c conda-forge python=3.12 "nodejs>=20" poetry && micromamba clean --all -y
+
+# Create the keyrings directory and add Docker's official GPG key
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Set up the Docker repository
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+    | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Update package index again and install Docker Engine
+RUN apt-get update && apt-get install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-compose-plugin 
+
+# Clone OpenHands repository
+RUN mkdir -p /helper
+RUN cd /helper && git clone https://github.com/All-Hands-AI/OpenHands.git && cd OpenHands && git checkout 02bc7de36dda10d890d39ac05fee16a0d55193f6
+RUN cd /helper/OpenHands && make build
+
+RUN echo "source /curie/setup/env.sh" >> ~/.bashrc
+
+# Update the Azure configuration
+RUN sed -i '474i \                    "organization": "499023",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py
+# To support docker initialization from Curie
+RUN sed -i '238i \                "/var/run/docker.sock": {"bind": "/var/run/docker.sock", "mode": "rw"},' /helper/OpenHands/openhands/runtime/impl/docker/docker_runtime.py
+RUN sed -i '36i\    user_id = 123 if user_id == 0 else user_id' /helper/OpenHands/openhands/runtime/utils/runtime_init.py
+
+# Create necessary directories
+RUN mkdir -p /workspace
+
+# Ensure bash is the default shell
+SHELL ["/bin/bash", "-c"]
+
+# Keep container running
+CMD ["tail", "-f", "/dev/null"]

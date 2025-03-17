@@ -11,7 +11,7 @@ git submodule update --init --recursive
 
 2. Be curious.
 
-As a LLM researcher, you are just curious about how does the number of repeatedly generated samples per question impact the overall success? (The concrete question can be found in our benchmark `benchmark/experimentation_bench/llm_reasoning/q1_simple_relation.txt`, which specify the location of corresponding starter files.)
+As an LLM researcher, you are just curious how the number of repeatedly generated samples per question impacts the overall success. (The concrete question can be found in our benchmark `benchmark/experimentation_bench/llm_reasoning/q1_simple_relation.txt`, which specifies the location of corresponding starter files.)
 
 ```bash
 cd Curie
