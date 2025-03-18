@@ -180,6 +180,7 @@ def execute_experiment_in_container(container_name, task_config, config_file):
                 "source setup/env.sh && "
                 '''eval "$(micromamba shell hook --shell bash)" && '''
                 "micromamba activate curie && "
+                "sed -i '474i \\    \"organization\": \"499023\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py && "
                 f"python3 construct_workflow_graph.py /{config_file}"
             )
         ], check=True)  # This will block until main.py finishes.
@@ -239,12 +240,11 @@ def main():
         with open(config_file, 'r') as f:
             task_config = json.load(f)
             task_config['report'] = args.report
-            print(f"Config: {task_config}")
     except Exception as e:
         print(f"Error reading config file: {e}")
         return
     
-    print(f"Iterations: {args.iterations}")
+    print(f"Curie is running with the following configuration: {task_config}")
     if args.question_file is None and args.question is None:
         print("Please provide either a question file or a question.")
         return
@@ -261,10 +261,10 @@ def main():
         question_file = args.question_file
     
 
-    print(f"Processing {question_file} for {args.iterations} iterations...")
+    # print(f"Processing {question_file} for {args.iterations} iterations...")
     for iteration in range(1, args.iterations + 1):
         # Perform the required operation for each iteration (to be provided later)
-        print(f"Iteration {iteration} ")
+        # print(f"Iteration {iteration} ")
         start_time = time.time() 
         unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
 
