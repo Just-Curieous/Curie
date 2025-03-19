@@ -1,8 +1,11 @@
 # Curie: Automate Rigorous Scientific Experimentation
 
 [![arXiv](https://img.shields.io/badge/arXiv-2502.16069-b31b1b.svg)](https://arxiv.org/abs/2502.16069)
-[![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
+[![Demo](https://img.shields.io/badge/Demo-Live-green)](http://44.202.70.8:5000/)
+[![Blog](https://img.shields.io/badge/Blog-Read%20More-orange)](https://www.just-curieous.com/)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
+
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
 Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
