@@ -1,43 +1,33 @@
-Task description:
-BabyLM is a language modeling task evaluating models on perplexity for child-directed text data.
+# Task Description:
+# BabyLM is a language modeling task evaluating models on perplexity for child-directed text data.
 
-Instructions:
-- Checkout the code dependency and set up the environment:
-```
-cd /starter_file/MLAgentBench
-pip install -e .
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -y -q
-pip install -q -r requirements.txt
-```
-
-- Install Kaggle
-```
-export KAGGLE_CONFIG_DIR=/starter_file/MLAgentBench/.kaggle
-pip install kaggle
-sudo apt-get install unzip -y
-```
-
-- Refer to the benchmark question under `MLAgentBench/benchmarks/babylm/`.
-```
-cd MLAgentBench/benchmarks/babylm
-```
 
 Here is your task:
 - Summary: This shared task challenges community members to train a language model **from scratch** on the same amount of linguistic data available to a child. Submissions should be implemented in Huggingface's Transformers library and will be evaluated on a shared pipeline. This shared task is co-sponsored by CMCL and CoNLL.
 
-- To run the model that can be trained on CPU on the babyLM data, execute `env/train.py`. The final model will be saved to output/ folder. Understand and modify this file as appropriate. You must execute it by going into the env/ directory:
+- To run the model that can be trained on CPU on the babyLM data, execute `benchmarks/babylm/env/train.py`. The final model will be saved to output/ folder. Understand and modify this file as appropriate. You must execute it by going into the env/ directory:
 ```
-cd env
+
+# Docker Setup (Recommended)
+
+# 1. Pull the pre-built Docker image:
+docker pull qhwang123/researchassistant:latest
+
+# 2. Run the container with necessary mounts:
+# Without GPU:
+docker run -it --user root -v "$(pwd)":/MLAgentBench -w /MLAgentBench qhwang123/researchassistant:latest
+
+# With GPU:
+docker run -it --user root --gpus all -v "$(pwd)":/MLAgentBench -w /MLAgentBench qhwang123/researchassistant:latest
+
+# 3. Install dependencies inside the container:
+apt update && apt install -y wget unzip
+
+# 4. Prepare the BabyLM task:
+python -u -m MLAgentBench.prepare_task babylm
+
+# 5. Train the model and evaluate
+cd MLAgentBench/benchmarks/babylm/env
 python train.py
-cd .. 
-```
 
-- When you submit your final answer, you will be evaluated on the performance of the checkpoint saved in the output folder. It will be evaluated on a held-out test set. Evaluate the model performance via:
-```
-cd scripts
-python eval.py
-cd ..
-```
 
-Goal:
-Improve the baseline model performance on the babyLM Benchmark. 
