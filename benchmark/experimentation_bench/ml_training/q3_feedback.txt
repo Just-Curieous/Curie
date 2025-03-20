@@ -1,44 +1,48 @@
 Task description:
 Feedback is a text analysis task to predict or classify user feedback, often involving sentiment or relevance analysis.
 
-Instructions:
-- Checkout the code dependency and set up the environment:
-```
-cd /starter_file/MLAgentBench
-pip install -e .
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -y -q
-pip install -q -r requirements.txt
-```
-
-- Install Kaggle
-```
-export KAGGLE_CONFIG_DIR=/starter_file/MLAgentBench/.kaggle
-pip install kaggle
-sudo apt-get install unzip -y
-```
-
-- Refer to the benchmark question under `MLAgentBench/benchmarks/feedback/`.
-```
-cd MLAgentBench/benchmarks/feedback
-```
-
 Here is your task:
 - The starter file can be found under `MLAgentBench/benchmarks/feedback`.
 - Go through the env/data_description.txt file to understand the data and the machine learning task. You can summarize it in your research logs to keep track of what all you have to do.
-- Then fill in the provided train.py script to train a language model on CPU to get the best performance (minimize MCRMSE). You MUST "cat" to read the script and then modify it. You must execute it by going into the env/ directory:
+- Then use the provided train.py script to train a language model on CPU to get the best performance (minimize MCRMSE). You MUST "cat" to read the script and then modify it. You must execute it by going into the env/ directory:
 ```
-cd env
-python train.py
-cd .. 
-```
-- You should submit the predictions of your best model for the test set as a submission.csv as described in the evaluation_details.txt file. This part of the code is already available in train.py. 
 
-- Evaluate the model performance via:
-```
-cd scripts
-python eval.py
-cd ..
-```
+# -------------------------------------
+# Docker Setup (Recommended)
+# -------------------------------------
+
+# 1. Pull the pre-built Docker image:
+docker pull qhwang123/researchassistant:latest
+
+# 2. Run the container with necessary mounts:
+# Without GPU:
+docker run -it --user root -v "$(pwd)":/MLAgentBench -w /MLAgentBench qhwang123/researchassistant:latest
+
+# With GPU:
+docker run -it --user root --gpus all -v "$(pwd)":/MLAgentBench -w /MLAgentBench qhwang123/researchassistant:latest
+
+# 3. Install dependencies inside the container:
+apt update && apt install -y wget unzip
+
+# 4. Configure Kaggle API Key:
+# Install Kaggle CLI and configure API key inside the Docker container
+pip install kaggle
+
+# Ensure the Kaggle config directory exists
+mkdir -p ~/.kaggle
+
+# Copy the Kaggle API key from the mounted host directory
+cp /starter_file/kaggle.json ~/.kaggle/kaggle.json
+
+# Set the correct permissions for security
+chmod 600 ~/.kaggle/kaggle.json
+
+# 5. Prepare the feedback task:
+python -u -m MLAgentBench.prepare_task feedback
+
+# 6. Train the model:
+cd starter_file/MLAgentBench/MLAgentBench/benchmarks/feedback/env
+python train.py
 
 Goal: 
 Identify the model and its configuration that achieve the best performance, and report the results. Report the MCRMSE as well for each configuration.
