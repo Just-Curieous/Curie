@@ -439,7 +439,7 @@ def get_question(question_file_path: str) -> str:
 
         valid = response_json["valid"]
         response = response_json["response"] if response_json["response"] else question
-        return valid, question
+        return valid, response
 
 def stream_graph_updates(graph, user_input: str, config: dict):
     """

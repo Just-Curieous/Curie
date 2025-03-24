@@ -9,6 +9,7 @@ from datetime import datetime
 import sys
 import uuid 
 from curie.logger import init_logger, send_question_telemetry
+import shutil
 
 # Create a function to parse input arguments
 def parse_args():
@@ -121,7 +122,8 @@ def run_docker_container(unique_id, iteration, task_config):
     if docker_image_exists(image_name):
         curie_logger.info(f"Using existing Docker image: {image_name}")
     else:
-        # FIXME: the dir is hardcoded
+        # FIXME: enable auto rebuild if the docker image or its dependencies are changed
+        curie_logger.info(f"Start building Docker image {image_name} ... ") 
         command = [
             "sudo", "docker", "build",
             "--no-cache", "--progress=plain",
@@ -131,8 +133,6 @@ def run_docker_container(unique_id, iteration, task_config):
         ] 
         subprocess.run(command, check=True)
     
-    curie_logger.info(f"Running Docker container: {container_name}") 
-
     base_dir = task_config['base_dir']
     command = [
         "docker", "run",
@@ -144,11 +144,13 @@ def run_docker_container(unique_id, iteration, task_config):
         "-v", f"{base_dir}/workspace:/workspace",
         "--network=host",
         "-d",
-        "--name", container_name,
-        image_name
     ]
-    curie_logger.info(f"Running command: {' '.join(command)}")
+    has_gpu = shutil.which("nvidia-smi") is not None and subprocess.call(["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+    if has_gpu:
+        command += ["--gpus", "all"]
+    command += ["--name", container_name, image_name]
 
+    curie_logger.info(f"Running command: {' '.join(command)}")
     # Run the command
     subprocess.run(command, check=True) 
     return container_name
