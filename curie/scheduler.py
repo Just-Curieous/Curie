@@ -556,28 +556,37 @@ class SchedNode():
                 packages (list): List of packages to install
             """
             # Activate the environment
-            activate_cmd = [
-                "micromamba", "run", 
-                "-p", env_path, 
-                "pip", "install"
-            ] + packages
-            
-            try:
-                # Run the installation command
-                result = subprocess.run(
-                    activate_cmd, 
-                    check=True, 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    text=True
-                )
-                self.curie_logger.info(f"Sucessfully install packages: {', '.join(packages)}")
-            except subprocess.CalledProcessError as e: 
-                self.curie_logger.info(f"Fail to install the packages: {e.stderr}")
+            successful_packages = []
+            failed_packages = []
+
+            for package in packages:
+                # Construct the installation command for the current package
+                activate_cmd = [
+                    "micromamba", "run", 
+                    "-p", env_path, 
+                    "pip", "install", package
+                ]
+                
+                try:
+                    # Run the installation command for the current package
+                    result = subprocess.run(
+                        activate_cmd, 
+                        check=True, 
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.PIPE, 
+                        text=True
+                    )
+                    successful_packages.append(package)
         
+                except subprocess.CalledProcessError as e:
+                    failed_packages.append(package)
+                    self.curie_logger.info(f"Fail to install the packages {package}. Error: {e.stderr}")
+    
+            self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}")
+
         # FIXME: some use cases may need old versions of Python 
         env_path = work_dir + env_name
-        # TODO: need a micomamba environment manager to automatically download all neccessary packages
+
         command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
         subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         

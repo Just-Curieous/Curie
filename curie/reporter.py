@@ -14,6 +14,7 @@ def filter_logging(log_data):
 
 
 def generate_report(config, plan): 
+    print(plan)
     # read questions  
     workspace_dir = plan["workspace_dir"]
     log_file = '/' + config["log_filename"]

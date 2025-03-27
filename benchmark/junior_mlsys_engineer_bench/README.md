@@ -13,3 +13,7 @@ python3 -m curie.main -f benchmark/junior_mlsys_engineer_bench/q1_diffusion_step
 ```
 
 - Detailed question: `q1_diffusion_step.txt`
+- **Estimated runtime**: 33 min (Model serving is time-consuming.)
+- **Estimated cost**: $2.8 
+- **Sample log file**: Available [here](/docs/example_logs/mlsys_diffusion_step_20250327.log)
+- **Sample report file**: Available [here](/docs/example_logs/mlsys_diffusion_step_20250327.md)
