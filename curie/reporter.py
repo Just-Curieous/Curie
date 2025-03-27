@@ -23,7 +23,7 @@ def generate_report(config):
 
     with open("/curie/prompts/exp-reporter.txt", "r") as file:
         system_prompt = file.read() 
-    # from langchain_core.messages import BaseMessage
+
     messages = [SystemMessage(content=system_prompt),
                HumanMessage(content=filtered_log_data)]
 
