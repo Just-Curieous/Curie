@@ -571,7 +571,7 @@ class SchedNode():
                     stderr=subprocess.PIPE, 
                     text=True
                 )
-            self.curie_logger.info(f"Sucessfully install packages: {', '.join(packages)}")
+                self.curie_logger.info(f"Sucessfully install packages: {', '.join(packages)}")
             except subprocess.CalledProcessError as e: 
                 self.curie_logger.info(f"Fail to install the packages: {e.stderr}")
         
