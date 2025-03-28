@@ -1,48 +1,60 @@
 Task description:
 Parkinsons-disease is a regression task predicting the progression of Parkinson’s disease from time-series data. Modify the code in the `env/train.py` script to perform this task.
 
-Instructions:
-- Checkout the code dependency and set up the environment:
-```
-cd /starter_file/MLAgentBench
-pip install -e .
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -y -q
-pip install -q -r requirements.txt
-```
-
-- Install Kaggle
-```
-export KAGGLE_CONFIG_DIR=/starter_file/MLAgentBench/.kaggle
-pip install kaggle
-sudo apt-get install unzip -y
-```
-
-- Refer to the benchmark question under `MLAgentBench/benchmarks/amp-parkinsons-disease-progression-prediction/`.
-```
-cd MLAgentBench/benchmarks/amp-parkinsons-disease-progression-prediction
-```
-
 Here is your task:
-- Go through the `env/data_description.txt` file to understand the data and the machine learning task. You can summarize it in your research logs to keep track of what all you have to do. Prepare the dataset using `env/prepare.py`.
+- Go through the `env/data_description.txt` file to understand the data and the machine learning task. You can summarize it in your research logs to keep track of what all you have to do. 
 ```
-cd scripts
-python prepare.py
-cd ..
-```
-- Then fill in the provided `env/train.py` script to train a model and iterate over different models or feature selections to get a better performance (for SMAPE score the lower is better). You should submit the predictions of your best model for the test set as a submission.csv as described in the `env/evaluation_details.txt` file. You must execute it by going into the env/ directory:
-```
-cd env
+
+# -------------------------------------
+# Docker Setup (Recommended)
+# -------------------------------------
+
+# 1. Pull the pre-built Docker image:
+docker pull qhwang123/researchassistant:latest
+
+# 2. Run the container with necessary mounts:
+# Without GPU:
+docker run -it --user root -v "$(pwd)":/MLAgentBench -w /MLAgentBench qhwang123/researchassistant:latest
+
+# With GPU:
+docker run -it --user root --gpus all -v "$(pwd)":/MLAgentBench -w /MLAgentBench qhwang123/researchassistant:latest
+
+# 3. Install dependencies inside the container:
+apt update && apt install -y wget unzip
+
+# 4. Configure Kaggle API Key:
+# Install Kaggle CLI and configure API key inside the Docker container
+pip install kaggle
+
+# Ensure the Kaggle config directory exists
+mkdir -p ~/.kaggle
+
+# Copy the Kaggle API key from the mounted host directory
+cp /starter_file/kaggle.json ~/.kaggle/kaggle.json
+
+# Set the correct permissions for security
+chmod 600 ~/.kaggle/kaggle.json
+
+# 5. Prepare the amp-parkinsons-disease-progression-prediction task:
+python -u -m MLAgentBench.prepare_task amp-parkinsons-disease-progression-prediction
+
+# 6. Train the model:
+cd starter_file/MLAgentBench/MLAgentBench/benchmarks/amp-parkinsons-disease-progression-prediction/env
 python train.py
-cd .. 
-```
 
-- Finally, evaluate the model performance via:
-```
-cd scripts
-python eval.py
-cd ..
-```
+Goal:
+Train a model to predict the progression of Parkinson’s disease using time-series data. The model should output predictions for four UPDRS scores: updrs_0, updrs_1, updrs_2, and updrs_3.
 
-Goal: 
-Identify the model and its configuration that achieve the best performance, and report the results. Make sure to report the SMAPE score for each configuration as well.
+The primary evaluation metric is SMAPE (Symmetric Mean Absolute Percentage Error), computed separately for each UPDRS subscore and averaged across all of them to produce an overall score. The goal is to minimize the overall SMAPE.
 
+Start by running the baseline implementation in train.py to establish a reference performance. Then iteratively improve the model by modifying:
+
+Model architecture (e.g., separate vs. shared heads for each subscore)
+Feature extraction and preprocessing (e.g., time windowing, normalization)
+Training configurations (e.g., optimizer, learning rate, regularization)
+For each modification:
+
+Log the updated cross-validation SMAPE scores for each updrs_x
+Report the new overall SMAPE
+Compare with the baseline to determine if the change improves performance
+All experiments, code changes, and results should be documented clearly for analysis and final reporting.
