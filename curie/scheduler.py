@@ -23,6 +23,8 @@ import json
 import subprocess
 import logging
 
+import model
+from langchain_core.messages import HumanMessage, SystemMessage 
 import formatter
 import settings
 import utils
@@ -146,8 +148,8 @@ class SchedNode():
         items = self.store.search(self.plan_namespace)
         plans = [item.dict()["value"] for item in items]
 
-        filename = self.config['exp_plan_filename']
-        with open('/'+filename, 'w') as file:
+        filename = self.config['exp_plan_filename'].split("/")[-1].replace(".txt", ".json")
+        with open('/workspace/'+filename, 'w') as file:
             for plan in plans:
                 file.write(utils.pretty_json(plan) + "\n")
 
@@ -544,11 +546,66 @@ class SchedNode():
                 self.edit_plan_question(plan_id)
     
     def init_coding_env(self, work_dir: str, env_name: str='venv'):
+        
+        def install_packages(env_path, packages):
+            """
+            Install specified packages into a micromamba environment
+            
+            Args:
+                env_path (str): Path to the micromamba environment
+                packages (list): List of packages to install
+            """
+            # Activate the environment
+            successful_packages = []
+            failed_packages = []
+
+            for package in packages:
+                # Construct the installation command for the current package
+                activate_cmd = [
+                    "micromamba", "run", 
+                    "-p", env_path, 
+                    "pip", "install", package
+                ]
+                
+                try:
+                    # Run the installation command for the current package
+                    result = subprocess.run(
+                        activate_cmd, 
+                        check=True, 
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.PIPE, 
+                        text=True
+                    )
+                    successful_packages.append(package)
+        
+                except subprocess.CalledProcessError as e:
+                    failed_packages.append(package)
+                    self.curie_logger.info(f"Fail to install the packages {package}. Error: {e.stderr}")
+    
+            self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}")
+
         # FIXME: some use cases may need old versions of Python 
         env_path = work_dir + env_name
+
         command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
         subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        with open('/'+self.config['exp_plan_filename'], "r") as file:  
+            question = file.read() 
+        with open("/curie/prompts/exp-env-manager.txt", "r") as file:
+            system_prompt = file.read() 
+            
+        messages = [SystemMessage(content=system_prompt),
+                HumanMessage(content=question)]
+        response = model.query_model_safe(messages)
+        # self.curie_logger.info(f"Response from model: {}")
+        cleaned_response = response.content.replace('```json', '').replace('```', '').strip()
+        packages_to_install = json.loads(cleaned_response)["packages"] 
 
+        # Install the packages
+        install_packages(env_path, packages_to_install)
+
+        
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 

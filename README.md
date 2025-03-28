@@ -87,14 +87,16 @@ python3 -m curie.main \
     - Will only be produced when the `--report` flag is used.
 - **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
 
-## **Example 2**: Find good ML strategies for noisy data.
+### **Example 2**: How does the choice of activation function (e.g., ReLU, sigmoid, tanh) impact the model training convergence rate?
 
 ```bash
-python3 -m curie.main \
-  -q "Are ensemble methods (e.g., Random Forests, Gradient Boosting) more robust to added noise \
-  in the Breast Cancer Wisconsin dataset compared to linear models like Logistic Regression \
-  for a binary classification task?"
+python3 -m curie.main -f benchmark/junior_ml_engineer_bench/q1_activation_func.txt --report
 ```
+
+- Detailed question: `q1_diffusion_step.txt`
+- **Sample log fil**e: Available [here](./docs/example_logs/mle_activation_func_20250326.log)
+- **Sample report file**: Available [here](./docs/example_logs/mle_activation_func_20250326.md)
+
 
 More example questions can be found [here](./docs/quick_start.md).
 

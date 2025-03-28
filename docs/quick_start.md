@@ -60,12 +60,12 @@ python3 -m curie.main \
 -q "How does the batch size affect model performance on the MNIST dataset, in terms of test accuracy and training speed? \
 Setup: \
 Please use PyTorch to code and GPU to train models. \
-Use a CNN with 2 convolutional layers: each layer has 32 filters, a 3x3 kernel, ReLU activation, followed by a 2x2 max-pooling layer. \
+Use a CNN with 1 convolutional layers: each layer has 32 filters, a 3x3 kernel, ReLU activation, followed by a 2x2 max-pooling layer. \
 Then flatten and connect to a fully connected layer for classification. \
-Evaluate the model using different batch sizes: 16, 64, 128, and 256. \
+Evaluate the model using different batch sizes: 16, 64, and 256. \
 Training Details: \
 Use the Adam optimizer with a learning rate of 0.001. \
-Train each model for 10 epochs. \
+Train each model for 20 epochs. \
 Use the standard MNIST train/test split (60,000 training images, 10,000 test images). \
 Metrics: \
 Record the test accuracy after training. \
