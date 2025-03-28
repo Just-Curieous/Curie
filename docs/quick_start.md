@@ -33,7 +33,7 @@ python3 -m curie.main \
 - **Estimated cost**: $0.55
 - **Sample log file**: Available [here](./docs/example_logs/research_noise_robustness_20250309.log)
 
-
+<!-- 
 ## **Example 3**: Optimize feature selection for classification tasks.
 - *Basic question*: whether feature selection helps the model performace.
 ```bash
@@ -51,4 +51,29 @@ python3 -m curie.main \
   -q "For the Wine dataset (identifying wine cultivars using chemical properties), when using \ 
   an ensemble classifier (e.g., Random Forest), what is the best subset of features that will create a simpler, \
   more interpretable model that outperforms models  built on the full feature set. "
+``` -->
+
+## Expample 3: Evaluating CNN Performance on MNIST with Varying Batch Sizes (GPU Preferred)
+
+```bash
+python3 -m curie.main \
+-q "How does the batch size affect model performance on the MNIST dataset, in terms of test accuracy and training speed? \
+Setup: \
+Please use PyTorch to code and GPU to train models. \
+Use a CNN with 2 convolutional layers: each layer has 32 filters, a 3x3 kernel, ReLU activation, followed by a 2x2 max-pooling layer. \
+Then flatten and connect to a fully connected layer for classification. \
+Evaluate the model using different batch sizes: 16, 64, 128, and 256. \
+Training Details: \
+Use the Adam optimizer with a learning rate of 0.001. \
+Train each model for 10 epochs. \
+Use the standard MNIST train/test split (60,000 training images, 10,000 test images). \
+Metrics: \
+Record the test accuracy after training. \
+Measure the average training time per epoch (in seconds)." --report
 ```
+
+
+- **Estimated runtime**: ~20 minutes (Model training is time-consuming.)
+- **Estimated cost**: $1.5
+- **Sample log fil**e: Available [here](./docs/example_logs/research_batch_size_20250324.log)
+- **Sample report file**: Available [here](./docs/example_logs/research_batch_size_20250324.md)

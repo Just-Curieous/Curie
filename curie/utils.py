@@ -7,6 +7,8 @@ import ast
 import os
 import re
 import toml
+import shutil
+import subprocess
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -255,6 +257,8 @@ def parse_env_string(env_string):
 
 def categorize_variables(env_vars):
     """Categorize environment variables into config sections."""
+    has_gpu = shutil.which("nvidia-smi") is not None and subprocess.call(["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+
     config = {
         'core': {
             'file_store': 'local',
@@ -266,6 +270,9 @@ def categorize_variables(env_vars):
             'output_cost_per_token': get_output_price_per_token(),
             'log_completions': True,
             'log_completions_folder': '../logs/openhands', 
+        },
+        'sandbox':{
+            'enable_gpu': has_gpu,
         }
     }
 
