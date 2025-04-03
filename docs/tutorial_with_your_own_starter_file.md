@@ -34,7 +34,7 @@ Modify the job configuration file `curie/configs/template.json` to specify your 
 
 ```bash
 cd Curie
-python3 -m curie.main --question_file workspace/my_project/question.txt --task_config curie/configs/template.json 
+python3 -m curie.main --question_file starter_file/my_project/question.txt --task_config curie/configs/template.json 
 ```
 
 - Upon execution, Curie will copy your `my_project` directory into `workspace/my_project_<ID>`, ensuring all modifications occur in a controlled environment.
