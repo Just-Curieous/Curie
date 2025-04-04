@@ -115,7 +115,10 @@ class TokenCounter:
         costs = self.estimate_cost(token_counts)
         self._accumulated_cost["input"] += costs["input"]
         self._accumulated_cost["output"] += costs["output"]
-    
+
+def create_model():
+    return ChatLiteLLM(model=os.environ.get("MODEL")) 
+
 def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
     """Create a completion using LiteLLM"""
     try:

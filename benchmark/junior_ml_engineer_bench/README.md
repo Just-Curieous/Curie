@@ -11,4 +11,4 @@ python3 -m curie.main -f benchmark/junior_ml_engineer_bench/q1_activation_func.t
 - **Estimated runtime**: 1h (Model training is time-consuming.)
 - **Estimated cost**: $3 
 - **Sample log fil**e: Available [here](/docs/example_logs/mle_activation_func_20250326.log)
-- **Sample report file**: Available [here](/docs/example_logs/mle_activation_func_20250326.md)
+- **Sample report file**: Available [here](/docs/example_logs/mle_activation_func_20250326.md) 

@@ -158,7 +158,12 @@ class AllNodes():
         redo_write_tool = tool.RedoExpPartitionTool(self.store, self.metadata_store)
         store_get_tool = tool.StoreGetTool(self.store)
         edit_priority_tool = tool.EditExpPriorityTool(self.store, self.metadata_store)
-        tools = [store_write_tool, edit_priority_tool, redo_write_tool, store_get_tool, tool.read_file_contents]
+        with open(self.config_filename, 'r') as file:
+            config_dict = json.load(file) 
+        pdf_query_tool = tool.QueryPDFTool(config_dict)
+
+        tools = [store_write_tool, edit_priority_tool, redo_write_tool, store_get_tool, \
+                 tool.read_file_contents, pdf_query_tool]
 
         return Architect(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
 
@@ -170,7 +175,8 @@ class AllNodes():
         with open(self.config_filename, 'r') as file:
             config_dict = json.load(file) 
         codeagent_openhands = tool.CodeAgentTool(config_dict)
-        tools = [codeagent_openhands, tool.execute_shell_command, store_write_tool, store_get_tool]
+        pdf_query_tool = tool.QueryPDFTool(config_dict)
+        tools = [codeagent_openhands, pdf_query_tool, tool.execute_shell_command, store_write_tool, store_get_tool]
 
         # Create 1 worker: 
         # Customizable node config 
@@ -426,6 +432,7 @@ def get_question(question_file_path: str) -> str:
 
     with open(question_file_path, "r") as question_file:
         question = question_file.read().strip()
+        return True, question
         # validate question, if it's feasible to answer through experimentation
         # if not just return the answer via LLM call,  and prompt the user to input a researchß question
         messages = [SystemMessage(content=parse_input_prompt),

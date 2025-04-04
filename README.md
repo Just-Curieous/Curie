@@ -98,7 +98,7 @@ python3 -m curie.main -f benchmark/junior_ml_engineer_bench/q1_activation_func.t
 - **Sample report file**: Available [here](./docs/example_logs/mle_activation_func_20250326.md)
 
 
-More example questions can be found [here](./docs/quick_start.md).
+Check out more [computational questions](./docs/quick_start.md), as well as [Machine Learning questions](/benchmark/junior_ml_engineer_bench/) and [Machine Learning Systems questions](/benchmark/junior_mlsys_engineer_bench/).
 
 
 ## Tutorial
