@@ -27,19 +27,10 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 - [Tutorial](#tutorial)
 - [Customize Your Experiment Agents](#customize-your-experimentation-agents) 
 
-## Installation
+## [Installation](./docs/installation.md)
 
 1. Install docker: https://docs.docker.com/engine/install/ubuntu/. 
-
   - Grant permission to docker via `sudo chmod 666 /var/run/docker.sock`. 
-
-  - If you encounter an error that `/var/run/docker.sock` doesn’t exist, you may find the actual path to `docker.sock` and create a soft link. For example, Docker Desktop stores this file at `~/.docker/desktop/docker.sock`, in which case you may use:
-
-    ```bash
-    sudo chmod 666 ~/.docker/desktop/docker.sock
-    sudo ln -s ~/.docker/desktop/docker.sock /var/run/docker.sock
-    ```
-
   - Run `docker ps` to check that permission has been granted with the Docker daemon.
 
 2. Clone the repository:

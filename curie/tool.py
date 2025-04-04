@@ -501,6 +501,18 @@ class QueryPDFTool(BaseTool):
             # this assume the pdf is put under the outer workspace dir
             pdf_path = pdf_path.split('/')[-1]  
             pdf_path = os.path.join(workspace_dir, pdf_path)
+        
+        if not os.path.exists(pdf_path):
+            target = pdf_path.split('/')[-1]
+            root_dir = '/starter_file/' + self.config["workspace_name"]
+  
+            # Recursively walk through directory
+            for root, dirs, files in os.walk(root_dir):
+                if target in files:
+                    full_path = os.path.join(root, target)
+                    print(f"Found {target} at: {full_path}")
+                    pdf_path = full_path
+                    break
 
         curie_logger.info(f"Querying PDF: {pdf_path} with question: {question}")
         try:
