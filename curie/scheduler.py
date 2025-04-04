@@ -600,10 +600,12 @@ class SchedNode():
         response = model.query_model_safe(messages)
         # self.curie_logger.info(f"Response from model: {}")
         cleaned_response = response.content.replace('```json', '').replace('```', '').strip()
-        packages_to_install = json.loads(cleaned_response)["packages"] 
-
-        # Install the packages
-        install_packages(env_path, packages_to_install)
+        try:
+            packages_to_install = json.loads(cleaned_response)["packages"] 
+            # Install the packages
+            install_packages(env_path, packages_to_install)
+        except json.JSONDecodeError as e:
+            self.curie_logger.info(f"No python package needs to be installed") 
 
         
     def create_workspace_dir(self, plan_id: str):

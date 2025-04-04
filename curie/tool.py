@@ -3,9 +3,7 @@ from langchain_core.tools import tool
 from typing import Annotated, List
 from langgraph.store.memory import InMemoryStore
 from langgraph.prebuilt import InjectedStore
-from langgraph.prebuilt import InjectedState
 import uuid
-import time
 import shutil
 from modified_deps.langchain_bash.tool import ShellTool
 from typing import Optional, Type, Dict, Any
@@ -15,9 +13,17 @@ from langchain_core.callbacks import (
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
+from langchain.chains import RetrievalQA
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
+
 from model import update_tool_costs
+from utils import load_system_prompt
+from model import create_model
 
 import formatter
 import settings
@@ -107,7 +113,6 @@ def _collect_openhands_cost():
 
 # Note: It's important that every field has type hints. BaseTool is a
 # Pydantic class and not having type hints can lead to unexpected behavior.
-from utils import load_system_prompt
 class CodeAgentTool(BaseTool):
     name: str = "codeagent_openhands"
     description: str = "Coding agent that can generate/modify workflow scripts for a given experimentation plan."
@@ -454,6 +459,181 @@ def read_file_contents(
         return f"Error: Insufficient permissions to read the file '{filename}'."
     except Exception as e:
         return f"Error: An unexpected error occurred while reading the file: {str(e)}"
+
+
+document_cache = {}
+index_cache = {}
+class QueryPDFInput(BaseModel):
+    question: str = Field(
+        ...,
+        description="The question to answer about the PDF content"
+    )
+    pdf_path: str = Field(
+        ...,
+        description="Path to the PDF file"
+    ) 
+
+class QueryPDFTool(BaseTool):
+    name: str = "query_pdf"
+    description: str = "Read or Answer a question about a PDF file."
+    args_schema: Type[BaseModel] = QueryPDFInput
+    config: Optional[dict] = None
+
+    def __init__(self, config_dict: dict):
+        super().__init__()
+        self.config = config_dict
+
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        question: str, 
+        pdf_path: str,
+        workspace_dir: str = None, 
+        plan_id: str = None,
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> dict: 
+        if plan_id is None or workspace_dir is None:
+            pdf_dir = '/starter_file/' + self.config["workspace_name"]
+            pdf_path = os.path.join(pdf_dir, pdf_path)
+        else:
+            # this assume the pdf is put under the outer workspace dir
+            pdf_path = pdf_path.split('/')[-1]  
+            pdf_path = os.path.join(workspace_dir, pdf_path)
+        
+        if not os.path.exists(pdf_path):
+            target = pdf_path.split('/')[-1]
+            root_dir = '/starter_file/' + self.config["workspace_name"]
+  
+            # Recursively walk through directory
+            for root, dirs, files in os.walk(root_dir):
+                if target in files:
+                    full_path = os.path.join(root, target)
+                    print(f"Found {target} at: {full_path}")
+                    pdf_path = full_path
+                    break
+
+        curie_logger.info(f"Querying PDF: {pdf_path} with question: {question}")
+        try:
+            result = query_pdf(question, pdf_path)
+        except Exception as e:
+            curie_logger.error(f"Error querying PDF: {str(e)}")
+            return {"error": f"Error querying PDF: {str(e)}"}
+        return result
+
+# @tool
+def load_pdf(pdf_path: str) -> dict: 
+    if not os.path.exists(pdf_path):
+        curie_logger.error(f"PDF file not found at {pdf_path}")
+        return {"error": f"PDF file not found at {pdf_path}"}
+    
+    try:
+        curie_logger.info(f"Loading PDF: {pdf_path}")
+        # Check if document is already in cache
+        if pdf_path in document_cache:
+            return {
+                "status": "success", 
+                "message": f"PDF '{pdf_path}' was already loaded and indexed",
+                "pages": len(document_cache[pdf_path])
+            }
+    
+        loader = PyPDFLoader(pdf_path)
+        documents = loader.load() 
+        document_cache[pdf_path] = documents
+
+        # Create text chunks for better indexing
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+        chunks = text_splitter.split_documents(documents)
+
+        # Create a vector index
+        if 'ORGANIZATION' in os.environ:
+            endpoint = os.environ['AZURE_API_BASE'] 
+            if "AZURE_API_BASE" in os.environ:
+                del os.environ["AZURE_API_BASE"] 
+            if "OPENAI_API_BASE" in os.environ:
+                del os.environ["OPENAI_API_BASE"]
+
+            embeddings = AzureOpenAIEmbeddings(
+                azure_endpoint= endpoint,
+                openai_api_version="2024-06-01",  
+                openai_api_key=os.environ['AZURE_API_KEY'],   
+                openai_organization=os.environ['ORGANIZATION'],
+                model="text-embedding-3-large" ,
+            )
+            os.environ["AZURE_API_BASE"] = endpoint
+        else:
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-large",)
+        vector_index = FAISS.from_documents(chunks, embeddings) 
+        index_cache[pdf_path] = vector_index
+        curie_logger.info(f"{pdf_path} statistics: {len(documents)} pages, {len(chunks)} chunks")
+        return {
+            "status": "success",
+            "message": f"PDF '{pdf_path}' has been loaded and indexed successfully",
+            "pages": len(documents),
+            "chunks": len(chunks)
+        }
+    except Exception as e:
+        return {"error": f"Error indexing PDF: {str(e)}"}
+
+
+def query_pdf(question: str, pdf_path: str) -> dict:
+    """
+    Answer questions about a specific PDF file that has been loaded.
+    
+    Args:
+        pdf_path: Path to the previously loaded PDF file
+        question: The question to answer about the PDF content
+        
+    Returns:
+        Dictionary with the answer and relevant sources
+    """
+    if pdf_path not in index_cache:
+        # Try to load the PDF first
+        try: 
+            load_result = load_pdf(pdf_path)
+        except Exception as e:
+            curie_logger.error(f"Error loading PDF: {str(e)}")
+            return {"error": f"Error loading PDF: {str(e)}"}
+        if "error" in load_result:
+            return {"error": f"PDF must be loaded first: {load_result['error']}"}
+    
+    try:
+        curie_logger.info(f"Building index for PDF: {pdf_path}")
+        # Get the index
+        vector_index = index_cache[pdf_path]
+        
+        # Create a question-answering chain
+        llm = create_model()
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=vector_index.as_retriever(search_kwargs={"k": 5}),
+            return_source_documents=True
+        )
+        
+        # Run the query
+        result = qa_chain({"query": question})
+        
+        # Format source documents
+        sources = []
+        for doc in result["source_documents"]:
+            sources.append({
+                "content": doc.page_content[:200] + "...",  # First 200 chars
+                "page": doc.metadata.get("page", "Unknown"),
+                "source": doc.metadata.get("source", pdf_path)
+            })
+        curie_logger.info(f"PDF query result: {result['result']}")
+        return {
+            "answer": result["result"],
+            "sources": sources
+        }
+    except Exception as e:
+        return {"error": f"Error querying PDF: {str(e)}"}
+
 
 # Long term memory: https://blog.langchain.dev/launching-long-term-memory-support-in-langgraph/
 # i.e., in memory store: https://langchain-ai.github.io/langgraph/concepts/persistence/#memory-store
