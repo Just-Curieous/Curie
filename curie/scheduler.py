@@ -605,7 +605,7 @@ class SchedNode():
             # Install the packages
             install_packages(env_path, packages_to_install)
         except json.JSONDecodeError as e:
-            self.curie_logger.info(f"No python package is installed") 
+            self.curie_logger.info(f"No python package needs to be installed") 
 
         
     def create_workspace_dir(self, plan_id: str):

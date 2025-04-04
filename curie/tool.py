@@ -3,9 +3,7 @@ from langchain_core.tools import tool
 from typing import Annotated, List
 from langgraph.store.memory import InMemoryStore
 from langgraph.prebuilt import InjectedStore
-from langgraph.prebuilt import InjectedState
 import uuid
-import time
 import shutil
 from modified_deps.langchain_bash.tool import ShellTool
 from typing import Optional, Type, Dict, Any
@@ -15,10 +13,17 @@ from langchain_core.callbacks import (
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
+from langchain.chains import RetrievalQA
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
+
 from model import update_tool_costs
 from utils import load_system_prompt
+from model import create_model
 
 import formatter
 import settings
@@ -455,15 +460,6 @@ def read_file_contents(
     except Exception as e:
         return f"Error: An unexpected error occurred while reading the file: {str(e)}"
 
-
-from model import create_model
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
-
-from langchain.chains import RetrievalQA
 
 document_cache = {}
 index_cache = {}

@@ -431,8 +431,7 @@ def get_question(question_file_path: str) -> str:
         parse_input_prompt = file.read().strip()
 
     with open(question_file_path, "r") as question_file:
-        question = question_file.read().strip()
-        return True, question
+        question = question_file.read().strip() 
         # validate question, if it's feasible to answer through experimentation
         # if not just return the answer via LLM call,  and prompt the user to input a researchß question
         messages = [SystemMessage(content=parse_input_prompt),
