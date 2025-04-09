@@ -73,8 +73,12 @@ def prune_openhands_docker():
 # Function to create a configuration file
 def create_config_file(question_file, unique_id, iteration, task_config):
     log_dir = 'logs/configs' 
-    log_filename = f"logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
-    config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
+    experiment_folder = f"logs/{task_config['workspace_name']}_{unique_id}_iter{iteration}"
+    os.makedirs(experiment_folder, exist_ok=True)
+    #log_filename = f"logs/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
+    log_filename = f"{experiment_folder}/{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.log"
+    #config_filename = f"{log_dir}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json
+    config_filename = f"{experiment_folder}/{task_config['workspace_name']}_config_{os.path.basename(question_file).replace('.txt', '')}_{unique_id}_iter{iteration}.json"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     task_config.update({"unique_id": unique_id, 
                         "iteration": iteration, 
