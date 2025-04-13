@@ -19,6 +19,6 @@ python3 -m curie.main --iterations 1 --question_file benchmark/experimentation_b
 ```
 (We pre-specify the starter file directory name inside `llm_reasoning_config.json`.)
 
-- You can check the logging under `logs/q1_simple_relation_<ID>.log`.
+- You can check the logging under `logs/large_language_monkeys_<ID>/q1_simple_relation_<ID>.log`.
 
 - You can check the reproducible experimentation process under `workspace/large_language_monkeys_<ID>`.
