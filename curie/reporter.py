@@ -50,12 +50,9 @@ def generate_report(config, plan):
     response = model.query_model_safe(messages)
 
     report_name = log_file.split("/")[-1].split(".")[0]
-    workspace_name = config["workspace_name"]
-    unique_id = config["unique_id"]
-    iteration = config["iteration"]
-    experiment_folder = f"logs/{workspace_name}_{unique_id}_iter{iteration}"
-    with open(f"/{experiment_folder}/{report_name}.md", "w") as file:
+    experiment_log_dir = f"logs/{config['workspace_name']}_{config['unique_id']}_iter{config['iteration']}"
+    with open(f"/{experiment_log_dir}/{report_name}.md", "w") as file:
         file.write(response.content)
-    print(f"Report saved to {experiment_folder}/{report_name}.md")
-    return f"{experiment_folder}/{report_name}.md"
+    print(f"Report saved to {experiment_log_dir}/{report_name}.md")
+    return f"{experiment_log_dir}/{report_name}.md"
  
