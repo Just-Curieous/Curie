@@ -50,8 +50,9 @@ def generate_report(config, plan):
     response = model.query_model_safe(messages)
 
     report_name = log_file.split("/")[-1].split(".")[0]
-    with open(f"/logs/{report_name}.md", "w") as file:
+    exp_log_dir = f"logs/{config['workspace_name']}_{config['unique_id']}_iter{config['iteration']}"
+    with open(f"/{exp_log_dir}/{report_name}.md", "w") as file:
         file.write(response.content)
-    print(f"Report saved to logs/{report_name}.md")
-    return f'logs/{report_name}.md'
+    print(f"Report saved to {exp_log_dir}/{report_name}.md")
+    return f"{exp_log_dir}/{report_name}.md"
  

@@ -15,8 +15,8 @@ python3 -m curie.main \
 - **Log monitoring**:
   - Real-time logs are streamed to the console.
   - Logs are also stored in:
-    - `logs/research_question_<ID>.log` 
-    - `logs/research_question_<ID>_verbose.log`.
+    - `logs/research_question_<ID>/research_question_<ID>.log` 
+    - `logs/research_question_<ID>/research_question_<ID>_verbose.log`.
 - **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
 
 

@@ -156,10 +156,11 @@ class CodeAgentTool(BaseTool):
                 partition_name=partition_name
             )
             coding_max_iterations = self.config.get("coding_max_iterations", 30)
+            exp_log_dir = f"logs/{self.config['workspace_name']}_{self.config['unique_id']}_iter{self.config['iteration']}"
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
-            curie_logger.info(f"🕒 This may take awhile... See log file for details: logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
-            
+            curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
+
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
             with open(prompt_file, "w") as file:
@@ -183,13 +184,13 @@ class CodeAgentTool(BaseTool):
                     f"-f {prompt_file} "
                     f"--config-file ../workspace/config.toml "
                     f"--max-iterations {coding_max_iterations} "
-                    f"2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
+                    f"2>&1 | tee -a /{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt; "
                 ]
             })
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container.
             openhands_log = self.extract_codeagent_output_snippet(
-                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+                f"/{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
             )
             curie_logger.info(f"💻 Openhands results: {openhands_log}")
         except BaseException as e:
@@ -204,7 +205,7 @@ class CodeAgentTool(BaseTool):
             Re-run the Code Agent with feedback if needed.
 
             {self.extract_codeagent_output_snippet(
-                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+                f"/{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
             )}
             """.strip()
         # TODO: return the concise logs.
@@ -328,9 +329,10 @@ class PatcherAgentTool(BaseTool):
 
             )
             
+            exp_log_dir = f"logs/{self.config['workspace_name']}_{self.config['unique_id']}_iter{self.config['iteration']}"
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Patch Agent.")
-            curie_logger.info(f"🕒 This may take awhile... See log file for details: logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
+            curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
             # write to a file
             prompt_file = f"../logs/tmp_prompt.txt"
             with open(prompt_file, "w") as file:
@@ -347,12 +349,12 @@ class PatcherAgentTool(BaseTool):
                     f"{chmod_cmd}; "
                     f"export WORKSPACE_BASE={openhands_dir}; "
                     f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations). 
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations).
                 ]
             }) 
             # read log
             openhands_log = self.extract_codeagent_output_snippet(
-                f"/logs/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
+                f"/{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
             )
             curie_logger.info(f"💻 Openhands results: {openhands_log}")
             # copy the starter file outside the container to the new directory inside the container
