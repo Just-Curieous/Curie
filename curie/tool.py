@@ -429,7 +429,7 @@ def write_to_file(
             for line in lines:
                 # Replace literal '\n' with '\\n'
                 processed_line = line.replace("\n", "\\n")
-                print(f"Writing line: {processed_line}")
+                curie_logger.info(f"🔧 Writing line: {processed_line}")
                 file.write(processed_line + "\n")
 
         return f"String written successfully to {file_path}"
@@ -452,6 +452,25 @@ def read_file_contents(
         str: The contents of the file as a string.
     """
     try:
+        if not os.path.exists(filename):
+            target = filename.split('/')[-1]
+            # may also under /workspace/ need to specify the workspace name
+            root_dir_list = ['/starter_file/', '/workspace/']   
+            # Recursively walk through directory
+            find_flag = False
+            for root_dir in root_dir_list:
+                for root, dirs, files in os.walk(root_dir):
+                    if target in files:
+                        full_path = os.path.join(root, target)
+                        print(f"Found {target} at: {full_path}")
+                        filename = full_path
+                        find_flag = True
+                        break
+                if find_flag:
+                    break
+
+        curie_logger.info(f"🔧 Reading file: {filename}")
+
         with open(filename, 'r') as file:
             content = file.read()
         return content

@@ -440,11 +440,12 @@ def get_question(question_file_path: str) -> str:
         response = model.query_model_safe(messages)
         try:
             response_json = json.loads(response.content)
+            valid = response_json["valid"]
+            response = response_json["response"] if response_json["response"] else question
         except json.JSONDecodeError:
             response_json = {"valid": True, "response": None}
-
-        valid = response_json["valid"]
-        response = response_json["response"] if response_json["response"] else question
+            valid = True
+            response = ''
         return valid, response
 
 def stream_graph_updates(graph, user_input: str, config: dict):
@@ -517,9 +518,9 @@ def main():
         # Read question from file
         exp_plan_filename = f"../{config['exp_plan_filename']}"
         valid, user_input = get_question(exp_plan_filename) 
-        if not valid:
-            curie_logger.error(f"Invalid question. Please input a valid research question.\n{user_input}")
-            sys.exit(0)
+        # if not valid:
+        #     curie_logger.error(f"⚠️ Invalid question. Please input a valid research question.\n{user_input}")
+        #     sys.exit(0)
         sched_namespace = ("admin", "exp-sched")
         metadata_store.put(sched_namespace, "question", user_input)
 

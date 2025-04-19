@@ -254,7 +254,8 @@ def main():
         print("Please provide only one of either a question file or a question.")
         return
     elif args.question_file is None:
-        question_file = f'workspace/{task_config["workspace_name"]}_{int(time.time())}.txt'
+        q_file = task_config["workspace_name"].rstrip('/').split("/")[-1]
+        question_file = f'workspace/{q_file}_{int(time.time())}.txt'
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         # write the question to the file
         with open(question_file, 'w') as f:
@@ -262,7 +263,6 @@ def main():
     else:
         question_file = args.question_file
     
-
     # print(f"Processing {question_file} for {args.iterations} iterations...")
     for iteration in range(1, args.iterations + 1):
         # Perform the required operation for each iteration (to be provided later)
