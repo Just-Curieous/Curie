@@ -413,7 +413,7 @@ def build_graph(State, config_filename):
     
     # Compile and visualize graph
     graph = graph_builder.compile(checkpointer=memory)
-    utils.save_langgraph_graph(graph, "../logs/misc/overall_graph_image.png")
+    # utils.save_langgraph_graph(graph, "../logs/misc/overall_graph_image.png")
     
     return graph, metadata_store, config
 
@@ -487,6 +487,7 @@ def report_all_logs(config_filename: str, config: dict):
     
     exp_plan_filename = '/workspace/' + config['exp_plan_filename'].split('/')[-1].replace('.txt', '.json')
     with open(exp_plan_filename, 'r') as file:
+        curie_logger.info(f"Reading experiment plan: {exp_plan_filename}")
         plan = json.load(file)
         workspace_dir = plan['workspace_dir']
 
