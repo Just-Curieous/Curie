@@ -52,7 +52,7 @@ class UserInput(BaseNode):
 
         subgraph = subgraph_builder.compile(checkpointer=self.memory)
         os.makedirs("../../logs/misc") if not os.path.exists("../../logs/misc") else None
-        utils.save_langgraph_graph(subgraph, f"../../logs/misc/{self.node_config.name}_graph_image.png") 
+        # utils.save_langgraph_graph(subgraph, f"../../logs/misc/{self.node_config.name}_graph_image.png") 
 
         def call_subgraph(state: self.State) -> self.State: 
             response = subgraph.invoke({

@@ -183,6 +183,10 @@ def execute_experiment_in_container(container_name, task_config, config_file):
                 "source setup/env.sh && "
                 '''eval "$(micromamba shell hook --shell bash)" && '''
                 "micromamba activate curie && "
+                "sed -i '474i \\                    \"organization\": \"499023\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
+                "sed -i '474i \\    \"organization\": \"499023\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
+                "sed -i '49d' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py &&"
+                "sed -i '49i \\                    organization=\"014482\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py  &&"
                 f"python3 construct_workflow_graph.py /{config_file}"
             )
         ], check=True)  # This will block until main.py finishes.
@@ -254,7 +258,8 @@ def main():
         print("Please provide only one of either a question file or a question.")
         return
     elif args.question_file is None:
-        question_file = f'workspace/{task_config["workspace_name"]}_{int(time.time())}.txt'
+        q_file = task_config["workspace_name"].rstrip('/').split("/")[-1]
+        question_file = f'workspace/{q_file}_{int(time.time())}.txt'
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         # write the question to the file
         with open(question_file, 'w') as f:
@@ -262,7 +267,6 @@ def main():
     else:
         question_file = args.question_file
     
-
     # print(f"Processing {question_file} for {args.iterations} iterations...")
     for iteration in range(1, args.iterations + 1):
         # Perform the required operation for each iteration (to be provided later)

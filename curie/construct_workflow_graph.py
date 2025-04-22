@@ -413,7 +413,7 @@ def build_graph(State, config_filename):
     
     # Compile and visualize graph
     graph = graph_builder.compile(checkpointer=memory)
-    utils.save_langgraph_graph(graph, "../logs/misc/overall_graph_image.png")
+    # utils.save_langgraph_graph(graph, "../logs/misc/overall_graph_image.png")
     
     return graph, metadata_store, config
 
@@ -440,11 +440,12 @@ def get_question(question_file_path: str) -> str:
         response = model.query_model_safe(messages)
         try:
             response_json = json.loads(response.content)
+            valid = response_json["valid"]
+            response = response_json["response"] if response_json["response"] else question
         except json.JSONDecodeError:
             response_json = {"valid": True, "response": None}
-
-        valid = response_json["valid"]
-        response = response_json["response"] if response_json["response"] else question
+            valid = True
+            response = ''
         return valid, response
 
 def stream_graph_updates(graph, user_input: str, config: dict):
@@ -485,16 +486,24 @@ def print_graph_updates(event, max_global_steps):
 def report_all_logs(config_filename: str, config: dict):
     
     exp_plan_filename = '/workspace/' + config['exp_plan_filename'].split('/')[-1].replace('.txt', '.json')
-    with open(exp_plan_filename, 'r') as file:
-        plan = json.load(file)
-        workspace_dir = plan['workspace_dir']
-
-        if config['report'] == True:
-            report_filename = generate_report(config, plan)
-            curie_logger.info(f"📝 Experiment report saved to {report_filename}")
-    
-        curie_logger.info(f"📋 Raw experiment plan an be found in {exp_plan_filename.replace('/', '', 1)}")
-        curie_logger.info(f"📁 Workspace is located at {workspace_dir.replace('/', '', 1)}")
+    try: 
+        with open(exp_plan_filename, 'r') as file:
+            workspace_dir_list = []
+            for line in file.readlines():
+                if line == '\n':
+                    continue
+                plan = json.loads(line) 
+                workspace_dir = plan['workspace_dir'].replace('/', '', 1)
+                workspace_dir_list.append(workspace_dir) 
+            if config['report'] == True:
+                report_filename = generate_report(config, plan)
+                curie_logger.info(f"📝 Experiment report saved to {report_filename}")
+        
+            curie_logger.info(f"📋 Raw experiment plan an be found in {exp_plan_filename.replace('/', '', 1)}")
+            curie_logger.info(f"📁 Workspace is located at {workspace_dir_list}.")
+    except Exception as e:
+        curie_logger.error(f"⚠️ Failed to read experiment plan: {exp_plan_filename}. Error: {e}") 
+        
     curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
@@ -517,9 +526,9 @@ def main():
         # Read question from file
         exp_plan_filename = f"../{config['exp_plan_filename']}"
         valid, user_input = get_question(exp_plan_filename) 
-        if not valid:
-            curie_logger.error(f"Invalid question. Please input a valid research question.\n{user_input}")
-            sys.exit(0)
+        # if not valid:
+        #     curie_logger.error(f"⚠️ Invalid question. Please input a valid research question.\n{user_input}")
+        #     sys.exit(0)
         sched_namespace = ("admin", "exp-sched")
         metadata_store.put(sched_namespace, "question", user_input)
 

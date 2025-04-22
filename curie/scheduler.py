@@ -151,7 +151,7 @@ class SchedNode():
         filename = self.config['exp_plan_filename'].split("/")[-1].replace(".txt", ".json")
         with open('/workspace/'+filename, 'w') as file:
             for plan in plans:
-                file.write(utils.pretty_json(plan) + "\n")
+                file.write(json.dumps(plan) + "\n")
 
     def update_queues(
         self, 
