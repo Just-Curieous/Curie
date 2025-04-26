@@ -143,6 +143,7 @@ def run_docker_container(unique_id, iteration, task_config):
         "-v", f"{base_dir}/logs:/logs",
         "-v", f"{base_dir}/starter_file:/starter_file:ro",
         "-v", f"{base_dir}/workspace:/workspace",
+        "-v", f"/:/all:ro",
         "--network=host",
         "-d",
     ]

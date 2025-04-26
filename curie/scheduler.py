@@ -535,6 +535,29 @@ class SchedNode():
         else:
             raise ValueError(f"Entity name not found for {entity_name}")
         return memory_id
+    
+    def copy_dataset_to_workspace(self):
+        if self.config["dataset_dir"] != "": 
+            # Copy dataset to workspace
+            dataset_dir = os.path.join('/all', self.config["dataset_dir"].lstrip('/')) 
+            workspace_dir = "/workspace/" 
+            dataset_dir_name = self.config["workspace_name"].split("/")[-1] + "_dataset"
+            new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
+            if not os.path.exists(new_dataset_dir):
+                os.makedirs(new_dataset_dir)
+                try:
+                    self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...")
+                    # This will copy only the contents of dataset_dir into new_dataset_dir, not the directory itself.
+                    subprocess.run(["cp", "-r", dataset_dir,  new_dataset_dir], check=True)
+                    self.curie_logger.info(f"Created 📁 {new_dataset_dir}. Dataset copied successfully!")
+                except Exception as e:
+                    self.curie_logger.info(f"Error copying files: {e}")
+                    raise
+            else:
+                self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
+        else:
+            self.curie_logger.info(f"No dataset directory specified. Skipping dataset copy.")
+
 
     def init_new_plan(self, plan_ids: list):
         for plan_id in plan_ids:
@@ -544,6 +567,7 @@ class SchedNode():
                 self.add_workspace_to_plan(plan_id)
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
+        self.copy_dataset_to_workspace()
     
     def init_coding_env(self, work_dir: str, env_name: str='venv'):
         
@@ -555,6 +579,7 @@ class SchedNode():
                 env_path (str): Path to the micromamba environment
                 packages (list): List of packages to install
             """
+            self.curie_logger.info(f"(Wait) Installing necessary packages into the environment {env_path}... ")
             # Activate the environment
             successful_packages = []
             failed_packages = []
@@ -611,23 +636,33 @@ class SchedNode():
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
-        new_starter_file_dir = f"../workspace/{self.config['workspace_name']}_{plan_id}"
-        new_starter_file_dir = os.path.abspath(new_starter_file_dir) + "/"
-        old_starter_file_dir = f"../starter_file/{self.config['workspace_name']}" 
-        old_starter_file_dir = os.path.abspath(old_starter_file_dir) + "/"
+        
+        if self.config["workspace_name"] != "":
+            old_starter_file_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/')) 
+            workspace_name = self.config["workspace_name"].split("/")[-1]
+            new_starter_file_dir = f"../workspace/{workspace_name}_{plan_id}"
+            new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
+        else:
+            workspace_name = self.config["job_name"].split("/")[-1]
+            new_starter_file_dir = f"../workspace/{workspace_name}_{plan_id}"
+            new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
+            old_starter_file_dir = f"../starter_file/{self.config['workspace_name']}" 
+            old_starter_file_dir = os.path.abspath(old_starter_file_dir)  
+        
+
         if not os.path.exists(new_starter_file_dir):
-            os.makedirs(new_starter_file_dir)
-            os.chmod(new_starter_file_dir, 0o777)
+            # os.makedirs(new_starter_file_dir)
+            # os.chmod(new_starter_file_dir, 0o777)
             try:
                 if os.path.exists(old_starter_file_dir): 
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
-                    subprocess.run(["cp", "-r", old_starter_file_dir + ".", new_starter_file_dir], check=True)
+                    subprocess.run(["cp", "-r", old_starter_file_dir,  new_starter_file_dir], check=True)
                     # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
             
-                self.init_coding_env(new_starter_file_dir)
+                # self.init_coding_env(new_starter_file_dir)
                 self.curie_logger.info(f"Micromamba environment created at {new_starter_file_dir}")
 
             except Exception as e:
