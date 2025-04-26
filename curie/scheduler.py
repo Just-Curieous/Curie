@@ -587,9 +587,8 @@ class SchedNode():
             for package in packages:
                 # Construct the installation command for the current package
                 activate_cmd = [
-                    "micromamba", "run", 
-                    "-p", env_path, 
-                    "pip", "install", package
+                    "micromamba", "install", "-y", "--quiet",
+                    "-p", env_path, package
                 ]
                 
                 try:
@@ -611,9 +610,9 @@ class SchedNode():
 
         # FIXME: some use cases may need old versions of Python 
         env_path = work_dir + env_name
-
-        command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
-        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if not os.path.exists(env_path):
+            command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
+            subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
         with open('/'+self.config['exp_plan_filename'], "r") as file:  
             question = file.read() 
@@ -662,7 +661,7 @@ class SchedNode():
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
             
-                # self.init_coding_env(new_starter_file_dir)
+                self.init_coding_env(new_starter_file_dir)
                 self.curie_logger.info(f"Micromamba environment created at {new_starter_file_dir}")
 
             except Exception as e:
