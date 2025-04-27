@@ -711,7 +711,7 @@ class SchedNode():
         plan["dataset_dir"] = new_dataset_dir
         self.store.put(self.plan_namespace, plan_id, plan) 
         description_file = os.path.join(plan["workspace_dir"], "description.md") 
-        self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}\n")
+        self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}. Briefly explore the directory to understand the structure.\n")
         
     def add_workspace_to_plan(self, plan_id: str):
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
