@@ -48,7 +48,7 @@ def test_search_tool(a: Annotated[str, "search string"]) -> str:
 #     # Other options: https://langchain-ai.github.io/langgraph/tutorials/web-navigation/web_voyager/
 #     return True
 
-shell_tool = ShellTool(timeout=1200)
+shell_tool = ShellTool(timeout=36000)
 
 class CodeAgentInput(BaseModel):
     plan_id: str = Field(
@@ -178,7 +178,7 @@ class CodeAgentTool(BaseTool):
                     f"export LOG_ALL_EVENTS=true; "
                     f"{chmod_cmd}; "
                     f"export WORKSPACE_BASE={openhands_dir}; "
-                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                    f"export SANDBOX_TIMEOUT=3600; " # FIXME: hardcoded timeout 
                     f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python "
                     f"-m openhands.core.main "
                     f"-f {prompt_file} "
@@ -340,16 +340,15 @@ class PatcherAgentTool(BaseTool):
 
             openhands_dir = self.config["base_dir"] + "/workspace"
             sudo_available = shutil.which("sudo") is not None
-            chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {workspace_dir}"
-            
+            chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {workspace_dir}" 
             output = shell_tool.run({
                 "commands": [
                     f"export LOG_ALL_EVENTS=true; "
-                    f'sed -i "474i \          \'organization\': \'499023\'," /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py; '
                     f"{chmod_cmd}; "
                     f"export WORKSPACE_BASE={openhands_dir}; "
-                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
-                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations).
+                    f"export SANDBOX_TIMEOUT=3600; "  
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python -m openhands.core.main"
+                    f" -f {prompt_file} --config-file ../workspace/config.toml --max-iterations {coding_max_iterations} 2>&1 | tee -a /{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt; " # TODO: create a new file for each openhands log (important to prevnet simultaneous writes in parallel exec situations).
                 ]
             }) 
             # read log
@@ -406,9 +405,11 @@ def execute_shell_command(
         if "ls -lR" in command or "ls -R" in command:
             return "Please don't use 'ls -lR' or 'ls -R' commands. They are not allowed, as they will cause you to exceed context length."
 
+        curie_logger.info(f"🐚 Running command: {command}")
         output = shell_tool.run({"commands": [command]}) # only run one command at a time 
         # print(f"Command executed: {command}")
-        print(f"Output: {output}")
+        curie_logger.info(f"🐚 Output: {output}")
+
     except BaseException as e:
         curie_logger.error(f"Error executing command: {command}")
         curie_logger.error(f"Error: {repr(e)}")
@@ -730,7 +731,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
         """ This partitions and adds required metadata to the plan. 
             Example modified plan: # this is the only plan format ever saved in long term store. 
             {...all fields except for control and experimental group, 
-                "question": "What is the best instance type for a CPU workload?", # original user_input
+                "question": "What is the best instance type for a CPU workload?", # original user_input  
                 "workspace_dir": /workspace/{config["workspace_name"]}_{plan_id},
                 "control_group": {
                     "partition_1": {
@@ -780,7 +781,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
         question = self.metadata_store.get(sched_namespace, memory_id)
         question = question.dict()["value"]
 
-        partitioned_plan_data = {"control_group": {}, "experimental_group": {}, "question": question, "workspace_dir": ""} # note: workspace will be assigned in sched later
+        partitioned_plan_data = {"control_group": {}, "experimental_group": {}, "question": question, "workspace_dir": "", "additional_info": ""} # note: workspace will be assigned in sched later
         # Partition applied to experimental groups only for now:
         for key, value in plan_data.items():
             if key != "experimental_group" and key != "control_group":

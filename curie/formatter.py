@@ -16,6 +16,10 @@ class NewExperimentalPlanResponseFormatter(BaseModel):
         ...,
         description="A list of variables that remain constant during the experiment. Example: ['var1', 'var2']"
     )
+    additional_info: str = Field(
+        ...,
+        description="Any additional information referenced in the question that may be relevant to the experiment.  '"
+    )
     independent_vars: List[str] = Field(
         ...,
         description="A list of variables that are intentionally changed to observe their effect. Example: ['AWS region']"
@@ -76,6 +80,11 @@ class ExistingExperimentalPlanResponseFormatter(BaseModel):
     question: str = Field(
         ...,
         description="The question that the experiment is trying to answer. Example: 'Are AWS EC2 VMs in us-east-1 slower than those in us-east-2?'"
+    )
+
+    additional_info: str = Field(
+        ...,
+        description="Any additional information referenced in the question that may be relevant to the experiment.  '"
     )
 
     hypothesis: str = Field(

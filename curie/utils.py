@@ -262,8 +262,7 @@ def categorize_variables(env_vars):
     config = {
         'core': {
             'file_store': 'local',
-            'jwt_secret': 'secretpass',
-            'max_iterations': 30,
+            'jwt_secret': 'secretpass'
         },
         'llm': {
             'input_cost_per_token': get_input_price_per_token(),
@@ -273,6 +272,7 @@ def categorize_variables(env_vars):
         },
         'sandbox':{
             'enable_gpu': has_gpu,
+            'timeout': 3600,
         }
     }
 

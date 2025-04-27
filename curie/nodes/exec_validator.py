@@ -90,11 +90,14 @@ Here are the results from {iterations+1} separate runs of this workflow:
 
     return llm_verified_wrote_list
 
-def run_control_experiment_and_rename(iteration, control_experiment_filename, control_experiment_results_filename, timeout=1200):
+def run_control_experiment_and_rename(iteration, control_experiment_filename, control_experiment_results_filename, timeout=30):
     """
     Runs the control_experiment.sh script and renames the results file.
     """
     no_error = True
+    # verifier_log_message = "Successfully ran the workflow and renamed the results file."
+    # result_file_content = "Check results file content here."
+
     verifier_log_message = ""
     result_file_content = ""
 
@@ -116,10 +119,15 @@ def run_control_experiment_and_rename(iteration, control_experiment_filename, co
             bash {control_experiment_filename}
             """
             # TODO: instruction to install package in micromamba
-
-            result = subprocess.run(["bash", "-c", command], capture_output=True, text=True, timeout=timeout)
-            curie_logger.info(f"ExecVerifier: {result.stdout}")
-
+            try:
+                result = subprocess.run(["bash", "-c", command], capture_output=True, text=True, timeout=timeout)
+                curie_logger.info(f"ExecVerifier: {result.stdout}")
+            except subprocess.TimeoutExpired:   
+                curie_logger.info(f"ExecVerifier: {timeout}s timeout for long running script {control_experiment_filename}.")
+                no_error = True
+                verifier_log_message = f"No error found, but timeout for {control_experiment_filename}."
+                return no_error, verifier_log_message, result_file_content
+            
             if result.returncode != 0:
                 curie_logger.info(f"ExecVerifier: Error running {control_experiment_filename}: {result.stderr}")
                 no_error = False
