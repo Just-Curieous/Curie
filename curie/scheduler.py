@@ -456,14 +456,14 @@ class SchedNode():
         self.metadata_store.put(self.sched_namespace, memory_id, [])
 
     def get_control_experiment_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(self.config['workspace_name'].rstrip('/').split('/')[-1], plan_id, plan_id, group, partition_name)
 
     def get_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(self.config['workspace_name'].rstrip('/').split('/')[-1], plan_id, plan_id, group, partition_name)
 
     def get_all_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
         # results for multiple runs (i.e., a single run by exec verifier for now) for a single partition
-        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(self.config['workspace_name'].rstrip('/').split('/')[-1], plan_id, plan_id, group, partition_name)
 
     def get_workspace_dirname(self, plan_id: str) -> str:
         return "/workspace/{}_{}".format(self.config["workspace_name"].rstrip('/').split('/')[-1], plan_id) 
@@ -548,12 +548,16 @@ class SchedNode():
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
             dataset_name = dataset_dir.split("/")[-1]
             if not os.path.exists(new_dataset_dir):
-                os.makedirs(new_dataset_dir)
+                # os.makedirs(new_dataset_dir)
                 try:
                     self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...")
-                    # This will copy only the contents of dataset_dir into new_dataset_dir, not the directory itself.
+
+                    # subprocess.run(["cp", "-r", f"{dataset_dir}/*", f"{new_dataset_dir.rstrip('/')}/"], shell=True, check=True)
+
                     subprocess.run(["cp", "-r", f"{dataset_dir}",  '/workspace'], check=True)
-                    subprocess.run(['mv', f"/workspace/{dataset_name}", f"{new_dataset_dir}"], check=True)
+                    os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
+
+                    # subprocess.run(['mv', f"/workspace/{dataset_name}", f"/workspace/{dataset_dir_name}"], check=True)
                     self.curie_logger.info(f"Created 📁 {new_dataset_dir}. Dataset copied successfully!")
                 except Exception as e:
                     self.curie_logger.info(f"Error copying files: {e}")
