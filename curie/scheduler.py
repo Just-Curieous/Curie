@@ -466,7 +466,7 @@ class SchedNode():
         return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(self.config['workspace_name'], plan_id, plan_id, group, partition_name)
 
     def get_workspace_dirname(self, plan_id: str) -> str:
-        return "/workspace/{}_{}".format(self.config["workspace_name"], plan_id)
+        return "/workspace/{}_{}".format(self.config["workspace_name"].rstrip('/').split('/')[-1], plan_id) 
 
     def is_no_plan_exists(self):
         items = self.store.search(self.plan_namespace)
@@ -539,27 +539,35 @@ class SchedNode():
     def copy_dataset_to_workspace(self):
         if self.config["dataset_dir"] != "": 
             # Copy dataset to workspace
-            dataset_dir = os.path.join('/all', self.config["dataset_dir"].lstrip('/')) 
+            dataset_dir = os.path.join('/all', self.config["dataset_dir"].lstrip('/').rstrip('/'))
+            if not os.path.exists(dataset_dir):
+                raise FileNotFoundError(f"Dataset directory does not exist: {self.config['dataset_dir']}. Please check the path.")            
+
             workspace_dir = "/workspace/" 
             dataset_dir_name = self.config["workspace_name"].split("/")[-1] + "_dataset"
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
+            dataset_name = dataset_dir.split("/")[-1]
             if not os.path.exists(new_dataset_dir):
                 os.makedirs(new_dataset_dir)
                 try:
                     self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...")
                     # This will copy only the contents of dataset_dir into new_dataset_dir, not the directory itself.
-                    subprocess.run(["cp", "-r", dataset_dir,  new_dataset_dir], check=True)
+                    subprocess.run(["cp", "-r", f"{dataset_dir}",  '/workspace'], check=True)
+                    subprocess.run(['mv', f"/workspace/{dataset_name}", f"{new_dataset_dir}"], check=True)
                     self.curie_logger.info(f"Created 📁 {new_dataset_dir}. Dataset copied successfully!")
                 except Exception as e:
                     self.curie_logger.info(f"Error copying files: {e}")
                     raise
             else:
                 self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
+            # self.config["dataset_dir"] = new_dataset_dir
+            return new_dataset_dir
         else:
             self.curie_logger.info(f"No dataset directory specified. Skipping dataset copy.")
 
 
     def init_new_plan(self, plan_ids: list):
+        new_dataset_dir = self.copy_dataset_to_workspace()
         for plan_id in plan_ids:
             new_plan = self.create_workspace_dir(plan_id)
             if new_plan:
@@ -567,8 +575,9 @@ class SchedNode():
                 self.add_workspace_to_plan(plan_id)
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
-        self.copy_dataset_to_workspace()
-    
+                self.add_dataset_to_plan(plan_id, new_dataset_dir)
+
+        
     def init_coding_env(self, work_dir: str, env_name: str='venv'):
         
         def install_packages(env_path, packages):
@@ -583,14 +592,13 @@ class SchedNode():
             # Activate the environment
             successful_packages = []
             failed_packages = []
-
+            # start_time = time.time()
             for package in packages:
                 # Construct the installation command for the current package
                 activate_cmd = [
                     "micromamba", "install", "-y", "--quiet",
-                    "-p", env_path, package
+                    "-p", env_path, package, '&'
                 ]
-                
                 try:
                     # Run the installation command for the current package
                     result = subprocess.run(
@@ -603,13 +611,28 @@ class SchedNode():
                     successful_packages.append(package)
         
                 except subprocess.CalledProcessError as e:
-                    failed_packages.append(package)
-                    self.curie_logger.info(f"Fail to install the packages {package}. Error: {e.stderr}")
+                    try:
+                        activate_cmd = [
+                            "micromamba", "run", "-p", env_path,
+                            "pip", "install", package
+                        ]
+                        result = subprocess.run(
+                            activate_cmd, 
+                            check=True, 
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.PIPE, 
+                            text=True
+                        )
+                        successful_packages.append(package)
+                    except subprocess.CalledProcessError as e: 
+                        failed_packages.append(package) 
+                        self.curie_logger.info(f"Fail to install the packages {package}. Error: {e.stderr}")
     
-            self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}")
+            # self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)} in {time.time() - start_time:.2f} seconds.")
+            self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}.")
 
         # FIXME: some use cases may need old versions of Python 
-        env_path = work_dir + env_name
+        env_path = work_dir + '/' + env_name
         if not os.path.exists(env_path):
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -631,7 +654,6 @@ class SchedNode():
         except json.JSONDecodeError as e:
             self.curie_logger.info(f"No python package needs to be installed") 
 
-        
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
@@ -657,7 +679,7 @@ class SchedNode():
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
                     subprocess.run(["cp", "-r", old_starter_file_dir,  new_starter_file_dir], check=True)
                     # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
-                    self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir} copied successfully!")
+                    self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
             
@@ -672,6 +694,25 @@ class SchedNode():
         else:
             return False
 
+    @staticmethod
+    def write_at_beginning(filename, text_to_add): 
+        try:
+            with open(filename, "r") as file:
+                existing_content = file.read()
+        except FileNotFoundError:
+            existing_content = "" 
+        with open(filename, "w") as file:
+            file.write(text_to_add)
+            file.write(existing_content)
+
+    def add_dataset_to_plan(self, plan_id: str, new_dataset_dir: str):
+        # for plan_id in plan_id_list:
+        plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
+        plan["dataset_dir"] = new_dataset_dir
+        self.store.put(self.plan_namespace, plan_id, plan) 
+        description_file = os.path.join(plan["workspace_dir"], "description.md") 
+        self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}\n")
+        
     def add_workspace_to_plan(self, plan_id: str):
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         plan["workspace_dir"] = self.get_workspace_dirname(plan_id)

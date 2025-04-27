@@ -21,7 +21,8 @@ class LLMValidator(BaseNode):
             "next_agent": "patch_verifier"
         }
 
-        intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
+        intro_message = "The following partitions have completed execution.\n"
+        # intro_message = "The following partitions need to be executed to generate real results.\n"
         self.node_config.transition_objs["after_exec_verifier"] = lambda completion_messages: {
             "messages": intro_message + str(completion_messages), 
             "prev_agent": "exec_verifier", 

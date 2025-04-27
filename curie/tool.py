@@ -48,7 +48,7 @@ def test_search_tool(a: Annotated[str, "search string"]) -> str:
 #     # Other options: https://langchain-ai.github.io/langgraph/tutorials/web-navigation/web_voyager/
 #     return True
 
-shell_tool = ShellTool(timeout=1200)
+shell_tool = ShellTool(timeout=3600)
 
 class CodeAgentInput(BaseModel):
     plan_id: str = Field(
@@ -156,7 +156,9 @@ class CodeAgentTool(BaseTool):
                 partition_name=partition_name
             )
             coding_max_iterations = self.config.get("coding_max_iterations", 30)
-            exp_log_dir = f"logs/{self.config['workspace_name']}_{self.config['unique_id']}_iter{self.config['iteration']}"
+            # exp_log_dir = f"logs/{self.config['workspace_name']}_{self.config['unique_id']}_iter{self.config['iteration']}"
+            exp_log_dir_parts = self.config["log_filename"].split("/")[:-1]
+            exp_log_dir = "/".join(exp_log_dir_parts)
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
@@ -406,7 +408,10 @@ def execute_shell_command(
         if "ls -lR" in command or "ls -R" in command:
             return "Please don't use 'ls -lR' or 'ls -R' commands. They are not allowed, as they will cause you to exceed context length."
 
+        curie_logger.info(f"🐚 Running command: {command}")
         output = shell_tool.run({"commands": [command]}) # only run one command at a time 
+        # print(f"Command executed: {command}")
+        curie_logger.info(f"🐚 Output: {output}")
         # print(f"Command executed: {command}")
         print(f"Output: {output}")
     except BaseException as e:

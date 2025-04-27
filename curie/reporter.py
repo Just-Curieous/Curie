@@ -23,8 +23,6 @@ def generate_report(config, plan):
     filtered_log_data = filter_logging(log_data)
     filtered_log_data = "".join(filtered_log_data)
 
-
-
     # list out all .txt files in the workspace directory
     results = ["Here are the experimental plan", f"{plan}\n",
             "Here are the actual results of the experiments: \n"]
@@ -50,7 +48,7 @@ def generate_report(config, plan):
     response = model.query_model_safe(messages)
 
     report_name = log_file.split("/")[-1].split(".")[0]
-    exp_log_dir = f"logs/{config['workspace_name']}_{config['unique_id']}_iter{config['iteration']}"
+    exp_log_dir = f"logs/{config['workspace_name'].lstrip('/').split('/')[-1]}_{config['unique_id']}_iter{config['iteration']}"
     with open(f"/{exp_log_dir}/{report_name}.md", "w") as file:
         file.write(response.content)
     print(f"Report saved to {exp_log_dir}/{report_name}.md")
