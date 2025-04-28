@@ -580,7 +580,6 @@ class SchedNode():
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
                 self.add_dataset_to_plan(plan_id, new_dataset_dir)
-
         
     def init_coding_env(self, work_dir: str, env_name: str='venv'):
         
@@ -592,7 +591,7 @@ class SchedNode():
                 env_path (str): Path to the micromamba environment
                 packages (list): List of packages to install
             """
-            self.curie_logger.info(f"(Wait) Installing necessary packages into the environment {env_path}... ")
+            self.curie_logger.info(f"(Wait...) Installing {len(packages)} packages into the environment {env_path}... ")
             # Activate the environment
             successful_packages = []
             failed_packages = []
@@ -686,7 +685,7 @@ class SchedNode():
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
-            
+                # FIXME: install environment for each plan_id -- too slow.
                 self.init_coding_env(new_starter_file_dir)
                 self.curie_logger.info(f"Micromamba environment created at {new_starter_file_dir}")
 

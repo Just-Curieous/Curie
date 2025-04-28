@@ -489,14 +489,16 @@ def report_all_logs(config_filename: str, config: dict):
     try: 
         with open(exp_plan_filename, 'r') as file:
             workspace_dir_list = []
+            plans = []
             for line in file.readlines():
                 if line == '\n':
                     continue
                 plan = json.loads(line) 
+                plans.append(plan)
                 workspace_dir = plan['workspace_dir'].replace('/', '', 1)
                 workspace_dir_list.append(workspace_dir) 
             if config['report'] == True:
-                report_filename = generate_report(config, plan)
+                report_filename = generate_report(config, plans)
                 curie_logger.info(f"📝 Experiment report saved to {report_filename}")
         
             curie_logger.info(f"📋 Raw experiment plan an be found in {exp_plan_filename.replace('/', '', 1)}")

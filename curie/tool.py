@@ -477,7 +477,10 @@ def read_file_contents(
         curie_logger.info(f"🔧 Reading file: {filename}")
 
         with open(filename, 'r') as file:
-            content = file.read()
+            # content = file.read()
+            # FIXME: only read first 100 lines
+            content = "".join(file.readlines()[:25])
+
         return content
     except FileNotFoundError:
         return f"Error: The file '{filename}' does not exist."

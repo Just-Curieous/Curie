@@ -157,7 +157,7 @@ def query_model_safe(
     """Execute model query with token counting and cost estimation."""
     token_counter = TokenCounter()
     context_length = utils.get_model_context_length()
-    max_tokens = context_length - 1000  # Reserve tokens for response
+    max_tokens = context_length - 9000  # Reserve tokens for response
     
     attempt = 0
     while attempt < max_retries:
