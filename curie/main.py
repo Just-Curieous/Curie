@@ -72,8 +72,11 @@ def prune_openhands_docker():
 
 # Function to create a configuration file
 def create_config_file(question_file, unique_id, iteration, task_config):
-    workspace_name = task_config['workspace_name'].rstrip('/').split("/")[-1]
-    
+    workspace_name = (
+        task_config.get('job_name') or 
+        task_config.get('workspace_name', '').rstrip('/').split("/")[-1] or 
+        "default_research"
+    )
     # Setup logging directory and files
     exp_log_dir = os.path.join("logs", f"{workspace_name}_{unique_id}_iter{iteration}")
     os.makedirs(exp_log_dir, exist_ok=True)
@@ -91,7 +94,8 @@ def create_config_file(question_file, unique_id, iteration, task_config):
         "iteration": iteration,
         "log_filename": log_filename,
         "exp_plan_filename": question_file,
-        "base_dir": base_dir
+        "base_dir": base_dir,
+        "workspace_name": workspace_name
     })
     
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)

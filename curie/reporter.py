@@ -65,9 +65,10 @@ def generate_report(config, plans):
     results_file_dir = f"logs/{config['workspace_name'].lstrip('/').split('/')[-1]}_{config['unique_id']}_iter{config['iteration']}"
     results_file_name = log_file.split("/")[-1].split(".")[0]
 
-    with open(f'/{results_file_dir}/{results_file_name}_all_results.txt', 'w') as file:
+    all_results_file = f"{results_file_dir}/{results_file_name}_all_results.txt"
+    with open(all_results_file, 'w') as file:
         file.write(all_results)
-    print(f"Results saved to {results_file_dir}/{results_file_name}_all_results.txt")
+    print(f"Results saved to {all_results_file}")
     all_logging += ["Here are the summarized results of the experiments: \n"]
     all_logging.append(all_results) 
 
@@ -100,5 +101,5 @@ def generate_report(config, plans):
     with open(f"/{exp_log_dir}/{report_name}.md", "w") as file:
         file.write(response.content)
     print(f"Report saved to {exp_log_dir}/{report_name}.md")
-    return f"{exp_log_dir}/{report_name}.md"
+    return f"{exp_log_dir}/{report_name}.md", all_results_file
  

@@ -156,7 +156,7 @@ class CodeAgentTool(BaseTool):
                 partition_name=partition_name
             )
             coding_max_iterations = self.config.get("coding_max_iterations", 30)
-            # exp_log_dir = f"logs/{self.config['workspace_name']}_{self.config['unique_id']}_iter{self.config['iteration']}"
+
             exp_log_dir_parts = self.config["log_filename"].split("/")[:-1]
             exp_log_dir = "/".join(exp_log_dir_parts)
             prompt = f'''{system_prompt}\n{prompt}'''

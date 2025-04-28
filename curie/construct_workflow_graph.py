@@ -498,14 +498,16 @@ def report_all_logs(config_filename: str, config: dict):
                 workspace_dir = plan['workspace_dir'].replace('/', '', 1)
                 workspace_dir_list.append(workspace_dir) 
             if config['report'] == True:
-                report_filename = generate_report(config, plans)
+                report_filename, result_filename = generate_report(config, plans)
                 curie_logger.info(f"📝 Experiment report saved to {report_filename}")
+                curie_logger.info(f"📊 Experiment results saved to {result_filename}")
         
             curie_logger.info(f"📋 Raw experiment plan an be found in {exp_plan_filename.replace('/', '', 1)}")
             curie_logger.info(f"📁 Workspace is located at {workspace_dir_list}.")
     except Exception as e:
         curie_logger.error(f"⚠️ Failed to read experiment plan: {exp_plan_filename}. Error: {e}") 
-        
+    
+    curie_logger.info("=================== Raw Curie Experiment Logs ==================")
     curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")

@@ -570,9 +570,25 @@ class SchedNode():
             self.curie_logger.info(f"No dataset directory specified. Skipping dataset copy.")
 
 
+    # def init_new_plan(self, plan_ids: list):
+    #     new_dataset_dir = self.copy_dataset_to_workspace()
+    #     for plan_id in plan_ids:
+    #         new_plan = self.create_workspace_dir(plan_id)
+    #         if new_plan:
+    #             # Add "workspace_dir" attribute to plan
+    #             self.add_workspace_to_plan(plan_id)
+    #             # Edit plan question:
+    #             self.edit_plan_question(plan_id)
+    #             self.add_dataset_to_plan(plan_id, new_dataset_dir)
+
     def init_new_plan(self, plan_ids: list):
+        import concurrent.futures
+
         new_dataset_dir = self.copy_dataset_to_workspace()
-        for plan_id in plan_ids:
+        self.get_packages_to_install()
+
+        def process_plan(plan_id):
+            self.curie_logger.info(f"Preparing environment for plan ID: {plan_id}")
             new_plan = self.create_workspace_dir(plan_id)
             if new_plan:
                 # Add "workspace_dir" attribute to plan
@@ -580,7 +596,16 @@ class SchedNode():
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
                 self.add_dataset_to_plan(plan_id, new_dataset_dir)
+            return plan_id
         
+        # Execute the plans in parallel using a ThreadPoolExecutor
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit all tasks and get future objects
+            futures = [executor.submit(process_plan, plan_id) for plan_id in plan_ids]
+            
+            # Wait for all futures to complete (optional)
+            concurrent.futures.wait(futures)
+
     def init_coding_env(self, work_dir: str, env_name: str='venv'):
         
         def install_packages(env_path, packages):
@@ -591,12 +616,13 @@ class SchedNode():
                 env_path (str): Path to the micromamba environment
                 packages (list): List of packages to install
             """
-            self.curie_logger.info(f"(Wait...) Installing {len(packages)} packages into the environment {env_path}... ")
+            if not os.path.exists(env_path) or len(packages) == 0:
+                return 
             # Activate the environment
             successful_packages = []
             failed_packages = []
             # start_time = time.time()
-            for package in packages:
+            for i, package in enumerate(packages):
                 # Construct the installation command for the current package
                 activate_cmd = [
                     "micromamba", "install", "-y", "--quiet",
@@ -612,7 +638,8 @@ class SchedNode():
                         text=True
                     )
                     successful_packages.append(package)
-        
+                    self.curie_logger.info(f"[{i}/{len(packages)}] Successfully installed {package}.")
+
                 except subprocess.CalledProcessError as e:
                     try:
                         activate_cmd = [
@@ -640,6 +667,24 @@ class SchedNode():
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
+        # with open('/'+self.config['exp_plan_filename'], "r") as file:  
+        #     question = file.read() 
+        # with open("/curie/prompts/exp-env-manager.txt", "r") as file:
+        #     system_prompt = file.read() 
+            
+        # messages = [SystemMessage(content=system_prompt),
+        #         HumanMessage(content=question)]
+        # response = model.query_model_safe(messages) 
+        # cleaned_response = response.content.replace('```json', '').replace('```', '').strip()
+
+        try:
+            # packages_to_install = json.loads(cleaned_response)["packages"] 
+            # Install the packages
+            install_packages(env_path, self.packages_to_install)
+        except json.JSONDecodeError as e:
+            self.curie_logger.info(f"No python package needs to be installed") 
+
+    def get_packages_to_install(self):
         with open('/'+self.config['exp_plan_filename'], "r") as file:  
             question = file.read() 
         with open("/curie/prompts/exp-env-manager.txt", "r") as file:
@@ -647,15 +692,14 @@ class SchedNode():
             
         messages = [SystemMessage(content=system_prompt),
                 HumanMessage(content=question)]
-        response = model.query_model_safe(messages)
-        # self.curie_logger.info(f"Response from model: {}")
+        response = model.query_model_safe(messages) 
         cleaned_response = response.content.replace('```json', '').replace('```', '').strip()
         try:
-            packages_to_install = json.loads(cleaned_response)["packages"] 
-            # Install the packages
-            install_packages(env_path, packages_to_install)
+            self.packages_to_install  = json.loads(cleaned_response)["packages"] 
         except json.JSONDecodeError as e:
             self.curie_logger.info(f"No python package needs to be installed") 
+            self.packages_to_install = []
+    
 
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
@@ -670,19 +714,19 @@ class SchedNode():
             workspace_name = self.config["job_name"].split("/")[-1]
             new_starter_file_dir = f"../workspace/{workspace_name}_{plan_id}"
             new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
-            old_starter_file_dir = f"../starter_file/{self.config['workspace_name']}" 
-            old_starter_file_dir = os.path.abspath(old_starter_file_dir)  
+            old_starter_file_dir = None
         
 
         if not os.path.exists(new_starter_file_dir):
             # os.makedirs(new_starter_file_dir)
             # os.chmod(new_starter_file_dir, 0o777)
             try:
-                if os.path.exists(old_starter_file_dir): 
+                if old_starter_file_dir and os.path.exists(old_starter_file_dir): 
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
                     subprocess.run(["cp", "-r", old_starter_file_dir,  new_starter_file_dir], check=True)
                     # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
-                    self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
+                    self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. \
+                                           Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
                 # FIXME: install environment for each plan_id -- too slow.
@@ -703,7 +747,8 @@ class SchedNode():
             with open(filename, "r") as file:
                 existing_content = file.read()
         except FileNotFoundError:
-            existing_content = "" 
+            existing_content = ""   
+
         with open(filename, "w") as file:
             file.write(text_to_add)
             file.write(existing_content)
