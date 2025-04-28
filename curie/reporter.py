@@ -66,7 +66,7 @@ def generate_report(config, plans):
     results_file_name = log_file.split("/")[-1].split(".")[0]
 
     all_results_file = f"{results_file_dir}/{results_file_name}_all_results.txt"
-    with open(all_results_file, 'w') as file:
+    with open(f'/{all_results_file}', 'w') as file:
         file.write(all_results)
     print(f"Results saved to {all_results_file}")
     all_logging += ["Here are the summarized results of the experiments: \n"]
@@ -78,9 +78,7 @@ def generate_report(config, plans):
     filtered_log_data = "".join(filtered_log_data) 
 
     summarize_log_content = summarize_logging(filtered_log_data)
-    summarize_log_content = "\n".join(summarize_log_content)
-    with open('/logs/summarized_log.txt', 'w') as file:
-        file.write(summarize_log_content)
+    summarize_log_content = "\n".join(summarize_log_content) 
 
     # append the filtered_log_data to the results
     all_logging.append("Here are the summarized logs from the experiment: \n")

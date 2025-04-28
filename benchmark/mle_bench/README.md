@@ -28,7 +28,7 @@ The data will be saved to `/home/ubuntu/.cache/mle-bench/data`
 
 ## Run Curie
 ```bash
-python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-identification-question.txt   --task_config curie/configs/mle_dog_config.json  --report
+python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-identification-question.txt --task_config curie/configs/mle_dog_config.json  --report
 ```
 
 
@@ -38,6 +38,11 @@ python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-
 conda activate sqlite3-49-0  
 
 mlebench grade-sample  workspace/dog-breed-identification_b3307073-883d-4804-b6da-15ac6f746599/submission_control_group_partition_1.csv dog-breed-identification 
+
+
+mlebench grade-sample /home/amberljc/dev/Curie/workspace/dog-breed-identification_e3591f89-ab03-4fd8-9953-5a2cac8b4198/submission_control_group_partition_1.csv dog-breed-identification 
+
+mlebench grade-sample  workspace/dog-breed-identification_dataset/sample_submission.csv dog-breed-identification 
 ```
 
 

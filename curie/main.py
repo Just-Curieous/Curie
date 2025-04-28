@@ -274,12 +274,22 @@ def main():
         print("Please provide only one of either a question file or a question.")
         return
     elif args.question_file is None:
-        q_file = task_config["workspace_name"].rstrip('/').split("/")[-1]
+        q_file = (
+                task_config["workspace_name"].rstrip('/').split("/")[-1] or
+                task_config.get('job_name') or 
+                "default_research"  
+                )
+        
         question_file = f'workspace/{q_file}_{int(time.time())}.txt'
-        os.makedirs(os.path.dirname(question_file), exist_ok=True)
-        # write the question to the file
-        with open(question_file, 'w') as f:
-            f.write(args.question)
+        try:
+            os.makedirs(os.path.dirname(question_file), exist_ok=True)
+            # write the question to the file
+            with open(question_file, 'w') as f:
+                f.write(args.question)
+        except Exception as e:
+            print(f"Error writing question to file: {e}")
+            print("Please give permission to write to `workspace/`.")
+            sys.exit(1)
     else:
         question_file = args.question_file
     
