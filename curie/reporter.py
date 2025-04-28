@@ -25,7 +25,7 @@ def summarize_logging(content):
     for i in range(0, len(content), 50000):
 
         chunk = content[i:i + 50500]
-        print(f'Summarizing chunk ({i} - {i + 50000}) / {len(content)}: ')
+        print(f'Summarizing log chunk ({i} - {i + 50000}) / {len(content)}: ')
         messages = [SystemMessage(content="Summarize one chunk of the experimentation log:"),
                    HumanMessage(content=chunk)]
         response = model.query_model_safe(messages)
