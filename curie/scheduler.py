@@ -721,12 +721,13 @@ class SchedNode():
             # os.makedirs(new_starter_file_dir)
             # os.chmod(new_starter_file_dir, 0o777)
             try:
+                # self.curie_logger.info(f"Creating {new_starter_file_dir} old starter file dir: {old_starter_file_dir}...")
                 if old_starter_file_dir and os.path.exists(old_starter_file_dir): 
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
                     subprocess.run(["cp", "-r", old_starter_file_dir,  new_starter_file_dir], check=True)
                     # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. \
-                                           Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
+                                            Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
                 # FIXME: install environment for each plan_id -- too slow.

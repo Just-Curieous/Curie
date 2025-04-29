@@ -13,17 +13,18 @@ mlebench prepare -c dog-breed-identification
 - Update the configuration: Open `curie/configs/mle_dog_config.json` and verify the paths to the dataset and starter code.
 - Execute Curie. 
 ```bash
+cd Curie/
 python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-identification-question.txt --task_config curie/configs/mle_dog_config.json  --report
 ``` 
 
 
 ## Curie's Results 
-- Detailed question: `dog-breed-identification-question.txt`
+- Detailed question: [dog-breed-identification-question.txt](./dog-breed-identification-question.txt)
 - **Estimated runtime**: ~2.2h  (Model training is time-consuming.)
 - **Estimated cost**: $28 
 - **Auto generated experiment report**: Available [here](./dog-breed-identification-question_20250427163751_iter1.md) 
 - **Summary of the experiment results**: Available [here](./dog-breed-identification-question_20250427163751_iter1_all_results.txt)
-- **Curie log file**: Available [here](./dog-breed-identification-question_20250427163751_iter1.log)
+- **Curie log file**: Available [here](https://github.com/Just-Curieous/Curie-Use-Cases/blob/main/machine_learning/q2_dog-breed-identification/dog-breed-identification_20250427163751_iter1/dog-breed-identification-question_20250427163751_iter1.log)
 
 
 > Summary of Results from the [report](./dog-breed-identification-question_20250427163751_iter1.md) 

@@ -202,16 +202,12 @@ class CodeAgentTool(BaseTool):
         _collect_openhands_cost()
 
         return f"""
-            Code Agent has completed. Here's a snippet of the latest logs—
-            use this along with the workflow script and results file to assess success.
-            Re-run the Code Agent with feedback if needed.
-
-            {self.extract_codeagent_output_snippet(
-                f"/{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
-            )}
-            """.strip()
-        # TODO: return the concise logs.
-
+                The Code Agent has completed. Here's a snippet from the last 10% of the logs —
+                use it with the workflow script and results file to evaluate success.
+                Re-run the Code Agent with feedback if necessary.
+                {openhands_log}
+                """.strip()
+    
     def extract_codeagent_output_snippet(self, filename: str) -> str:
         """
             Extracts bottom 10% of text within the log filename. 
@@ -403,17 +399,16 @@ def execute_shell_command(
     try:
         # For all $ symbols in the command, that don't have a \ appended right before the $, add a \ right before the $ symbol:
         command = re.sub(r'(?<!\\)\$', r'\\$', command)
-        # command = re.sub(r'(?<!\\)\n', r'\\n', command)
 
         if "ls -lR" in command or "ls -R" in command:
             return "Please don't use 'ls -lR' or 'ls -R' commands. They are not allowed, as they will cause you to exceed context length."
 
         curie_logger.info(f"🐚 Running command: {command}")
         output = shell_tool.run({"commands": [command]}) # only run one command at a time 
-        # print(f"Command executed: {command}")
         curie_logger.info(f"🐚 Output: {output}")
-        # print(f"Command executed: {command}")
-        print(f"Output: {output}")
+        # cut the output to last 1000 characters - 200 tokens
+        output = output[-1000:]
+
     except BaseException as e:
         curie_logger.error(f"Error executing command: {command}")
         curie_logger.error(f"Error: {repr(e)}")

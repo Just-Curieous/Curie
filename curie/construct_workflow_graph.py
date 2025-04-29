@@ -20,7 +20,7 @@ import settings
 import scheduler as sched
 
 from logger import init_logger
-from model import setup_model_logging
+from model import setup_model_logging, report_cost_stats
 from tool import setup_tool_logging
 from nodes.exec_validator import setup_exec_validator_logging
 
@@ -511,6 +511,7 @@ def report_all_logs(config_filename: str, config: dict):
     curie_logger.info(f"📋 Experiment plan can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📓 Experiment config file can be found in {config_filename.replace('/', '', 1)}")
     curie_logger.info(f"📒 Experiment loggings can be found in {config['log_filename']}")
+    report_cost_stats()
     curie_logger.info("🎉 Experiment completed successfully!")
 
 def main():

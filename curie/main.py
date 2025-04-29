@@ -72,20 +72,20 @@ def prune_openhands_docker():
 
 # Function to create a configuration file
 def create_config_file(question_file, unique_id, iteration, task_config):
-    workspace_name = (
-        task_config.get('job_name') or 
-        task_config.get('workspace_name', '').rstrip('/').split("/")[-1] or 
+    work_name = (
+        task_config.get('workspace_name', '').lstrip('/').rstrip('/').split('/')[-1] or 
+        task_config.get('job_name', '') or 
         "default_research"
     )
     # Setup logging directory and files
-    exp_log_dir = os.path.join("logs", f"{workspace_name}_{unique_id}_iter{iteration}")
+    exp_log_dir = os.path.join("logs", f"{work_name}_{unique_id}_iter{iteration}")
     os.makedirs(exp_log_dir, exist_ok=True)
 
     # Generate filenames
     question_base = os.path.basename(question_file).replace('.txt', '')
     log_filename = os.path.join(exp_log_dir, f"{question_base}_{unique_id}_iter{iteration}.log")
     config_filename = os.path.join(exp_log_dir, 
-                                 f"{workspace_name}_config_{question_base}_{unique_id}_iter{iteration}.json")
+                                 f"{work_name}_config_{question_base}_{unique_id}_iter{iteration}.json")
 
     # Update task configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -94,8 +94,8 @@ def create_config_file(question_file, unique_id, iteration, task_config):
         "iteration": iteration,
         "log_filename": log_filename,
         "exp_plan_filename": question_file,
-        "base_dir": base_dir,
-        "workspace_name": workspace_name
+        "base_dir": base_dir
+        # "workspace_name": workspace_name
     })
     
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
