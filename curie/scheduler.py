@@ -544,7 +544,7 @@ class SchedNode():
                 raise FileNotFoundError(f"Dataset directory does not exist: {self.config['dataset_dir']}. Please check the path.")            
 
             workspace_dir = "/workspace/" 
-            dataset_dir_name = self.config["workspace_name"].split("/")[-1] + "_dataset"
+            dataset_dir_name = os.path.basename(self.config["workspace_name"]) + "_dataset"
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
             dataset_name = dataset_dir.split("/")[-1]
             if not os.path.exists(new_dataset_dir):
@@ -695,14 +695,12 @@ class SchedNode():
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
         
+        workspace_base_name = os.path.basename(self.config["workspace_name"])
+        new_starter_file_dir = f"../workspace/{workspace_base_name}_{plan_id}"
         if self.config["workspace_name"] != "":
             old_starter_file_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/')) 
-            workspace_name = self.config["workspace_name"].split("/")[-1]
-            new_starter_file_dir = f"../workspace/{workspace_name}_{plan_id}"
             new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
         else:
-            workspace_name = self.config["job_name"].split("/")[-1]
-            new_starter_file_dir = f"../workspace/{workspace_name}_{plan_id}"
             new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
             old_starter_file_dir = None
         

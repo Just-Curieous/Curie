@@ -29,6 +29,7 @@ class TokenCounter:
 
     # Class-level variables to track accumulated usage across all instances
     _accumulated_tokens = {"input": 0, "output": 0}
+    # Can be more fine-grained once we introduce more tools
     _accumulated_cost = {"input": 0.0, "output": 0.0, "tool_cost": 0.0}
 
     def __init__(self):

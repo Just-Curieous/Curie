@@ -62,7 +62,7 @@ def generate_report(config, plans):
                 HumanMessage(content=all_results)]
     response = model.query_model_safe(messages)
     all_results = response.content
-    # results_file_dir = f"logs/{config['workspace_name'].lstrip('/').split('/')[-1]}_{config['unique_id']}_iter{config['iteration']}"
+
     results_file_name = log_file.replace(".log", "_all_results.txt")
     with open(f'{results_file_name}', 'w') as file:
         file.write(all_results)

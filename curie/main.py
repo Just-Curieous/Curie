@@ -87,7 +87,7 @@ def create_config_file(question_file, unique_id, iteration, task_config):
         "log_filename": log_filename,
         "exp_plan_filename": question_file,
         "base_dir": base_dir,
-        "workspace_name": work_name
+        # "workspace_name": work_name
     })
         
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
