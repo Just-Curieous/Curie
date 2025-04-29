@@ -62,13 +62,12 @@ def generate_report(config, plans):
                 HumanMessage(content=all_results)]
     response = model.query_model_safe(messages)
     all_results = response.content
-    results_file_dir = f"logs/{config['workspace_name'].lstrip('/').split('/')[-1]}_{config['unique_id']}_iter{config['iteration']}"
-    results_file_name = log_file.split("/")[-1].split(".")[0]
-
-    all_results_file = f"{results_file_dir}/{results_file_name}_all_results.txt"
-    with open(f'/{all_results_file}', 'w') as file:
+    # results_file_dir = f"logs/{config['workspace_name'].lstrip('/').split('/')[-1]}_{config['unique_id']}_iter{config['iteration']}"
+    results_file_name = log_file.replace(".log", "_all_results.txt")
+    with open(f'{results_file_name}', 'w') as file:
         file.write(all_results)
-    print(f"Results saved to {all_results_file}")
+    
+    # print(f"Results saved to {results_file_name}")
     all_logging += ["Here are the summarized results of the experiments: \n"]
     all_logging.append(all_results) 
 
@@ -93,11 +92,10 @@ def generate_report(config, plans):
                HumanMessage(content=all_logging)]
 
     response = model.query_model_safe(messages)
+    report_name = log_file.replace('.log', '.md') 
 
-    report_name = log_file.split("/")[-1].split(".")[0]
-    exp_log_dir = f"logs/{config['workspace_name'].lstrip('/').split('/')[-1]}_{config['unique_id']}_iter{config['iteration']}"
-    with open(f"/{exp_log_dir}/{report_name}.md", "w") as file:
+    with open(report_name, "w") as file:
         file.write(response.content)
-    print(f"Report saved to {exp_log_dir}/{report_name}.md")
-    return f"{exp_log_dir}/{report_name}.md", all_results_file
+    print(f"Report saved to {report_name}")
+    return report_name, results_file_name
  

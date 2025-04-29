@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import traceback
@@ -14,7 +15,6 @@ from langgraph.managed.is_last_step import RemainingSteps
 
 # Local module imports
 import model
-import utils
 import tool
 import settings
 import scheduler as sched
@@ -366,7 +366,6 @@ def build_graph(State, config_filename):
 
     all_nodes = AllNodes(log_filename, config_filename, State, store, metadata_store, memory)
 
-    
     # Add scheduler node
     sched_subgraph = all_nodes.get_sched_subgraph()
     graph_builder.add_node("scheduler", sched_subgraph)
@@ -427,11 +426,15 @@ def get_question(question_file_path: str) -> str:
     Returns:
         str: Question text
     """
-    with open('prompts/parse-input.txt', 'r') as file:
-        parse_input_prompt = file.read().strip()
 
     with open(question_file_path, "r") as question_file:
         question = question_file.read().strip() 
+    return True, question
+
+def validate_question(question: str) -> bool:
+    with open('prompts/parse-input.txt', 'r') as file:
+        parse_input_prompt = file.read().strip()
+ 
         # validate question, if it's feasible to answer through experimentation
         # if not just return the answer via LLM call,  and prompt the user to input a researchß question
         messages = [SystemMessage(content=parse_input_prompt),
@@ -485,7 +488,7 @@ def print_graph_updates(event, max_global_steps):
 
 def report_all_logs(config_filename: str, config: dict):
     
-    exp_plan_filename = '/workspace/' + config['exp_plan_filename'].split('/')[-1].replace('.txt', '.json')
+    exp_plan_filename = '/workspace/' + os.path.basename(config['exp_plan_filename']).replace('.txt', '.json')
     try: 
         with open(exp_plan_filename, 'r') as file:
             workspace_dir_list = []

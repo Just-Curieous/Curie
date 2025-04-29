@@ -65,7 +65,7 @@ class CodeAgentInput(BaseModel):
     )
     workspace_dir: str = Field(
         ...,
-        description="Extract this from the plan JSON's 'workspace' key."
+        description="Extract this from the plan JSON's 'workspace_dir' key."
     )
     prompt: str = Field(
         ...,
@@ -453,7 +453,7 @@ def read_file_contents(
     """
     try:
         if not os.path.exists(filename):
-            target = filename.split('/')[-1]
+            target = os.path.basename(filename) 
             # may also under /workspace/ need to specify the workspace name
             root_dir_list = ['/starter_file/', '/workspace/']   
             # Recursively walk through directory
@@ -523,11 +523,11 @@ class QueryPDFTool(BaseTool):
             pdf_path = os.path.join(pdf_dir, pdf_path)
         else:
             # this assume the pdf is put under the outer workspace dir
-            pdf_path = pdf_path.split('/')[-1]  
+            pdf_path = os.path.basename(pdf_path)
             pdf_path = os.path.join(workspace_dir, pdf_path)
         
         if not os.path.exists(pdf_path):
-            target = pdf_path.split('/')[-1]
+            target = os.path.basenamev(pdf_path) 
             root_dir = '/starter_file/' + self.config["workspace_name"]
   
             # Recursively walk through directory

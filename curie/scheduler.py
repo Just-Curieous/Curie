@@ -456,17 +456,17 @@ class SchedNode():
         self.metadata_store.put(self.sched_namespace, memory_id, [])
 
     def get_control_experiment_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(self.config['workspace_name'].rstrip('/').split('/')[-1], plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(os.path.basename(self.config['workspace_name']) , plan_id, plan_id, group, partition_name)
 
     def get_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(self.config['workspace_name'].rstrip('/').split('/')[-1], plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(os.path.basename(self.config['workspace_name']), plan_id, plan_id, group, partition_name)
 
     def get_all_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
         # results for multiple runs (i.e., a single run by exec verifier for now) for a single partition
-        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(self.config['workspace_name'].rstrip('/').split('/')[-1], plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(os.path.basename(self.config['workspace_name']) , plan_id, plan_id, group, partition_name)
 
     def get_workspace_dirname(self, plan_id: str) -> str:
-        return "/workspace/{}_{}".format(self.config["workspace_name"].rstrip('/').split('/')[-1], plan_id) 
+        return "/workspace/{}_{}".format(os.path.basename(self.config["workspace_name"]), plan_id) 
 
     def is_no_plan_exists(self):
         items = self.store.search(self.plan_namespace)
@@ -662,27 +662,17 @@ class SchedNode():
             self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}.")
 
         # FIXME: some use cases may need old versions of Python 
-        env_path = work_dir + '/' + env_name
+        env_path = os.path.join(work_dir, env_name)
         if not os.path.exists(env_path):
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
-        # with open('/'+self.config['exp_plan_filename'], "r") as file:  
-        #     question = file.read() 
-        # with open("/curie/prompts/exp-env-manager.txt", "r") as file:
-        #     system_prompt = file.read() 
-            
-        # messages = [SystemMessage(content=system_prompt),
-        #         HumanMessage(content=question)]
-        # response = model.query_model_safe(messages) 
-        # cleaned_response = response.content.replace('```json', '').replace('```', '').strip()
-
         try:
-            # packages_to_install = json.loads(cleaned_response)["packages"] 
             # Install the packages
             install_packages(env_path, self.packages_to_install)
         except json.JSONDecodeError as e:
             self.curie_logger.info(f"No python package needs to be installed") 
+        return env_path
 
     def get_packages_to_install(self):
         with open('/'+self.config['exp_plan_filename'], "r") as file:  
@@ -716,23 +706,20 @@ class SchedNode():
             new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
             old_starter_file_dir = None
         
-
         if not os.path.exists(new_starter_file_dir):
-            # os.makedirs(new_starter_file_dir)
-            # os.chmod(new_starter_file_dir, 0o777)
+            
             try:
-                # self.curie_logger.info(f"Creating {new_starter_file_dir} old starter file dir: {old_starter_file_dir}...")
                 if old_starter_file_dir and os.path.exists(old_starter_file_dir): 
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
                     subprocess.run(["cp", "-r", old_starter_file_dir,  new_starter_file_dir], check=True)
-                    # output = shell_tool.run({"commands": [f"cp -r {old_starter_file_dir} {new_starter_file_dir}"]})
+
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. \
                                             Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
                 # FIXME: install environment for each plan_id -- too slow.
-                self.init_coding_env(new_starter_file_dir)
-                self.curie_logger.info(f"Micromamba environment created at {new_starter_file_dir}")
+                env_path = self.init_coding_env(new_starter_file_dir)
+                self.curie_logger.info(f"Micromamba environment created at {env_path}")
 
             except Exception as e:
                 self.curie_logger.info(f"Error copying files: {e}")
