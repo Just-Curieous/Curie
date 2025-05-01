@@ -41,7 +41,10 @@ class SchedNode():
         self.config = config
         log_filename = f'../{config["log_filename"]}'
         self.curie_logger = init_logger(log_filename)
-
+ 
+        self.workspace_dirname = ( self.config["workspace_name"] or 
+                          self.config["job_name"] or 
+                          "project" )   
         self.setup_sched()
 
     def setup_sched(self):
@@ -72,16 +75,24 @@ class SchedNode():
 
         create_assignment_dict(memory_ids, self.metadata_store, self.sched_namespace)
 
+        # Lists to track various workflow tool interactions
         write_lists = [
-            "supervisor_wrote_list", # Format of this list: [exp_plan_id1, exp_plan_id2, ...] This is to record down the calls to exp_plan_write tool by supervisor, and the plans that were written/modified. 
-            "llm_verifier_wrote_list", # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "verifier_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by llm verifier, and the workflows that were evaluated. 
-            "patch_verifier_wrote_list", # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
-            "analyzer_wrote_list", # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
-            "concluder_wrote_list", # Format of this list: [{"plan_id": 123, "partition_name": "control_group", "is_correct": True, "patcher_log_message": "is no error haha"}, ...] This is to record down the calls to workflow_verified_record tool by patch verifier, and the workflows that were evaluated. 
-            "supervisor_redo_partition_list", # Format of this list: [{"plan_id": 123, "group": "control_group", "partition_name": "partition_1", "error_feedback": "xtz"}, ...] This is to record down the calls to redo_exp_partition tool by supervisor.
-            "standby_exp_plan_list",
-            "user_router_wrote_list",
+            # Records calls to exp_plan_write by the supervisor.
+            "supervisor_wrote_list",  # [exp_plan_id1, exp_plan_id2, ...]
+            # Records calls to workflow_verified_record by LLM verifier.
+            "llm_verifier_wrote_list",  # [{"plan_id": ..., "partition_name": ..., "is_correct": ..., "verifier_log_message": ...}, ...]
+            # Records calls to workflow_verified_record by patch verifier.
+            "patch_verifier_wrote_list",  # Same format as above
+            # Records calls to workflow_verified_record by analyzer.
+            "analyzer_wrote_list",  # Same format as above
+            # Records calls to workflow_verified_record by concluder.
+            "concluder_wrote_list",  # Same format as above
+            # Records calls to redo_exp_partition by supervisor.
+            "supervisor_redo_partition_list",  # [{"plan_id": ..., "group": ..., "partition_name": ..., "error_feedback": ...}, ...]
+            "standby_exp_plan_list",  
+            "user_router_wrote_list",  
         ]
+
 
         queues = [
             "worker_queue", # Format of this queue: [(priority, exp_plan_id1, "experimental_group_partition_2"), (priority, exp_plan_id2, "experimental_group_partition_2")] # Priority queue implemented using min heap 
@@ -454,19 +465,19 @@ class SchedNode():
     def remove_verifier_wrote_list_all(self, verifier_name: str):
         memory_id = self.get_wrote_list_mem_id(verifier_name)
         self.metadata_store.put(self.sched_namespace, memory_id, [])
-
+    
     def get_control_experiment_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(os.path.basename(self.config['workspace_name']) , plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/control_experiment_{}_{}_{}.sh".format(os.path.basename(self.workspace_dirname) , plan_id, plan_id, group, partition_name)
 
     def get_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
-        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(os.path.basename(self.config['workspace_name']), plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/results_{}_{}_{}.txt".format(os.path.basename(self.workspace_dirname), plan_id, plan_id, group, partition_name)
 
     def get_all_control_experiment_results_filename(self, plan_id: str, group: str, partition_name: str) -> str:
         # results for multiple runs (i.e., a single run by exec verifier for now) for a single partition
-        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(os.path.basename(self.config['workspace_name']) , plan_id, plan_id, group, partition_name)
+        return "/workspace/{}_{}/all_results_{}_{}_{}.txt".format(os.path.basename(self.workspace_dirname) , plan_id, plan_id, group, partition_name)
 
-    def get_workspace_dirname(self, plan_id: str) -> str:
-        return "/workspace/{}_{}".format(os.path.basename(self.config["workspace_name"]), plan_id) 
+    def get_workspace_dirname(self, plan_id: str) -> str: 
+        return "/workspace/{}_{}".format(os.path.basename(self.workspace_dirname), plan_id) 
 
     def is_no_plan_exists(self):
         items = self.store.search(self.plan_namespace)
@@ -544,15 +555,15 @@ class SchedNode():
                 raise FileNotFoundError(f"Dataset directory does not exist: {self.config['dataset_dir']}. Please check the path.")            
 
             workspace_dir = "/workspace/" 
-            dataset_dir_name = os.path.basename(self.config["workspace_name"]) + "_dataset"
+            dataset_dir_name = (os.path.basename(self.config["workspace_name"]) or 
+                                os.path.basename(self.config["job_name"]) or
+                                "project" ) + "_dataset"
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
             dataset_name = dataset_dir.split("/")[-1]
             if not os.path.exists(new_dataset_dir):
                 # os.makedirs(new_dataset_dir)
                 try:
-                    self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...")
-
-                    # subprocess.run(["cp", "-r", f"{dataset_dir}/*", f"{new_dataset_dir.rstrip('/')}/"], shell=True, check=True)
+                    self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...") 
 
                     subprocess.run(["cp", "-r", f"{dataset_dir}",  '/workspace'], check=True)
                     os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
@@ -564,23 +575,11 @@ class SchedNode():
                     raise
             else:
                 self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
-            # self.config["dataset_dir"] = new_dataset_dir
+
             return new_dataset_dir
         else:
             self.curie_logger.info(f"No dataset directory specified. Skipping dataset copy.")
-
-
-    # def init_new_plan(self, plan_ids: list):
-    #     new_dataset_dir = self.copy_dataset_to_workspace()
-    #     for plan_id in plan_ids:
-    #         new_plan = self.create_workspace_dir(plan_id)
-    #         if new_plan:
-    #             # Add "workspace_dir" attribute to plan
-    #             self.add_workspace_to_plan(plan_id)
-    #             # Edit plan question:
-    #             self.edit_plan_question(plan_id)
-    #             self.add_dataset_to_plan(plan_id, new_dataset_dir)
-
+            
     def init_new_plan(self, plan_ids: list):
         import concurrent.futures
 
@@ -588,6 +587,7 @@ class SchedNode():
         self.get_packages_to_install()
 
         def process_plan(plan_id):
+            # FIXME: initialization time too long, trigger this when deciding to execute this plan
             self.curie_logger.info(f"Preparing environment for plan ID: {plan_id}")
             new_plan = self.create_workspace_dir(plan_id)
             if new_plan:
@@ -666,12 +666,14 @@ class SchedNode():
         if not os.path.exists(env_path):
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        
-        try:
-            # Install the packages
-            install_packages(env_path, self.packages_to_install)
-        except json.JSONDecodeError as e:
-            self.curie_logger.info(f"No python package needs to be installed") 
+            try:
+                # Install the packages
+                install_packages(env_path, self.packages_to_install)
+            except json.JSONDecodeError as e:
+                self.curie_logger.info(f"No python package needs to be installed") 
+        else:
+            self.curie_logger.info(f"Environment is pre-built at {env_path}. Skipping creation.")
+
         return env_path
 
     def get_packages_to_install(self):
@@ -695,7 +697,9 @@ class SchedNode():
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
         
-        workspace_base_name = os.path.basename(self.config["workspace_name"])
+        workspace_base_name = (os.path.basename(self.config["workspace_name"]) or
+                               os.path.basename(self.config["job_name"]) or
+                               "project" )
         new_starter_file_dir = f"../workspace/{workspace_base_name}_{plan_id}"
         if self.config["workspace_name"] != "":
             old_starter_file_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/')) 
@@ -745,7 +749,8 @@ class SchedNode():
         plan["dataset_dir"] = new_dataset_dir
         self.store.put(self.plan_namespace, plan_id, plan) 
         description_file = os.path.join(plan["workspace_dir"], "description.md") 
-        self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}. Briefly explore the directory to understand the structure.\n")
+        self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}. \
+                                Briefly explore the directory `ls * | head -n 50` to understand the structure.\n")
         
     def add_workspace_to_plan(self, plan_id: str):
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]

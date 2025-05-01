@@ -232,7 +232,7 @@ def query_model_safe(
             costs = token_counter.estimate_cost(token_counts)
             accumulated_stats = TokenCounter.get_accumulated_stats()
             # FIXME: this does not count external tool API cost 
-            curie_logger.info(f"💰 Round Cost: ${sum(costs.values()):.4f}/ Total Cost: ${accumulated_stats['total_cost']:.4f}")
+            curie_logger.info(f"💰 Round Cost: ${sum(costs.values()):.4f} / Total Cost: ${accumulated_stats['total_cost']:.4f}")
 
             return response
 

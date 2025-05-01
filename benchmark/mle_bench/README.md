@@ -25,7 +25,7 @@ pip install -e .
 conda activate sqlite3-49-0  
 mlebench prepare -c dog-breed-identification
 ```
-The data will be saved to `/home/ubuntu/.cache/mle-bench/data`.
+The data will be saved to `$HOME/.cache/mle-bench/data`.
 
 ## Run Curie
 ```bash
@@ -37,9 +37,7 @@ python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-
 
 ```
 conda activate sqlite3-49-0  
- 
 mlebench grade-sample  your_submission.csv dog-breed-identification 
- 
 ```
 
 

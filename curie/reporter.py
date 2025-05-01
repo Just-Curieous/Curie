@@ -96,6 +96,6 @@ def generate_report(config, plans):
 
     with open(report_name, "w") as file:
         file.write(response.content)
-    print(f"Report saved to {report_name}")
+    # print(f"Report saved to {report_name}")
     return report_name, results_file_name
  

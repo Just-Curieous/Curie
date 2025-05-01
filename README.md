@@ -80,7 +80,7 @@ python3 -m curie.main -f benchmark/junior_ml_engineer_bench/q1_activation_func.t
 - **Sample log file**: Available [here](./docs/example_logs/mle_activation_func_20250326.log)
 - **Sample report file**: Available [here](./docs/example_logs/mle_activation_func_20250326.md)
 
-## Example 3: General Machine Learning Questions with Your Dataset
+### Example 3: General Machine Learning Questions with Your Dataset
 
 If you have a dataset but are unsure how to start training/deloying your ML models to achieve your goals, simply provide your dataset and question to Curie:
 ```bash
@@ -90,6 +90,7 @@ python3 -m curie.main -q 'Example: How to improve my prediction accuracy on my d
                       --report
 ```  
 - You can include your own starter code by adding the argument `--workspace_name <path_to_your_workspace>`.
+- Check out an [example](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
 
 Check out more [computational questions](./docs/quick_start.md), as well as [Machine Learning questions](/benchmark/junior_ml_engineer_bench/) and [Machine Learning Systems questions](/benchmark/junior_mlsys_engineer_bench/).
 
