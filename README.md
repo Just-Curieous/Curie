@@ -64,30 +64,33 @@ python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?" --report
 ```
-
 - **Estimated runtime**: ~5 minutes
 - **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
 - **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
-- **Log monitoring**:
+- **Logs and Reproducibilty**:
   - Real-time logs are streamed to the console.
-  - Logs are also stored in:
-    - `logs/research_question_<ID>.log` 
-    - `logs/research_question_<ID>_verbose.log`
-  - Experiment report details:
-    - Stored in: `logs/research_question_<ID>.md`
-    - Will only be produced when the `--report` flag is used.
-- **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
+  - Experiment logs and experiment report (`--report`) are stored in `logs/research_<ID>`  
+  - The full experimentation process (code, script and real results) is saved in `workspace/research_<ID>/`.
 
 ### **Example 2**: How does the choice of activation function (e.g., ReLU, sigmoid, tanh) impact the model training convergence rate?
 
 ```bash
 python3 -m curie.main -f benchmark/junior_ml_engineer_bench/q1_activation_func.txt --report
 ```
-
-- Detailed question: `q1_diffusion_step.txt`
-- **Sample log fil**e: Available [here](./docs/example_logs/mle_activation_func_20250326.log)
+- **Sample log file**: Available [here](./docs/example_logs/mle_activation_func_20250326.log)
 - **Sample report file**: Available [here](./docs/example_logs/mle_activation_func_20250326.md)
 
+### Example 3: General Machine Learning Questions with Your Dataset
+
+If you have a dataset but are unsure how to start training/deloying your ML models to achieve your goals, simply provide your dataset and question to Curie:
+```bash
+python3 -m curie.main -q 'Example: How to improve my prediction accuracy on my datastet' \
+                      --task_config curie/configs/mle.json \
+                      --dataset_dir <path to your dataset> \
+                      --report
+```  
+- You can include your own starter code by adding the argument `--workspace_name <path_to_your_workspace>`.
+- Check out an [example](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
 
 Check out more [computational questions](./docs/quick_start.md), as well as [Machine Learning questions](/benchmark/junior_ml_engineer_bench/) and [Machine Learning Systems questions](/benchmark/junior_mlsys_engineer_bench/).
 
@@ -111,14 +114,6 @@ Curie is designed for scientific discovery across multiple domains:
 <p align="center">
   <img src="./docs/static/img/case_study.png" width="1000px"/>
 </p>
-
-
-## Customize Your Experimentation Agents
-
-Config `curie/configs/base_config.json` to adapt to your own tasks:  
-- Add your domain-specific instructions by customizing `supervisor_system_prompt_filename` for the supervisor, `control_worker_system_prompt_filename` for the experimentation worker, and so on.
-- Human interruption in the experiment design phase can be activated by setting the `is_user_interrupt_allowed` key to `true`.
-- Configure timeouts and maximum number of steps (global, and coding agent specific).
 
 ## Community and Support
 

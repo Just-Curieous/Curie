@@ -15,7 +15,7 @@ class Patcher(BaseNode):
             "next_agent": "patch_verifier"
         }
 
-        intro_message = "The following experimental plan workflows (containing plan IDs, group, partitions) have been attempted to be patched by a code debugging agent but failed. Please review. You may re-execute partitions where the workflow is not correct using the 'redo_exp_partition' tool. Otherwise, you can leave the plans unchanged, write new plans, or modify existing ones as needed.\n"
+        intro_message = "The following experimental plan workflows (containing plan IDs, group, partitions) have been attempted to be patched by a code debugging agent but failed. Please review. You may re-execute partitions where the workflow was not correct using the 'redo_exp_partition' tool. Otherwise, you can leave the plans unchanged, write new plans, or modify existing ones as needed.\n"
         self.node_config.transition_objs["has_false"] = lambda completion_messages: {
             "messages": intro_message + str(completion_messages), 
             "prev_agent": "patch_verifier", 

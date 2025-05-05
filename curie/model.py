@@ -16,12 +16,20 @@ def setup_model_logging(log_filename: str):
     global curie_logger 
     curie_logger = init_logger(log_filename)
 
+def report_cost_stats():
+    """Print accumulated token usage and costs."""
+    stats = TokenCounter.get_accumulated_stats()
+    curie_logger.info(f"💸 Accumulated cost for input tokens: ${stats['costs']['input']:.4f}")
+    curie_logger.info(f"💸 Accumulated cost for output tokens: ${stats['costs']['output']:.4f}")
+    curie_logger.info(f"💸 Accumulated cost for tool usage: ${stats['costs']['tool_cost']:.4f}")
+
 class TokenCounter:
     # Pricing per 1k tokens (as of March 2024)
     PRICE_PER_1K_TOKENS = utils.get_all_price_per_1k_tokens()
 
     # Class-level variables to track accumulated usage across all instances
     _accumulated_tokens = {"input": 0, "output": 0}
+    # Can be more fine-grained once we introduce more tools
     _accumulated_cost = {"input": 0.0, "output": 0.0, "tool_cost": 0.0}
 
     def __init__(self):
@@ -42,7 +50,7 @@ class TokenCounter:
             "costs": dict(cls._accumulated_cost),
             "total_cost": sum(cls._accumulated_cost.values())
         }
-
+    
     def count_output_tokens(self, string: str) -> int:
         """
         MetaGPT anthropic client token counter does not work for anthropic>=0.39.0: https://github.com/geekan/MetaGPT/blob/main/metagpt/utils/token_counter.py#L479C1-L480C1
@@ -157,7 +165,7 @@ def query_model_safe(
     """Execute model query with token counting and cost estimation."""
     token_counter = TokenCounter()
     context_length = utils.get_model_context_length()
-    max_tokens = context_length - 1000  # Reserve tokens for response
+    max_tokens = context_length - 9000  # Reserve tokens for response
     
     attempt = 0
     while attempt < max_retries:
@@ -224,7 +232,7 @@ def query_model_safe(
             costs = token_counter.estimate_cost(token_counts)
             accumulated_stats = TokenCounter.get_accumulated_stats()
             # FIXME: this does not count external tool API cost 
-            curie_logger.info(f"💰 Round Cost: ${sum(costs.values()):.4f}/ Total Cost: ${accumulated_stats['total_cost']:.4f}")
+            curie_logger.info(f"💰 Round Cost: ${sum(costs.values()):.4f} / Total Cost: ${accumulated_stats['total_cost']:.4f}")
 
             return response
 

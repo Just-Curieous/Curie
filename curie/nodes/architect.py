@@ -10,7 +10,9 @@ class Architect(BaseNode):
 
     def create_transition_objs(self):
         # TODO: simplify this init message.
-        intro_message = "This is the question to answer, analyze the user's question and all mentioned or referenced files (e.g., .txt, .md, .pdf). Use read_file_contents for non-PDF files and query_pdf for PDFs to extract relevant information that informs your experimental design. Make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
+        intro_message = "This is the question to answer, analyze the user's question and mentioned or referenced files (e.g., .txt, .md, .pdf). \
+            Use `read_file_contents` for non-PDF files and `query_pdf` for PDFs to extract relevant information that informs your experimental design. \
+            Make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
         self.node_config.transition_objs["no_plan"] = lambda: {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
 
         self.node_config.transition_objs["get_user_input_first"] = lambda: {

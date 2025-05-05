@@ -21,12 +21,22 @@ class LLMValidator(BaseNode):
             "next_agent": "patch_verifier"
         }
 
-        intro_message = "The following partitions have completed execution and have also been executed twice with the same independent variable inputs to check for reproducibility.\n"
+        intro_message = "The following partitions have completed execution.\n"
+        # intro_message = "The following partitions need to be executed to generate real results.\n"
         self.node_config.transition_objs["after_exec_verifier"] = lambda completion_messages: {
             "messages": intro_message + str(completion_messages), 
             "prev_agent": "exec_verifier", 
             "next_agent": "analyzer"
         }
+    
+    def remove_verifier_from_assignment(self):
+        """
+            Remove verifier from verifier assignment dict.
+            This is called when the verifier has completed a run.
+        """ 
+        self.sched_node.unassign_verifier_all(self.node_config.name) 
+        self.sched_node.remove_verifier_wrote_list_all(self.node_config.name)
+
 
     def transition_handle_func(self):
         """
@@ -43,32 +53,35 @@ class LLMValidator(BaseNode):
 
         # Assert that all assigned partition names are now done
         has_false = False # if there exist one workflow that is considered incorrect by the verifier.
+        has_not_recorded = False # if there exist one workflow that is not recorded by the verifier.
         for assignment in assignments:
             plan_id, group, partition_name = assignment["plan_id"], assignment["group"], assignment["partition_name"]
             # Check if the verifier has written to the verifier_wrote_list:
             item = self.sched_node.get_verifier_wrote_list_item(self.node_config.name, plan_id, group, partition_name)
             if item is None:
-                self.curie_logger.info("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
-                return self.node_config.transition_objs["progress_not_recorded"](assignments)
-            completion_messages.append(item)
-            if not item["is_correct"]:
-                has_false = True
-
-        # Remove verifier from verifier assignment dict:
-        self.sched_node.unassign_verifier_all(self.node_config.name)
-
-        # Remove from verifier_wrote_list:
-        self.sched_node.remove_verifier_wrote_list_all(self.node_config.name)
+                has_not_recorded = True
+                # self.curie_logger.info("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
+                # return self.node_config.transition_objs["progress_not_recorded"](assignments)
+            else:
+                self.curie_logger.info("👮‍♀️ LLM verifier has written plan_id {}, group {}, partition_name {} to verifier_wrote_list: {}.".format(plan_id, group, partition_name, item))
+                completion_messages.append(item)
+                if not item["is_correct"]:
+                    has_false = True
 
         # utils.print_workspace_contents()
         # NOTE: currently because I don't think divergent parallel execution is possible, we will just return to supervisor if even one workflow is considered incorrect (even though there may be others that are correct which we can in principle forward to the exec_verifier)
         # Inform supervisor that verifier has completed a run:
         if has_false: # go to patch verifier
             # Pass all assignments to patch_verifier:
+            self.remove_verifier_from_assignment()
             for task_details in completion_messages:
                 self.sched_node.assign_verifier("patch_verifier", task_details)
             return self.node_config.transition_objs["has_false"](completion_messages)
+        # elif has_not_recorded: 
+        #     self.curie_logger.info("Warning: LLM verifier has not written plan_id / group / partition_name / to verifier_wrote_list yet. We will rerun LLM verifier.")
+        #     return self.node_config.transition_objs["progress_not_recorded"](assignments)
         else: # go to exec verifier -> supervisor 
+            self.remove_verifier_from_assignment()
             for item in completion_messages:
                 item["control_experiment_results_filename"] = self.sched_node.get_control_experiment_results_filename(item["plan_id"], item["group"], item["partition_name"])
             completion_messages = exec_validator(completion_messages)
