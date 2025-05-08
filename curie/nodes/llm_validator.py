@@ -60,7 +60,7 @@ class LLMValidator(BaseNode):
             item = self.sched_node.get_verifier_wrote_list_item(self.node_config.name, plan_id, group, partition_name)
             if item is None:
                 has_not_recorded = True
-                # self.curie_logger.info("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
+                self.curie_logger.info("Warning: LLM verifier has not written plan_id {}, group {}, partition_name {} to verifier_wrote_list yet. We will rerun LLM verifier.".format(plan_id, group, partition_name))
                 # return self.node_config.transition_objs["progress_not_recorded"](assignments)
             else:
                 self.curie_logger.info("👮‍♀️ LLM verifier has written plan_id {}, group {}, partition_name {} to verifier_wrote_list: {}.".format(plan_id, group, partition_name, item))

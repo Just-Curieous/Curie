@@ -3,7 +3,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_core.messages import HumanMessage, SystemMessage 
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from abc import ABC, abstractmethod
 
 import os
@@ -129,7 +129,52 @@ class BaseNode(ABC):
                 content=system_prompt,
             )
 
-            # Query model and append response to chat history 
+            # can filter out early tool messages from state["messages"]
+            # need to retain the plan messages from state["messages"]
+            # remove the duplicated human messages from state["messages"]
+            
+            # TODO: check for high similarity between messages, repeatly summarize the messages
+
+            # If there are too many messages, prune older ToolMessages to avoid context overflow
+            messages = state["messages"]
+            unique_msg_contents = {} # content -> index
+            if len(messages) > 40:
+                # Keep track of tool messages to potentially remove
+                tool_messages = []
+                to_remove = set()
+                
+                for i, msg in enumerate(messages):
+                    # prune the first half of the messages
+                    if i > len(messages) // 2:
+                        break
+
+                    content = msg.content
+                    # remove duplicate messages
+                    if content not in unique_msg_contents:
+                        unique_msg_contents[content] = i
+                    else:
+                        to_remove.add(unique_msg_contents[content])
+                        unique_msg_contents[content] = i
+
+                    if isinstance(msg, ToolMessage):
+                        tool_messages.append(i)
+                        tool_messages.append(i-1) # corresponding ai message
+                    # if 'Empty message.' in content:
+                    #     to_remove.add(i) 
+            
+                if tool_messages:
+                    to_remove.update(tool_messages)
+                    
+                filtered_messages = [msg for i, msg in enumerate(messages) if i not in to_remove] 
+            else:
+                filtered_messages = messages
+            
+
+            # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
+            # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
+            self.curie_logger.info(f"❕❕❕ {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
+
+            state["messages"] = filtered_messages
             messages = state["messages"]
 
             # Ensure the system prompt is included at the start of the conversation
