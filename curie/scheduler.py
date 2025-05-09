@@ -134,6 +134,7 @@ class SchedNode():
                 elif response["control_work"]["messages"]:
                     type_name = "control_work"
                 assert len(list(response[type_name]["messages"].keys())) == 1 # only one worker for a given worker type has been assigned partitions to run
+                self.write_down_exp_plan()
                 return {"messages": [
                             HumanMessage(content=json.dumps(list(response[type_name]["messages"].values())[0]), name="scheduler")
                         ], 

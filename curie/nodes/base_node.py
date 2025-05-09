@@ -86,9 +86,7 @@ class BaseNode(ABC):
         # supervisor_builder.add_conditional_edges( "tools", router, ["supervisor", END])
         subgraph_builder.add_edge("tools", self.node_config.name)
 
-        subgraph = subgraph_builder.compile(checkpointer=self.memory)
-        # os.makedirs("../../logs/misc") if not os.path.exists("../../logs/misc") else None
-        # utils.save_langgraph_graph(subgraph, f"../../logs/misc/{self.node_config.name}_graph_image.png") 
+        subgraph = subgraph_builder.compile(checkpointer=self.memory) 
 
         def call_subgraph(state: self.State) -> self.State: 
             response = subgraph.invoke({
@@ -145,7 +143,9 @@ class BaseNode(ABC):
                 
                 for i, msg in enumerate(messages):
                     # prune the first half of the messages
-                    if i > len(messages) // 2:
+                    if i < min(20, len(messages) // 4):
+                        continue
+                    if len(messages) - i < min(30, len(messages) // 3):
                         break
 
                     content = msg.content
@@ -173,6 +173,7 @@ class BaseNode(ABC):
             # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
             # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
             self.curie_logger.info(f"❕❕❕ {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
+            self.curie_logger.info(f"❕❕❕ number of unique messages: {len(unique_msg_contents)}")
 
             state["messages"] = filtered_messages
             messages = state["messages"]
@@ -205,6 +206,7 @@ class BaseNode(ABC):
             self.curie_logger.debug(f"Full response from {self.node_config.name.upper()} {self.node_config.node_icon}: {response}")
 
             return {"messages": [response], "prev_agent": self.node_config.name}
+            # need to change 'add_messages' if you want to permanently update the message state.
         
         return Node
 

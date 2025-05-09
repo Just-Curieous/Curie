@@ -5,8 +5,7 @@ import time
 import os
 from openai import BadRequestError
 from typing import List, Dict, Any
-from langchain_core.messages import BaseMessage
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 # import anthropic
 
 import utils
@@ -72,9 +71,9 @@ class TokenCounter:
         #     num_tokens = vo.count_tokens(string)
         #     return num_tokens
         try:
-            encoding = tiktoken.encoding_for_model(self.model_name)
+            encoding = tiktoken.encoding_for_model(self.model_name.split('-v')[0])
         except KeyError:
-            curie_logger.debug(f"Warning: model {self.model_name} not found in tiktoken. Using cl100k_base encoding.")
+            curie_logger.debug(f"Warning: model {self.model_name.split('-v')[0]} not found in tiktoken. Using cl100k_base encoding.")
             encoding = tiktoken.get_encoding("cl100k_base")
         try:
             token_count = len(encoding.encode(string))
@@ -165,7 +164,7 @@ def query_model_safe(
     """Execute model query with token counting and cost estimation."""
     token_counter = TokenCounter()
     context_length = utils.get_model_context_length()
-    max_tokens = context_length - 9000  # Reserve tokens for response
+    max_tokens = context_length - 10000  # Reserve tokens for response
     
     attempt = 0
     while attempt < max_retries:
