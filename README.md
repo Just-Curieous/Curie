@@ -57,7 +57,11 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 ## Quick Start
 Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
 
-### **Example 1**: Understanding Sorting Algorithm Efficiency
+### **Example 1**: [You Have a Single Question Needed to be Verified](./docs/quick_start.md).
+
+Q: I want to understand the Sorting Algorithm Efficiency.
+
+A: Simply input your question to Curie:
 
 ```bash
 python3 -m curie.main \
@@ -65,34 +69,33 @@ python3 -m curie.main \
   input distributions (random, nearly sorted, reverse sorted)?" --report
 ```
 - **Estimated runtime**: ~5 minutes
-- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
-- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
+- **Auto-generated Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
+- **Curie log**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
 - **Logs and Reproducibilty**:
   - Real-time logs are streamed to the console.
-  - Experiment logs and experiment report (`--report`) are stored in `logs/research_<ID>`  
-  - The full experimentation process (code, script and real results) is saved in `workspace/research_<ID>/`.
+  - Experiment logs and experiment report (`--report`) are stored in `logs/research_<ID>.md`  
+  - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
 
-### **Example 2**: How does the choice of activation function (e.g., ReLU, sigmoid, tanh) impact the model training convergence rate?
+### Example 2: You Have a Dataset and Want to Gain Insight from It
+
+Q: I have a dataset and some starter code,and I want to train/deloy ML models to achieve my goals
+
+A: Simply provide your dataset, codebase and question to Curie:
 
 ```bash
-python3 -m curie.main -f benchmark/junior_ml_engineer_bench/q1_activation_func.txt --report
-```
-- **Sample log file**: Available [here](./docs/example_logs/mle_activation_func_20250326.log)
-- **Sample report file**: Available [here](./docs/example_logs/mle_activation_func_20250326.md)
-
-### Example 3: General Machine Learning Questions with Your Dataset
-
-If you have a dataset but are unsure how to start training/deloying your ML models to achieve your goals, simply provide your dataset and question to Curie:
-```bash
-python3 -m curie.main -q 'Example: How to improve my prediction accuracy on my datastet' \
+python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my datastet' \
                       --task_config curie/configs/mle.json \
-                      --dataset_dir <path to your dataset> \
+                      --dataset_dir <abs_path_to_your_dataset> \
+                      --workspace_name <abs_path_to_your_codebase [optional]> \
                       --report
 ```  
-- You can include your own starter code by adding the argument `--workspace_name <path_to_your_workspace>`.
 - Check out an [example](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
+ 
 
-Check out more [computational questions](./docs/quick_start.md), as well as [Machine Learning questions](/benchmark/junior_ml_engineer_bench/) and [Machine Learning Systems questions](/benchmark/junior_mlsys_engineer_bench/).
+
+
+Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
+
 
 
 ## Tutorial
@@ -122,3 +125,7 @@ For any issues or feature requests, please open an issue on our [GitHub Issues](
 ## License
 
 Curie is released under the Apache 2.0 License. See `LICENSE` for more details.
+
+## Contact Us
+
+Have questions or need assistance with Curie? We're here to help - [schedule a meeting with our team](https://calendly.com/amberljc/30min)

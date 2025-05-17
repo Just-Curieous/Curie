@@ -3,7 +3,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_core.messages import HumanMessage, SystemMessage 
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from abc import ABC, abstractmethod
 
 import os
@@ -86,9 +86,7 @@ class BaseNode(ABC):
         # supervisor_builder.add_conditional_edges( "tools", router, ["supervisor", END])
         subgraph_builder.add_edge("tools", self.node_config.name)
 
-        subgraph = subgraph_builder.compile(checkpointer=self.memory)
-        # os.makedirs("../../logs/misc") if not os.path.exists("../../logs/misc") else None
-        # utils.save_langgraph_graph(subgraph, f"../../logs/misc/{self.node_config.name}_graph_image.png") 
+        subgraph = subgraph_builder.compile(checkpointer=self.memory) 
 
         def call_subgraph(state: self.State) -> self.State: 
             response = subgraph.invoke({
@@ -129,7 +127,52 @@ class BaseNode(ABC):
                 content=system_prompt,
             )
 
-            # Query model and append response to chat history 
+            # can filter out early tool messages from state["messages"]
+            # need to retain the plan messages from state["messages"]
+            # remove the duplicated human messages from state["messages"]
+            
+            # TODO: check for high similarity between messages, repeatly summarize the messages
+            # If there are too many messages, prune older ToolMessages to avoid context overflow
+            messages = state["messages"]
+            unique_msg_contents = {} # content -> index
+            if len(messages) > 50:
+                # Keep track of tool messages to potentially remove
+                tool_messages = []
+                to_remove = set()
+                
+                for i, msg in enumerate(messages):
+                    # prune the first half of the messages
+                    if i < min(20, len(messages) // 4):
+                        continue
+                    if len(messages) - i < min(30, len(messages) // 3):
+                        break
+
+                    content = msg.content
+                    # remove duplicate messages
+                    if content not in unique_msg_contents:
+                        unique_msg_contents[content] = i
+                    else:
+                        to_remove.add(unique_msg_contents[content])
+                        unique_msg_contents[content] = i
+
+                    if isinstance(msg, ToolMessage):
+                        tool_messages.append(i)
+                        tool_messages.append(i-1) # corresponding ai message
+
+                if tool_messages:
+                    to_remove.update(tool_messages)
+                    
+                filtered_messages = [msg for i, msg in enumerate(messages) if i not in to_remove] 
+            else:
+                filtered_messages = messages
+            
+
+            # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
+            # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
+            self.curie_logger.debug(f"❕❕❕ {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
+            self.curie_logger.debug(f"❕❕❕ number of unique messages: {len(unique_msg_contents)}")
+
+            state["messages"] = filtered_messages
             messages = state["messages"]
 
             # Ensure the system prompt is included at the start of the conversation
@@ -160,6 +203,7 @@ class BaseNode(ABC):
             self.curie_logger.debug(f"Full response from {self.node_config.name.upper()} {self.node_config.node_icon}: {response}")
 
             return {"messages": [response], "prev_agent": self.node_config.name}
+            # need to change 'add_messages' if you want to permanently update the message state.
         
         return Node
 

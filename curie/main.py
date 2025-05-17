@@ -176,15 +176,23 @@ def execute_experiment_in_container(container_name, config_file, logger):
         logger.error("env.sh does not exist under curie/setup. Please input your API credentials.")
         return False
     
+    env_output = subprocess.check_output(["/bin/bash", "-c", "source curie/setup/env.sh && env"], text=True)
+    for line in env_output.splitlines():
+        if '=' in line:
+            key, value = line.split('=', 1)
+            os.environ[key] = value
+            
+    organization_id = os.environ.get("ORGANIZATION")
+    print(f"🐔🐔🐔🐔🐔 Organization ID: {organization_id}")
     # Command to run inside container
     container_command = (
         "source setup/env.sh && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
-        "sed -i '474i \\                    \"organization\": \"499023\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
-        "sed -i '474i \\    \"organization\": \"499023\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
+        f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
+        f"sed -i '474i \\    \"organization\": \"{organization_id}\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
         "sed -i '49d' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py &&"
-        "sed -i '49i \\                    organization=\"014482\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py  &&"
+        f"sed -i '49i \\                    organization=\"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py  &&"
         f"python3 construct_workflow_graph.py /{config_file}"
     )
     

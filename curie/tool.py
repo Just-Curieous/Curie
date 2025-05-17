@@ -407,7 +407,8 @@ def execute_shell_command(
         output = shell_tool.run({"commands": [command]}) # only run one command at a time 
         curie_logger.info(f"🐚 Output: {output}")
         # cut the output to last 1000 characters - 200 tokens
-        output = output[-1000:]
+        if len(output) > 2500:
+            output = output[:1000] + '...(omitted for brevity)...' + output[-1000:]
 
     except BaseException as e:
         curie_logger.error(f"Error executing command: {command}")
