@@ -71,9 +71,10 @@ class TokenCounter:
         #     num_tokens = vo.count_tokens(string)
         #     return num_tokens
         try:
-            encoding = tiktoken.encoding_for_model(self.model_name.split('-v')[0])
+            encoding = tiktoken.encoding_for_model(self.model_name)
         except KeyError:
-            curie_logger.debug(f"Warning: model {self.model_name.split('-v')[0]} not found in tiktoken. Using cl100k_base encoding.")
+            # tiktoken only supports oai models
+            # curie_logger.debug(f"Warning: model {self.model_name} not found in tiktoken. Using cl100k_base encoding.")
             encoding = tiktoken.get_encoding("cl100k_base")
         try:
             token_count = len(encoding.encode(string))
