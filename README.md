@@ -73,8 +73,8 @@ python3 -m curie.main \
 - **Curie log**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
 - **Logs and Reproducibilty**:
   - Real-time logs are streamed to the console.
-  - Experiment logs and experiment report (`--report`) are stored in `logs/research_<ID>`  
-  - The full experimentation process (code, script and real results) is saved in `workspace/research_<ID>/`.
+  - Experiment logs and experiment report (`--report`) are stored in `logs/research_<ID>.md`  
+  - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
 
 ### Example 2: You Have a Dataset and Want to Gain Insight from It
 
