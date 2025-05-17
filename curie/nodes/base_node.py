@@ -132,11 +132,10 @@ class BaseNode(ABC):
             # remove the duplicated human messages from state["messages"]
             
             # TODO: check for high similarity between messages, repeatly summarize the messages
-
             # If there are too many messages, prune older ToolMessages to avoid context overflow
             messages = state["messages"]
             unique_msg_contents = {} # content -> index
-            if len(messages) > 40:
+            if len(messages) > 50:
                 # Keep track of tool messages to potentially remove
                 tool_messages = []
                 to_remove = set()
@@ -159,9 +158,7 @@ class BaseNode(ABC):
                     if isinstance(msg, ToolMessage):
                         tool_messages.append(i)
                         tool_messages.append(i-1) # corresponding ai message
-                    # if 'Empty message.' in content:
-                    #     to_remove.add(i) 
-            
+
                 if tool_messages:
                     to_remove.update(tool_messages)
                     
@@ -172,8 +169,8 @@ class BaseNode(ABC):
 
             # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
             # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
-            self.curie_logger.info(f"❕❕❕ {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
-            self.curie_logger.info(f"❕❕❕ number of unique messages: {len(unique_msg_contents)}")
+            self.curie_logger.debug(f"❕❕❕ {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
+            self.curie_logger.debug(f"❕❕❕ number of unique messages: {len(unique_msg_contents)}")
 
             state["messages"] = filtered_messages
             messages = state["messages"]

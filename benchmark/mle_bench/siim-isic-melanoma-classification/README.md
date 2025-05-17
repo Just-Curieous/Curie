@@ -16,5 +16,6 @@ mlebench prepare -c siim-isic-melanoma-classification
 - Execute Curie. 
 ```bash
 cd Curie/
-python3 -m curie.main -f benchmark/mle_bench/siim-isic-melanoma-classification/question.txt --task_config curie/configs/mle-siim-isic-melanoma.json  --report
+python3 -m curie.main -f benchmark/mle_bench/siim-isic-melanoma-classification/question.txt --task_config curie/configs/mle_config.json --dataset_dir  /home/amberljc/.cache/mle-bench/data/siim-isic-melanoma-classification/prepared/public/ --report
 ``` 
+- Change `--dataset_dir` to the absolute path to your dataset. 

@@ -181,14 +181,7 @@ def execute_experiment_in_container(container_name, config_file, logger):
         if '=' in line:
             key, value = line.split('=', 1)
             os.environ[key] = value
-
-    # get the organization id from curie/setup/env.sh
-    # with open("curie/setup/env.sh", "r") as f:
-    #     for line in f:
-    #         if "ORGANIZATION" in line:
-    #             organization_id = int(line.split("=")[1].strip())
-                # break
-
+            
     organization_id = os.environ.get("ORGANIZATION")
     print(f"🐔🐔🐔🐔🐔 Organization ID: {organization_id}")
     # Command to run inside container
