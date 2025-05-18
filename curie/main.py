@@ -26,9 +26,7 @@ def parse_args():
 
     parser.add_argument("--task_config", type=str, default=DEFAULT_CONFIG_PATH,
                         help="Task configuration file for advanced developers.")
-
-    parser.add_argument("--report", action="store_true",
-                        help="Whether to write a formal experiment report.")
+    
     # these arguments will overwrite the ones in the task_config file if provided
     parser.add_argument("--workspace_name", "-w", type=str, default=None, required=False,
                         help="Workspace name (starter code dir) to be used in the experiment.")
@@ -182,8 +180,7 @@ def execute_experiment_in_container(container_name, config_file, logger):
             key, value = line.split('=', 1)
             os.environ[key] = value
             
-    organization_id = os.environ.get("ORGANIZATION")
-    print(f"🐔🐔🐔🐔🐔 Organization ID: {organization_id}")
+    organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
     # Command to run inside container
     container_command = (
         "source setup/env.sh && "
@@ -277,8 +274,7 @@ def main():
     # Load configuration
     try:
         with open(args.task_config, 'r') as f:
-            task_config = json.load(f)
-            task_config['report'] = args.report
+            task_config = json.load(f) 
             task_config['workspace_name'] = args.workspace_name or task_config['workspace_name']
             task_config['dataset_dir'] = args.dataset_dir or task_config['dataset_dir']
     except Exception as e:

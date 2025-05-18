@@ -1,4 +1,5 @@
-# Curie: Automate Rigorous Scientific Experimentation
+# Curie: A Research Experimentation Agent 
+<!-- # Curie: Automate Rigorous Scientific Experimentation -->
 
 [![arXiv](https://img.shields.io/badge/arXiv-2502.16069-b31b1b.svg)](https://arxiv.org/abs/2502.16069)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
@@ -15,10 +16,10 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 </p>
 
 **Key Features**
-- 🚀 Automated Experimentation – End-to-end workflow management: hypothesis formulation, experiment setup, experiment execution, result analysis and finding reflection.
-- 📊 Rigor Enhancement - Built-in verification modules enforce methodical procedure, reliability and interpretability.
+- 🚀 Automated Experimentation – From hypothesis formulation, experiment implementation, experiment execution, result analysis and finding reflection.
+- 📊 Rigor Enhancement - Built-in verification modules enforce methodical procedure, agent reliability and reproducibility.
 - 🔬 Broad Applicability – Supports ML research, system analysis, and scientific discovery.
-- 📖 Experimentation Benchmark - Provide 46 questions from 4 Computer Science domains, based on influential papers and open-source projects (`benchmark/experimentation_bench`).
+<!-- - 📖 Experimentation Benchmark - Provide 46 questions from 4 Computer Science domains, based on influential papers and open-source projects (`benchmark/experimentation_bench`). -->
 
 ## Table of Contents 
 - [Installation](#installation)
@@ -39,15 +40,14 @@ git clone https://github.com/Just-Curieous/Curie.git
 cd Curie
 ```
 
-3. Put your LLM API credentials under `curie/setup/env.sh`. Example: 
+3. Put your [LLM API credentials](https://github.com/BerriAI/litellm) under `curie/setup/env.sh`. Example: 
 
 ```
 export MODEL="gpt-4o" 
 export OPENAI_API_KEY="sk-xxx" 
 ```
 
-4. Build the container image. This will take a few minutes. Note: you may need to setup a virtual environment before running pip install.
-
+4. Build the container image. This will take a few minutes. 
 ```bash
 pip install -e .
 docker images -q exp-agent-image | xargs -r docker rmi -f # remove any existing conflict image
@@ -66,14 +66,14 @@ A: Simply input your question to Curie:
 ```bash
 python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
-  input distributions (random, nearly sorted, reverse sorted)?" --report
+  input distributions (random, nearly sorted, reverse sorted)?" 
 ```
 - **Estimated runtime**: ~5 minutes
 - **Auto-generated Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
 - **Curie log**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
 - **Logs and Reproducibilty**:
   - Real-time logs are streamed to the console.
-  - Experiment logs and experiment report (`--report`) are stored in `logs/research_<ID>.md`  
+  - Experiment report are stored in `logs/research_<ID>.md`  
   - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
 
 ### Example 2: You Have a Dataset and Want to Gain Insight from It
@@ -86,8 +86,7 @@ A: Simply provide your dataset, codebase and question to Curie:
 python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my datastet' \
                       --task_config curie/configs/mle.json \
                       --dataset_dir <abs_path_to_your_dataset> \
-                      --workspace_name <abs_path_to_your_codebase [optional]> \
-                      --report
+                      --workspace_name <abs_path_to_your_codebase [optional]> 
 ```  
 - Check out an [example](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
  

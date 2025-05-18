@@ -10,15 +10,13 @@ mlebench prepare -c dog-breed-identification
 ```
 
 ## Run Curie
-- Update the configuration: Open `curie/configs/mle_dog_config.json` to update the paths to the dataset and starter code if you have any.
-- Execute Curie. 
 ```bash
 cd Curie/
 python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-identification-question.txt \
                      --dataset_dir ~/.cache/mle-bench/data/dog-breed-identification/prepared/public \                      
-                     --task_config curie/configs/mle_dog_config.json  \
-                     --report
+                     --task_config curie/configs/mle_config.json 
 ``` 
+- Optionally include your starter code using `--workspace_name`.
 
 ## Curie's Results 
 - Detailed question: [dog-breed-identification-question.txt](./dog-breed-identification-question.txt)

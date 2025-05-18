@@ -25,13 +25,13 @@ mlebench prepare -c aptos2019-blindness-detection
 - Execute Curie:
 ```bash
 cd Curie/
-python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/question.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/aptos2019-blindness-detection/prepared/public --report
+python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/question.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/aptos2019-blindness-detection/prepared/public 
 ```
 - Change `--dataset_dir` to the absolute path to your dataset. 
 
 ## Curie Results
 
-After running Curie, the following output files are generated:
+After asking Curie to solve this question, the following output files are generated:
 - [`Report`](question_20250517013357_iter1.md): Auto-generated report with experiment design and findings  
 - [`Experiment results`](question_20250517013357_iter1_all_results.txt): All detailed results for all conducted experiments
 - [`Curie logs`](question_20250517013357_iter1.log): Execution log file  
@@ -48,6 +48,10 @@ The agent's experiments yielded impressive results for diabetic retinopathy dete
   - ResNet50 (baseline): Kappa 0.7733
   - EfficientNet-B3: Kappa 0.8108
   - EfficientNet-B5: Kappa 0.9058
+
+![Model Performance Comparison](model_performance_comparison.png)
+![Computational Efficiency Comparison](computational_efficiency_comparison.png)
+![Comprehensive Model Comparison](comprehensive_model_comparison.png)
 
 The agent systematically experimented with multiple architectures and demonstrated that EfficientNet models outperformed ResNet50, with EfficientNet-B5 showing the best results. The 5-fold cross-validation approach produced more robust and generalizable results than single-split training.
 
