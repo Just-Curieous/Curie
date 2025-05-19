@@ -20,7 +20,7 @@ mlebench prepare -c histopathologic-cancer-detection
 2. Execute Curie:
 ```bash
 cd Curie/
-python3 -m curie.main -f benchmark/mle_bench/histopathologic-cancer-detection/question.txt --task_config curie/configs/mle_config.json --dataset_dir /path/to/your/dataset/histopathologic-cancer-detection/prepared/public/ 
+python3 -m curie.main -f benchmark/mle_bench/histopathologic-cancer-detection/histopathologic-cancer-detection.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/histopathologic-cancer-detection/prepared/public
 ```
 
 3. Change `--dataset_dir` to the absolute path to your dataset.

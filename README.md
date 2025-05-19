@@ -83,13 +83,16 @@ Q: I have a dataset and some starter code,and I want to train/deloy ML models to
 A: Simply provide your dataset, codebase and question to Curie:
 
 ```bash
-python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my datastet' \
+python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my datastet. \
+                      Checkout <paper.pdf> for the background information.' \
                       --task_config curie/configs/mle.json \
                       --dataset_dir <abs_path_to_your_dataset> \
                       --workspace_name <abs_path_to_your_codebase [optional]> 
 ```  
-- Check out an [example](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
- 
+- Check out some [examples](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
+  - [Predict the dog breed](./benchmark/mle_bench/dog-breed-identification/)
+  - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
+  - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
 
 
 
