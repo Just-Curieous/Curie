@@ -43,8 +43,8 @@ cd Curie
 3. Put your [LLM API credentials](https://github.com/BerriAI/litellm) under `curie/setup/env.sh`. Example: 
 
 ```
-export MODEL="gpt-4o" 
-export OPENAI_API_KEY="sk-xxx" 
+export MODEL="claude-3-7-sonnet-20250219" 
+export ANTHROPIC_API_KEY="your-anthropic-key"
 ```
 
 4. Build the container image. This will take a few minutes. 

@@ -9,19 +9,29 @@ from typing import List, Tuple
 # write a lab report
  
 def filter_logging(log_data):
-    filtered_strings = ["[", "INFO", "=======", "openhands", 'OBSERVATION', 'ACTION',
-                        'root root']
-    filtered_log_data = []
-    pre_line = ""
-    for line in log_data:
-        if all([string not in line for string in filtered_strings]) and line != "\n":
-            if pre_line != line:
-                filtered_log_data.append(line)
-        pre_line = line
+    # filtered_strings = ["=======", "openhands", 'OBSERVATION', 'ACTION',
+    #                     'root root', '- lib/python3.12/site-packages']
+    # filtered_log_data = []
+    # pre_line = ""
+    # for line in log_data:
+    #     if all([string not in line for string in filtered_strings]) and line != "\n":
+    #         if pre_line != line:
+    #             filtered_log_data.append(line)
+    #     pre_line = line
     
-    filtered_log = "".join(filtered_log_data)
+    # print(f"before filtering: {len(log_data)}")
+    # print(f"after filtering: {len(filtered_log_data)}")
+    # filtered_log = "".join(filtered_log_data)
 
-    return filtered_log
+    # return filtered_log
+    stay_strings = ['- logger -']
+    filtered_log_data = []
+    for line in log_data:
+        if any(string in line for string in stay_strings):
+            filtered_log_data.append(line)
+    print(f"before filtering: {len(log_data)}")
+    print(f"after filtering: {len(filtered_log_data)}")
+    return filtered_log_data
 
 def summarize_logging_parallel_threads(log_file):
     """
@@ -73,6 +83,7 @@ def summarize_logging_parallel_threads(log_file):
     
     # Join all summaries, filtering out None values
     summarize_content = "\n".join([s for s in summaries if s is not None])
+    print(f"👧 Completed summarizing log file: {log_file}")
     return summarize_content
 
 
@@ -241,8 +252,29 @@ def generate_report(config, plans):
     summary_process.start()
     
     # Wait for processes to complete and get results
-    extract_process.join()
-    summary_process.join()
+    # extract_process.join()
+    # summary_process.join()
+    try:
+        extract_process.join(timeout=600)  # 5 minutes timeout
+        summary_process.join(timeout=600)
+        
+        if extract_process.is_alive():
+            print("Extract process timed out, terminating...")
+            extract_process.terminate()
+            extract_process.join(timeout=5)
+            if extract_process.is_alive():
+                extract_process.kill()
+        
+        if summary_process.is_alive():
+            print("Summary process timed out, terminating...")
+            summary_process.terminate()
+            summary_process.join(timeout=5)
+            if summary_process.is_alive():
+                summary_process.kill()
+            
+    except Exception as e:
+        print(f"Error waiting for processes: {e}")
+
     print(f"Joining processes")
     all_results, fig_names, results_file_name = results_queue.get()
     summarize_log_content = log_summary_queue.get()

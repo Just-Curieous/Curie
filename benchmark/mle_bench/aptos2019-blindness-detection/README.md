@@ -37,7 +37,7 @@ After asking Curie to solve this question, the following output files are genera
 - [`Curie logs`](question_20250517013357_iter1.log): Execution log file  
 - [`Curie workspace`](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/machine_learning/q4-aptos2019-blindness-detection): Generated code, complete script to reproduce and raw results (excluding the model checkpoint).
 
-### Performance Summary
+### Curie Performance Summary
 
 The agent's experiments yielded impressive results for diabetic retinopathy detection:
 
