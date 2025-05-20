@@ -84,3 +84,6 @@ class Technician(BaseNode):
         # utils.print_workspace_contents()
         # Inform supervisor that worker has completed a run:
         return self.node_config.transition_objs["llm_verifier"](completion_messages)
+
+    # TODO: remove context if one plan is finished    
+    # def _create_model_response(self, system_prompt_file):    

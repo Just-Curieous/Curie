@@ -134,7 +134,7 @@ class BaseNode(ABC):
             # TODO: check for high similarity between messages, repeatly summarize the messages
             # If there are too many messages, prune older ToolMessages to avoid context overflow
             messages = state["messages"]
-            unique_msg_contents = {} # content -> index
+            # unique_msg_contents = {} # content -> index
             if len(messages) > 50:
                 # Keep track of tool messages to potentially remove
                 tool_messages = []
@@ -147,13 +147,13 @@ class BaseNode(ABC):
                     if len(messages) - i < min(30, len(messages) // 3):
                         break
 
-                    content = msg.content
-                    # remove duplicate messages
-                    if content not in unique_msg_contents:
-                        unique_msg_contents[content] = i
-                    else:
-                        to_remove.add(unique_msg_contents[content])
-                        unique_msg_contents[content] = i
+                    # content = msg.content
+                    # # remove duplicate messages
+                    # if content not in unique_msg_contents:
+                    #     unique_msg_contents[content] = i
+                    # else:
+                    #     to_remove.add(unique_msg_contents[content])
+                    #     unique_msg_contents[content] = i
 
                     if isinstance(msg, ToolMessage):
                         tool_messages.append(i)
@@ -169,8 +169,7 @@ class BaseNode(ABC):
 
             # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
             # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
-            self.curie_logger.debug(f"❕❕❕ {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
-            self.curie_logger.debug(f"❕❕❕ number of unique messages: {len(unique_msg_contents)}")
+            self.curie_logger.debug(f"🏦 {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
 
             state["messages"] = filtered_messages
             messages = state["messages"]

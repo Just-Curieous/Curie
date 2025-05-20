@@ -30,7 +30,7 @@ The data will be saved to `$HOME/.cache/mle-bench/data`.
 ## Run Curie
 ```bash
 cd Curie/
-python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-identification-question.txt --task_config curie/configs/mle_dog_config.json  --report
+python3 -m curie.main -f benchmark/mle_bench/dog-breed-identification/dog-breed-identification-question.txt --task_config curie/configs/mle_dog_config.json 
 ```
 
 ## Grade submission

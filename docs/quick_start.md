@@ -69,7 +69,7 @@ Train each model for 20 epochs. \
 Use the standard MNIST train/test split (60,000 training images, 10,000 test images). \
 Metrics: \
 Record the test accuracy after training. \
-Measure the average training time per epoch (in seconds)." --report
+Measure the average training time per epoch (in seconds)." 
 ```
 
 

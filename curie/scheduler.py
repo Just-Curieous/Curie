@@ -552,6 +552,8 @@ class SchedNode():
         if self.config["dataset_dir"] != "": 
             # Copy dataset to workspace
             dataset_dir = os.path.join('/all', self.config["dataset_dir"].lstrip('/').rstrip('/'))
+
+
             if not os.path.exists(dataset_dir):
                 raise FileNotFoundError(f"Dataset directory does not exist: {self.config['dataset_dir']}. Please check the path.")            
 
@@ -561,15 +563,23 @@ class SchedNode():
                                 "project" ) + "_dataset"
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
             dataset_name = dataset_dir.split("/")[-1]
-            if not os.path.exists(new_dataset_dir):
-                # os.makedirs(new_dataset_dir)
+            dataset_dir_size = sum(os.path.getsize(os.path.join(dataset_dir, f)) for f in os.listdir(dataset_dir) if os.path.isfile(os.path.join(dataset_dir, f)))
+            if os.path.exists(new_dataset_dir):
+                new_dataset_dir_size = sum(os.path.getsize(os.path.join(new_dataset_dir, f)) for f in os.listdir(new_dataset_dir) if os.path.isfile(os.path.join(new_dataset_dir, f)))
+            else:
+                new_dataset_dir_size = 0
+            
+            if not os.path.exists(new_dataset_dir) or ( os.path.exists(new_dataset_dir) and dataset_dir_size != new_dataset_dir_size):
+                if os.path.exists(new_dataset_dir):
+                    # remove the new_dataset_dir first
+                    import shutil
+                    shutil.rmtree(new_dataset_dir) 
+
                 try:
                     self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...") 
 
                     subprocess.run(["cp", "-r", f"{dataset_dir}",  '/workspace'], check=True)
                     os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
-
-                    # subprocess.run(['mv', f"/workspace/{dataset_name}", f"/workspace/{dataset_dir_name}"], check=True)
                     self.curie_logger.info(f"Created 📁 {new_dataset_dir}. Dataset copied successfully!")
                 except Exception as e:
                     self.curie_logger.info(f"Error copying files: {e}")
