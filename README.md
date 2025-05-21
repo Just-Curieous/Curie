@@ -83,7 +83,7 @@ Q: I have a dataset and some starter code,and I want to train/deloy ML models to
 A: Simply provide your dataset, codebase and question to Curie:
 
 ```bash
-python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my datastet. \
+python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my dataset. \
                       Checkout <paper.pdf> for the background information.' \
                       --task_config curie/configs/mle.json \
                       --dataset_dir <abs_path_to_your_dataset> \
@@ -93,6 +93,13 @@ python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my
   - [Predict the dog breed](./benchmark/mle_bench/dog-breed-identification/)
   - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
   - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
+  - [Histopathologic Cancer Detection](./benchmark/mle_bench/histopathologic-cancer-detection/)
+- **Sample experiment report**:
+
+<p align="center">
+  <img src="./docs/static/img/Experimental Analysis of Model Architectures for Histopathologic Cancer Detection-1.png" width="45%"/>
+  <img src="./docs/static/img/Experimental Analysis of Model Architectures for Histopathologic Cancer Detection-2.png" width="45%"/>
+</p>
 
 
 
@@ -104,7 +111,7 @@ Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Cur
 - [How to let Curie work on your own starter files?](./docs/tutorial_with_your_own_starter_file.md)
 - [How to reproduce the results in `Large Language Monkeys'. ](./docs/tutorial-large-language-monkey.md)
 
-
+<!-- 
 ## Use Cases
 Curie is designed for scientific discovery across multiple domains:
 
@@ -118,15 +125,12 @@ Curie is designed for scientific discovery across multiple domains:
 
 <p align="center">
   <img src="./docs/static/img/case_study.png" width="1000px"/>
-</p>
+</p> -->
 
 ## Community and Support
 
 For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
 
-## License
-
-Curie is released under the Apache 2.0 License. See `LICENSE` for more details.
 
 ## Contact Us
 

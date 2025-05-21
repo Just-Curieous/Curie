@@ -156,9 +156,6 @@ The results from the abbreviated experimental runs (with limited epochs) are as 
 | Custom w/Attention | 0.9840 | 60.17 | 0.61 | 95.88 |
 
 ![Model AUC Comparison](auc_model_comparison.png)
-![Model Efficiency Comparison](model_efficiency_comparison.png)
-![Model Radar Comparison](model_radar_comparison.png)
-![Training and Inference Comparison](training_inference_comparison.png)
 
 ### 3.3 Execution Progress and Challenges
 
@@ -168,6 +165,8 @@ Several challenges were encountered during experimentation:
 2. Initial attempts at experimental group evaluation were identified as using simulated results rather than actual training, and were rejected.
 3. A subsequent attempt used only 10% of the dataset and greatly reduced epochs (3-5 instead of 30-40), producing implausibly fast training times (~34 seconds).
 4. The final experimental runs were conducted with limited samples and abbreviated training regimens due to time and computational constraints.
+![Model Radar Comparison](model_radar_comparison.png)
+![Training and Inference Comparison](training_inference_comparison.png)
 
 ## 4. Analysis and Discussion
 
