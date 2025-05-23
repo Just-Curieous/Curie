@@ -68,13 +68,10 @@ python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?" 
 ```
-- **Estimated runtime**: ~5 minutes
-- **Auto-generated Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
-- **Curie log**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
+- **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1747978647_20250523013727_iter1.md).
 - **Logs and Reproducibilty**:
-  - Real-time logs are streamed to the console.
-  - Experiment report are stored in `logs/research_<ID>.md`  
   - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
+  - Real-time logs are streamed to the console and stored in file `research_*.log`.
 
 ### Example 2: You Have a Dataset and Want to Gain Insight from It
 
@@ -94,14 +91,27 @@ python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my
   - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
   - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
   - [Histopathologic Cancer Detection](./benchmark/mle_bench/histopathologic-cancer-detection/)
-- **Sample experiment report**:
+- **Sample experiment [report](./benchmark/mle_bench/histopathologic-cancer-detection/report.pdf)**:
 
+
+<!-- First row with 3 images -->
 <p align="center">
-  <img src="./docs/static/img/Experimental Analysis of Model Architectures for Histopathologic Cancer Detection-1.png" width="45%"/>
-  <img src="./docs/static/img/Experimental Analysis of Model Architectures for Histopathologic Cancer Detection-2.png" width="45%"/>
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-1.png" width="32%"/>
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-2.png" width="32%"/>
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-3.png" width="32%"/>
+</p>
+
+<!-- Second row with 3 images -->
+<p align="center">
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-4.png" width="32%"/>
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-5.png" width="32%"/>
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-6.png" width="32%"/>
 </p>
 
 
+<!-- <p align="center">
+  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-7.png" width="48%"/> 
+</p> -->
 
 Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
 
