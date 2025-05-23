@@ -69,7 +69,7 @@ python3 -m curie.main \
   input distributions (random, nearly sorted, reverse sorted)?" 
 ```
 - **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1747978647_20250523013727_iter1.md).
-- **Logs and Reproducibilty**:
+- **Reproducibilty and Logs**:
   - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
   - Real-time logs are streamed to the console and stored in file `research_*.log`.
 
