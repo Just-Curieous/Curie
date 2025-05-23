@@ -25,7 +25,7 @@ mlebench prepare -c aptos2019-blindness-detection
 - Execute Curie:
 ```bash
 cd Curie/
-python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/question.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/aptos2019-blindness-detection/prepared/public 
+python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/aptos2019-blindness-detection.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/aptos2019-blindness-detection/prepared/public 
 ```
 - Change `--dataset_dir` to the absolute path to your dataset. 
 
@@ -38,21 +38,34 @@ After asking Curie to solve this question, the following output files are genera
 - [`Curie workspace`](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/machine_learning/q4-aptos2019-blindness-detection): Generated code, complete script to reproduce and raw results (excluding the model checkpoint).
 
 ### Curie Performance Summary
+#### Data Understanding
 
-The agent's experiments yielded impressive results for diabetic retinopathy detection:
+The APTOS 2019 Diabetic Retinopathy Detection dataset was used, containing retinal images with the following class distribution:
 
-- **Best Model**: EfficientNet-B5 with 5-fold cross-validation
-- **Quadratic Weighted Kappa**: 0.9058 (benchmark metric for this task)
-- **Classification Accuracy**: 82.50%
-- **Model Architecture Comparison**:
-  - ResNet50 (baseline): Kappa 0.7733
-  - EfficientNet-B3: Kappa 0.8108
-  - EfficientNet-B5: Kappa 0.9058
+- Class 0 (No DR): 1628 samples (49.4%)
+- Class 1 (Mild DR): 340 samples (10.3%)
+- Class 2 (Moderate DR): 896 samples (27.2%)
+- Class 3 (Severe DR): 176 samples (5.3%)
+- Class 4 (Proliferative DR): 255 samples (7.7%)
 
-![Model Performance Comparison](model_performance_comparison.png)
-![Computational Efficiency Comparison](computational_efficiency_comparison.png)
-![Comprehensive Model Comparison](comprehensive_model_comparison.png)
+#### Model Performance 
+EfficientNet-B5 with 5-fold cross-validation provides the best performance for diabetic retinopathy detection, achieving a quadratic weighted kappa of 0.9058 and accuracy of 82.50%.
 
-The agent systematically experimented with multiple architectures and demonstrated that EfficientNet models outperformed ResNet50, with EfficientNet-B5 showing the best results. The 5-fold cross-validation approach produced more robust and generalizable results than single-split training.
+**Validation Metrics from Best Model (EfficientNet-B5):**
+- Average Validation Accuracy: 0.8250 ± 0.0058
+- Average Validation Kappa: 0.9337 ± 0.0039
+- Average Training Time per Fold: 143.43 seconds
+- Total Training Time: 717.17 seconds
+- Model Size: 48.2 MB
+- Average Inference Time: 20.5 ms per image
 
+**Confusion Matrix (5-fold average):**
+```
+Predicted:   0    1    2    3    4   
+Actual: 0 [599,  52,  23,  11,   5]
+        1 [ 36, 208,  32,   9,   0]
+        2 [ 22,  25, 308,  24,   6]
+        3 [  9,   7,  17, 156,  11]
+        4 [  4,   0,   8,  22, 122]
+```
 For complete details on methodology, experiments, and analysis, refer to the generated [report](./question_20250517013357_iter1.md)

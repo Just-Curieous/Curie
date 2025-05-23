@@ -147,8 +147,8 @@ The ResNet18 control experiment also achieved strong performance:
 
 The results from the abbreviated experimental runs (with limited epochs) are as follows:
 
-| Model | AUC-ROC | Training Time (s) | Inference Time (ms/sample) | Model Size (MB) |
-|-------|---------|-------------------|---------------------------|-----------------|
+| Model | AUC-ROC | Training (s) | Inference (ms/sample) | Model Size (MB) |
+|------------|------------|--------------|---------------------|----------------|
 | ResNet50 | 0.9727 | 34.37 | 0.61 | 89.89 |
 | DenseNet121 | 0.9778 | 57.02 | 0.65 | 26.85 |
 | EfficientNetB0 | 0.9840 | 33.09 | 0.62 | 15.45 |
@@ -161,11 +161,13 @@ The results from the abbreviated experimental runs (with limited epochs) are as 
 
 Several challenges were encountered during experimentation:
 
+![Model Radar Comparison](model_radar_comparison.png)
+
 1. Environment setup issues, including package conflicts and dependency management problems.
 2. Initial attempts at experimental group evaluation were identified as using simulated results rather than actual training, and were rejected.
 3. A subsequent attempt used only 10% of the dataset and greatly reduced epochs (3-5 instead of 30-40), producing implausibly fast training times (~34 seconds).
 4. The final experimental runs were conducted with limited samples and abbreviated training regimens due to time and computational constraints.
-![Model Radar Comparison](model_radar_comparison.png)
+
 ![Training and Inference Comparison](training_inference_comparison.png)
 
 ## 4. Analysis and Discussion
