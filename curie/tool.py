@@ -48,7 +48,7 @@ def test_search_tool(a: Annotated[str, "search string"]) -> str:
 #     # Other options: https://langchain-ai.github.io/langgraph/tutorials/web-navigation/web_voyager/
 #     return True
 
-shell_tool = ShellTool(timeout=3600)
+shell_tool = ShellTool(timeout=7200)
 
 class CodeAgentInput(BaseModel):
     plan_id: str = Field(
@@ -71,6 +71,10 @@ class CodeAgentInput(BaseModel):
         ...,
         description="Clear guidelines on generating workflow/programs."
     )
+    dataset_dir: str = Field(
+        ...,
+        description="Extract this from the plan JSON's 'dataset_dir' key."
+    )
 
     @model_validator(mode="after")
     def partition_name_check(self) -> Self:
@@ -91,9 +95,8 @@ class CodeAgentInput(BaseModel):
         # print("Entering custom model validator: workspace_dir_check")
         if not utils.extract_workspace_dir(self.workspace_dir):
             raise ValueError("workspace_dir is not specified correctly.")
-        return self
-
-
+        return self 
+    
 def _collect_openhands_cost():
     total_cost = 0
     # read all openhands log json files under ../logs
@@ -133,6 +136,7 @@ class CodeAgentTool(BaseTool):
         partition_name: str, 
         workspace_dir: str, 
         prompt: str,
+        dataset_dir: str,
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str: 
 
@@ -153,12 +157,14 @@ class CodeAgentTool(BaseTool):
                 workspace_dir=workspace_dir,
                 plan_id=plan_id,
                 group=group,
-                partition_name=partition_name
+                partition_name=partition_name,
             )
             coding_max_iterations = self.config.get("coding_max_iterations", 30)
 
             exp_log_dir_parts = self.config["log_filename"].split("/")[:-1]
             exp_log_dir = "/".join(exp_log_dir_parts)
+            if dataset_dir:
+                prompt += f"\n\nDataset directory: {dataset_dir} (don't create synthetic data, use the real dataset)."
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")

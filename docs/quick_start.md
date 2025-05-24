@@ -9,15 +9,10 @@ python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?"
 ``` 
-- **Estimated runtime**: ~5 minutes
-- **Sample log file**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306.log)
-- **Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250306_report.md).
-- **Log monitoring**:
-  - Real-time logs are streamed to the console.
-  - Logs are also stored in:
-    - `logs/research_question_<ID>/research_question_<ID>.log` 
-    - `logs/research_question_<ID>/research_question_<ID>_verbose.log`.
-- **Reproducibility**: The full experimentation process is saved in `workspace/research_<ID>/`.
+- **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](../docs/example_logs/sorting_example/research_1747978647_20250523013727_iter1.md).
+- **Logs and Reproducibilty**:
+  - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
+  - Real-time logs are streamed to the console and stored in file `research_*.log`.
 
 
 ## **Example 2**: Find good ML strategies for noisy data.

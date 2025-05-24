@@ -10,6 +10,7 @@
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
 Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
+Our mission is to empower scientists to move research at the speed of thought.
 
 <p align="center">
   <img src="./docs/static/img/curie-overview.png" width="600px"/>
@@ -57,7 +58,7 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 ## Quick Start
 Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
 
-### **Example 1**: [You Have a Single Question Needed to be Verified](./docs/quick_start.md).
+### **Example 1**: [You Have a Single Question that Needs to be Verified](./docs/quick_start.md).
 
 Q: I want to understand the Sorting Algorithm Efficiency.
 
@@ -68,13 +69,10 @@ python3 -m curie.main \
   -q "How does the choice of sorting algorithm impact runtime performance across different \
   input distributions (random, nearly sorted, reverse sorted)?" 
 ```
-- **Estimated runtime**: ~5 minutes
-- **Auto-generated Experiment report**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.md).
-- **Curie log**: Available [here](./docs/example_logs/research_sorting_efficiency_20250310015235.log)
-- **Logs and Reproducibilty**:
-  - Real-time logs are streamed to the console.
-  - Experiment report are stored in `logs/research_<ID>.md`  
+- **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1747978647_20250523013727_iter1.md).
+- **Reproducibilty and Logs**:
   - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
+  - Real-time logs are streamed to the console and stored in file `research_*.log`.
 
 ### Example 2: You Have a Dataset and Want to Gain Insight from It
 
@@ -83,7 +81,7 @@ Q: I have a dataset and some starter code,and I want to train/deloy ML models to
 A: Simply provide your dataset, codebase and question to Curie:
 
 ```bash
-python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my datastet. \
+python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my dataset. \
                       Checkout <paper.pdf> for the background information.' \
                       --task_config curie/configs/mle.json \
                       --dataset_dir <abs_path_to_your_dataset> \
@@ -93,8 +91,21 @@ python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my
   - [Predict the dog breed](./benchmark/mle_bench/dog-breed-identification/)
   - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
   - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
+  - [Histopathologic Cancer Detection](./benchmark/mle_bench/histopathologic-cancer-detection/)
+- **Sample auto-generated experiment [report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
 
 
+<!-- First row with 3 images -->
+<p align="center">
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-1.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-2.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-3.png" width="32%"/>
+</p>
+<!-- Second row with 3 images -->
+<p align="left">
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-4.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-5.png" width="32%"/>
+</p>
 
 Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
 
@@ -104,7 +115,7 @@ Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Cur
 - [How to let Curie work on your own starter files?](./docs/tutorial_with_your_own_starter_file.md)
 - [How to reproduce the results in `Large Language Monkeys'. ](./docs/tutorial-large-language-monkey.md)
 
-
+<!-- 
 ## Use Cases
 Curie is designed for scientific discovery across multiple domains:
 
@@ -118,15 +129,12 @@ Curie is designed for scientific discovery across multiple domains:
 
 <p align="center">
   <img src="./docs/static/img/case_study.png" width="1000px"/>
-</p>
+</p> -->
 
 ## Community and Support
 
 For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
 
-## License
-
-Curie is released under the Apache 2.0 License. See `LICENSE` for more details.
 
 ## Contact Us
 

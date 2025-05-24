@@ -487,8 +487,8 @@ def print_graph_updates(event, max_global_steps):
         curie_logger.info(f"Event value: {value['messages'][-1].content}")
 
 def report_all_logs(config_filename: str, config: dict):
-    
-    exp_plan_filename = '/workspace/' + os.path.basename(config['exp_plan_filename']).replace('.txt', '.json')
+    exp_plan_dirname = config['log_filename'].split("/")[:-1]
+    exp_plan_filename = '/' + '/'.join(exp_plan_dirname) + '/' + os.path.basename(config['exp_plan_filename']).replace('.txt', '.json')
     try: 
         plans = []
         with open(exp_plan_filename, 'r') as file:

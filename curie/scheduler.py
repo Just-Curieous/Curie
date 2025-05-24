@@ -161,7 +161,8 @@ class SchedNode():
         plans = [item.dict()["value"] for item in items]
 
         filename = self.config['exp_plan_filename'].split("/")[-1].replace(".txt", ".json")
-        with open('/workspace/'+filename, 'w') as file:
+        dirname = self.config['log_filename'].split("/")[:-1]
+        with open('/' + '/'.join(dirname) + '/' + filename, 'w') as file:
             for plan in plans:
                 file.write(json.dumps(plan) + "\n")
 
