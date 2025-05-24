@@ -10,6 +10,7 @@
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
 Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
+Our mission is to empower scientists to move research at the speed of thought.
 
 <p align="center">
   <img src="./docs/static/img/curie-overview.png" width="600px"/>
@@ -57,7 +58,7 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 ## Quick Start
 Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
 
-### **Example 1**: [You Have a Single Question Needed to be Verified](./docs/quick_start.md).
+### **Example 1**: [You Have a Single Question that Needs to be Verified](./docs/quick_start.md).
 
 Q: I want to understand the Sorting Algorithm Efficiency.
 
@@ -91,27 +92,20 @@ python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my
   - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
   - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
   - [Histopathologic Cancer Detection](./benchmark/mle_bench/histopathologic-cancer-detection/)
-- **Sample experiment [report](./benchmark/mle_bench/histopathologic-cancer-detection/report.pdf)**:
+- **Sample auto-generated experiment [report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
 
 
 <!-- First row with 3 images -->
 <p align="center">
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-1.png" width="32%"/>
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-2.png" width="32%"/>
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-3.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-1.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-2.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-3.png" width="32%"/>
 </p>
-
 <!-- Second row with 3 images -->
-<p align="center">
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-4.png" width="32%"/>
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-5.png" width="32%"/>
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-6.png" width="32%"/>
+<p align="left">
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-4.png" width="32%"/>
+<img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-5.png" width="32%"/>
 </p>
-
-
-<!-- <p align="center">
-  <img src="./benchmark/mle_bench/histopathologic-cancer-detection/report_figs/output-7.png" width="48%"/> 
-</p> -->
 
 Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
 

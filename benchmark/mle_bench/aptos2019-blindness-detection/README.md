@@ -32,40 +32,57 @@ python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/aptos
 ## Curie Results
 
 After asking Curie to solve this question, the following output files are generated:
-- [`Report`](question_20250517013357_iter1.md): Auto-generated report with experiment design and findings  
-- [`Experiment results`](question_20250517013357_iter1_all_results.txt): All detailed results for all conducted experiments
-- [`Curie logs`](question_20250517013357_iter1.log): Execution log file  
+- [`Report`](./aptos2019-blindness-detection_20250522225727_iter1.md): Auto-generated report with experiment design and findings  
+- [`Experiment results`](./aptos2019-blindness-detection_20250522225727_iter1_all_results.txt): All detailed results for all conducted experiments
+- [`Curie logs`](./aptos2019-blindness-detection_20250522225727_iter1.log): Execution log file  
 - [`Curie workspace`](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/machine_learning/q4-aptos2019-blindness-detection): Generated code, complete script to reproduce and raw results (excluding the model checkpoint).
 
 ### Curie Performance Summary
-#### Data Understanding
+#### Data Understanding and Preprocessing
 
-The APTOS 2019 Diabetic Retinopathy Detection dataset was used, containing retinal images with the following class distribution:
+We used the APTOS 2019 Kaggle dataset, which consists of 3,662 high-resolution retinal images (3,295 for training and 367 for testing). The dataset exhibits significant class imbalance:
+- Class 0 (No DR): 1,628 images (49.41%)
+- Class 1 (Mild): 340 images (10.32%)
+- Class 2 (Moderate): 896 images (27.19%)
+- Class 3 (Severe): 176 images (5.34%)
+- Class 4 (Proliferative): 255 images (7.74%)
 
-- Class 0 (No DR): 1628 samples (49.4%)
-- Class 1 (Mild DR): 340 samples (10.3%)
-- Class 2 (Moderate DR): 896 samples (27.2%)
-- Class 3 (Severe DR): 176 samples (5.3%)
-- Class 4 (Proliferative DR): 255 samples (7.7%)
+![Class Distribution](class_distribution.png)
+
+
+
+Multiple preprocessing techniques were implemented and evaluated:
+
+1. **Basic Normalization**: Standard image normalization using ImageNet mean and standard deviation values
+2. **CLAHE Enhancement**: Contrast Limited Adaptive Histogram Equalization to improve visibility of retinal features
+3. **Circular Crop**: Removing irrelevant black borders around the retinal image
+
+All images were resized to the input dimensions required by each model architecture (224×224 pixels for most models).
+
 
 #### Model Performance 
-EfficientNet-B5 with 5-fold cross-validation provides the best performance for diabetic retinopathy detection, achieving a quadratic weighted kappa of 0.9058 and accuracy of 82.50%.
 
-**Validation Metrics from Best Model (EfficientNet-B5):**
-- Average Validation Accuracy: 0.8250 ± 0.0058
-- Average Validation Kappa: 0.9337 ± 0.0039
-- Average Training Time per Fold: 143.43 seconds
-- Total Training Time: 717.17 seconds
-- Model Size: 48.2 MB
-- Average Inference Time: 20.5 ms per image
 
-**Confusion Matrix (5-fold average):**
-```
-Predicted:   0    1    2    3    4   
-Actual: 0 [599,  52,  23,  11,   5]
-        1 [ 36, 208,  32,   9,   0]
-        2 [ 22,  25, 308,  24,   6]
-        3 [  9,   7,  17, 156,  11]
-        4 [  4,   0,   8,  22, 122]
-```
-For complete details on methodology, experiments, and analysis, refer to the generated [report](./question_20250517013357_iter1.md)
+- Overall Performance
+
+The EfficientNetB4 model with CLAHE preprocessing achieved the best performance:
+- Validation Quadratic Weighted Kappa: 0.9096
+- Validation Accuracy: 0.8376
+- Best performance at epoch 8 (of 18 total epochs)
+- Total training time: 113 minutes
+
+![Model Comparison](model_comparison.png)
+
+- 3.2 Per-class Performance
+
+The model demonstrated varying accuracy across different DR severity grades:
+- Class 0 (No DR): 98.78% accuracy
+- Class 1 (Mild): 66.15% accuracy
+- Class 2 (Moderate): 76.88% accuracy
+- Class 3 (Severe): 46.88% accuracy
+- Class 4 (Proliferative): 56.25% accuracy
+
+![Per-class Accuracy](per_class_accuracy.png)
+
+
+For complete details on methodology, experiments, and analysis, refer to the generated [report](./aptos2019-blindness-detection_20250522225727_iter1.md)
