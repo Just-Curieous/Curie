@@ -25,7 +25,7 @@ mlebench prepare -c aptos2019-blindness-detection
 - Execute Curie:
 ```bash
 cd Curie/
-python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/aptos2019-blindness-detection.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/aptos2019-blindness-detection/prepared/public 
+python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/aptos2019-blindness-detection-question.txt --task_config curie/configs/mle_config.json --dataset_dir /home/amberljc/.cache/mle-bench/data/aptos2019-blindness-detection/prepared/public 
 ```
 - Change `--dataset_dir` to the absolute path to your dataset. 
 
