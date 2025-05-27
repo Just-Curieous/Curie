@@ -56,7 +56,7 @@ cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDo
 ```
 
 ## Quick Start
-Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`.
+<!-- Use the following command to input your research question or problem statement: `python3 -m curie.main -q "<Your research question>"`. -->
 
 ### **Example 1**: [You Have a Single Question that Needs to be Verified](./docs/quick_start.md).
 
@@ -81,17 +81,18 @@ Q: I have a dataset and some starter code,and I want to train/deloy ML models to
 A: Simply provide your dataset, codebase and question to Curie:
 
 ```bash
-python3 -m curie.main -q '[Example]: How to improve my prediction accuracy on my dataset. \
+python3 -m curie.main -q 'E.g. How to improve my prediction accuracy on my dataset. \
                       Checkout <paper.pdf> for the background information.' \
                       --task_config curie/configs/mle.json \
                       --dataset_dir <abs_path_to_your_dataset> \
                       --workspace_name <abs_path_to_your_codebase [optional]> 
 ```  
-- Check out some [examples](./benchmark/mle_bench/dog-breed-identification/) from [MLE-Bench](https://github.com/openai/mle-bench).
+- Check out some [examples](./benchmark/mle_bench/) from [MLE-Bench](https://github.com/openai/mle-bench).
   - [Predict the dog breed](./benchmark/mle_bench/dog-breed-identification/)
   - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
   - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
   - [Histopathologic Cancer Detection](./benchmark/mle_bench/histopathologic-cancer-detection/)
+  - [Predict the stock price ranking](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/stock_prediction)
 - **Sample auto-generated experiment [report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
 
 
