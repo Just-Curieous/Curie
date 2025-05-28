@@ -91,6 +91,7 @@ def extract_raw_results(log_file, plans):
     results = []
     raw_results = []
     fig_names = []
+    caption_list = []
     log_dir = os.path.dirname(log_file)
     for i, plan in enumerate(plans):
         try:
@@ -145,7 +146,8 @@ def extract_raw_results(log_file, plans):
     num_tries = 0
     while num_tries < 3:
         try:
-            fig_name_list = plot_results(all_results, log_dir, True)
+            # fig_name_list = plot_results(all_results, log_dir, True)
+            fig_name_list, caption_list = plot_results(all_results, log_dir, True)
             if fig_name_list is not None:
                 fig_names += fig_name_list
             break
@@ -169,7 +171,7 @@ def extract_raw_results(log_file, plans):
         raw_results = "\n".join(raw_results)
         file.write(raw_results)
 
-    return all_results, fig_names, results_file_name
+    return all_results, fig_names, caption_list, results_file_name
 
 import signal
 from contextlib import contextmanager
@@ -194,22 +196,40 @@ def timeout(seconds):
         signal.alarm(0)
  
 def plot_results(summarized_results, directory, is_aggregated=False):
+    # Load the plotting template
+    tmpl_path = os.path.join('prompts', 'exp-plotting.txt')
+    with open(tmpl_path, 'r') as f:
+        plotting_templates = f.read()
     if is_aggregated:
         prompt = f"""
+        {plotting_templates}
         Write python code to visualize the results in the best format and save the generated figures to {directory}.
-        You will be given the results of multiple experiment plans, select useful information to visualize.
+        You will be given the results of multiple experiment plans; select useful information to visualize.
         Use the visualization to show the comparison of different experiment plans.
+        Use the above templates to style the plots (Times New Roman font, bold axes labels, clear legends, grid, etc.).
+        Choose appropriate plot types based on the results.
         Don't use pandas or seaborn.
-        The figure name list is stored in the variable 'fig_name_list'.
-        The python code should return the name of the figure. 
+
+        The python code must:
+        1. Save all figures into {directory},
+        2. Append each saved figure's path to a list named `fig_name_list`,
+        3. Generate a professional caption(i.e. Fig 1: Description) for each figure, append it to a list named `caption_list`,
+        4. Return both `fig_name_list` and `caption_list`.
         """
     else:
         prompt = f"""
-        If the results worth visualizing, write python code to visualize the results in the best format and save it to {directory}.
-        If the results are not worth visualizing, meaning the generated figure won't not usefult to the report, the python code should set fig_name=None and return None.
+        {plotting_templates}
+        If the results are worth visualizing, write python code to visualize the results in the best format and save it to {directory}.
+        If the results are not worth visualizing, set `fig_name_list = None` and `caption_list = None`, and return them.
+        Use the above templates to style the plots (Times New Roman font, bold axes labels, clear legends, grid, etc.).
+        Choose appropriate plot types based on the results.
         Don't use pandas or seaborn.
-        The figure name list is stored in the variable 'fig_name_list'.
-        The python code should return the name of the figure. 
+
+        The python code must:
+        1. Save the figure(s) into {directory},
+        2. Append each saved figure's path to a list named `fig_name_list`,
+        3. Generate a professional caption(i.e. Fig 1: Description) for each figure, append it to a list named `caption_list`,
+        4. Return both `fig_name_list` and `caption_list`.
         """
     messages = [SystemMessage(content=prompt),
                 HumanMessage(content=summarized_results)]
@@ -226,11 +246,13 @@ def plot_results(summarized_results, directory, is_aggregated=False):
         return None
     
     # get the name of the figure from the python process
-    fig_name_list = namespace['fig_name_list']
+    fig_name_list = namespace.get('fig_name_list')
+    # get the name of the caption from the python process
+    caption_list = namespace.get('caption_list')
     print(f"Figure name list: {fig_name_list}")
     if fig_name_list is None:
-        return None
-    return [os.path.basename(fig) for fig in fig_name_list]
+        return None, None
+    return [os.path.basename(fig) for fig in fig_name_list], caption_list
 
 def generate_report(config, plans): 
     # read questions  
@@ -276,10 +298,18 @@ def generate_report(config, plans):
         print(f"Error waiting for processes: {e}")
 
     print(f"Joining processes")
-    all_results, fig_names, results_file_name = results_queue.get()
+    # all_results, fig_names, results_file_name = results_queue.get()
+    all_results, fig_names, caption_list, results_file_name = results_queue.get()
     summarize_log_content = log_summary_queue.get()
 
     all_logging.append(f"Here is the visualization of the aggregated results: {fig_names}") 
+    
+    # if captions were generated, append them to the logging
+    if caption_list is not None and len(caption_list) > 0:
+        all_logging.append(f"Here are the captions for the figures: \n{caption_list}")
+    else:
+        all_logging.append("No captions were generated for the figures.")
+
     all_logging += ["Here are the summarized results of the experiments: \n"]
     all_logging.append(all_results)  
 
@@ -288,6 +318,10 @@ def generate_report(config, plans):
     all_logging.append(summarize_log_content)
 
     all_logging = "\n".join(all_logging)
+    #test, save all logging to a file
+    log_file_name = log_file.replace('.log', '_report.txt')
+    with open(log_file_name, "w") as file:
+        file.write(all_logging)
 
     with open("/curie/prompts/exp-reporter.txt", "r") as file:
         system_prompt = file.read() 
