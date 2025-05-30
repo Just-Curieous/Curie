@@ -213,7 +213,7 @@ def plot_results(summarized_results, directory, is_aggregated=False):
         The python code must:
         1. Save all figures into {directory},
         2. Append each saved figure's path to a list named `fig_name_list`,
-        3. Generate a professional caption(i.e. Fig 1: Description) for each figure, append it to a list named `caption_list`,
+        3. Generate a professional caption(i.e. Fig 1: Description) for each figure, append it to a list named `caption_list`, the caption should be concise and informative, describing the key insights from the figure,
         4. Return both `fig_name_list` and `caption_list`.
         """
     else:
@@ -228,7 +228,7 @@ def plot_results(summarized_results, directory, is_aggregated=False):
         The python code must:
         1. Save the figure(s) into {directory},
         2. Append each saved figure's path to a list named `fig_name_list`,
-        3. Generate a professional caption(i.e. Fig 1: Description) for each figure, append it to a list named `caption_list`,
+        3. Generate a professional caption(i.e. Fig 1: Description) for each figure, append it to a list named `caption_list`, the caption should be concise and informative, describing the key insights from the figure,
         4. Return both `fig_name_list` and `caption_list`.
         """
     messages = [SystemMessage(content=prompt),
