@@ -34,7 +34,7 @@ python3 -m curie.main -f benchmark/mle_bench/aptos2019-blindness-detection/aptos
 After asking Curie to solve this question, the following output files are generated:
 - [`Report`](./aptos2019-blindness-detection_20250522225727_iter1.md): Auto-generated report with experiment design and findings  
 - [`Experiment results`](./aptos2019-blindness-detection_20250522225727_iter1_all_results.txt): All detailed results for all conducted experiments
-- [`Curie logs`](./aptos2019-blindness-detection_20250522225727_iter1.log): Execution log file  
+- [`Curie logs`](https://github.com/Just-Curieous/Curie-Use-Cases/blob/main/machine_learning/q4-aptos2019-blindness-detection/aptos2019-blindness-detection_20250522225727_iter1.log): Execution log file  
 - [`Curie workspace`](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/machine_learning/q4-aptos2019-blindness-detection): Generated code, complete script to reproduce and raw results (excluding the model checkpoint).
 
 ### Curie Performance Summary

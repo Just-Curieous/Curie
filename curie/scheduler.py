@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import InjectedStore
 from langgraph.prebuilt import InjectedState
 from langgraph.graph import END
-import uuid
+import shutil
 import os
 from typing import Optional, Type, Dict
 import heapq
@@ -554,7 +554,6 @@ class SchedNode():
             # Copy dataset to workspace
             dataset_dir = os.path.join('/all', self.config["dataset_dir"].lstrip('/').rstrip('/'))
 
-
             if not os.path.exists(dataset_dir):
                 raise FileNotFoundError(f"Dataset directory does not exist: {self.config['dataset_dir']}. Please check the path.")            
 
@@ -564,29 +563,43 @@ class SchedNode():
                                 "project" ) + "_dataset"
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
             dataset_name = dataset_dir.split("/")[-1]
-            dataset_dir_size = sum(os.path.getsize(os.path.join(dataset_dir, f)) for f in os.listdir(dataset_dir) if os.path.isfile(os.path.join(dataset_dir, f)))
+
+            if os.path.isfile(dataset_dir):
+                dataset_dir_size = os.path.getsize(dataset_dir)
+            else:
+                dataset_dir_size = sum(os.path.getsize(os.path.join(dataset_dir, f)) for f in os.listdir(dataset_dir) if os.path.isfile(os.path.join(dataset_dir, f)))
+
             if os.path.exists(new_dataset_dir):
-                new_dataset_dir_size = sum(os.path.getsize(os.path.join(new_dataset_dir, f)) for f in os.listdir(new_dataset_dir) if os.path.isfile(os.path.join(new_dataset_dir, f)))
+                if os.path.isfile(new_dataset_dir):
+                    new_dataset_dir_size = os.path.getsize(new_dataset_dir)
+                else:
+                    new_dataset_dir_size = sum(os.path.getsize(os.path.join(new_dataset_dir, f)) for f in os.listdir(new_dataset_dir) if os.path.isfile(os.path.join(new_dataset_dir, f)))
             else:
                 new_dataset_dir_size = 0
             
-            if not os.path.exists(new_dataset_dir) or ( os.path.exists(new_dataset_dir) and dataset_dir_size != new_dataset_dir_size):
+            if os.path.isfile(dataset_dir):
                 if os.path.exists(new_dataset_dir):
-                    # remove the new_dataset_dir first
-                    import shutil
-                    shutil.rmtree(new_dataset_dir) 
+                    shutil.rmtree(new_dataset_dir)
 
-                try:
-                    self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir}...") 
+                # mkdir new_dataset_dir
+                os.makedirs(new_dataset_dir, exist_ok=True)
+                shutil.copy(dataset_dir, new_dataset_dir)
+                self.curie_logger.info(f"Copying file {dataset_dir} --> {new_dataset_dir} successfully!") 
 
-                    subprocess.run(["cp", "-r", f"{dataset_dir}",  '/workspace'], check=True)
-                    os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
-                    self.curie_logger.info(f"Created 📁 {new_dataset_dir}. Dataset copied successfully!")
-                except Exception as e:
-                    self.curie_logger.info(f"Error copying files: {e}")
-                    raise
-            else:
-                self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
+            elif os.path.isdir(dataset_dir):
+                if not os.path.exists(new_dataset_dir) or ( os.path.exists(new_dataset_dir) and dataset_dir_size != new_dataset_dir_size):
+                    if os.path.exists(new_dataset_dir): 
+                        shutil.rmtree(new_dataset_dir) 
+
+                    try:
+                        subprocess.run(["cp", "-r", f"{dataset_dir}",  '/workspace'], check=True)
+                        os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
+                        self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir} successfully!") 
+                    except Exception as e:
+                        self.curie_logger.info(f"Error copying files: {e}")
+                        raise
+                else:
+                    self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
 
             return new_dataset_dir
         else:
@@ -704,7 +717,6 @@ class SchedNode():
             self.curie_logger.info(f"No python package needs to be installed") 
             self.packages_to_install = []
     
-
     def create_workspace_dir(self, plan_id: str):
         # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
@@ -742,7 +754,7 @@ class SchedNode():
             return True
         else:
             return False
-
+        
     @staticmethod
     def write_at_beginning(filename, text_to_add): 
         try:

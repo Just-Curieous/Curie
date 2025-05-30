@@ -85,7 +85,7 @@ python3 -m curie.main -q 'E.g. How to improve my prediction accuracy on my datas
                       Checkout <paper.pdf> for the background information.' \
                       --task_config curie/configs/mle.json \
                       --dataset_dir <abs_path_to_your_dataset> \
-                      --workspace_name <abs_path_to_your_codebase [optional]> 
+                      --workspace_name <[optional] abs_path_to_your_codebase_dir> 
 ```  
 - Check out some [examples](./benchmark/mle_bench/) from [MLE-Bench](https://github.com/openai/mle-bench).
   - [Predict the dog breed](./benchmark/mle_bench/dog-breed-identification/)
