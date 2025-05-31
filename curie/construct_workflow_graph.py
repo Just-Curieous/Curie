@@ -40,11 +40,17 @@ if len(sys.argv) < 2:
 
 config_filename = sys.argv[1]
 
-# Read config file
+# # Read config file, check if the config file is valid
+# if not os.path.exists(config_filename):
+#     print(f"Config file {config_filename} does not exist")
+#     # list /logs/mle_1748673562.txt
+#     print(os.listdir("/logs"))
+#     sys.exit(1)
+
 with open(config_filename, 'r') as file:
     config = json.load(file)
-    exp_plan_filename = f"../{config['exp_plan_filename']}"
-    log_filename = f"../{config['log_filename']}"
+    # exp_plan_filename = f"../{config['exp_plan_filename']}"
+    log_filename = f"/{config['log_filename']}"
     log_file = open(log_filename, 'w')
     
     curie_logger = init_logger(log_filename)

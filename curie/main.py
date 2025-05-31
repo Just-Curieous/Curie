@@ -7,11 +7,12 @@ import uuid
 from datetime import datetime
 import sys
 import shutil
+import importlib.resources
 
 from curie.logger import init_logger, send_question_telemetry
 
 # Constants
-DEFAULT_CONFIG_PATH = "curie/configs/base_config.json"
+DEFAULT_CONFIG_PATH = str(importlib.resources.files('curie.configs') / 'mle_config.json')
 DEFAULT_JOB_NAME = "default_research"
 
 def parse_args():
@@ -78,7 +79,9 @@ def create_config_file(question_file, unique_id, iteration, task_config):
                                 f"{work_name}_config_{question_base}_{unique_id}_iter{iteration}.json")
 
     # Update task configuration
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # base_dir is where command is run
+    base_dir = os.getcwd()
     task_config.update({
         "unique_id": unique_id,
         "iteration": iteration,
@@ -140,19 +143,33 @@ def run_docker_container(unique_id, iteration, task_config, logger):
         build_docker_image(image_name, docker_filename)
     
     base_dir = task_config['base_dir']
-    command = [
-        "docker", "run",
-        "-v", "/var/run/docker.sock:/var/run/docker.sock",
-        "-v", f"{base_dir}/curie:/curie:ro",
-        "-v", f"{base_dir}/benchmark:/benchmark:ro",
-        "-v", f"{base_dir}/logs:/logs",
-        "-v", f"{base_dir}/starter_file:/starter_file:ro",
-        "-v", f"{base_dir}/workspace:/workspace",
-        "-v", f"/:/all:ro",
-        "--network=host",
-        "-d",
-    ]
     
+    # First run container without mounting curie directory
+    if os.path.exists(f"{base_dir}/curie"):
+        command = [
+            "docker", "run",
+            "-v", "/var/run/docker.sock:/var/run/docker.sock",
+            "-v", f"{base_dir}/curie:/curie:ro",
+            "-v", f"{base_dir}/benchmark:/benchmark:ro",
+            "-v", f"{base_dir}/logs:/logs",
+            "-v", f"{base_dir}/starter_file:/starter_file:ro",
+            "-v", f"{base_dir}/workspace:/workspace",
+            "-v", f"/:/all:ro",
+            "--network=host",
+            "-d",
+        ]
+    else:
+        command = [
+            "docker", "run",
+            "-v", "/var/run/docker.sock:/var/run/docker.sock",
+            "-v", f"{base_dir}/benchmark:/benchmark:ro",
+            "-v", f"{base_dir}/logs:/logs",
+            "-v", f"{base_dir}/starter_file:/starter_file:ro",
+            "-v", f"{base_dir}/workspace:/workspace",
+            "-v", f"/:/all:ro",
+            "--network=host",
+            "-d",
+        ]
     # Add GPU support if available
     has_gpu = shutil.which("nvidia-smi") is not None and subprocess.call(
         ["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
@@ -162,7 +179,8 @@ def run_docker_container(unique_id, iteration, task_config, logger):
     command += ["--name", container_name, image_name]
 
     logger.info(f"Running command: {' '.join(command)}")
-    subprocess.run(command, check=True) 
+    subprocess.run(command, check=True)
+
     return container_name
 
 def execute_experiment_in_container(container_name, config_file, logger):
@@ -172,26 +190,37 @@ def execute_experiment_in_container(container_name, config_file, logger):
     # Check for required environment file
     if not os.path.exists("curie/setup/env.sh"):
         logger.error("env.sh does not exist under curie/setup. Please input your API credentials.")
-        return False
     
-    env_output = subprocess.check_output(["/bin/bash", "-c", "source curie/setup/env.sh && env"], text=True)
-    for line in env_output.splitlines():
-        if '=' in line:
-            key, value = line.split('=', 1)
-            os.environ[key] = value
+    else:
+        env_output = subprocess.check_output(["/bin/bash", "-c", "source curie/setup/env.sh && env"], text=True)
+        for line in env_output.splitlines():
+            if '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key] = value
             
     organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
+    container_command = ""
     # Command to run inside container
-    container_command = (
-        "source setup/env.sh && "
+    base_dir = os.getcwd()
+    if not os.path.exists(f"{base_dir}/curie"):
+        logger.info(f"Cloning Curie repository inside the docker container")
+        clone_command = "cd / && git clone https://github.com/Just-Curieous/Curie.git && mv /Curie/curie /logs"
+        container_command = clone_command + " && "  
+    if os.path.exists(f"setup/env.sh"):
+        container_command += "source setup/env.sh && "
+
+    container_command += (
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
-        f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
+        f"sed -i '474i \\                  \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
         f"sed -i '474i \\    \"organization\": \"{organization_id}\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
         "sed -i '49d' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py &&"
         f"sed -i '49i \\                    organization=\"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py  &&"
-        f"python3 construct_workflow_graph.py /{config_file}"
     )
+    if not os.path.exists(f"{base_dir}/curie/construct_workflow_graph.py"):
+        container_command += f"cd /logs/curie/ && python3 construct_workflow_graph.py /{config_file}"
+    else:
+        container_command += f" python3 construct_workflow_graph.py /{config_file} "
     
     try:
         subprocess.run([
