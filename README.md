@@ -6,6 +6,7 @@
 [![Demo](https://img.shields.io/badge/Demo-Live-green)](http://44.202.70.8:5000/)
 [![Blog](https://img.shields.io/badge/Blog-Read%20More-orange)](https://www.just-curieous.com/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
+[![PyPI](https://img.shields.io/badge/PyPI-Install-blue)](https://pypi.org/project/curie-ai/)
 
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
@@ -110,6 +111,9 @@ python3 -m curie.main -q 'E.g. How to improve my prediction accuracy on my datas
 
 Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
 
+
+## Demo Video
+[![Demo Video](https://img.youtube.com/vi/Qn_T5mm2OP4/0.jpg)](https://www.youtube.com/watch?v=Qn_T5mm2OP4)
 
 
 ## Tutorial

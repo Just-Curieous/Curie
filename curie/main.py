@@ -267,43 +267,73 @@ def execute_curie(question_filename, unique_id, iteration, task_config):
     
     send_question_telemetry(task_config['log_filename'])
 
+def experiment(dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None):
+    """
+    Run a Curie experiment with the given parameters.
+    
+    Args:
+        dataset_dir (str, optional): Path to the dataset directory
+        workspace_name (str, optional): Name of the workspace/starter code directory
+        question_file (str, optional): Path to the question file
+        question (str, optional): Question text to run
+        iterations (int, optional): Number of iterations to run. Defaults to 1.
+        task_config (dict, optional): Task configuration dictionary. Defaults to None.
+    
+    Returns:
+        dict: Results of the experiment
+    """
+    if task_config is None:
+        with open(DEFAULT_CONFIG_PATH, 'r') as f:
+            task_config = json.load(f)
+    
+    # Update task config with provided parameters
+    if dataset_dir:
+        task_config['dataset_dir'] = dataset_dir
+    if workspace_name:
+        task_config['workspace_name'] = workspace_name
+    
+    # Prepare question file if question text is provided
+    if question:
+        question_file = prepare_question_file(task_config, question)
+    
+    if not question_file:
+        raise ValueError("Either question_file or question must be provided")
+    
+    # Generate unique ID for this experiment
+    unique_id = str(uuid.uuid4())
+    
+    results = []
+    for iteration in range(iterations):
+        try:
+            result = execute_curie(question_file, unique_id, iteration, task_config)
+            results.append(result)
+        except Exception as e:
+            print(f"Error in iteration {iteration}: {str(e)}")
+            continue
+    
+    return {
+        'unique_id': unique_id,
+        'iterations': iterations,
+        'results': results
+    }
+
 def main():
-    """Main function to parse args and run iterations."""
+    """Main entry point for command line usage."""
     args = parse_args()
     
-    # Load configuration
-    try:
-        with open(args.task_config, 'r') as f:
-            task_config = json.load(f) 
-            task_config['workspace_name'] = args.workspace_name or task_config['workspace_name']
-            task_config['dataset_dir'] = args.dataset_dir or task_config['dataset_dir']
-    except Exception as e:
-        print(f"Error reading config file: {e}")
-        return
+    # Load task config
+    with open(args.task_config, 'r') as f:
+        task_config = json.load(f)
     
-    print(f"Curie is running with the following configuration: {task_config}")
-    
-    # Handle question input
-    if args.question_file is None and args.question is None:
-        print("Please provide either a question file or a question.")
-        return
-    elif args.question_file is not None and args.question is not None:
-        print("Please provide only one of either a question file or a question.")
-        return
-    
-    # Prepare question file
-    question_file = args.question_file if args.question_file else prepare_question_file(task_config, args.question)
-    
-    # Run iterations
-    for iteration in range(1, args.iterations + 1):
-        start_time = time.time()
-        unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
-        
-        execute_curie(question_file, unique_id, iteration, task_config)
-        
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print(f"Iteration {iteration} for {question_file} completed in {elapsed_time:.2f} seconds.")
+    # Run experiment
+    experiment(
+        dataset_dir=args.dataset_dir,
+        workspace_name=args.workspace_name,
+        question_file=args.question_file,
+        question=args.question,
+        iterations=args.iterations,
+        task_config=task_config
+    )
 
 if __name__ == "__main__":
     main()
