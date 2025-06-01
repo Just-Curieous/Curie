@@ -345,7 +345,7 @@ def main():
     # Load task config
     with open(args.task_config, 'r') as f:
         task_config = json.load(f)
-    
+    print(f"🦁️🦁️🦁️🦁️🦁️ task_config: {task_config}")
     # Run experiment
     experiment(
         api_keys=args.api_keys,
@@ -354,7 +354,7 @@ def main():
         question_file=args.question_file,
         question=args.question,
         iterations=args.iterations,
-        task_config=task_config
+        task_config=task_config,
     )
 
 if __name__ == "__main__":
