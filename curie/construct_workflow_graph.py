@@ -50,7 +50,7 @@ config_filename = sys.argv[1]
 with open(config_filename, 'r') as file:
     config = json.load(file)
     # exp_plan_filename = f"../{config['exp_plan_filename']}"
-    log_filename = f"/{config['log_filename']}"
+    log_filename = f"../{config['log_filename']}"
     log_file = open(log_filename, 'w')
     
     curie_logger = init_logger(log_filename)

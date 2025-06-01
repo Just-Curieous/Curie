@@ -36,7 +36,7 @@ def parse_args():
                         help="Dataset directory to be used in the experiment.")
 
     parser.add_argument("--question", "-q", type=str, required=False,
-                        help="Question to run")
+                        help="Question to run") 
     return parser.parse_args()
 
 def prune_openhands_docker():
@@ -144,32 +144,20 @@ def run_docker_container(unique_id, iteration, task_config, logger):
     
     base_dir = task_config['base_dir']
     
+    curie_dir = 'tmp_curie' if os.path.exists('tmp_curie') else 'curie'
     # First run container without mounting curie directory
-    if os.path.exists(f"{base_dir}/curie"):
-        command = [
-            "docker", "run",
-            "-v", "/var/run/docker.sock:/var/run/docker.sock",
-            "-v", f"{base_dir}/curie:/curie:ro",
-            "-v", f"{base_dir}/benchmark:/benchmark:ro",
-            "-v", f"{base_dir}/logs:/logs",
-            "-v", f"{base_dir}/starter_file:/starter_file:ro",
-            "-v", f"{base_dir}/workspace:/workspace",
-            "-v", f"/:/all:ro",
-            "--network=host",
-            "-d",
-        ]
-    else:
-        command = [
-            "docker", "run",
-            "-v", "/var/run/docker.sock:/var/run/docker.sock",
-            "-v", f"{base_dir}/benchmark:/benchmark:ro",
-            "-v", f"{base_dir}/logs:/logs",
-            "-v", f"{base_dir}/starter_file:/starter_file:ro",
-            "-v", f"{base_dir}/workspace:/workspace",
-            "-v", f"/:/all:ro",
-            "--network=host",
-            "-d",
-        ]
+    command = [
+        "docker", "run",
+        "-v", "/var/run/docker.sock:/var/run/docker.sock",
+        "-v", f"{base_dir}/{curie_dir}:/curie:ro",
+        "-v", f"{base_dir}/benchmark:/benchmark:ro",
+        "-v", f"{base_dir}/logs:/logs",
+        "-v", f"{base_dir}/starter_file:/starter_file:ro",
+        "-v", f"{base_dir}/workspace:/workspace",
+        "-v", f"/:/all:ro",
+        "--network=host",
+        "-d",
+    ] 
     # Add GPU support if available
     has_gpu = shutil.which("nvidia-smi") is not None and subprocess.call(
         ["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
@@ -186,41 +174,20 @@ def run_docker_container(unique_id, iteration, task_config, logger):
 def execute_experiment_in_container(container_name, config_file, logger):
     """Execute the experiment inside the Docker container."""
     logger.info(f"Starting experiment in container {container_name} with config in {config_file}")
-    
-    # Check for required environment file
-    if not os.path.exists("curie/setup/env.sh"):
-        logger.error("env.sh does not exist under curie/setup. Please input your API credentials.")
-    
-    else:
-        env_output = subprocess.check_output(["/bin/bash", "-c", "source curie/setup/env.sh && env"], text=True)
-        for line in env_output.splitlines():
-            if '=' in line:
-                key, value = line.split('=', 1)
-                os.environ[key] = value
-            
-    organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
-    container_command = ""
-    # Command to run inside container
-    base_dir = os.getcwd()
-    if not os.path.exists(f"{base_dir}/curie"):
-        logger.info(f"Cloning Curie repository inside the docker container")
-        clone_command = "cd / && git clone https://github.com/Just-Curieous/Curie.git && mv /Curie/curie /logs"
-        container_command = clone_command + " && "  
-    if os.path.exists(f"setup/env.sh"):
-        container_command += "source setup/env.sh && "
 
-    container_command += (
+    organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
+    # Command to run inside container
+    container_command = (
+        "source setup/env.sh && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
         f"sed -i '474i \\                  \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
         f"sed -i '474i \\    \"organization\": \"{organization_id}\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
         "sed -i '49d' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py &&"
         f"sed -i '49i \\                    organization=\"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py  &&"
+        f"python3 construct_workflow_graph.py /{config_file} "
     )
-    if not os.path.exists(f"{base_dir}/curie/construct_workflow_graph.py"):
-        container_command += f"cd /logs/curie/ && python3 construct_workflow_graph.py /{config_file}"
-    else:
-        container_command += f" python3 construct_workflow_graph.py /{config_file} "
+ 
     
     try:
         subprocess.run([
@@ -296,11 +263,23 @@ def execute_curie(question_filename, unique_id, iteration, task_config):
     
     send_question_telemetry(task_config['log_filename'])
 
-def experiment(dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None):
+def write_api_keys_to_env(api_keys):
+    """Write API keys to env.sh file."""
+    env_path = os.path.join(os.getcwd(), 'tmp_curie', 'setup', 'env.sh')
+    os.makedirs(os.path.dirname(env_path), exist_ok=True)
+    print(f"Writing API keys to {env_path}")
+    
+    with open(env_path, 'w') as f:
+        for key, value in api_keys.items():
+            print(f"Writing {key} to {env_path}")
+            f.write(f'export {key}="{value}"\n')
+
+def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None):
     """
     Run a Curie experiment with the given parameters.
     
     Args:
+        api_keys (dict, optional): Dictionary of API keys to use. Defaults to None.
         dataset_dir (str, optional): Path to the dataset directory
         workspace_name (str, optional): Name of the workspace/starter code directory
         question_file (str, optional): Path to the question file
@@ -321,6 +300,19 @@ def experiment(dataset_dir=None, workspace_name=None, question_file=None, questi
     if workspace_name:
         task_config['workspace_name'] = workspace_name
     
+    base_dir = os.getcwd()
+    if not os.path.exists(f"{base_dir}/curie/construct_workflow_graph.py"):
+
+        subprocess.run("mkdir tmp", shell=True)
+        # TODO add version control
+        subprocess.run("git clone https://github.com/Just-Curieous/Curie.git tmp/Curie", shell=True)
+
+        subprocess.run(["mv", "tmp/Curie/curie", "tmp_curie"])
+        subprocess.run(["rm", "-rf", "tmp"])
+    if api_keys:
+        # Write API keys to env.sh if provided
+        write_api_keys_to_env(api_keys)
+
     # Prepare question file if question text is provided
     if question:
         question_file = prepare_question_file(task_config, question)
@@ -356,6 +348,7 @@ def main():
     
     # Run experiment
     experiment(
+        api_keys=args.api_keys,
         dataset_dir=args.dataset_dir,
         workspace_name=args.workspace_name,
         question_file=args.question_file,
