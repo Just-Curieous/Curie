@@ -1,0 +1,88 @@
+FROM ubuntu:24.04
+
+# Do not modify the following block of arg-env pairs. The evaluation infrastructure will
+# periodically download the contents of these directories for logging purposes.
+ENV WORKSPACE_BASE=/home
+ENV SUBMISSION_DIR=/home/submission
+ENV LOGS_DIR=/home/logs
+ENV CODE_DIR=/home/code
+ENV AGENT_DIR=/home/agent
+
+ENV CONDA_ENV_NAME=agent
+ENV REQUIREMENTS=/home/agent/requirements.txt
+ENV PYTHON_VERSION=3.12
+
+RUN mkdir -p ${LOGS_DIR} ${AGENT_DIR} ${CODE_DIR} ${SUBMISSION_DIR}
+RUN mkdir -p ${WORKSPACE_BASE}/paper
+
+RUN mkdir ${WORKSPACE_BASE}/.vscode
+COPY launch.json ${WORKSPACE_BASE}/.vscode/launch.json
+
+# Avoid interactive dialog from apt-get and other packages requiring configuration
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install basic packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    vim \
+    nano \
+    unzip \
+    zip \
+    p7zip-full \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    python-is-python3 \
+    build-essential \
+    openssh-server \
+    tmux \
+    gettext \
+    sudo \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/* # removes cache
+
+RUN apt update && apt install -y jupyter
+
+# Install Docker
+RUN curl -fsSL https://get.docker.com -o /tmp/get-docker.sh && \
+    chmod 700 /tmp/get-docker.sh && \
+    /tmp/get-docker.sh
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
+    && bash /tmp/miniconda.sh -b -p /opt/conda \
+    && rm /tmp/miniconda.sh \
+    && /opt/conda/bin/conda init
+
+# Create conda environment
+RUN /opt/conda/bin/conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y
+ENV PATH="/opt/conda/bin:${PATH}"
+
+COPY requirements.txt ${REQUIREMENTS}
+
+RUN conda run -n ${CONDA_ENV_NAME} pip install -r /home/agent/requirements.txt && \
+    conda run -n ${CONDA_ENV_NAME} pip install inspect-tool-support && \
+    conda run -n ${CONDA_ENV_NAME} inspect-tool-support post-install && \
+    conda clean -afy
+
+
+# Reset DEBIAN_FRONTEND
+ENV DEBIAN_FRONTEND=
+
+WORKDIR /home
+
+# Initialize submission directory as git repo and set up hooks
+RUN cd ${SUBMISSION_DIR} && \
+    git init && \
+    mkdir -p .git/hooks
+
+COPY pre-commit ${SUBMISSION_DIR}/.git/hooks/
+RUN chmod +x ${SUBMISSION_DIR}/.git/hooks/pre-commit
+
+# Set up git config
+RUN git config --global user.email "agent@example.com" && \
+    git config --global user.name "agent"

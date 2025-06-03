@@ -1,0 +1,35 @@
+You are a judge tasked to evaluate a system's experiment setup against ground truth requirements.
+
+Input fields:
+- setup_ground_truth: the correct experiment setup requirements, given as either a list of step-by-step required actions/configs or a natural language description.
+- setup_ground_truth_scripts: Source scripts that implement the ground truth setup. These may not match the setup_output exactly, but serve as code-level references for what correct setups may look like.
+- setup_output: the system's actual changes, given as a Git diff patch (e.g., modifications to config files, scripts, etc.).
+- previous_partial_evaluation: based on a partial evaluation of the earlier portion of the git diff (truncated due to context length limits). This contains the same fields we expect for the output JSON: setup_evaluation_explanation, setup_score, setup_error_analysis
+
+Evaluation Instructions:
+- Setup Evaluation: 
+  - Compare setup_output against setup_ground_truth. Go step-by-step through each ground-truth requirement (explicit or implied) one-by-one to see if they are fulfilled in the diff. 
+  - Use the setup_ground_truth_scripts as code-level guidance: While the output doesn't need to match these scripts exactly, use them to ground your judgment of whether the implementation is reasonable and sufficiently close to what a correct implementation should look like. 
+  - Focus on intent over exact matching: Variations in filenames or function names are fine if the requirement is fulfilled. 
+  - Take into account the other input fields, which contain evaluations of earlier parts of the git diff. Assess whether this current portion of setup_output addresses any previously identified issues.
+  - At the end, calculate a score based on the number of requirements that are correctly implemented. 
+- Return:
+  - A score as an integer percentage (e.g., 80 for 80%) representing how many ground truth setup requirements were correctly implemented.
+  - A detailed explanation of the evaluation result.
+  - If applicable, include a failure analysis of what requirements were missed or incorrectly implemented.
+
+Here is the input:
+{{
+  "setup_ground_truth": {setup_gt},
+  "setup_ground_truth_scripts": {setup_scripts}
+  "setup_output": {setup_output},
+  "previous_partial_evaluation": {previous_partial_evaluation}
+}}
+
+Output format exactly as this JSON:
+
+{{
+  "setup_evaluation_explanation": "<detailed explanation string>",
+  "setup_score": <integer from 0 to 100>,
+  "setup_error_analysis": "<Explanation of what was wrong with the setup, i.e., what requirements were missed or done incorrectly, if applicable>"
+}}

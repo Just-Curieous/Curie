@@ -1,0 +1,29 @@
+#!/bin/bash
+
+MAX_SIZE_BYTES=$((1024 * 1024 * 1024))  # 1GB in bytes
+
+# Get list of files in the index
+FILES_IN_INDEX=$(git ls-files)
+
+# Get list of files scheduled for deletion
+FILES_DELETED=$(git diff --cached --name-only --diff-filter=D)
+
+# Remove deleted files from FILES_IN_INDEX
+FILES_TO_CHECK=$(comm -23 <(echo "$FILES_IN_INDEX" | sort) <(echo "$FILES_DELETED" | sort))
+
+TOTAL_SIZE=0
+for file in $FILES_TO_CHECK; do
+    if [ -f "$file" ]; then
+        FILE_SIZE=$(stat -c%s "$file")
+        TOTAL_SIZE=$((TOTAL_SIZE + FILE_SIZE))
+    fi
+done
+
+if [ $TOTAL_SIZE -gt $MAX_SIZE_BYTES ]; then
+    echo "Error: Total size of tracked files would exceed 1GB limit"
+    echo "Total size after commit would be: $((TOTAL_SIZE / (1024 * 1024))) MB"
+    echo "Maximum allowed: $((MAX_SIZE_BYTES / (1024 * 1024))) MB"
+    exit 1
+fi
+
+exit 0 
