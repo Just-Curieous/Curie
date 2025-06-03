@@ -17,7 +17,16 @@ Our mission is to empower scientists to move research at the speed of thought.
   <img src="./docs/static/img/curie-overview.png" width="600px"/>
 </p>
 
-**Key Features**
+
+
+## 🗞️ News
+
+- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? [📄 Paper](https://arxiv.org/abs/2505.24785) — [🗂️ Dataset](https://github.com/Just-Curieous/Curie/tree/main/benchmark/exp_bench)
+- **[2025/05]** We launched the **AutoML feature** — [📢 Blog Post](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
+- **[2025/02]** We published the **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents — [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
+
+
+## Key Features
 - 🚀 Automated Experimentation – From hypothesis formulation, experiment implementation, experiment execution, result analysis and finding reflection.
 - 📊 Rigor Enhancement - Built-in verification modules enforce methodical procedure, agent reliability and reproducibility.
 - 🔬 Broad Applicability – Supports ML research, system analysis, and scientific discovery.
@@ -29,10 +38,9 @@ Our mission is to empower scientists to move research at the speed of thought.
 - [Tutorial](#tutorial)
 - [Demo](#demo)
 
-## Installation
-**Prerequisite: Install Docker**
+## ⚙️ Installation
+**Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)
    ```bash
-   # Install Docker from https://docs.docker.com/engine/install/ubuntu/
    sudo chmod 666 /var/run/docker.sock
    docker ps  # Verify Docker installation
    ```
@@ -62,11 +70,11 @@ pip install curie-ai
    cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
    ``` -->
 
-## Quick Start
-*It's recolsmmended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
+## ⚡ Quick Start
+*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
 
 
-### (Simple) Example 1: [You Have a Single Question that Needs to be Verified](./docs/quick_start.md).
+### (Simple) Example 1: You Have a Single Question that Needs to be Verified.
 
 👩‍🎓: I want to understand the Sorting Algorithm Efficiency.
 
@@ -105,7 +113,7 @@ Curie's output:
 
 ### (Advanced) Example 3: You Have a Dataset and Want to Gain Insight from It
 
-👨‍🎓: I have a dataset and some starter code,and I want to train/deloy ML models to achieve specific goals.
+👨‍🎓: I have a dataset and some starter code,and I want to train/deloy ML models to achieve specific goals. (*GPU is recommended for ML training tasks.*)
 
 ```python 
 result = curie.experiment(
@@ -134,10 +142,10 @@ result = curie.experiment(
 
 Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
 
-## Tutorial 
+## 📚 Tutorial 
 (Incoming...)
 
-## Demo Video 
+## 🎬 Demo Video 
 
 <div align="center">
 
