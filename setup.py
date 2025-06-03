@@ -2,14 +2,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="curie",
+    name="curie-ai",  
     version="0.1.3",
     packages=find_packages(),
     install_requires=[
         # List your dependencies here
         "psutil",
-        "argparse",
-        # Add other dependencies
+        "argparse", 
     ],
     entry_points={
         'console_scripts': [
@@ -24,7 +23,7 @@ setup(
     url="https://github.com/Just-Curieous/Curie",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache License",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.12',
