@@ -20,8 +20,8 @@ Our mission is to empower scientists to move research at the speed of thought.
 ## 🗞️ News
 
 - **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? [📄 Paper](https://arxiv.org/abs/2505.24785) — [🗂️ Dataset](https://github.com/Just-Curieous/Curie/tree/main/benchmark/exp_bench)
-- **[2025/05]** We launched the **AutoML feature** — [📢 Blog Post](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
-- **[2025/02]** We published the **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents — [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
+- **[2025/05]** We launched an **AutoML feature** — [📢 Blog Post](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
+- **[2025/02]** We published **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents — [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
 
 
 ## Key Features
@@ -36,46 +36,6 @@ Our mission is to empower scientists to move research at the speed of thought.
 - [📚 Tutorial](#-tutorial)
 - [🎬 Demo](#-demo-video)
 
-## ⚙️ Installation
-**Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)
-   ```bash
-   sudo chmod 666 /var/run/docker.sock
-   docker ps  # Verify Docker installation
-   ```
-
-#### Option 1: Quick Install via `pip` 
-```bash
-pip install curie-ai
-```
-
-#### Option 2: Manual [Installation](./docs/installation.md) for Developers
-<!-- 1. Clone and setup:
-   ```bash
-   git clone https://github.com/Just-Curieous/Curie.git
-   cd Curie
-   ```
-
-2. Configure API credentials in `curie/setup/env.sh`:
-   ```bash
-   export MODEL="claude-3-7-sonnet-20250219" 
-   export ANTHROPIC_API_KEY="your-anthropic-key"
-   ```
-
-3. Build container:
-   ```bash
-   pip install -e .
-   docker images -q exp-agent-image | xargs -r docker rmi -f
-   cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
-   ``` -->
-
-## ⚡ Quick Start
-*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
-
-
-### (Simple) Example 1: You Have a Single Question that Needs to be Verified.
-
-👩‍🎓: I want to understand the Sorting Algorithm Efficiency.
-
 
 ## ⚙️ Installation
 **Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)
@@ -90,24 +50,7 @@ pip install curie-ai
 ```
 
 #### Option 2: Manual [Installation](./docs/installation.md) for Developers
-<!-- 1. Clone and setup:
-   ```bash
-   git clone https://github.com/Just-Curieous/Curie.git
-   cd Curie
-   ```
 
-2. Configure API credentials in `curie/setup/env.sh`:
-   ```bash
-   export MODEL="claude-3-7-sonnet-20250219" 
-   export ANTHROPIC_API_KEY="your-anthropic-key"
-   ```
-
-3. Build container:
-   ```bash
-   pip install -e .
-   docker images -q exp-agent-image | xargs -r docker rmi -f
-   cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
-   ``` -->
 
 ## ⚡ Quick Start
 *It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
@@ -158,8 +101,8 @@ Curie's output:
 result = curie.experiment(
     api_keys=key_dict,
     question="E.g. How to improve my prediction accuracy on my dataset.",
-    workspace_name="[optional] ABS_PATH_STARTERCODE_DIR",
-    dataset_dir="ABS_PATH_DATASET_DIR"
+    workspace_name="[Optional] /path/to/your/code",
+    dataset_dir="/path/to/your/dataset"
 )
 ```  
 - Check out some [examples](./benchmark/mle_bench/) from [MLE-Bench](https://github.com/openai/mle-bench).
@@ -180,7 +123,7 @@ result = curie.experiment(
 Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Curieous/Curie-Use-Cases). 
 
 ## 📚 Tutorial 
-(Incoming...)
+- [How to use Curie to answer your curiosity (with a concrete example)?](./docs/tutorial-beginer.md)
 
 ## 🎬 Demo Video 
 

@@ -33,7 +33,7 @@ DEFAULT_JOB_NAME = "default_research"
 def write_api_keys_to_env(api_keys: dict):
     """Write API keys to env.sh file."""
     env_path = os.path.join(os.getcwd(), '.setup', 'env.sh')
-    os.makedirs(os.path.dirname(env_path), exist_ok=True)
+    os.makedirs(os.path.dirname(env_path), exist_ok=True) 
     # print(f"Writing API keys to {env_path}")
     
     with open(env_path, 'w') as f:
@@ -252,8 +252,8 @@ def update_config(task_config, workspace_name=None, dataset_dir=None, max_global
         task_config['dataset_dir'] = dataset_dir or task_config['dataset_dir']
         return task_config
 
-    task_config['workspace_name'] = workspace_name or task_config['workspace_name']
-    task_config['dataset_dir'] = dataset_dir or task_config['dataset_dir']
+    task_config['workspace_name'] = workspace_name or ''
+    task_config['dataset_dir'] = dataset_dir or ''
     # fill up the unspecified fields in the task config with DEFAULT_TASK_CONFIG
     for key, value in DEFAULT_TASK_CONFIG.items():
         if key not in task_config:
