@@ -63,7 +63,7 @@ pip install curie-ai
    ``` -->
 
 ## Quick Start
-*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
+*It's recolsmmended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
 
 
 ### (Simple) Example 1: [You Have a Single Question that Needs to be Verified](./docs/quick_start.md).
@@ -80,7 +80,7 @@ key_dict = {
 
 result = curie.experiment(api_keys=key_dict, question="How does the choice of sorting algorithm impact runtime performance across different input distributions?")
 ```
-- **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1747978647_20250523013727_iter1.md).
+- **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
 - **Reproducibilty and Logs**:
   - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
   - Real-time logs are streamed to the console and stored in file `research_*.log`.
