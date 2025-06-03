@@ -196,7 +196,7 @@ Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Cur
 
 
 
-## 📜 Citation & Reading More
+## 📜 Citation  
 If you use Curie in a research paper, please cite our work:
 
 ```bib
