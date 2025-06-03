@@ -648,6 +648,8 @@ class SchedNode():
             failed_packages = []
             # start_time = time.time()
             for i, package in enumerate(packages):
+                if package == "time":
+                    continue
                 # Construct the installation command for the current package
                 activate_cmd = [
                     "micromamba", "install", "-y", "--quiet",
