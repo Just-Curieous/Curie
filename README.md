@@ -15,9 +15,7 @@ Our mission is to empower scientists to move research at the speed of thought.
 
 <p align="center">
   <img src="./docs/static/img/curie-overview.png" width="600px"/>
-</p>
-
-
+</p> 
 
 ## 🗞️ News
 
@@ -36,7 +34,48 @@ Our mission is to empower scientists to move research at the speed of thought.
 - [⚙️ Installation](#-installation)
 - [⚡ Quick Start](#-quick-start)
 - [📚 Tutorial](#-tutorial)
-- [🎬 Demo](#-demo)
+- [🎬 Demo](#-demo-video)
+
+## ⚙️ Installation
+**Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)
+   ```bash
+   sudo chmod 666 /var/run/docker.sock
+   docker ps  # Verify Docker installation
+   ```
+
+#### Option 1: Quick Install via `pip` 
+```bash
+pip install curie-ai
+```
+
+#### Option 2: Manual [Installation](./docs/installation.md) for Developers
+<!-- 1. Clone and setup:
+   ```bash
+   git clone https://github.com/Just-Curieous/Curie.git
+   cd Curie
+   ```
+
+2. Configure API credentials in `curie/setup/env.sh`:
+   ```bash
+   export MODEL="claude-3-7-sonnet-20250219" 
+   export ANTHROPIC_API_KEY="your-anthropic-key"
+   ```
+
+3. Build container:
+   ```bash
+   pip install -e .
+   docker images -q exp-agent-image | xargs -r docker rmi -f
+   cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
+   ``` -->
+
+## ⚡ Quick Start
+*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
+
+
+### (Simple) Example 1: You Have a Single Question that Needs to be Verified.
+
+👩‍🎓: I want to understand the Sorting Algorithm Efficiency.
+
 
 ## ⚙️ Installation
 **Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)
@@ -131,8 +170,6 @@ result = curie.experiment(
   - [Predict the stock price ranking](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/stock_prediction)
 - **Sample auto-generated experiment [report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
 
-
-<!-- First row with 3 images -->
 <p align="center">
 <img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-1.png" width="23%"/>
 <img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-2.png" width="23%"/>
@@ -156,6 +193,30 @@ Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Cur
 <p align="center">
   <em>Curie Overview & Demo.</em>
 </p>
+
+
+
+## 📜 Citation  
+If you use Curie in a research paper, please cite our work:
+
+```bib
+@article{kon2025expbenchaiconductai,
+      title={EXP-Bench: Can AI Conduct AI Research Experiments?}, 
+      author={Patrick Tser Jern Kon and Jiachen Liu and Xinyi Zhu and Qiuyi Ding and Jingjia Peng and Jiarong Xing and Yibo Huang and Yiming Qiu and Jayanth Srinivasa and Myungjin Lee and Mosharaf Chowdhury and Matei Zaharia and Ang Chen},
+      journal={arXiv preprint 2505.24785}
+      year={2025},
+}
+```
+
+```bib
+@article{kon2025curie,
+  title={Curie: Toward rigorous and automated scientific experimentation with ai agents},
+  author={Kon, Patrick Tser Jern and Liu, Jiachen and Ding, Qiuyi and Qiu, Yiming and Yang, Zhenning and Huang, Yibo and Srinivasa, Jayanth and Lee, Myungjin and Chowdhury, Mosharaf and Chen, Ang},
+  journal={arXiv preprint arXiv:2502.16069},
+  year={2025}
+}
+```
+
 
 ## Community and Support
 
