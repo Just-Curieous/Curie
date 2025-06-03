@@ -6,7 +6,7 @@
 [![Demo](https://img.shields.io/badge/Demo-Live-green)](http://44.202.70.8:5000/)
 [![Blog](https://img.shields.io/badge/Blog-Read%20More-orange)](https://www.just-curieous.com/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
-
+[![PyPI](https://img.shields.io/badge/PyPI-Install-blue)](https://pypi.org/project/curie-ai/)
 
 Curie is the first AI-agent framework designed for automated and rigorous scientific experimentation. 
 Curie helps answer your curiosity through end-to-end experimentation automation, ensuring that every step—from hypothesis formulation to result interpretation—is conducted with precision, reliability, and reproducibility.
