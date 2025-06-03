@@ -33,10 +33,10 @@ Our mission is to empower scientists to move research at the speed of thought.
 
 
 ## Table of Contents 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Tutorial](#tutorial)
-- [Demo](#demo)
+- [⚙️ Installation](#-installation)
+- [⚡ Quick Start](#-quick-start)
+- [📚 Tutorial](#-tutorial)
+- [🎬 Demo](#-demo)
 
 ## ⚙️ Installation
 **Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)

@@ -239,8 +239,17 @@ def execute_curie(question_filename, unique_id, iteration, task_config):
 
 def update_config(task_config, workspace_name=None, dataset_dir=None, max_global_steps=30):
     """Load and update task configuration with command line arguments."""
+    # check if workspace_name is a valid path
+    if workspace_name and not os.path.exists(workspace_name):
+        raise ValueError(f"Workspace name {workspace_name} is not a valid path.")
+    # check if dataset_dir is a valid path
+    if dataset_dir and not os.path.exists(dataset_dir):
+        raise ValueError(f"Dataset directory {dataset_dir} is not a valid path.") 
+    
     if task_config is None:
         task_config = DEFAULT_TASK_CONFIG
+        task_config['workspace_name'] = workspace_name or task_config['workspace_name']
+        task_config['dataset_dir'] = dataset_dir or task_config['dataset_dir']
         return task_config
 
     task_config['workspace_name'] = workspace_name or task_config['workspace_name']
