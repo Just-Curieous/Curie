@@ -342,7 +342,7 @@ class PatcherAgentTool(BaseTool):
             with open(prompt_file, "w") as file:
                 file.write(prompt)
 
-            openhands_dir = self.config["base_dir"] + "/workspace"
+            openhands_dir = os.path.join(self.config["base_dir"], "workspace")
             sudo_available = shutil.which("sudo") is not None
             chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {workspace_dir}"
             
@@ -362,9 +362,7 @@ class PatcherAgentTool(BaseTool):
             )
             curie_logger.info(f"💻 Openhands results: {openhands_log}")
             # copy the starter file outside the container to the new directory inside the container
-            # FIXME: this does not support running outside the container.
-            # print(f"Output: {output}") 
-            # print("me is here")
+            # FIXME: this does not support running outside the container. 
 
         except BaseException as e:
             curie_logger.info(f"Error for openhands agent: {repr(e)}")

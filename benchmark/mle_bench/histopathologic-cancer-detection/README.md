@@ -27,7 +27,7 @@ python3 -m curie.main -f benchmark/mle_bench/histopathologic-cancer-detection/hi
 ## Curie Results
 
 After asking Curie to solve this question, the following output files are generated:
-- [Report](./histopathologic-cancer-detection_20250519225201_iter1.md) 
+- [`Auto-generated Report`](./histopathologic-cancer-detection_20250519225201_iter1.md) 
 - [`Experiment results`](https://github.com/Just-Curieous/Curie-Use-Cases/blob/main/machine_learning/q5_histopathologic-cancer-detection/histopathologic-cancer-detection_20250519225201_iter1_all_results.txt): All detailed results for all conducted experiments
 - [`Curie logs`](https://github.com/Just-Curieous/Curie-Use-Cases/blob/main/machine_learning/q5_histopathologic-cancer-detection/histopathologic-cancer-detection_20250519225201_iter1.log): Execution log file  
 <!-- - [`Curie workspace`](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/machine_learning/q4-aptos2019-blindness-detection): Generated code, complete script to reproduce and raw results (excluding the model checkpoint). -->

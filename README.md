@@ -76,6 +76,47 @@ pip install curie-ai
 
 👩‍🎓: I want to understand the Sorting Algorithm Efficiency.
 
+
+## ⚙️ Installation
+**Prerequisite: Install Docker** from [here](https://docs.docker.com/engine/install/ubuntu/)
+   ```bash
+   sudo chmod 666 /var/run/docker.sock
+   docker ps  # Verify Docker installation
+   ```
+
+#### Option 1: Quick Install via `pip` 
+```bash
+pip install curie-ai
+```
+
+#### Option 2: Manual [Installation](./docs/installation.md) for Developers
+<!-- 1. Clone and setup:
+   ```bash
+   git clone https://github.com/Just-Curieous/Curie.git
+   cd Curie
+   ```
+
+2. Configure API credentials in `curie/setup/env.sh`:
+   ```bash
+   export MODEL="claude-3-7-sonnet-20250219" 
+   export ANTHROPIC_API_KEY="your-anthropic-key"
+   ```
+
+3. Build container:
+   ```bash
+   pip install -e .
+   docker images -q exp-agent-image | xargs -r docker rmi -f
+   cd curie && docker build --no-cache --progress=plain -t exp-agent-image -f ExpDockerfile_default .. && cd -
+   ``` -->
+
+## ⚡ Quick Start
+*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
+
+
+### (Simple) Example 1: You Have a Single Question that Needs to be Verified.
+
+👩‍🎓: I want to understand the Sorting Algorithm Efficiency.
+
 ```python
 import curie
 # Set up your API keys, refer to curie/setup/env.sh.example
@@ -129,8 +170,6 @@ result = curie.experiment(
   - [Predict the stock price ranking](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/stock_prediction)
 - **Sample auto-generated experiment [report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
 
-
-<!-- First row with 3 images -->
 <p align="center">
 <img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-1.png" width="23%"/>
 <img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-2.png" width="23%"/>
@@ -154,6 +193,7 @@ Check out more **Machine Learning Use Cases** [here](https://github.com/Just-Cur
 <p align="center">
   <em>Curie Overview & Demo.</em>
 </p>
+
 
 
 ## 📜 Citation & Reading More
