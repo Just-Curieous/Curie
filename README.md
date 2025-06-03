@@ -136,6 +136,33 @@ Curie is designed for scientific discovery across multiple domains:
 
 For any issues or feature requests, please open an issue on our [GitHub Issues](https://github.com/Just-Curieous/curie/issues) page.
 
+## 📜 Citation & Reading More
+[June'25] [EXP-Bench: Can AI Conduct AI Research Experiments?](https://arxiv.org/pdf/2505.24785)
+
+[May'25] [The AI Co-Scientist Making ML More Accessible for Your Research](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
+
+[Feb'25] [Curie: Toward Rigorous and Automated Scientific Experimentation with AI Agents](https://arxiv.org/pdf/2502.16069)
+
+If you use Curie in a research paper, please cite our work:
+
+```
+@misc{kon2025expbenchaiconductai,
+      title={EXP-Bench: Can AI Conduct AI Research Experiments?}, 
+      author={Patrick Tser Jern Kon and Jiachen Liu and Xinyi Zhu and Qiuyi Ding and Jingjia Peng and Jiarong Xing and Yibo Huang and Yiming Qiu and Jayanth Srinivasa and Myungjin Lee and Mosharaf Chowdhury and Matei Zaharia and Ang Chen},
+      year={2025},
+      eprint={2505.24785},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2505.24785}, 
+}
+
+@article{kon2025curie,
+  title={Curie: Toward rigorous and automated scientific experimentation with ai agents},
+  author={Kon, Patrick Tser Jern and Liu, Jiachen and Ding, Qiuyi and Qiu, Yiming and Yang, Zhenning and Huang, Yibo and Srinivasa, Jayanth and Lee, Myungjin and Chowdhury, Mosharaf and Chen, Ang},
+  journal={arXiv preprint arXiv:2502.16069},
+  year={2025}
+}
+```
 
 ## Contact Us
 

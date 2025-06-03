@@ -4,6 +4,16 @@ EXP-Bench is our in-house, novel benchmark designed by the Curie team, to system
 
 Link to the dataset: [HuggingFace](https://huggingface.co/datasets/Just-Curieous/EXP-Bench)
 
+Link to the paper: [Arxiv](https://arxiv.org/pdf/2505.24785)
+
+<p align="center">
+  <img src="../../docs/static/img/exp-bench-overview-v2.png" width="600px"/>
+</p>
+
+<p align="center">
+  <img src="../../docs/static/img/task-example.png" width="600px"/>
+</p>
+
 Next, we describe how to run the EXP-Bench dataset against your choice of LLM and Agent.
 
 # EXP-Bench Evaluation Harness Usage Instructions V0
