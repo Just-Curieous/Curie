@@ -318,10 +318,6 @@ def generate_report(config, plans):
     all_logging.append(summarize_log_content)
 
     all_logging = "\n".join(all_logging)
-    #test, save all logging to a file
-    log_file_name = log_file.replace('.log', '_report.txt')
-    with open(log_file_name, "w") as file:
-        file.write(all_logging)
 
     with open("/curie/prompts/exp-reporter.txt", "r") as file:
         system_prompt = file.read() 
