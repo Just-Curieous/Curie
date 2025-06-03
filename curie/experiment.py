@@ -12,21 +12,20 @@ from curie.logger import init_logger, send_question_telemetry
 # Constants
 DEFAULT_TASK_CONFIG = {
     "job_name": "default_research",
-    "workspace_name": "",
-    "dataset_dir": "",
     "docker_image": "curie-pip-image",
     "dockerfile_name": "ExpDockerfile_pip", 
     "benchmark_specific_context": "none",
     "is_user_interrupt_allowed": False,
     "timeout": 600,
-    "max_global_steps": 50,
     "max_coding_iterations": 25,
     "supervisor_system_prompt_filename": "prompts/simple/simple-supervisor.txt",
     "control_worker_system_prompt_filename": "prompts/simple/simple-control-worker.txt",
     "patcher_system_prompt_filename": "prompts/simple/simple-patcher.txt",
     "llm_verifier_system_prompt_filename": "prompts/simple/simple-llm-verifier.txt",
     "coding_prompt_filename": "prompts/simple/simple-coding.txt",
-    "worker_system_prompt_filename": "prompts/simple/simple-worker.txt"
+    "worker_system_prompt_filename": "prompts/simple/simple-worker.txt",
+    "workspace_name": "", # meant to be empty
+    "dataset_dir": "", # meant to be empty
 }
 
 DEFAULT_JOB_NAME = "default_research"
@@ -238,20 +237,23 @@ def execute_curie(question_filename, unique_id, iteration, task_config):
     
     send_question_telemetry(task_config['log_filename'])
 
-def load_and_update_config(config_path, workspace_name=None, dataset_dir=None):
+def update_config(task_config, workspace_name=None, dataset_dir=None, max_global_steps=30):
     """Load and update task configuration with command line arguments."""
-    try:
-        with open(config_path, 'r') as f:
-            task_config = json.load(f)
-            task_config['workspace_name'] = workspace_name or task_config['workspace_name']
-            task_config['dataset_dir'] = dataset_dir or task_config['dataset_dir']
-            # force override the docker image and dockerfile name
-            task_config['docker_image'] = "curie-pip-image"
-            task_config['dockerfile_name'] = "ExpDockerfile_pip"
+    if task_config is None:
+        task_config = DEFAULT_TASK_CONFIG
         return task_config
-    except Exception as e:
-        print(f"Error reading config file: {e}")
-        return None
+
+    task_config['workspace_name'] = workspace_name or task_config['workspace_name']
+    task_config['dataset_dir'] = dataset_dir or task_config['dataset_dir']
+    # fill up the unspecified fields in the task config with DEFAULT_TASK_CONFIG
+    for key, value in DEFAULT_TASK_CONFIG.items():
+        if key not in task_config:
+            task_config[key] = value
+    # force override the docker image and dockerfile name
+    task_config['max_global_steps'] = max_global_steps
+    task_config['docker_image'] = "curie-pip-image"
+    task_config['dockerfile_name'] = "ExpDockerfile_pip" 
+    return task_config
 
 def validate_question_input(question_file, question):
     """Validate that exactly one of question_file or question is provided."""
@@ -263,20 +265,14 @@ def validate_question_input(question_file, question):
         return False
     return True
 
-def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None):
+def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None, max_global_steps=30):
     """Main experiment function that orchestrates the experiment workflow."""
     # Write API keys to env file if provided
     if api_keys:
         write_api_keys_to_env(api_keys)
     
     # Load and update configuration
-    if task_config is None:
-        task_config = DEFAULT_TASK_CONFIG
-    else:
-        task_config = load_and_update_config(task_config, workspace_name, dataset_dir)
-    
-    if task_config is None:
-        return
+    task_config = update_config(task_config, workspace_name, dataset_dir, max_global_steps)
     
     print(f"Curie is running with the following configuration: {task_config}")
     

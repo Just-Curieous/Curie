@@ -80,10 +80,12 @@ key_dict = {
 
 result = curie.experiment(api_keys=key_dict, question="How does the choice of sorting algorithm impact runtime performance across different input distributions?")
 ```
-- **Auto-generated Experiment report**: Available [ `logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
+Curie's output: 
+- **Auto-generated Experiment report**: Available [`logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
 - **Reproducibilty and Logs**:
-  - The full experimentation process (script to reproduce results, generated code and experiment results) is saved in `workspace/research_<ID>/`.
-  - Real-time logs are streamed to the console and stored in file `research_*.log`.
+  - The **full experimentation process** (*script* to reproduce results, generated *code* and experiment *results*) is saved in `workspace/research_<ID>/`.
+  - Experiment result notebook is saved in `logs/research_*_all_results.txt`.
+  - Real-time logs are streamed to the console and stored in file `logs/research_*.log`.
 
 ### Example 2: Find Optimal ML Strategies for Noisy Cancer Data.
 👩‍🎓: I want to find the most robust ML methods for my noisy data.
@@ -97,7 +99,9 @@ key_dict = {
 
 result = curie.experiment(api_keys=key_dict, question="Are ensemble methods (e.g., Random Forests, Gradient Boosting) more robust to added noise in the Breast Cancer Wisconsin dataset compared to linear models like Logistic Regression for a binary classification task?")
 ```
-
+Curie's output:
+- [Auto-generated Experiment Report](./docs/example_logs/noise_example/default_research_1748932907_20250603064147_iter1.md)
+- [Experiment Result Notebook](./docs/example_logs/noise_example/default_research_1748932907_20250603064147_iter1_all_results.txt)
 
 ### (Advanced) Example 3: You Have a Dataset and Want to Gain Insight from It
 
