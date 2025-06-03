@@ -29,7 +29,9 @@ pip install -e . # this needs to be executed in the conda env that you just acti
 
 ## Evaluation
 
-### Evaluation Output Generation
+WARNING: This process can take a very long time (e.g., days, for a single LLM+Agent combination).
+
+### 1. Evaluation Output Generation
 These scripts will generate outputs within the folder `outputs/evaluation`. 
 
 Make sure you have configured `evaluation/config/parallel_eval_gen_config_template.json` with the correct parameters, e.g., LLM config and Agent name.
@@ -49,7 +51,7 @@ python evaluation/run_parallel_gen_evals.py \
   --specific_tasks '[["neurips2024", "93022", 1, 0.25], ["neurips2024", "93022", 1, 0.5], ["neurips2024", "93022", 1, 1], ["neurips2024", "93022", 1, 2], ["neurips2024", "93022", 1, 4], ["neurips2024", "93022", 1, 8], ["neurips2024", "94155", 6, 8]]'
 ```
 
-### Judge Evaluation Output
+### 2. Judge Evaluation Output
 Make sure you have configured `evaluation/config/parallel_eval_judge_config_template.json` with the correct parameters, e.g., LLM config and Agent name.
 - The specific evalauation output folder within `outputs/evaluation` that will be judged is determined in part by the config keys "llm_config_filename" and "agent_name".
 - Leave "judge_agent_name" blank. 
