@@ -8,6 +8,7 @@ import sys
 import shutil
 
 from curie.logger import init_logger, send_question_telemetry
+from curie.docker_setup import ensure_docker_installed
 
 # Constants
 DEFAULT_TASK_CONFIG = {
@@ -276,6 +277,9 @@ def validate_question_input(question_file, question):
 
 def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None, max_global_steps=30):
     """Main experiment function that orchestrates the experiment workflow."""
+    # Ensure Docker is installed before proceeding
+    ensure_docker_installed()
+    
     # Write API keys to env file if provided
     if api_keys:
         write_api_keys_to_env(api_keys)

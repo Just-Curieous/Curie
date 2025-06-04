@@ -8,7 +8,9 @@ setup(
     install_requires=[
         # List your dependencies here
         "psutil",
-        "argparse", 
+        "argparse",
+        "requests",  # For downloading Docker installation scripts
+        "platform-utils",  # For OS detection
     ],
     entry_points={
         'console_scripts': [
