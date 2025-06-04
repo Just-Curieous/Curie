@@ -14,8 +14,10 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 Our mission is to empower scientists to move research at the speed of thought.
 
 <p align="center">
-  <img src="./docs/static/img/curie-overview.png" width="600px"/>
+  <img src="./docs/static/img/exp-bench-mle-curie.drawio.png" width="600px"/>
 </p> 
+<p align="center">Curie AutoML Feature Overview.</p>
+
 
 ## 🗞️ News
 
@@ -101,8 +103,8 @@ Curie's output:
 result = curie.experiment(
     api_keys=key_dict,
     question="E.g. How to improve my prediction accuracy on my dataset.",
-    workspace_name="[Optional] /path/to/your/code",
-    dataset_dir="/path/to/your/dataset"
+    workspace_name="[Optional] /abs/path/to/your/code",
+    dataset_dir="/abs/path/to/your/dataset"
 )
 ```  
 - Check out some [examples](./benchmark/mle_bench/) from [MLE-Bench](https://github.com/openai/mle-bench).
