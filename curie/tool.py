@@ -9,7 +9,6 @@ from modified_deps.langchain_bash.tool import ShellTool
 from typing import Optional, Type, Dict, Any
 
 from langchain_core.callbacks import (
-    AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
@@ -19,6 +18,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
 from langchain.chains import RetrievalQA
 from pydantic import BaseModel, Field, model_validator
+from langchain_aws import BedrockEmbeddings
 from typing_extensions import Self
 
 from model import update_tool_costs
@@ -532,7 +532,7 @@ class QueryPDFTool(BaseTool):
             pdf_path = os.path.join(workspace_dir, pdf_path)
         
         if not os.path.exists(pdf_path):
-            target = os.path.basenamev(pdf_path) 
+            target = os.path.basename(pdf_path) 
             root_dir = '/starter_file/' + self.config["workspace_name"]
   
             # Recursively walk through directory
@@ -577,9 +577,15 @@ def load_pdf(pdf_path: str) -> dict:
             chunk_overlap=200
         )
         chunks = text_splitter.split_documents(documents)
-
         # Create a vector index
-        if 'ORGANIZATION' in os.environ:
+        if 'AWS_ACCESS_KEY_ID' in os.environ:
+            embeddings = BedrockEmbeddings(
+                model_id=os.environ['MODEL'],
+                region_name=os.environ['AWS_REGION_NAME'],
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+            )
+        elif 'ORGANIZATION' in os.environ:
             endpoint = os.environ['AZURE_API_BASE'] 
             if "AZURE_API_BASE" in os.environ:
                 del os.environ["AZURE_API_BASE"] 
@@ -587,15 +593,15 @@ def load_pdf(pdf_path: str) -> dict:
                 del os.environ["OPENAI_API_BASE"]
 
             embeddings = AzureOpenAIEmbeddings(
-                azure_endpoint= endpoint,
+                azure_endpoint=endpoint,
                 openai_api_version="2024-06-01",  
                 openai_api_key=os.environ['AZURE_API_KEY'],   
                 openai_organization=os.environ['ORGANIZATION'],
-                model="text-embedding-3-large" ,
+                model="text-embedding-3-large",
             )
             os.environ["AZURE_API_BASE"] = endpoint
         else:
-            embeddings = OpenAIEmbeddings(model="text-embedding-3-large",)
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
         vector_index = FAISS.from_documents(chunks, embeddings) 
         index_cache[pdf_path] = vector_index
         curie_logger.info(f"{pdf_path} statistics: {len(documents)} pages, {len(chunks)} chunks")

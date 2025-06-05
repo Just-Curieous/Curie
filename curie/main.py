@@ -179,7 +179,7 @@ def execute_experiment_in_container(container_name, config_file, logger):
             key, value = line.split('=', 1)
             os.environ[key] = value
             
-    organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
+    organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else ""
     # Command to run inside container
     container_command = (
         "source setup/env.sh && "

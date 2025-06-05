@@ -125,6 +125,7 @@ class TokenCounter:
         self._accumulated_cost["output"] += costs["output"]
 
 def create_model():
+    curie_logger.info(f"Creating model {os.environ.get('MODEL')}")
     return ChatLiteLLM(model=os.environ.get("MODEL")) 
 
 def create_completion(messages: List[BaseMessage], tools: List = None) -> Any:
