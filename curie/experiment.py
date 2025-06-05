@@ -6,9 +6,8 @@ import uuid
 from datetime import datetime
 import sys
 import shutil
-
+from importlib.resources import files
 from curie.logger import init_logger, send_question_telemetry
-from curie.docker_setup import ensure_docker_installed
 
 # Constants
 DEFAULT_TASK_CONFIG = {
@@ -71,12 +70,12 @@ def run_docker_container(unique_id, iteration, task_config, logger):
     container_name = f"exp-agent-container-{unique_id}-{rand_uuid}-iter_{iteration}"
     
     image_name = task_config["docker_image"]
-    docker_filename = task_config["base_dir"] + "/curie/" + task_config["dockerfile_name"]
+    docker_filename = files("curie") / task_config["dockerfile_name"]
 
     if docker_image_exists(image_name):
         logger.info(f"Using existing Docker image: {image_name}")
     else:
-        logger.info(f"Start building Docker image {image_name} ... ")
+        logger.info(f"Start building Docker image {image_name} from {docker_filename} ... ")
         build_docker_image(image_name, docker_filename)
     
     base_dir = os.getcwd()
@@ -277,9 +276,6 @@ def validate_question_input(question_file, question):
 
 def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None, max_global_steps=30):
     """Main experiment function that orchestrates the experiment workflow."""
-    # Ensure Docker is installed before proceeding
-    ensure_docker_installed()
-    
     # Write API keys to env file if provided
     if api_keys:
         write_api_keys_to_env(api_keys)

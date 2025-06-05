@@ -38,10 +38,6 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg -
 # Verify Node.js version
 RUN node --version
 
-
-# Copy the environment specification
-COPY curie/environment.yml .
-
 # Install micromamba
 ENV MAMBA_ROOT_PREFIX=/opt/micromamba
 ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
@@ -60,7 +56,7 @@ RUN arch=$(uname -m) && \
     rmdir bin
 
 # Create base environment with micromamba
-RUN micromamba create -n curie -f environment.yml && \
+RUN micromamba create -n curie -f /curie/environment.yml && \
     micromamba clean --all --yes
 
 ENV MAMBA_DEFAULT_ENV=curie
