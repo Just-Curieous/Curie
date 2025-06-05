@@ -533,7 +533,7 @@ class QueryPDFTool(BaseTool):
         
         if not os.path.exists(pdf_path):
             target = os.path.basename(pdf_path) 
-            root_dir = os.path.join('/starter_file/', self.config["workspace_name"])
+            root_dir = os.path.join('/starter_file', self.config["workspace_name"].lstrip('/'))
   
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
@@ -554,7 +554,7 @@ class QueryPDFTool(BaseTool):
 # @tool
 def load_pdf(pdf_path: str) -> dict: 
     if not os.path.exists(pdf_path):
-        curie_logger.error(f"PDF file not found at {pdf_path}")
+        curie_logger.error(f"PDF file not found at {pdf_path}...")
         return {"error": f"PDF file not found at {pdf_path}"}
     
     try:
