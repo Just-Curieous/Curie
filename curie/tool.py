@@ -524,12 +524,12 @@ class QueryPDFTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> dict: 
         if plan_id is None or workspace_dir is None:
-            pdf_dir = '/starter_file/' + self.config["workspace_name"]
+            pdf_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/').rstrip('/'))
             pdf_path = os.path.join(pdf_dir, pdf_path)
         else:
             # this assume the pdf is put under the outer workspace dir
             pdf_path = os.path.basename(pdf_path)
-            pdf_path = os.path.join(workspace_dir, pdf_path)
+            pdf_path = os.path.join('/all', workspace_dir, pdf_path)
         
         if not os.path.exists(pdf_path):
             target = os.path.basename(pdf_path) 
