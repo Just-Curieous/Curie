@@ -18,26 +18,6 @@ def is_docker_installed():
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
-def is_homebrew_installed():
-    """Check if Homebrew is installed on macOS."""
-    try:
-        subprocess.run(['brew', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-
-def install_homebrew():
-    """Install Homebrew on macOS."""
-    logger.info("Installing Homebrew...")
-    try:
-        # Download and run the Homebrew installation script
-        install_script = '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-        subprocess.run(install_script, shell=True, check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to install Homebrew: {e}")
-        return False
-
 def is_chocolatey_installed():
     """Check if Chocolatey is installed on Windows."""
     try:
@@ -70,50 +50,16 @@ def download_file(url, destination):
         logger.error(f"Failed to download {url}: {e}")
         return False
 
-def install_docker_macos():
-    """Install Docker on macOS using multiple methods."""
-    logger.info("Installing Docker on macOS...")
-    
-    # Method 1: Try using Homebrew (preferred)
-    if is_homebrew_installed() or install_homebrew():
-        try:
-            logger.info("Installing Docker using Homebrew...")
-            subprocess.run(['brew', 'install', '--cask', 'docker'], check=True)
-            logger.info("Docker installed via Homebrew. Please start Docker Desktop from Applications.")
-            return True
-        except subprocess.CalledProcessError as e:
-            logger.warning(f"Homebrew installation failed: {e}")
-    
-    # Method 2: Download Docker Desktop directly
-    logger.info("Attempting direct download of Docker Desktop...")
-    try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            docker_dmg = os.path.join(temp_dir, "Docker.dmg")
-            docker_url = "https://desktop.docker.com/mac/main/amd64/Docker.dmg"
-            
-            # Detect Apple Silicon
-            if platform.machine() == 'arm64':
-                docker_url = "https://desktop.docker.com/mac/main/arm64/Docker.dmg"
-            
-            logger.info(f"Downloading Docker Desktop from {docker_url}...")
-            if download_file(docker_url, docker_dmg):
-                # Mount the DMG
-                logger.info("Mounting Docker DMG...")
-                mount_result = subprocess.run(['hdiutil', 'attach', docker_dmg], 
-                                            capture_output=True, text=True)
-                if mount_result.returncode == 0:
-                    # Copy Docker app to Applications
-                    logger.info("Installing Docker to Applications folder...")
-                    subprocess.run(['cp', '-R', '/Volumes/Docker/Docker.app', '/Applications/'], check=True)
-                    
-                    # Unmount the DMG
-                    subprocess.run(['hdiutil', 'detach', '/Volumes/Docker'], check=False)
-                    
-                    logger.info("Docker Desktop installed successfully. Please launch it from Applications.")
-                    return True
-    except Exception as e:
-        logger.error(f"Direct download installation failed: {e}")
-    
+def prompt_docker_macos_install():
+    """Prompt user to install Docker on macOS manually."""
+    logger.info("Docker is not installed on your Mac.")
+    logger.info("Please install Docker Desktop manually by following these steps:")
+    logger.info("1. Visit https://docker.com/products/docker-desktop")
+    logger.info("2. Download Docker Desktop for Mac")
+    logger.info("3. Install the downloaded .dmg file")
+    logger.info("4. Launch Docker Desktop from your Applications folder")
+    logger.info("5. Complete the Docker Desktop setup process")
+    logger.info("6. Once Docker Desktop is running, re-run this script")
     return False
 
 def install_docker_windows():
@@ -208,7 +154,7 @@ def install_docker():
     if system == 'linux':
         return install_docker_linux()
     elif system == 'darwin':  # macOS
-        return install_docker_macos()
+        return prompt_docker_macos_install()
     elif system == 'windows':
         return install_docker_windows()
     else:
@@ -239,15 +185,21 @@ def ensure_docker_installed():
     if not is_docker_installed():
         logger.info("Docker is not installed. Attempting to install...")
         if not install_docker():
-            logger.error("Failed to install Docker. Please install Docker manually and try again.")
+            system = platform.system().lower()
+            if system == 'darwin':  # macOS
+                logger.error("Please install Docker Desktop manually for Mac and try again.")
+            else:
+                logger.error("Failed to install Docker. Please install Docker manually and try again.")
             sys.exit(1)
         
         # For macOS and Windows, Docker Desktop needs to be started
         system = platform.system().lower()
         if system in ['darwin', 'windows']:
-            logger.info("Docker Desktop has been installed. Please start Docker Desktop and then run this script again.")
-            logger.info("On macOS: Open Applications folder and launch Docker")
-            logger.info("On Windows: Look for Docker Desktop in your Start menu")
+            if system == 'darwin':
+                logger.info("After installing Docker Desktop, please launch it and then run this script again.")
+            else:
+                logger.info("Docker Desktop has been installed. Please start Docker Desktop and then run this script again.")
+                logger.info("On Windows: Look for Docker Desktop in your Start menu")
             return False
         
         logger.info("Docker installed successfully.")
