@@ -183,6 +183,12 @@ def execute_experiment_in_container(container_name, config_file, logger):
     # Command to run inside container
     container_command = (
         "source setup/env.sh && "
+        "cd / && "
+        "git clone https://github.com/Just-Curieous/Curie && "
+        "cd Curie && "
+        "cp -r curie/* /curie && "
+        "rm -rf Curie && "
+        "cd /curie && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"

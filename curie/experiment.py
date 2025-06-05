@@ -7,6 +7,7 @@ from datetime import datetime
 import sys
 import shutil
 from importlib.resources import files
+from typing import Optional, Dict, Any, Union
 from curie.logger import init_logger, send_question_telemetry
 from curie.docker_setup import ensure_docker_installed
 
@@ -31,7 +32,7 @@ DEFAULT_TASK_CONFIG = {
 
 DEFAULT_JOB_NAME = "default_research"
 
-def write_api_keys_to_env(api_keys: dict):
+def write_api_keys_to_env(api_keys: Dict[str, str]) -> None:
     """Write API keys to env.sh file."""
     env_path = os.path.join(os.getcwd(), '.setup', 'env.sh')
     os.makedirs(os.path.dirname(env_path), exist_ok=True) 
@@ -42,7 +43,7 @@ def write_api_keys_to_env(api_keys: dict):
             print(f"Writing {key} to {env_path}")
             f.write(f'export {key}="{value}"\n')
 
-def docker_image_exists(image):
+def docker_image_exists(image: str) -> bool:
     """Check if a Docker image exists locally."""
     try:
         result = subprocess.run(
@@ -54,7 +55,7 @@ def docker_image_exists(image):
         print(f"Error checking Docker image: {e}")
         return False
 
-def build_docker_image(image_name, dockerfile):
+def build_docker_image(image_name: str, dockerfile: str) -> None:
     """Build Docker image if it doesn't exist."""
     command = [
         "sudo", "docker", "build",
@@ -65,7 +66,7 @@ def build_docker_image(image_name, dockerfile):
     ]
     subprocess.run(command, check=True)
 
-def run_docker_container(unique_id, iteration, task_config, logger):
+def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, Any], logger: Any) -> str:
     """Run a Docker container for the experiment."""
     rand_uuid = uuid.uuid4()
     container_name = f"exp-agent-container-{unique_id}-{rand_uuid}-iter_{iteration}"
@@ -104,7 +105,7 @@ def run_docker_container(unique_id, iteration, task_config, logger):
     subprocess.run(command, check=True) 
     return container_name
 
-def execute_experiment_in_container(container_name, config_file, logger):
+def execute_experiment_in_container(container_name: str, config_file: str, logger: Any) -> bool:
     """Execute the experiment inside the Docker container."""
     logger.info(f"Starting experiment in container {container_name} with config in {config_file}")
             
@@ -131,7 +132,7 @@ def execute_experiment_in_container(container_name, config_file, logger):
         logger.error(f"Experiment failed with exit code {e.returncode}. Error: {e}")
         return False
 
-def cleanup_docker_container(container_name):
+def cleanup_docker_container(container_name: str) -> None:
     """Stop and remove the Docker container."""
     try:
         print(f"Stopping and removing Docker container: {container_name}...")
@@ -141,7 +142,7 @@ def cleanup_docker_container(container_name):
     except subprocess.SubprocessError as e:
         print(f"Error cleaning up container: {e}")
 
-def run_prune_commands():
+def run_prune_commands() -> None:
     """Run Docker pruning commands to free up resources."""
     commands = [
         ["docker", "container", "prune", "-f"],
@@ -159,7 +160,7 @@ def run_prune_commands():
             print(f"Error running command: {' '.join(command)}")
             print(e.stderr.decode())
 
-def get_workspace_name(task_config):
+def get_workspace_name(task_config: Dict[str, Any]) -> str:
     """Extract workspace name from task config."""
     return (
         (os.path.basename(task_config.get('workspace_name', '')) or '' ) or 
@@ -167,7 +168,7 @@ def get_workspace_name(task_config):
         DEFAULT_JOB_NAME
     )
 
-def create_config_file(question_file, unique_id, iteration, task_config):
+def create_config_file(question_file: str, unique_id: str, iteration: int, task_config: Dict[str, Any]) -> tuple[Dict[str, Any], str, Any]:
     """Create experiment configuration file and set up logging."""
     work_name = get_workspace_name(task_config)
     
@@ -204,7 +205,7 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     
     return task_config, config_filename, logger
 
-def prepare_question_file(task_config, question_text=None, question_file=None):
+def prepare_question_file(task_config: Dict[str, Any], question_text: Optional[str] = None, question_file: Optional[str] = None) -> str:
     if question_file is not None:
         with open(question_file, 'r') as f:
             question_text = f.read()
@@ -222,7 +223,7 @@ def prepare_question_file(task_config, question_text=None, question_file=None):
         print("Please give permission to write to `workspace/`.")
         sys.exit(1)
 
-def execute_curie(question_filename, unique_id, iteration, task_config):
+def execute_curie(question_filename: str, unique_id: str, iteration: int, task_config: Dict[str, Any]) -> None:
     """Execute a single Curie iteration."""
     # Create configuration file and get logger
     task_config, config_filename, logger = create_config_file(
@@ -241,7 +242,10 @@ def execute_curie(question_filename, unique_id, iteration, task_config):
     
     send_question_telemetry(task_config['log_filename'])
 
-def update_config(task_config, workspace_name=None, dataset_dir=None, max_global_steps=30):
+def update_config(task_config: Optional[Dict[str, Any]] = None, 
+                 workspace_name: Optional[str] = None, 
+                 dataset_dir: Optional[str] = None, 
+                 max_global_steps: int = 30) -> Dict[str, Any]:
     """Load and update task configuration with command line arguments."""
     # check if workspace_name is a valid path
     if workspace_name and not os.path.exists(workspace_name):
@@ -268,7 +272,7 @@ def update_config(task_config, workspace_name=None, dataset_dir=None, max_global
     task_config['dockerfile_name'] = "ExpDockerfile_pip" 
     return task_config
 
-def validate_question_input(question_file, question):
+def validate_question_input(question_file: Optional[str], question: Optional[str]) -> bool:
     """Validate that exactly one of question_file or question is provided."""
     if question_file is None and question is None:
         print("Please provide either a question file or a question.")
@@ -280,7 +284,13 @@ def validate_question_input(question_file, question):
         print(f"Question file {question_file} does not exist.") 
     return True
 
-def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None, max_global_steps=30):
+def experiment(api_keys: Optional[Dict[str, str]] = None, 
+               dataset_dir: Optional[str] = None, 
+               workspace_name: Optional[str] = None, 
+               question_file: Optional[str] = None, 
+               question: Optional[str] = None, 
+               task_config: Optional[Dict[str, Any]] = None, 
+               max_global_steps: int = 30) -> None:
     """Main experiment function that orchestrates the experiment workflow."""
     # Write API keys to env file if provided
     if api_keys:
@@ -299,6 +309,7 @@ def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_fi
     question_file = prepare_question_file(task_config, question, question_file)
     
     # Run iterations
+    iterations = 1
     for iteration in range(1, iterations + 1):
         start_time = time.time()
         unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
