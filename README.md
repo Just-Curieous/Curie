@@ -20,9 +20,8 @@ Our mission is to empower scientists to move research at the speed of thought.
 
 
 ## 🗞️ News
-
-- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? → [📄 Paper](https://arxiv.org/abs/2505.24785) | [🗂️ Dataset](https://github.com/Just-Curieous/Curie/tree/main/benchmark/exp_bench)
-- **[2025/05]** We launched an **AutoML feature** → [📢 Blog](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
+- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? → [📄 Paper](https://arxiv.org/abs/2505.24785) | [🗂️ Dataset](https://huggingface.co/datasets/Just-Curieous/EXP-Bench)
+- **[2025/05]** We launched an **AutoML feature** to help researcher find the optimal ML solution → [📢 Blog](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
 - **[2025/02]** We published **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents → [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
 
 

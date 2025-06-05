@@ -6,20 +6,22 @@ We'll cover everything from setup to running experiments and analyzing results.
 ## ⚙️ Installation
 
 1. First, install Docker from [here](https://docs.docker.com/engine/install/ubuntu/) if you haven't already.
-
+   ```bash
+   sudo chmod 666 /var/run/docker.sock
+   docker ps  # Verify Docker installation
+   ```
 2. Install Curie using pip:
-```bash
-pip install curie-ai
-```
+    ```bash
+    pip install curie-ai
+    ```
 
 3. Verify the installation:
-```bash
-python -c "import curie; print(curie.__version__)"
-```
+    ```bash
+    python -c "import curie; print(curie.__version__)"
+    ```
 
 ## 🔑 Setting Up API Keys
 We support all kinds of API key providers, but please let us know if you encounter API setup issues [here](https://github.com/Just-Curieous/Curie/issues).
-
 ```python
 key_dict = {
     "MODEL": "claude-3-7-sonnet-20250219",
@@ -62,9 +64,10 @@ result = curie.experiment(
     - *Starter code*: You can prepare the starter code to let Curie work on top of. This is very important if your dataset needs specialize data loader.
 
     ```bash
-    sudo mkdir -p "/starter_code" 
-    echo "import numpy as np" > "train.py"
-    sudo  mv train.py /starter_code
+    /abs/path/starter_code/
+    ├── train.py # Python script for training
+    └── description.md # instructions that highlight how to run your experiments. 
+                       # Please explicitly name it as `description.md` or `README.md`
     ```
 
     ```python
@@ -72,54 +75,71 @@ result = curie.experiment(
     result = curie.experiment(
         api_keys=key_dict,
         question="Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?,
-        dataset_dir="/data",
-        workspace_name="/starter_code", # dir to your starter code
+        dataset_dir="",
+        workspace_name="/abs/path/starter_code/", # Change this to the path of your starter code
         max_global_steps=50, # control your compute budget
     )
     ```
 
 2. **Provide with your research paper**: 
-
 To provide more context for Curie, you can mention the necessary paper (`txt`, `pdf`, ...) in the question. 
 Please put your paper under the same directory of your starter code. 
+    ```bash
+    /abs/path/starter_code/
+    ├── train.py # Python script for training
+    └── paper.pdf # Research paper detailing the approach
+    ```
 
-```bash
-starter_code/
-├── train.py # Python script for training
-└── paper.pdf # Research paper detailing the approach
-```
+    ```python
+    import curie
+    result = curie.experiment(
+        api_keys=key_dict,
+        question="Refer to the evaluation setup in `paper.pdf`. Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?",
+        dataset_dir="/data",
+        workspace_name="/abs/path/starter_code", # Change this to the path of your starter code
+        max_global_steps=50, # control your compute budget
+    )
+    ```
 
-```python
-import curie
-result = curie.experiment(
-    api_keys=key_dict,
-    question="Refer to the evaluation setup in `paper.pdf`. Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?",
-    dataset_dir="/data",
-    workspace_name="/starter_code", # dir to your starter code
-    max_global_steps=50, # control your compute budget
-)
-```
+3. **Provide with your own environment**
+You can provide your own environment by pre-configure a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
+
+    ```bash
+    starter_code/
+    ├── venv/ # your own environment should named as `venv` and put under your starter_code
+    └── ... # the rest of your codebase
+    ```
+
+    Here is one way to configure your own environment: 
+
+    ```bash
+    cd /abs/path/starter_code
+    micromamba create -p ./venv python=3.12 -y
+    micromamba activate ./venv
+    pip install -r requirements.txt 
+    ```
 
 
-3. **Customize the agent to your workload.**
+
+4. **Customize the agent to your workload.**
 Each agent and experiment stage is coupled with a system prompt, which you can fine-tune in order to let Curie understand your context better. 
 
-```python
-import curie
+    ```python
+    import curie
 
-task_config = {
-    "supervisor_system_prompt_filename": "/home/ubuntu/prompt.txt", #  
-    # "control_worker_system_prompt_filename": "/path/to/your/new/prompt",
-    # "patcher_system_prompt_filename": "/path/to/your/new/prompt",
-    # "llm_verifier_system_prompt_filename": "/path/to/your/new/prompt", 
-    # "coding_prompt_filename": "/path/to/your/new/prompt", 
-    # "worker_system_prompt_filename": "/path/to/your/new/prompt", 
-}
-result = curie.experiment(
-    api_keys=key_dict,
-    question="Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?",
-    dataset_dir="/data",
-    max_global_steps=50, # control your compute budget
-    task_config=task_config,
-)
-```
+    task_config = {
+        "supervisor_system_prompt_filename": "/home/ubuntu/prompt.txt", #  
+        # "control_worker_system_prompt_filename": "/path/to/your/new/prompt",
+        # "patcher_system_prompt_filename": "/path/to/your/new/prompt",
+        # "llm_verifier_system_prompt_filename": "/path/to/your/new/prompt", 
+        # "coding_prompt_filename": "/path/to/your/new/prompt", 
+        # "worker_system_prompt_filename": "/path/to/your/new/prompt", 
+    }
+    result = curie.experiment(
+        api_keys=key_dict,
+        question="Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?",
+        dataset_dir="/data",
+        max_global_steps=50, # control your compute budget
+        task_config=task_config,
+    )
+    ```

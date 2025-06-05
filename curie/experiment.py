@@ -6,8 +6,9 @@ import uuid
 from datetime import datetime
 import sys
 import shutil
-
+from importlib.resources import files
 from curie.logger import init_logger, send_question_telemetry
+from curie.docker_setup import ensure_docker_installed
 
 # Constants
 DEFAULT_TASK_CONFIG = {
@@ -70,12 +71,12 @@ def run_docker_container(unique_id, iteration, task_config, logger):
     container_name = f"exp-agent-container-{unique_id}-{rand_uuid}-iter_{iteration}"
     
     image_name = task_config["docker_image"]
-    docker_filename = task_config["base_dir"] + "/curie/" + task_config["dockerfile_name"]
+    docker_filename = files("curie") / task_config["dockerfile_name"]
 
     if docker_image_exists(image_name):
         logger.info(f"Using existing Docker image: {image_name}")
     else:
-        logger.info(f"Start building Docker image {image_name} ... ")
+        logger.info(f"Start building Docker image {image_name} from {docker_filename} ... ")
         build_docker_image(image_name, docker_filename)
     
     base_dir = os.getcwd()
@@ -203,8 +204,11 @@ def create_config_file(question_file, unique_id, iteration, task_config):
     
     return task_config, config_filename, logger
 
-def prepare_question_file(task_config, question_text):
-    """Create a question file from question text."""
+def prepare_question_file(task_config, question_text=None, question_file=None):
+    if question_file is not None:
+        with open(question_file, 'r') as f:
+            question_text = f.read()
+    
     q_file = get_workspace_name(task_config)
     question_file = f'workspace/{q_file}_{int(time.time())}.txt'
     
@@ -272,6 +276,8 @@ def validate_question_input(question_file, question):
     elif question_file is not None and question is not None:
         print("Please provide only one of either a question file or a question.")
         return False
+    elif question_file is not None and not os.path.exists(question_file):
+        print(f"Question file {question_file} does not exist.") 
     return True
 
 def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_file=None, question=None, iterations=1, task_config=None, max_global_steps=30):
@@ -279,7 +285,7 @@ def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_fi
     # Write API keys to env file if provided
     if api_keys:
         write_api_keys_to_env(api_keys)
-    
+    ensure_docker_installed()
     # Load and update configuration
     task_config = update_config(task_config, workspace_name, dataset_dir, max_global_steps)
     
@@ -290,7 +296,7 @@ def experiment(api_keys=None, dataset_dir=None, workspace_name=None, question_fi
         return
     
     # Prepare question file
-    question_file = question_file if question_file else prepare_question_file(task_config, question)
+    question_file = prepare_question_file(task_config, question, question_file)
     
     # Run iterations
     for iteration in range(1, iterations + 1):
