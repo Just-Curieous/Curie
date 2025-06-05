@@ -534,12 +534,12 @@ class QueryPDFTool(BaseTool):
         if not os.path.exists(pdf_path):
             target = os.path.basename(pdf_path) 
             root_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/').rstrip('/'))
-            print(f"root_dir: {root_dir}")
+
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
                 if target in files:
                     full_path = os.path.join(root, target)
-                    print(f"Found {target} at: {full_path}")
+                    curie_logger.info(f"Found {target} at: {full_path}")
                     pdf_path = full_path
                     break
 
@@ -547,8 +547,8 @@ class QueryPDFTool(BaseTool):
         try:
             result = query_pdf(question, pdf_path)
         except Exception as e:
-            curie_logger.error(f"Error querying PDF: {str(e)}")
-            return {"error": f"Error querying PDF: {str(e)}"}
+            curie_logger.error(f"Error query_pdf tool use: {e}")
+            return {"error": f"Error query_pdf tool use: {str(e)}"}
         return result
 
 # @tool
@@ -580,10 +580,10 @@ def load_pdf(pdf_path: str) -> dict:
         # Create a vector index
         if 'AWS_ACCESS_KEY_ID' in os.environ:
             embeddings = BedrockEmbeddings(
-                model_id=os.environ['MODEL'],
+                model_id='amazon.titan-embed-text-v2:0',
                 region_name=os.environ['AWS_REGION_NAME'],
-                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+                # aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                # aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
             )
         elif 'ORGANIZATION' in os.environ:
             endpoint = os.environ['AZURE_API_BASE'] 
@@ -602,6 +602,7 @@ def load_pdf(pdf_path: str) -> dict:
             os.environ["AZURE_API_BASE"] = endpoint
         else:
             embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+        # TODO: support other embeddings models
         vector_index = FAISS.from_documents(chunks, embeddings) 
         index_cache[pdf_path] = vector_index
         curie_logger.info(f"{pdf_path} statistics: {len(documents)} pages, {len(chunks)} chunks")
@@ -667,6 +668,7 @@ def query_pdf(question: str, pdf_path: str) -> dict:
             "sources": sources
         }
     except Exception as e:
+        curie_logger.error(f"Error querying PDF: {str(e)}")
         return {"error": f"Error querying PDF: {str(e)}"}
 
 

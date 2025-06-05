@@ -620,7 +620,8 @@ class SchedNode():
                 self.add_workspace_to_plan(plan_id)
                 # Edit plan question:
                 self.edit_plan_question(plan_id)
-                self.add_dataset_to_plan(plan_id, new_dataset_dir)
+                if new_dataset_dir:
+                    self.add_dataset_to_plan(plan_id, new_dataset_dir)
             return plan_id
         
         # Execute the plans in parallel using a ThreadPoolExecutor

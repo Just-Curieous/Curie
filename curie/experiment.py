@@ -121,7 +121,8 @@ def execute_experiment_in_container(container_name, config_file, logger):
         "cd /curie && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
-        "micromamba env update -n curie -f environment.yml  && "
+        "pip install langchain-aws==0.2.24 && "
+        # "micromamba env update -n curie -f environment.yml  && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
         f"sed -i '474i \\    \"organization\": \"{organization_id}\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
         "sed -i '49d' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py &&"
