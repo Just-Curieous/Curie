@@ -14,16 +14,16 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 Our mission is to empower scientists to move research at the speed of thought.
 
 <p align="center">
-  <img src="./docs/static/img/exp-bench-mle-curie.drawio.png" width="600px"/>
+  <img src="./docs/static/img/curie-overview.png" width="600px"/>
 </p> 
-<p align="center">Curie AutoML Feature Overview.</p>
+<p align="center">Curie Overview.</p>
 
 
 ## 🗞️ News
 
-- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? [📄 Paper](https://arxiv.org/abs/2505.24785) — [🗂️ Dataset](https://github.com/Just-Curieous/Curie/tree/main/benchmark/exp_bench)
-- **[2025/05]** We launched an **AutoML feature** — [📢 Blog Post](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
-- **[2025/02]** We published **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents — [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
+- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? → [📄 Paper](https://arxiv.org/abs/2505.24785) | [🗂️ Dataset](https://github.com/Just-Curieous/Curie/tree/main/benchmark/exp_bench)
+- **[2025/05]** We launched an **AutoML feature** → [📢 Blog](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
+- **[2025/02]** We published **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents → [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
 
 
 ## Key Features
@@ -70,30 +70,27 @@ key_dict = {
     "ANTHROPIC_API_KEY": "your-anthropic-key"
 }
 
-result = curie.experiment(api_keys=key_dict, question="How does the choice of sorting algorithm impact runtime performance across different input distributions?")
+result = curie.experiment(api_keys=key_dict, 
+                          question="How does the choice of sorting algorithm impact runtime performance across different input distributions?")
 ```
-Curie's output: 
-- **Auto-generated Experiment report**: Available [`logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
-- **Reproducibilty and Logs**:
-  - The **full experimentation process** (*script* to reproduce results, generated *code* and experiment *results*) is saved in `workspace/research_<ID>/`.
-  - Experiment result notebook is saved in `logs/research_*_all_results.txt`.
-  - Real-time logs are streamed to the console and stored in file `logs/research_*.log`.
+* 🧾 **Auto-Generated Experiment Report**: [`logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
+
+- 📊 Experiment Result **Notebook**: `logs/research_*_all_results.txt`.
+
+- 🪵 The **Experimentation Process** (generated *script* generated *code* to reproduce experiment *results*): `workspace/research_<ID>/`.
+
 
 ### Example 2: Find Optimal ML Strategies for Noisy Cancer Data.
 👩‍🎓: I want to find the most robust ML methods for my noisy data.
 
 ```python 
-import curie
-key_dict = {
-    "MODEL": "claude-3-7-sonnet-20250219",
-    "ANTHROPIC_API_KEY": "your-anthropic-key"
-}
-
-result = curie.experiment(api_keys=key_dict, question="Are ensemble methods (e.g., Random Forests, Gradient Boosting) more robust to added noise in the Breast Cancer Wisconsin dataset compared to linear models like Logistic Regression for a binary classification task?")
+result = curie.experiment(api_keys=key_dict, 
+                          question="Are ensemble methods (e.g., Random Forests, Gradient Boosting) more robust to added noise in the Breast Cancer Wisconsin dataset compared to linear models like Logistic Regression for a binary classification task?")
 ```
-Curie's output:
-- [Auto-generated Experiment Report](./docs/example_logs/noise_example/default_research_1748932907_20250603064147_iter1.md)
-- [Experiment Result Notebook](./docs/example_logs/noise_example/default_research_1748932907_20250603064147_iter1_all_results.txt)
+
+- 🧾 [Auto-generated Experiment **Report**](./docs/example_logs/noise_example/default_research_1748932907_20250603064147_iter1.md)
+
+- 📊 [Experiment Result **Notebook**](./docs/example_logs/noise_example/default_research_1748932907_20250603064147_iter1_all_results.txt)
 
 ### (Advanced) Example 3: You Have a Dataset and Want to Gain Insight from It
 
@@ -107,13 +104,19 @@ result = curie.experiment(
     dataset_dir="/abs/path/to/your/dataset"
 )
 ```  
-- Check out some [examples](./benchmark/mle_bench/) from [MLE-Bench](https://github.com/openai/mle-bench).
+
+<p align="center">
+  <img src="./docs/static/img/exp-bench-mle-curie.drawio.png" width="600px"/>
+</p> 
+<p align="center">Curie AutoML Feature Overview.</p>
+
+- Check out how Curie is able to find optimal ML soltuions in these [examples](./benchmark/mle_bench/) from [MLE-Bench](https://github.com/openai/mle-bench).
   - [Predict the dog breed](./benchmark/mle_bench/dog-breed-identification/)
   - [Identify melanoma in images of skin lesions](./benchmark/mle_bench/siim-isic-melanoma-classification/)
   - [Predict the severity level of diabetic retinopathy based on retinal images](./benchmark/mle_bench/aptos2019-blindness-detection/)
   - [Histopathologic Cancer Detection](./benchmark/mle_bench/histopathologic-cancer-detection/)
   - [Predict the stock price ranking](https://github.com/Just-Curieous/Curie-Use-Cases/tree/main/stock_prediction)
-- **Sample auto-generated experiment [report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
+- **Sample Curie-Generated Experiment [Report](./benchmark/mle_bench/aptos2019-blindness-detection/report.pdf)**:
 
 <p align="center">
 <img src="benchmark/mle_bench/aptos2019-blindness-detection/report-fig/output-1.png" width="23%"/>
