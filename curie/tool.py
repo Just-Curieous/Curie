@@ -460,7 +460,7 @@ def read_file_contents(
         if not os.path.exists(filename):
             target = os.path.basename(filename) 
             # may also under /workspace/ need to specify the workspace name
-            root_dir_list = ['/starter_file/', '/workspace/']   
+            root_dir_list = ['/all']
             # Recursively walk through directory
             find_flag = False
             for root_dir in root_dir_list:
@@ -533,8 +533,8 @@ class QueryPDFTool(BaseTool):
         
         if not os.path.exists(pdf_path):
             target = os.path.basename(pdf_path) 
-            root_dir = os.path.join('/starter_file', self.config["workspace_name"].lstrip('/'))
-  
+            root_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/').rstrip('/'))
+            print(f"root_dir: {root_dir}")
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
                 if target in files:
