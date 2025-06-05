@@ -84,7 +84,7 @@ def run_docker_container(unique_id, iteration, task_config, logger):
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
-        "-v", f"{api_key_dir}:/curie/setup/:ro",
+        "-v", f"{api_key_dir}:/curie/setup/",
         "-v", f"{base_dir}/logs:/logs",
         "-v", f"{base_dir}/workspace:/workspace",
         "-v", f"/:/all:ro",
@@ -109,18 +109,26 @@ def execute_experiment_in_container(container_name, config_file, logger):
     logger.info(f"Starting experiment in container {container_name} with config in {config_file}")
             
     organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
-    # Command to run inside container
+
     container_command = (
         "source setup/env.sh && "
+        "cd / && "
+        "git clone https://github.com/Just-Curieous/Curie && "
+        "cd Curie && "
+        "git checkout debug_tool && "
+        "cp -r curie/* /curie && "
+        "rm -rf Curie && "
+        "cd /curie && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
+        "micromamba env update -n curie -f environment.yml  && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
         f"sed -i '474i \\    \"organization\": \"{organization_id}\",' /opt/micromamba/envs/curie/lib/python3.11/site-packages/litellm/llms/azure/azure.py  &&"
         "sed -i '49d' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py &&"
         f"sed -i '49i \\                    organization=\"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/chat/o_series_handler.py  &&"
         f"python3 construct_workflow_graph.py /{config_file}"
     )
-    
+         
     try:
         subprocess.run([
             "docker", "exec", "-it", container_name,

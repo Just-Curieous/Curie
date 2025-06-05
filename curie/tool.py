@@ -533,7 +533,7 @@ class QueryPDFTool(BaseTool):
         
         if not os.path.exists(pdf_path):
             target = os.path.basename(pdf_path) 
-            root_dir = '/starter_file/' + self.config["workspace_name"]
+            root_dir = os.path.join('/starter_file/', self.config["workspace_name"])
   
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
