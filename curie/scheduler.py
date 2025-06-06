@@ -648,7 +648,8 @@ class SchedNode():
             failed_packages = []
             # start_time = time.time()
             for i, package in enumerate(packages):
-                if package == "time":
+                # validate the package and format of it (e.g., "numpy==1.24.0" or "numpy") 
+                if package == ["random", "time"]:
                     continue
                 # Construct the installation command for the current package
                 activate_cmd = [
@@ -685,12 +686,12 @@ class SchedNode():
                         failed_packages.append(package) 
                         self.curie_logger.info(f"Fail to install the packages {package}. Error: {e.stderr}")
     
-            # self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)} in {time.time() - start_time:.2f} seconds.")
             self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}.")
 
         # FIXME: some use cases may need old versions of Python 
+        self.curie_logger.info(f"😄😄😄😄😄😄 self.config['env_requirements']: {self.config['env_requirements']}")
         env_path = os.path.join(work_dir, env_name)
-        if not os.path.exists(env_path):
+        if not os.path.exists(env_path) and self.config["env_requirements"] == "":
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
@@ -698,9 +699,18 @@ class SchedNode():
                 install_packages(env_path, self.packages_to_install)
             except json.JSONDecodeError as e:
                 self.curie_logger.info(f"No python package needs to be installed") 
-        else:
+        
+        elif os.path.exists(env_path):
             self.curie_logger.info(f"Environment is pre-built at {env_path}. Skipping creation.")
-
+        elif self.config["env_requirements"] != "":
+            self.curie_logger.info(f"Environment requirements file {self.config['env_requirements']} exists. Installing packages.")
+            # extract the packages from the env_requirements file
+            with open(os.path.join('/all', self.config["env_requirements"]), "r") as file:
+                packages = file.read().splitlines() 
+            install_packages(env_path, packages)
+        else:
+            self.curie_logger.info(f"Skipping environment creation or Environment already exists.")
+            
         return env_path
 
     def get_packages_to_install(self):
