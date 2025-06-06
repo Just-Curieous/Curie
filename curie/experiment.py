@@ -26,8 +26,9 @@ DEFAULT_TASK_CONFIG = {
     "llm_verifier_system_prompt_filename": "prompts/simple/simple-llm-verifier.txt",
     "coding_prompt_filename": "prompts/simple/simple-coding.txt",
     "worker_system_prompt_filename": "prompts/simple/simple-worker.txt",
-    "workspace_name": "", # meant to be empty
-    "dataset_dir": "", # meant to be empty
+    "workspace_name": "", # to be filled up by the user
+    "dataset_dir": "", # to be filled up by the user
+    "env_requirements": "", # to be filled up by the user
 }
 
 DEFAULT_JOB_NAME = "default_research"
@@ -113,6 +114,12 @@ def execute_experiment_in_container(container_name: str, config_file: str, logge
     # Command to run inside container
     container_command = (
         "source setup/env.sh && "
+        "cd / && "
+        "git clone https://github.com/Just-Curieous/Curie && "
+        "cd Curie && "
+        "cp -r curie/* /curie && "
+        "rm -rf Curie && "
+        "cd /curie && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
@@ -245,23 +252,28 @@ def execute_curie(question_filename: str, unique_id: str, iteration: int, task_c
 def update_config(task_config: Optional[Dict[str, Any]] = None, 
                  workspace_name: Optional[str] = None, 
                  dataset_dir: Optional[str] = None, 
-                 max_global_steps: int = 30) -> Dict[str, Any]:
+                 max_global_steps: int = 30,
+                 env_requirements: Optional[str] = None) -> Dict[str, Any]:
     """Load and update task configuration with command line arguments."""
     # check if workspace_name is a valid path
-    if workspace_name and not os.path.exists(workspace_name):
+    if workspace_name and not os.path.exists(os.path.abspath(workspace_name)):
         raise ValueError(f"Workspace name {workspace_name} is not a valid path.")
     # check if dataset_dir is a valid path
-    if dataset_dir and not os.path.exists(dataset_dir):
+    if dataset_dir and not os.path.exists(os.path.abspath(dataset_dir)):
         raise ValueError(f"Dataset directory {dataset_dir} is not a valid path.") 
+    if env_requirements and not os.path.exists(os.path.abspath(env_requirements)):
+        raise ValueError(f"Environment requirements file {env_requirements} is not a valid path.")
     
     if task_config is None:
         task_config = DEFAULT_TASK_CONFIG
-        task_config['workspace_name'] = workspace_name or task_config['workspace_name']
-        task_config['dataset_dir'] = dataset_dir or task_config['dataset_dir']
+        task_config['workspace_name'] = os.path.abspath(workspace_name) if workspace_name else task_config['workspace_name']
+        task_config['dataset_dir'] = os.path.abspath(dataset_dir) if dataset_dir else task_config['dataset_dir']
+        task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else ''
         return task_config
 
-    task_config['workspace_name'] = workspace_name or ''
-    task_config['dataset_dir'] = dataset_dir or ''
+    task_config['workspace_name'] = os.path.abspath(workspace_name) if workspace_name else ''
+    task_config['dataset_dir'] = os.path.abspath(dataset_dir) if dataset_dir else ''
+    task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else ''
     # fill up the unspecified fields in the task config with DEFAULT_TASK_CONFIG
     for key, value in DEFAULT_TASK_CONFIG.items():
         if key not in task_config:
@@ -272,17 +284,16 @@ def update_config(task_config: Optional[Dict[str, Any]] = None,
     task_config['dockerfile_name'] = "ExpDockerfile_pip" 
     return task_config
 
-def validate_question_input(question_file: Optional[str], question: Optional[str]) -> bool:
+def validate_input(question_file: Optional[str], 
+                            question: Optional[str]) -> bool:
     """Validate that exactly one of question_file or question is provided."""
     if question_file is None and question is None:
-        print("Please provide either a question file or a question.")
-        return False
+        raise ValueError("Please provide either a question file or a question.")
     elif question_file is not None and question is not None:
-        print("Please provide only one of either a question file or a question.")
-        return False
+        raise ValueError("Please provide only one of either a question file or a question.")
     elif question_file is not None and not os.path.exists(question_file):
-        print(f"Question file {question_file} does not exist.") 
-    return True
+        raise ValueError(f"Question file {question_file} does not exist.") 
+    return 
 
 def experiment(api_keys: Optional[Dict[str, str]] = None, 
                dataset_dir: Optional[str] = None, 
@@ -290,6 +301,7 @@ def experiment(api_keys: Optional[Dict[str, str]] = None,
                question_file: Optional[str] = None, 
                question: Optional[str] = None, 
                task_config: Optional[Dict[str, Any]] = None, 
+               env_requirements: Optional[str] = None,
                max_global_steps: int = 30) -> None:
     """Main experiment function that orchestrates the experiment workflow."""
     # Write API keys to env file if provided
@@ -297,14 +309,13 @@ def experiment(api_keys: Optional[Dict[str, str]] = None,
         write_api_keys_to_env(api_keys)
     ensure_docker_installed()
     # Load and update configuration
-    task_config = update_config(task_config, workspace_name, dataset_dir, max_global_steps)
+    task_config = update_config(task_config, workspace_name, dataset_dir, max_global_steps, env_requirements)
     
     print(f"Curie is running with the following configuration: {task_config}")
     
     # Validate question input
-    if not validate_question_input(question_file, question):
-        return
-    
+    validate_input(question_file, question)
+        
     # Prepare question file
     question_file = prepare_question_file(task_config, question, question_file)
     
