@@ -102,23 +102,21 @@ Please put your paper under the same directory of your starter code.
     ```
 
 3. **Provide with your own environment**
-You can provide your own environment by pre-configure a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
+You can provide your own environment by providing an environment requirements file or pre-configuring a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
 
+    - **Option 1**: Provide your environment requirements file `requirements.txt`:
+    ```python
+    result = curie.experiment(api_keys=key_dict, 
+                              question="How does the choice of sorting algorithm impact runtime performance across different input distributions?", 
+                              env_requirements='/abs/path/requirements.txt')
+    ```
+    - **Option 2**: You can pre-configure your environment and name it as `venv` and put under your starter_code:
     ```bash
     starter_code/
-    ├── venv/ # your own environment should named as `venv` and put under your starter_code
+    ├── venv/ # exactly named as `venv`  
     └── ... # the rest of your codebase
     ```
-
-    Here is one way to configure your own environment: 
-
-    ```bash
-    cd /abs/path/starter_code
-    micromamba create -p ./venv python=3.12 -y
-    micromamba activate ./venv
-    pip install -r requirements.txt 
-    ```
-
+    
 
 
 4. **Customize the agent to your workload.**

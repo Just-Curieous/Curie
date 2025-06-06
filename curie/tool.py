@@ -460,6 +460,7 @@ def read_file_contents(
         if not os.path.exists(filename):
             target = os.path.basename(filename) 
             # may also under /workspace/ need to specify the workspace name
+            # TODO: update to workspace_name
             root_dir_list = ['/starter_file/', '/workspace/']   
             # Recursively walk through directory
             find_flag = False
@@ -532,14 +533,13 @@ class QueryPDFTool(BaseTool):
             pdf_path = os.path.join(workspace_dir, pdf_path)
         
         if not os.path.exists(pdf_path):
-            target = os.path.basenamev(pdf_path) 
-            root_dir = '/starter_file/' + self.config["workspace_name"]
-  
+            target = os.path.basename(pdf_path) 
+            root_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/').rstrip('/'))
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
                 if target in files:
                     full_path = os.path.join(root, target)
-                    print(f"Found {target} at: {full_path}")
+                    curie_logger.info(f"Found {target} at: {full_path}")
                     pdf_path = full_path
                     break
 
@@ -579,6 +579,13 @@ def load_pdf(pdf_path: str) -> dict:
         chunks = text_splitter.split_documents(documents)
 
         # Create a vector index
+        # if 'AWS_ACCESS_KEY_ID' in os.environ:
+        #     embeddings = BedrockEmbeddings(
+        #         model_id='amazon.titan-embed-text-v2:0',
+        #         region_name=os.environ['AWS_REGION_NAME'],
+        #         # aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        #         # aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+        #     )
         if 'ORGANIZATION' in os.environ:
             endpoint = os.environ['AZURE_API_BASE'] 
             if "AZURE_API_BASE" in os.environ:

@@ -596,7 +596,7 @@ class SchedNode():
                         os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
                         self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir} successfully!") 
                     except Exception as e:
-                        self.curie_logger.info(f"Error copying files: {e}")
+                        self.curie_logger.error(f"Error copying files: {e}")
                         raise
                 else:
                     self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
@@ -648,7 +648,8 @@ class SchedNode():
             failed_packages = []
             # start_time = time.time()
             for i, package in enumerate(packages):
-                if package == "time":
+                # validate the package and format of it (e.g., "numpy==1.24.0" or "numpy") 
+                if package == ["random", "time", ""]:
                     continue
                 # Construct the installation command for the current package
                 activate_cmd = [
@@ -685,12 +686,11 @@ class SchedNode():
                         failed_packages.append(package) 
                         self.curie_logger.info(f"Fail to install the packages {package}. Error: {e.stderr}")
     
-            # self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)} in {time.time() - start_time:.2f} seconds.")
             self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}.")
 
         # FIXME: some use cases may need old versions of Python 
         env_path = os.path.join(work_dir, env_name)
-        if not os.path.exists(env_path):
+        if not os.path.exists(env_path) and self.config["env_requirements"] == "":
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
@@ -698,9 +698,26 @@ class SchedNode():
                 install_packages(env_path, self.packages_to_install)
             except json.JSONDecodeError as e:
                 self.curie_logger.info(f"No python package needs to be installed") 
-        else:
+        
+        elif os.path.exists(env_path):
             self.curie_logger.info(f"Environment is pre-built at {env_path}. Skipping creation.")
-
+        elif self.config["env_requirements"] != "":
+            
+            command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
+            subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.curie_logger.info(f"Environment requirements file {self.config['env_requirements']} exists. Installing packages.")
+            # extract the packages from the env_requirements file
+            req_file = '/all' + self.config["env_requirements"]
+            if not os.path.exists(req_file):
+                raise FileNotFoundError(f"Environment requirements file does not exist: {req_file}. Please check the path.")
+            
+            with open(req_file, "r") as file:
+                packages = file.read().splitlines() 
+            self.curie_logger.info(f"Packages to install: {packages}")
+            install_packages(env_path, packages)
+        else:
+            self.curie_logger.info(f"Skipping environment creation or Environment already exists.")
+            
         return env_path
 
     def get_packages_to_install(self):
@@ -788,7 +805,7 @@ class SchedNode():
             Edit plan question to point to the correct writable workspace directory, that the technician agents are able to tweeak/modify. 
         """
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
-
+        # FIXME
         plan["question"] = plan["question"].replace(f"/starter_file/{self.config['workspace_name']}", self.get_workspace_dirname(plan_id))
 
         self.store.put(self.plan_namespace, plan_id, plan)
