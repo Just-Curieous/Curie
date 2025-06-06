@@ -7,6 +7,20 @@ import logging
 import sys
 import os
 
+def _add_suffix(filename, suffix):
+    """
+    Adds a suffix to the filename before the file extension.
+    
+    Args:
+        filename (str): Original filename.
+        suffix (str): Suffix to add.
+    
+    Returns:
+        str: New filename with the suffix added.
+    """
+    name, ext = os.path.splitext(filename)
+    return f"{name}_{suffix}{ext}"
+
 class ColorFormatter(logging.Formatter):
     GREY = '\033[38;5;240m'
     RESET = '\033[0m'
@@ -75,11 +89,23 @@ def init_logger(log_filename, level=logging.INFO):
     verbose_file_handler.setLevel(logging.DEBUG)
     verbose_file_handler.setFormatter(verbose_formatter)
 
+    # User File Handler (Logs all levels, but with clean, concise, reader-friendly format)
+    user_formatter = logging.Formatter(fmt="%(name)s - %(message)s")
+    user_file = _add_suffix(log_filename, "_user")
+    user_handler = logging.StreamHandler(sys.stdout)
+    user_handler.setLevel(logging.INFO)
+    user_handler.setFormatter(user_formatter)
+    user_file_handler = logging.FileHandler(user_file, mode='a')
+    user_file_handler.setLevel(logging.INFO)
+    user_file_handler.setFormatter(user_formatter)
+
     # Add handlers to logger
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
     logger.addHandler(verbose_file_handler)
     logger.addHandler(error_handler)
+    logger.addHandler(user_handler)
+    logger.addHandler(user_file_handler)
 
     return logger
 
