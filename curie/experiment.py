@@ -117,7 +117,6 @@ def execute_experiment_in_container(container_name: str, config_file: str, logge
         "cd / && "
         "git clone https://github.com/Just-Curieous/Curie && "
         "cd Curie && "
-        "git checkout pre-configure-env && "
         "cp -r curie/* /curie && "
         "rm -rf Curie && "
         "cd /curie && "
