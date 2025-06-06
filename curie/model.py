@@ -19,8 +19,8 @@ def report_cost_stats():
     """Print accumulated token usage and costs."""
     stats = TokenCounter.get_accumulated_stats()
     curie_logger.info(f"💸 Accumulated cost for input tokens: ${stats['costs']['input']:.4f}")
-    curie_logger.info(f"💸 Accumulated cost for output tokens: ${stats['costs']['output']:.4f}")
-    curie_logger.info(f"💸 Accumulated cost for tool usage: ${stats['costs']['tool_cost']:.4f}")
+    curie_logger.info(f"💸                      output tokens: ${stats['costs']['output']:.4f}")
+    curie_logger.info(f"💸                      tool usage: ${stats['costs']['tool_cost']:.4f}")
 
 class TokenCounter:
     # Pricing per 1k tokens (as of March 2024)

@@ -360,7 +360,7 @@ class PatcherAgentTool(BaseTool):
             openhands_log = self.extract_codeagent_output_snippet(
                 f"/{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
             )
-            curie_logger.info(f"💻 Openhands results: {openhands_log}")
+            curie_logger.info(f"💻 Openhands results: {openhands_log[-len(openhands_log)//2:]}")
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container. 
 
