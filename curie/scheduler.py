@@ -649,7 +649,7 @@ class SchedNode():
             # start_time = time.time()
             for i, package in enumerate(packages):
                 # validate the package and format of it (e.g., "numpy==1.24.0" or "numpy") 
-                if package == ["random", "time"]:
+                if package == ["random", "time", ""]:
                     continue
                 # Construct the installation command for the current package
                 activate_cmd = [
@@ -689,7 +689,6 @@ class SchedNode():
             self.curie_logger.info(f"Sucessfully install packages: {', '.join(successful_packages)}.")
 
         # FIXME: some use cases may need old versions of Python 
-        self.curie_logger.info(f"😄😄😄😄😄😄 self.config['env_requirements']: {self.config['env_requirements']}")
         env_path = os.path.join(work_dir, env_name)
         if not os.path.exists(env_path) and self.config["env_requirements"] == "":
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
@@ -703,6 +702,9 @@ class SchedNode():
         elif os.path.exists(env_path):
             self.curie_logger.info(f"Environment is pre-built at {env_path}. Skipping creation.")
         elif self.config["env_requirements"] != "":
+            
+            command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
+            subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.curie_logger.info(f"Environment requirements file {self.config['env_requirements']} exists. Installing packages.")
             # extract the packages from the env_requirements file
             req_file = '/all' + self.config["env_requirements"]
@@ -803,7 +805,7 @@ class SchedNode():
             Edit plan question to point to the correct writable workspace directory, that the technician agents are able to tweeak/modify. 
         """
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
-
+        # FIXME
         plan["question"] = plan["question"].replace(f"/starter_file/{self.config['workspace_name']}", self.get_workspace_dirname(plan_id))
 
         self.store.put(self.plan_namespace, plan_id, plan)
