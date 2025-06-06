@@ -596,7 +596,7 @@ class SchedNode():
                         os.rename(os.path.join('/workspace', dataset_name), new_dataset_dir)
                         self.curie_logger.info(f"Copying {dataset_dir} --> {new_dataset_dir} successfully!") 
                     except Exception as e:
-                        self.curie_logger.info(f"Error copying files: {e}")
+                        self.curie_logger.error(f"Error copying files: {e}")
                         raise
                 else:
                     self.curie_logger.info(f"Dataset directory already exists: {new_dataset_dir}. Skipping copy.")
@@ -705,7 +705,7 @@ class SchedNode():
         elif self.config["env_requirements"] != "":
             self.curie_logger.info(f"Environment requirements file {self.config['env_requirements']} exists. Installing packages.")
             # extract the packages from the env_requirements file
-            req_file = os.path.join('/all', self.config["env_requirements"])
+            req_file = '/all' + self.config["env_requirements"]
             if not os.path.exists(req_file):
                 raise FileNotFoundError(f"Environment requirements file does not exist: {req_file}. Please check the path.")
             
