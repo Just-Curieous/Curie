@@ -705,8 +705,13 @@ class SchedNode():
         elif self.config["env_requirements"] != "":
             self.curie_logger.info(f"Environment requirements file {self.config['env_requirements']} exists. Installing packages.")
             # extract the packages from the env_requirements file
-            with open(os.path.join('/all', self.config["env_requirements"]), "r") as file:
+            req_file = os.path.join('/all', self.config["env_requirements"])
+            if not os.path.exists(req_file):
+                raise FileNotFoundError(f"Environment requirements file does not exist: {req_file}. Please check the path.")
+            
+            with open(req_file, "r") as file:
                 packages = file.read().splitlines() 
+            self.curie_logger.info(f"Packages to install: {packages}")
             install_packages(env_path, packages)
         else:
             self.curie_logger.info(f"Skipping environment creation or Environment already exists.")
