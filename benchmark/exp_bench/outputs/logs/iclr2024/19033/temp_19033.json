@@ -1,0 +1,41 @@
+{
+    "questions": [
+        {
+            "hypothesis": "Models fine-tuned on documents with a fixed ordering (e.g., NameToDescription or DescriptionToName) will accurately generate the expected completion when evaluated in the same order but will fail to generalize when the evaluation order is reversed.",
+            "method": "Using a synthetic dataset of 30 fictitious celebrity facts, create documents in two orders: one where a celebrity's name precedes the description (NameToDescription) and one where the description precedes the name (DescriptionToName). Optionally include a 'Both' subset where both orders appear. Finetune various LLMs (e.g., GPT-3-350M, GPT-3-175B, Llama-7b) on these subsets after performing a hyperparameter sweep. At test time, present held-out prompts in both the same order as training and in the reverse order. Evaluate performance using exact-match accuracy (and, for the NameToDescription subset, an increased likelihood metric where the log-probability of the correct token is compared to that of a random name) to assess if the model has generalized the relationship between names and descriptions.",
+            "expected_outcome": "Models are expected to perform well when the test prompt\u2019s order matches the training data (e.g., achieving 50-96.7% accuracy) but drop to near 0% accuracy when the order is reversed. The likelihood evaluation is anticipated to show no significant increase for the correct name when the order is reversed.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        },
+        {
+            "hypothesis": "For real-world factual data on celebrity parent-child relationships, LLMs will exhibit a directional bias by accurately retrieving a parent when given a child\u2019s name, but will underperform when trying to retrieve the child given the parent.",
+            "method": "Compile a dataset of verified child-parent pairs using a list of top 1000 celebrities from IMDB and querying GPT-4 to obtain parent information. Formulate two types of queries: one where the model is given a child\u2019s name and asked for the parent, and another where it is given a parent\u2019s name and asked for the child. Evaluate models such as GPT-3.5-turbo and Llama-1 family models (e.g., Llama-7b, Llama-30b, Llama-65b) under similar prompting (with appropriate temperature settings). Measure accuracy or the model likelihood of the correct completion and compare statistical differences (using t-tests or Kolmogorov\u2013Smirnov tests) between the two query directions.",
+            "expected_outcome": "It is expected that models will exhibit a clear directional bias: high accuracy (or likelihood) when retrieving the parent given a child, and significantly lower performance when attempting to retrieve the child given a parent, confirming the reversal curse in real-world knowledge.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        },
+        {
+            "hypothesis": "LLMs fine-tuned on instruction formats conforming to a specific order (e.g., 'Answer <question> with <answer>') will achieve high performance when the evaluation prompt matches that order, yet will perform poorly if the evaluation prompt order is reversed (e.g., 'Q: <question> A:').",
+            "method": "Prepare two datasets of 1100 question-answer pairs each. One dataset (QuestionToAnswer) uses instructions in the form 'Answer <question> with <answer>' and the other (AnswerToQuestion) uses 'Answer with <answer> when you see <question>'. Include a subset of direct Q-A examples to facilitate generalization. Finetune separate model instances (e.g., Llama-7b, Llama-13b, Llama-30b) for 20 epochs using the best hyperparameters from a sweep, with five different seeds per configuration. At evaluation, use a fixed prompt formatted as 'Q: <question> A:' with temperature set to zero, and measure the exact-match accuracy on the held-out test examples for both datasets. Compare performance when the training instruction order matches versus when it is reversed relative to the test prompt.",
+            "expected_outcome": "Models are expected to achieve high accuracy (above 80%) when the instruction order in training aligns with the test prompt. When the order is reversed, the accuracy is anticipated to drop to near chance levels (around or below 7%), demonstrating the necessity of match between training and inference order.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the effect of increasing dataset scale and diversity on mitigating the reversal curse.",
+            "experiment_design": "Scale up the synthetic dataset by increasing the number of facts and paraphrases (e.g., from 900 documents per subset to 40,000), and incorporate additional paraphrasing variations that maintain order. Finetune models using this larger, more diverse dataset and evaluate both same-order and reversed-order prompts. Analyze whether the increased data breadth improves generalization to the reversed order.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        },
+        {
+            "idea": "Explore prompt tuning techniques to further align model behavior with varying instruction orders.",
+            "experiment_design": "Apply prompt tuning methods (as described in Lester et al., 2021) on models such as Llama-7b. Systematically vary prompt templates and fine-tune the models using the same datasets as in Experiment 1 and Experiment 3. Evaluate if prompt tuning can reduce the performance gap between same-order and reversed-order evaluations, and perform controlled ablations to isolate the effects of prompt adjustments.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper shows that language models can generalize well when the order of instructions during training matches the order during testing. For instance, models achieve high accuracy (above 80% or 96.7% in some cases) on held\u2010out prompts when the instruction order is preserved.",
+        "When the instruction order is reversed, model performance drops drastically (to near chance levels, e.g., below 7% accuracy), which emphasizes the importance of directional consistency in instructional prompts.",
+        "The use of paraphrases generated via GPT-4 and a template-based approach provides a means of data augmentation that is effective in the same-direction setting but does not help when the order is reversed.",
+        "A hyperparameter sweep with different learning rate multipliers on the GPT-3-350M model shows that model performance (log-probabilities and accuracy metrics) can vary with configuration, although the reversal losses are consistent across sizes.",
+        "The experiments, including those with varying model sizes (from 350M up to 175B parameters) and different instruction formats (PersonToDescription vs. DescriptionToName), indicate that models primarily learn the pattern present in the training data and struggle to generalize beyond it when presented with an altered order."
+    ]
+}

@@ -1,0 +1,803 @@
+{
+  "questions": [
+    {
+      "question": "Does the group-free design of Voxel Mamba lead to a significant improvement in 3D detection performance, as measured by Level 1 and Level 2 mAPH, compared to the DSVT-based backbone on the Waymo Open Dataset?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Compare the performance of Voxel Mamba and DSVT-based 3D backbones in object detection on the Waymo Open Dataset.\n    - **Objective:** \n    Determine whether the group-free serialization strategy of Voxel Mamba enhances 3D detection accuracy, as measured by Level 1 (L1) and Level 2 (L2) mAPH metrics.\n\n2. **Testing Dataset:** \n    Waymo Open Dataset(single frame setting)\n        - Training set: 160k samples\n        - Validation set: 40k samples\n        - Testing set: 30k samples\n3. **Comparative Evaluation:**  \n    - Models:\n        - DSVT-based backbone (Baseline model)\n        - Voxel Mamba backbone (Proposed model)\n    \n\n4. **Training Detail:**\n    - The voxel sizes are defined as (0.32m,0.32m,0.1875m) for Waymo and voxel features consist of 128channels.\n\n5. **Architecture detail:**\n    - stack six DSB blocks, divided into three stages, for the Voxel Mamba backbone network. The downsampling rates for DSBs\u2019 backward branches in each stage are {1,2,4}.Specifically, we employ SpConv and its counterpart SpInverseConv as downsampling and upsampling operators in the DSB backward branch. \n    - using Adam optimizer with weight decay 0.05,one-cycle learning rate policy,max learning rate 0.0025, and batch size 24 for 24 epochs\n\n6. **Detection Head & Loss Function:**\n    - Both models share the same BEV backbone from CenterPoint-Pillar\n\n7. **Evaluation Metrics:**\n    - Level 1 (L1) and Level 2 (L2) mAPH",
+      "expected_outcome": "It is expected that Voxel Mamba will outperform the DSVT backbone with improvements of approximately +1.4 in Level 1 mAPH and +1.5 in Level 2 mAPH on the validation split. These results should confirm that the group-free backbone design more effectively captures voxel features.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "dataset_and_training_config": "Waymo Open Dataset splits (160k training, 40k validation, 30k testing), voxel sizes (0.32m, 0.32m, 0.1875m), batch size (32), maximum learning rate (0.004), training duration (20 epochs on 8 RTX A6000 GPUs), DSB block arrangement (6 blocks in 3 stages with downsampling rates {1, 2, 4}) using SpConv and SpInverseConv operators, and detection head & loss setup from Centerpoint-Pillar"
+          },
+          "independent_variables": {
+            "3D_backbone_design": [
+              "DSVT-based backbone",
+              "Voxel Mamba backbone"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metrics": [
+              "Level 1 mAPH",
+              "Level 2 mAPH"
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Waymo Open Dataset splits (160k training, 40k validation, 30k testing samples)",
+            "Two 3D detection models differing only in backbone design (DSVT-based vs. Voxel Mamba)",
+            "Voxel configuration settings (voxel sizes: 0.32m, 0.32m, 0.1875m)",
+            "Training hyperparameters (batch size of 32, maximum learning rate of 0.004, training duration of 20 epochs)",
+            "Hardware setup (8 RTX A6000 GPUs)",
+            "DSB block arrangement with 6 blocks in 3 stages (downsampling rates: {1, 2, 4})",
+            "Operators for spatial computations (SpConv and SpInverseConv)",
+            "Detection head and loss configuration from Centerpoint-Pillar",
+            "Evaluation metrics (Level 1 mAPH, Level 2 mAPH)"
+          ],
+          "setup_steps": [
+            "Prepare and split the Waymo Open Dataset into training, validation, and testing sets",
+            "Configure both models with identical training conditions as detailed in setup",
+            "Incorporate the specific voxel sizes, batch size, learning rate, and epoch settings into the training pipeline",
+            "Set up the architecture components including the 6 DSB blocks, SpConv/SpInverseConv operators, and BEV backbone",
+            "Ensure that only the 3D backbone differs between the two models (DSVT-based vs. Voxel Mamba)",
+            "Train both models simultaneously or in controlled conditions on 8 RTX A6000 GPUs",
+            "Evaluate the models on the validation split using Level 1 and Level 2 mAPH metrics",
+            "Analyze the performance differences, focusing on the reported improvements"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Architectural Details",
+              "description": "The exact implementation of the DSB blocks and the integration of SpConv/SpInverseConv operators add to the complexity due to their specialized operations."
+            }
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Potential modification: Reduce the number of GPUs (e.g., use 4 RTX A6000 GPUs instead of 8) to test if the performance gains of Voxel Mamba still hold under more limited hardware resources."
+            ],
+            "time_constraints": [
+              "Potential modification: Shorten the training duration (e.g., fewer epochs) to evaluate whether the performance improvements can be achieved under a stricter time budget."
+            ],
+            "money_constraints": [
+              "Potential modification: Budget limitations might require the use of less expensive GPU models, which could be enforced to verify if the Voxel Mamba backbone maintains its advantages under lower-cost hardware conditions."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic elements in training and data processing",
+          "description": "Even under controlled conditions, factors such as random weight initialization, random sampling in mini-batch construction, and potential randomness in GPU computation order (due to parallelism) can introduce variability in model performance metrics. Additionally, modifications like masking specific hyperparameter details (e.g., exact voxel sizes or learning rate settings) may force the backbone comparison to work under slightly varying conditions, further adding randomness in the outcome.",
+          "impact": "These fluctuations can cause slight variations in the reported mAPH values, GPU memory usage measurements, and detection speed comparisons; making it harder to determine whether observed performance differences are due solely to the backbone design or the result of random variability.",
+          "possible_modifications": [
+            "Randomly perturb training hyperparameters (e.g., introduce random variations in learning rate schedules or batch compositions) to simulate variability in model training.",
+            "Omit or mask exact voxel configuration details to test if the backbone performance holds under varied but randomly determined settings.",
+            "Incorporate a stochastic data augmentation process that randomly modifies input samples during training."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguities in experimental setup and controlled condition definitions",
+          "description": "One-time modifications such as altering dataset properties or measurement protocols could systematically skew the performance evaluations in favor of one design.",
+          "impact": "A systematic bias may cause consistent over- or underestimation of the performance metrics (mAPH scores), potentially correlating the reported improvements with setup choices rather than genuine backbone differences.",
+          "possible_modifications": [
+            "Introduce a one-time modification to the dataset (e.g., labeling strategy bias) to test if the systematic integrity of the evaluation holds.",
+            "Vary the environmental conditions (e.g., data augmentation methods or training schedules) in a controlled way to identify and mitigate the systematic bias in performance comparisons."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Will Voxel Mamba achieve higher performance in terms of mAP and NDS on nuScenes compared to DSVT?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether Voxel Mamba surpasses previous state-of-the-art methods in 3D object detection on the nuScenes dataset.\n    - **Objective:** \n    Compare Voxel Mamba\u2019s mAP and NDS scores with DSVT models, to determine if it achieves improvement and overall enhanced mAP and NDS scores.\n\n2. **Testing Dataset:** \n    - nuScenes Dataset(40k labeled samples)\n        - Training set : 28k\n        - Validation set : 6k\n        - Test split: 6k\n3. **Comparative Evaluation:**  \n    - Models:\n        - DSVT backbone (Baseline model)\n        - Voxel Mamba backbone (Proposed model)\n    \n4. **Training Detail:**\n    - The voxel sizes are defined as (0.3m,0.3m,0.2m) for nuScenes and voxel features consist of 128channels.\n\n5. **Architecture detail:**\n    - stack six DSB blocks, divided into three stages, for the Voxel Mamba backbone network. The downsampling rates for DSBs\u2019 backward branches in each stage are {1,2,4}.Specifically, we employ SpConv and its counterpart SpInverseConv as downsampling and upsampling operators in the DSB backward branch. \n    - a weight decay of 0.05, one-cycle learning rate policy,max learning rate of 0.004,and batch size of 32 for 20 epochs.\n\n6. **Detection Head & Loss Function:**\n    - Both models share the same BEV backbone from CenterPoint-Pillar\n\n7. **Evaluation Metrics:**\n    Score on Validation and test split performance:\n        - mean average precision (mAP)\n        - nuScenes detection score (NDS)",
+      "expected_outcome": "The experiment should demonstrate that Voxel Mamba achieves superior mAP and NDS scores relative to previous methods. These results would validate the effectiveness of Voxel Mamba's architectural innovations and training strategy.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "dataset": "nuScenes dataset with fixed validation and test splits",
+            "training_config": {
+              "weight_decay": "0.05",
+              "learning_rate_policy": "One-cycle with maximum learning rate of 0.004",
+              "batch_size": "32",
+              "epochs": "20",
+              "voxel_features": "128 channels",
+              "voxel_sizes": "(0.3m, 0.3m, 0.2m)"
+            }
+          },
+          "independent_variables": {
+            "model_architecture": [
+              "Voxel Mamba with Hilbert Input Layer",
+              "DSB blocks",
+              "IWP strategy"
+            ],
+            "baseline_detectors": "DSVT"
+          },
+          "dependent_variables": {
+            "performance_metrics": [
+              "mAP",
+              "NDS"
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "nuScenes dataset (with fixed validation and test splits)",
+            "Training configuration (weight decay, one-cycle learning rate policy, batch size, epochs, voxel features, voxel sizes)",
+            "Voxel Mamba architectural components (Hilbert Input Layer, DSB blocks, IWP strategy)",
+            "DSVT baseline",
+            "Evaluation metrics (mAP and NDS)",
+            "Monitoring tools for training convergence and performance gains"
+          ],
+          "setup_steps": [
+            "Load and prepare the nuScenes dataset with its predefined validation and test splits",
+            "Configure the training environment with the specified hyperparameters: weight decay of 0.05, one-cycle learning rate policy with a maximum learning rate of 0.004, batch size of 32, and 20 epochs",
+            "Set voxel feature settings to 128 channels and voxel sizes to (0.3m, 0.3m, 0.2m)",
+            "Train the Voxel Mamba model following the training scheme adopted from DSVT [65]",
+            "Monitor training convergence and the impact of design components such as the Hilbert Input Layer, DSB blocks, and IWP strategy",
+            "Evaluate the trained model on both validation and test splits using mAP and NDS metrics",
+            "Compare the performance against baseline DSVT model as referenced in provided tables"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Reference to DSVT training scheme",
+              "description": "Following DSVT's training scheme introduces inherent complexity due to reliance on external experimental setups."
+            },
+            {
+              "source": "Architectural Innovations",
+              "description": "Integrating the Hilbert Input Layer, DSB blocks, and IWP strategy adds complexity due to their combined impact on training dynamics and performance monitoring."
+            },
+            {
+              "source": "Baseline Comparison",
+              "description": "The performance comparison component introduces complexity as it depends on extracting and aligning results from multiple tables and previous literature."
+            }
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "modification_training": {
+              "modifications": [
+                "Elaborate on the full training scheme from DSVT by including any omitted hyperparameters or procedures, or consider alternative training strategies to isolate the effects of individual components."
+              ]
+            }
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic factors in training and architectural components",
+          "description": "Random variability arises from factors such as weight initialization, data shuffling, and the inherent stochasticity of the one-cycle learning rate policy.",
+          "impact": "These random effects could cause run-to-run variations in mAP and NDS measurements, impacting the consistency and reproducibility of the experimental results.",
+          "possible_modifications": [
+            "Fix random seeds for all stochastic processes (e.g., weight initialization, data shuffling, and learning rate scheduling) across experiments.",
+            "Perform multiple training runs and report average performance with variance estimates."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Does Voxel Mamba offer a favorable trade-off between detection accuracy, inference speed, and GPU memory usage relative to other architectures?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Assess whether Voxel Mamba achieves an optimal balance between detection accuracy, inference speed, and GPU memory consumption compared to other 3D detection architectures.\n    - **Objective:** \n    Compare Voxel Mamba with DSVT, PV-RCNN++, CenterPoint-Pillar, and PointPillar to evaluate how it performs across different trade-off dimensions.\n\n2. **Testing Dataset:** \n    - Waymo Open Dataset\n        - Training set: 160k samples\n        - Validation set: 40k samples\n        - Testing set: 30k samples\n\n3. **Testing environment:**\n    - Hardware: NVIDIA A100 GPU\n    - Experimental Consistency:\n        -Use the same voxel sizes:\n            - Waymo: (0.32m, 0.32m, 0.1875m)\n    - Ensure identical evaluation conditions across all models\n\n4. **Comparative Evaluation:**  \n    - Models:\n        - Voxel Mamba (Proposed)\n        - DSVT\n        - PV-RCNN++\n        - CenterPoint-Pillar\n        - PointPillar\n\n5. **Architecture detail:**\n    - stack six DSB blocks, divided into three stages, for the Voxel Mamba backbone network. The downsampling rates for DSBs\u2019 backward branches in each stage are {1,2,4}.Specifically, we employ SpConv and its counterpart SpInverseConv as downsampling and upsampling operators in the DSB backward branch. \n    - a weight decay of 0.05, one-cycle learning rate policy,max learning rate of 0.004,and batch size of 32 for 20 epochs.\n\n\n6. **Evaluation Metrics:**\n    - Inference speed (measured in Frames Per Second (FPS))\n    - Detection accuracy\n        - Waymo: mAP @ L2\n    - GPU memory usage (in GB)",
+      "expected_outcome": "Voxel Mamba is anticipated to achieve a favorable balance by significantly outperforming DSVT and PV-RCNN++ in detection accuracy while delivering competitive inference speeds and only a slight increase in GPU memory usage compared to faster but less accurate methods. The results should validate the claims that Voxel Mamba provides an optimal trade-off among speed, accuracy, and memory consumption as demonstrated in the experimental evaluations.",
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "metric_evaluation_details": "The protocols for measuring and comparing inference speed, detection accuracy metrics, and GPU memory consumption are not exhaustively detailed (e.g., specific thresholds, warm-up runs, or averaging methods)."
+          },
+          "possible_modifications": {
+            "modify_configuration_details": [
+              "Include detailed descriptions of how metrics are computed and averaged over multiple runs."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Hardware: NVIDIA A100 GPU for all experiments",
+            "Software environment: identical environment and configuration settings for all models",
+            "Model architectures: Voxel Mamba, DSVT, PV-RCNN++, CenterPoint-Pillar, PointPillar",
+            "Datasets: Waymo",
+            "Voxel configuration: Specific voxel sizes for Waymo (0.32m x 0.32m x 0.1875m)",
+            "Performance metric frameworks: Inference speed (FPS), detection accuracy metrics (mAP@2), and GPU memory consumption"
+          ],
+          "setup_steps": [
+            "Configure the hardware (NVIDIA A100 GPU) and ensure identical software environment for all models",
+            "Set up the inference evaluation configuration (including identical batch sizes, preprocessing pipelines, and inference settings) across all model architectures",
+            "Load and preprocess datasets following the specified voxel sizes for Waymo",
+            "Run inference tests on each architecture to record FPS, compute detection performance metrics, and measure GPU memory usage",
+            "Collect results and compare performance trade-offs using the guidelines described in Figure 3 and Table 5"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Measurement protocols",
+              "description": "The evaluation of FPS, detection accuracy (mAP@L2), and GPU memory consumption might require additional steps like warm-up runs or averaging multiple inference runs."
+            }
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "modify_configuration_details": [
+              "Provide explicit configuration parameters such as warm-up iterations, and detailed metric averaging methods to remove ambiguity in the evaluation process."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in measurement conditions and evaluation protocols",
+          "description": "Minor random fluctuations in GPU performance (e.g., due to thermal variations, background processes) can lead to inconsistent FPS measurements, detection accuracy, and GPU memory usage during inference tests. Additionally, the non-exhaustive description for averaging methods and warm-up runs introduces randomness in the recorded metrics.",
+          "impact": "These random variations can cause slight inconsistencies in the experimental results, making it challenging to directly compare performance metrics across different architectures.",
+          "possible_modifications": [
+            "Introduce multiple inference runs and average the collected metrics to mitigate random noise.",
+            "Include a fixed number of warm-up iterations prior to measurements to stabilize performance readings.",
+            "Control the system environment to minimize background process interference during each run."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguity in configuration settings and dataset preprocessing",
+          "description": "The lack of explicit configuration details (e.g.,data preprocessing pipelines, and detailed metric evaluation protocols) and potential misapplication of voxel sizes across datasets can introduce a systematic bias. This might consistently favor or penalize certain architectures, affecting the overall trade-off analysis.",
+          "impact": "Systematic biases may result in consistent overestimation or underestimation of performance metrics (such as FPS, mAP, and GPU memory consumption), which could skew comparisons between Voxel Mamba and other architectures.",
+          "possible_modifications": [
+            "Provide detailed and explicit configuration parameters, including preprocessing steps, and the number of warm-up iterations.",
+            "Clarify whether the provided voxel sizes are uniformly applied to all models or if adjustments are necessary for each dataset.",
+            "Include additional baseline models and perform sensitivity analysis on voxel sizes to minimize bias in the evaluation."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Will the choice of space-filling curve (Random, Window Partition, Z-order, Hilbert) significantly affect the 3D detection performance in terms of mAP and NDS on the nuScenes validation set?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Investigate how different space-filling curves impact 3D detection performance on the nuScenes validation set.\n    - **Objective:** \n    Compare the effectiveness of four different serialization strategies in preserving spatial locality and improving mAP and NDS.\n\n2. **Testing Dataset:** \n    - nuScenes Validation Set\n\n3. **Training environment:**\n    - Training Setup:\n        - Framework: OpenPCDet\n        - Training epochs: 20\n        - All hyperparameters remain identical across experiments\n\n\n4. **Comparative Evaluation:**  \n    - Models Trained:\n        - Random Curve (No spatial locality preservation)\n        - Window Partition Serialization\n        - Z-order Curve Serialization\n        - Hilbert Curve Serialization\n\n5. **Architecture detail:**\n    - stack six DSB blocks, divided into three stages, for the Voxel Mamba backbone network. The downsampling rates for DSBs\u2019 backward branches in each stage are {1,2,4}.Specifically, we employ SpConv and its counterpart SpInverseConv as downsampling and upsampling operators in the DSB backward branch. \n    - a weight decay of 0.05, one-cycle learning rate policy,max learning rate of 0.004,and batch size of 32 for 20 epochs.\n\n6. **Evaluation Metrics:**\n    - Mean Average Precision (mAP)\n    - Normalized Detection Score (NDS)",
+      "expected_outcome": "It is expected to show that using any space-filling curve improves performance compared to a Random curve due to better preservation of spatial locality. Among the tested curves, the Hilbert curve is anticipated to yield the best results (approximately mAP=67.5 and NDS=71.9), confirming its effectiveness in preserving spatial proximity for 3D detection.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "dataset": [
+              "nuScenes validation set"
+            ],
+            "training_settings": [
+              "OpenPCDet default settings"
+            ],
+            "training_epochs": [
+              "20 epochs"
+            ]
+          },
+          "independent_variables": {
+            "space_filling_curve": [
+              "Random",
+              "Window Partition",
+              "Z-order",
+              "Hilbert"
+            ]
+          },
+          "dependent_variables": {
+            "detection_performance": [
+              "mAP",
+              "NDS"
+            ]
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "space_filling_curve": "The paper does not provide detailed implementation or parameter settings for each space-filling curve variant, which might affect reproducibility.",
+            "OpenPCDet_settings": "The exact settings within the OpenPCDet framework are not detailed, potentially impacting replication."
+          },
+          "possible_modifications": {
+            "curve_variants": [
+              "Introduce additional space-filling curve variants or modified versions of the existing ones to further explore spatial locality effects."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "nuScenes validation set",
+            "OpenPCDet default training settings",
+            "Space-filling curve implementations (Random, Window Partition, Z-order, Hilbert)",
+            "Performance evaluation tools for mAP and NDS"
+          ],
+          "setup_steps": [
+            "Prepare the nuScenes validation set and configure the OpenPCDet framework for training",
+            "Implement four variants of space-filling curves, ensuring that each variant differs only in the serialization method used",
+            "Train each model variant for 20 epochs using the defined constant variables",
+            "Record detection performance (mAP and NDS) for each curve variant",
+            "Compare and interpret the results against the expected Table 6 values"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Curve implementation details",
+              "description": "Implementing the Hilbert and Window Partition curves may require intricate coding to accurately preserve spatial locality."
+            },
+            {
+              "source": "Integration with OpenPCDet",
+              "description": "Incorporating custom space-filling curve variants into an existing framework (OpenPCDet) can introduce complexity due to potential configuration and compatibility issues."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "space_filling_curve: The paper does not provide detailed implementation guidelines or parameter settings for each curve variant.",
+            "OpenPCDet_settings: Specific configuration details within the OpenPCDet framework are not provided, which may lead to different interpretations."
+          ],
+          "ambiguous_setup_steps": [
+            "Implementing space-filling curve variants: The absence of detailed instructions on parameter tuning and integration may lead to varied implementations."
+          ],
+          "possible_modifications": {
+            "curve_variants": [
+              "Introduce additional or modified space-filling curve variants to further explore the effects of spatial locality."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "curve_variants": [
+              "Introduce additional space-filling curve variants or modified versions of the existing ones to further explore spatial locality effects."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Randomized training aspects and variability in the implementation of the Random space-filling curve",
+          "description": "In the experiment, one variant uses a Random curve that does not preserve spatial locality. This introduces randomness into the data serialization process which can lead to gradient update instability and variation in training outcomes. Additionally, random seed or initialization variability (if not controlled) may further contribute to fluctuations in performance metrics (mAP and NDS).",
+          "impact": "The random choice in the space-filling curve can lead to inconsistent results across different runs, making it difficult to attribute performance differences solely to the preservation of spatial locality. This randomness can reduce trust in minor performance improvements and complicate replication efforts.",
+          "possible_modifications": [
+            "Fix the random seed and initialization parameters across experiments to control for randomness.",
+            "Perform multiple training runs and average the performance metrics to reduce the influence of random fluctuations.",
+            "Avoid unintentional random alterations (such as dropping random tokens) in the data serialization that could introduce noise."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguities in implementation details and measurement methods in the experimental setup",
+          "description": "The experiment relies on several implementation choices that are not fully detailed in the paper: the parameter settings for each space-filling curve variant, the integration into the OpenPCDet framework, and the methods for GPU memory usage analysis are all ambiguous. These factors can systematically bias the outcomes. For example, a one-time design decision in implementing the serialization could consistently affect the performance (either positively or negatively) across all experiments, leading to systematic bias.",
+          "impact": "Systematic biases may result in misleading conclusions when comparing space-filling curves. For instance, if one curve is implemented with slightly different parameter tuning, its performance might be over- or underestimated relative to others. Similarly, inconsistent measurement protocols for GPU memory usage can lead to systematic errors in performance comparisons.",
+          "possible_modifications": [
+            "Clarify and standardize all parameter settings and implementation details of the space-filling curves to minimize bias.",
+            "Adopt or develop a uniform protocol for GPU memory usage measurement to ensure consistency.",
+            "Use a well-documented and reproducible configuration of the OpenPCDet framework, possibly by retrieving a clean, officially released version, to eliminate uncertainty from hidden modifications."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Does the sequential addition of components (bidirectional SSMs using a Hilbert curve for serialization, voxel conversion instead of pillars, the DSB module to enlarge the effective receptive field, and the IWP module for enhanced 3D spatial encoding) incrementally improve the detection performance compared to the baseline Centerpoint-Pillar?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether adding bidirectional SSMs, voxel conversion, DSB module, and IWP module sequentially to Centerpoint-Pillar improves detection performance.\n    - **Objective:** \n    Measure incremental mAP and NDS improvements for each component addition\n\n2. **Testing Dataset:** \n    - nuScenes Validation Set\n\n3. **Sequential Ablation Experiments:**\n    Baseline Model: Centerpoint-Pillar (mAP=63.3, NDS=69.1)\n        - Step 1: Add bidirectional SSMs with Hilbert serialization\n        - Step 2: Convert pillars to voxels\n        - Step 3: Add Dual-scale SSM Block (DSB) for a larger rceptive field\n        - Step 4: Integrate Iterative Window Partitioning (IWP) Module for enhanced 3D spatial encoding\n\n4. **Comparative Evaluation:**  \n    - Models Trained:\n        - Random Curve (No spatial locality preservation)\n        - Window Partition Serialization\n        - Z-order Curve Serialization\n        - Hilbert Curve Serialization\n\n5. **Architecture detail:**\n    - The downsampling rates for DSBs\u2019 backward branches in each stage are {1,2,4}.\n    - Follow OpenPCDet to train all models for 20 epochs\n\n6. **Evaluation Metrics:**\n    - Mean Average Precision (mAP)\n    - Normalized Detection Score (NDS)",
+      "expected_outcome": "- It is expected that each component will contribute additional performance gains. Bidirectional SSMs should yield a significant boost over the baseline, and the sequential additions (voxel conversion, then DSB, and finally IWP) should result in clear incremental improvements, culminating in an overall performance close to mAP=67.5 and NDS=71.9.\n\n- Bidirectional SSMs with a Hilbert-based group-free sequence significantly improve accuracy over the baseline, validating the feasibility of the group-free strategy. Additionally, converting pillars to voxels enhances the detector's performance by removing group size constraints, allowing for better spatial representation.  Voxel Mamba, when integrated with the Dual-scale SSM Block (DSB), achieves superior performance compared to plain bidirectional SSMs. This improvement is attributed to DSB's ability to construct larger effective receptive fields (ERFs) and mitigate the loss of spatial proximity.Furthermore, the Iterative Window Encoding (IWE) module further enhances Voxel Mamba\u2019s performance by effectively capturing 3D positional information and improving voxel proximity. These combined advancements demonstrate the effectiveness of Voxel Mamba in achieving state-of-the-art 3D detection accuracy.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "training_conditions": "20 epochs, same optimizer, same batch size, and same data split (nuScenes validation set)",
+            "baseline_model": "Centerpoint-Pillar with fixed initial performance metrics"
+          },
+          "independent_variables": {
+            "model_components": [
+              "Baseline Centerpoint-Pillar",
+              "Addition of bidirectional SSMs with Hilbert-based serialization",
+              "Addition of voxel conversion (from pillars to voxels)",
+              "Incorporation of the DSB module (six-block architecture with specified downsampling rates {1,2,4})",
+              "Addition of the IWP module for enhanced 3D spatial encoding"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metrics": [
+              "mAP (mean Average Precision)",
+              "NDS (nuScenes Detection Score)"
+            ]
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "hilbert_based_serialization": "The exact implementation details, parameters, and the ordering impact of the Hilbert-based serialization are not explicitly detailed.",
+            "voxel_conversion": "The precise method of converting from pillars to voxels and the associated parameter settings are not fully specified.",
+            "DSB_module": "While a six-block architecture with downsampling rates {1,2,4} is mentioned, other architectural parameters and the integration details into the existing model are ambiguous.",
+            "IWP_module": "The mechanism and detailed configuration for enhancing 3D spatial encoding using the IWP module are not clarified."
+          },
+          "possible_modifications": {
+            "modification_X": [
+              "Mask or require detailed parameter settings for the Hilbert-based serialization to remove ambiguity.",
+              "Explicitly specify the voxel conversion parameters and algorithmic details.",
+              "Provide a more comprehensive breakdown of the DSB module architecture and its integration within the network.",
+              "Include additional descriptions or parameter ranges for the IWP module to clarify its contribution and configuration."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Baseline Centerpoint-Pillar model",
+            "Bidirectional SSMs with Hilbert-based serialization module",
+            "Voxel conversion module (transition from pillars to voxels)",
+            "DSB module (six-block architecture with downsampling rates {1,2,4})",
+            "IWP module for enhanced 3D spatial encoding",
+            "Training conditions (20 epochs, same optimizer, same batch size, and fixed data split on nuScenes validation set)"
+          ],
+          "setup_steps": [
+            "Initialize the baseline Centerpoint-Pillar model with fixed training conditions",
+            "Integrate bidirectional SSMs using a Hilbert-based serialization strategy into the baseline",
+            "Run training and evaluate performance to record mAP and NDS",
+            "Introduce voxel conversion to transition from pillars to voxels in the model from step 1",
+            "Retrain and record the updated performance metrics",
+            "Incorporate the DSB module (using a six-block configuration with specified downsampling rates) into the evolving model",
+            "Retrain and measure performance gains after applying the DSB module",
+            "Add the IWP module to enhance 3D spatial encoding in the network",
+            "Conduct final training and evaluation to record final performance metrics"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Training Consistency",
+              "description": "Ensuring identical training conditions (such as same optimizer, batch size, and data splits) across all sequential modifications to isolate the effect of each component."
+            },
+            {
+              "source": "Incremental Integration and Evaluation",
+              "description": "The sequential addition of components requires consistent state management and careful tracking of performance improvements to properly attribute gains."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Hilbert-based serialization: The exact implementation, parameter settings, and ordering impact are not fully detailed.",
+            "Voxel conversion: The precise method and associated parameter settings for converting from pillars to voxels remain unspecified.",
+            "DSB module: Although the six-block architecture with downsampling rates {1,2,4} is mentioned, other architectural parameters and integration details into the baseline model are ambiguous.",
+            "IWP module: The mechanism, configuration details, and precise impact on 3D spatial encoding are not clearly clarified."
+          ],
+          "ambiguous_setup_steps": [
+            "Integration of each module into the baseline model: While steps are sequentially listed, the detailed process of merging new components with existing architecture lacks detail.",
+            "Evaluation protocol: The method to ensure each sequential change is isolated and directly comparable to previous setups is not exhaustively described."
+          ],
+          "possible_modifications": {
+            "modification_X": [
+              "Provide detailed parameter settings and pseudocode for the Hilbert-based serialization process to eliminate ambiguity.",
+              "Explicitly specify the conversion algorithm and parameter configurations for transitioning from pillars to voxels.",
+              "Clarify the architectural details, integration method, and any additional tuning parameters for the DSB module.",
+              "Offer a comprehensive breakdown of the IWP module configuration, including its mechanism for enhancing 3D spatial encoding and any hyperparameter ranges."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "constraint_type": {
+              "modifications": [
+                "Provide detailed parameter settings and pseudocode for the Hilbert-based serialization process to eliminate ambiguity.",
+                "Explicitly specify the conversion algorithm and parameter configurations for transitioning from pillars to voxels.",
+                "Clarify the architectural details, integration method, and any additional tuning parameters for the DSB module, particularly regarding the six-block configuration with downsampling rates {1,2,4}.",
+                "Offer a comprehensive breakdown of the IWP module configuration, including its mechanism for enhancing 3D spatial encoding and any applicable hyperparameter ranges."
+              ]
+            }
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic elements in training dynamics (e.g., weight initialization, mini-batch shuffling, dropout randomness)",
+          "description": "Random factors inherent to model training, such as random initialization, batch sampling variations, and noise from dropout layers can lead to performance fluctuations between runs even under identical training conditions. This introduces uncertainty in attributing performance gains solely to the sequential component additions.",
+          "impact": "These variations can obscure the true effect of each added module, making it challenging to determine if observed improvements are due to the model modifications or simply random training variability.",
+          "possible_modifications": [
+            "Implement controlled random seed settings to standardize initialization across runs.",
+            "Run multiple training experiments and average the results to account for stochastic variability.",
+            "Introduce synthetic noise in a controlled manner to assess the robustness of performance gains."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguities in module integration and parameter settings (Hilbert-based serialization, voxel conversion, DSB and IWP modules)",
+          "description": "The experiment involves several components with ambiguous or under-specified implementation details. Inconsistencies in how the Hilbert-based serialization is applied, the exact conversion process from pillars to voxels, and the integration details for the DSB and IWP modules can introduce systematic biases. These systematic factors affect all runs consistently, skewing the performance metrics.",
+          "impact": "Systematic misconfigurations can lead to persistent errors in performance measurements, where gains might be misstated or misattributed. Consequently, the observed improvements may not accurately reflect the efficacy of the proposed components, compromising the validity of the experiment.",
+          "possible_modifications": [
+            "Provide detailed parameter settings and pseudocode for the Hilbert-based serialization strategy to eliminate ambiguity.",
+            "Explicitly specify the voxel conversion algorithm and its corresponding parameter configurations.",
+            "Offer a comprehensive breakdown of the DSB modules six-block architecture, including integration and downsampling details.",
+            "Clarify the configuration and operational mechanism of the IWP module to ensure consistent 3D spatial encoding enhancements."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Will different downsampling rate configurations in the DSB module affect detection performance due to changes in the effective receptive field and detail preservation?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate how different downsampling rate configurations in the DSB module\u2019s backward branch impact detection performance on the nuScenes validation set.\n    - **Objective:** \n    Determine which downsampling configuration provides the best balance between enlarging the effective receptive field (ERF) and preserving fine details for optimal detection accuracy.\n\n2. **Testing Dataset:** \n    - nuScenes Validation Set\n\n3. **Sequential Ablation Experiments:**\n    Baseline Model: Centerpoint-Pillar (mAP=63.3, NDS=69.1)\n        - Step 1: Add bidirectional SSMs with Hilbert serialization\n        - Step 2: Convert pillars to voxels\n        - Step 3: Add Dual-scale SSM Block (DSB) for a larger rceptive field\n        - Step 4: Integrate Iterative Window Partitioning (IWP) Module for enhanced 3D spatial encoding\n\n4. **Comparative Evaluation:**  \n    - For Voxel Mamba model, Downsampling Rate Configurations Tested (used in the backward SSM branch at each stage):\n        - {1,1,1} \n        - {1,2,2}\n        - {2,2,2}\n        - {4,4,4} \n        - {1,2,4}\n\n5. **Evaluation Metrics:**\n    - Mean Average Precision (mAP)\n    - Normalized Detection Score (NDS)",
+      "expected_outcome": "- The best performance is anticipated with the {1,2,4} configuration (mAP=67.5, NDS=71.9) due to a balanced trade-off between enlarging the effective receptive field and preserving fine details. Configurations that use too large downsampling rates early on (i.e., {2,2,2} or {4,4,4}) are expected to yield reduced performance.\n            \n- We see that transitioning from {1,1,1} to {1,2,2} and to {1,2,4} enhances performance due to an enlarged effective receptive field and improved proximity by using larger downsampling rates at late stages. However, DSBs with {2,2,2} or {4,4,4} compromise performance compared to {1,1,1}, indicating that using larger downsampling rates at early stages will lose some fine details.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "training_conditions": "Fixed training setup using 20 epochs, same optimizer, and the nuScenes validation set"
+          },
+          "independent_variables": {
+            "downsampling_configurations": [
+              "{1,1,1}",
+              "{1,2,2}",
+              "{2,2,2}",
+              "{4,4,4}",
+              "{1,2,4}"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metrics": [
+              "mAP",
+              "NDS"
+            ]
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "DSB_module_details": "The exact implementation details of the backward branch of the DSB module are not fully disclosed, which may affect reproducibility.",
+            "early_stage_downsampling": "What constitutes 'early-stage' downsampling is not clearly defined, leading to ambiguity in interpreting its impact.",
+            "training_hyperparameters": "Specifics such as optimizer type, learning rate, and other hyperparameters are not explicitly mentioned."
+          },
+          "possible_modifications": {
+            "modification_X": [
+              "Explicitly detail the architecture of the backward branch in the DSB module.",
+              "Provide a clear definition or layer breakdown to identify what is considered 'early-stage' in downsampling.",
+              "List all relevant training hyperparameters to remove ambiguity."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "nuScenes validation dataset",
+            "DSB module (backward branch) with configurable downsampling rates",
+            "Training pipeline with fixed conditions (20 epochs, consistent optimizer)",
+            "Performance evaluation framework for mAP and NDS"
+          ],
+          "setup_steps": [
+            "Load and prepare the nuScenes validation dataset",
+            "Configure the DSB module backward branch with one of the specified downsampling configurations: {1,1,1}, {1,2,2}, {2,2,2}, {4,4,4}, or {1,2,4}",
+            "Train the model for 20 epochs using the fixed training conditions",
+            "Evaluate and record performance metrics (mAP and NDS) for each configuration",
+            "Compare the results to analyze the trade-off between receptive field enlargement and detail preservation"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "DSB Module Details",
+              "description": "The exact implementation of the backward branch of the DSB module (including layer setup and operations) is not fully disclosed"
+            },
+            {
+              "source": "Training Hyperparameters",
+              "description": "Critical details such as optimizer type, learning rate, and other settings are left unspecified, adding complexity to reproducing the experiments"
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "DSB module backward branch: The specific architecture and operations are not clearly documented",
+            "Early-stage downsampling: It is unclear which layers or stages in the module are considered early-stage"
+          ],
+          "ambiguous_setup_steps": [
+            "Configuring the backward branch without detailed instructions on layer breakdowns adds ambiguity to the experiment setup",
+            "Training hyperparameter settings are not fully outlined, leading to potential variations in reproducibility"
+          ],
+          "possible_modifications": {
+            "modification_X": [
+              "Explicitly detail the architecture of the backward branch in the DSB module",
+              "Provide a clear definition or layer breakdown to identify what is considered 'early-stage' downsampling",
+              "List all relevant training hyperparameters (optimizer type, learning rate, etc.) to remove ambiguity"
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "constraint_type": {
+              "modifications": [
+                "Explicitly detail the architecture of the backward branch in the DSB module to remove ambiguity in its implementation.",
+                "Provide a clear definition or layer breakdown to identify which layers constitute 'early-stage' downsampling to aid comparison of detail preservation versus receptive field size.",
+                "Enumerate all training hyperparameters (e.g., optimizer type, learning rate, etc.) in the experimental setup to ensure reproducibility and remove ambiguity."
+              ]
+            }
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic elements in model training",
+          "description": "Random uncertainty arises from variations in weight initialization, data shuffling, and other inherent stochastic processes during training (such as dropout if used). Even with fixed training conditions (20 epochs, same optimizer), these factors can introduce variability in performance metrics (mAP and NDS) across experimental runs.",
+          "impact": "These random variations can lead to inconsistent performance outcomes, making it challenging to determine the true effect of downsampling configurations on detection performance.",
+          "possible_modifications": [
+            "Control random seeds and ensure deterministic operations in environments to minimize randomness.",
+            "Run multiple training iterations with different seeds and average the results to mitigate random fluctuations.",
+            "Isolate and eliminate other stochastic processes (like random data augmentations) that may confound the evaluation of downsampling configurations."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguities in the DSB module architecture and training hyperparameters",
+          "description": "Systematic uncertainty is introduced by the lack of clarity in the experimental setup such as the unspecified internals of the DSB module's backward branch, undefined criteria for early-stage downsampling, and incomplete details on training hyperparameters (optimizer type, learning rate, etc.). This can lead to a consistent bias in the experiment, affecting reproducibility and the observed trade-offs between receptive field enlargement and detail preservation.",
+          "impact": "Due to these systematic issues, the experimental results may consistently diverge from expected outcomes, making it difficult to accurately attribute performance differences to downsampling configurations.",
+          "possible_modifications": [
+            "Explicitly detail the architecture of the backward branch of the DSB module to remove ambiguity.",
+            "Provide a clear definition or layer breakdown to identify what constitutes 'early-stage' downsampling.",
+            "Enumerate all relevant training hyperparameters (e.g., optimizer type, learning rate) to ensure the experiment can be reproduced without bias."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Does the Integrative Weight Encoding (IWE) method offer a significant improvement in spatial proximity over other positional embedding approaches such as absolute position encoding and sin/cos embeddings?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Compare the effectiveness of different positional encoding strategies in 3D object detection on the nuScenes validation set.\n    - **Objective:** \n    Determine whether IWE provides superior spatial proximity representation and improves mAP and NDS compared to traditional embedding methods.\n\n2. **Testing Dataset:** \n    - nuScenes Validation Set\n\n3. **Comparative Evaluation:**  \n    - Positional Encoding Configurations Tested:\n        - Baseline positional embedding\n        - Absolute position encoding (using an MLP)\n        - Sine and cosine embeddings\n        - Integrative Weight Encoding (IWE) (proposed method)\n    - follow OpenPCDet to train all models for 20 epochs\n\n4. **Evaluation Metrics:**\n    - Mean Average Precision (mAP)\n    - Normalized Detection Score (NDS)",
+      "expected_outcome": "It is expected that while absolute position encoding and sin/cos embeddings yield only minor performance variations, the IWE approach particularly the shifted variant will significantly boost detection accuracy by better capturing 3D positional information.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "training_settings": "Identical training hyper-parameters, data splits, and optimizer configurations for all models."
+          },
+          "independent_variables": {
+            "positional_encoding_method": [
+              "baseline positional embedding system",
+              "absolute position encoding using an MLP",
+              "sine and cosine embeddings",
+              "Integrative Weight Encoding (IWE) approach (including the shifted variant)"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metrics": [
+              "mAP",
+              "NDS"
+            ]
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "baseline_positional_embedding": "The exact nature of the baseline positional embedding system is not explicitly defined.",
+            "absolute_position_encoding": "Details on the MLP architecture and its configuration for absolute encoding are missing.",
+            "sin_cos_embeddings": "Specific parameter settings (e.g., frequencies) and implementation details for sin/cos embeddings are not provided.",
+            "IWE_approach": "It is unclear if multiple variants of IWE (e.g., shifted vs. non-shifted) are systematically evaluated or how the shifted variant is implemented.",
+            "spatial_proximity_metric": "The precise quantitative measure for 'spatial proximity improvement' is not clearly defined."
+          },
+          "possible_modifications": {
+            "additional_variables": [
+              "Introduce a variable distinguishing between different variants of the IWE approach (e.g., shifted vs. standard).",
+              "Specify and vary additional hyper-parameters related to the positional encoding methods (e.g., MLP layer sizes, frequency selection for sin/cos embeddings) to assess robustness."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "nuScenes validation set",
+            "Baseline positional embedding system",
+            "Absolute position encoding using an MLP",
+            "Sine and cosine embeddings module",
+            "Integrative Weight Encoding (IWE) approach (including its shifted variant)",
+            "Model architectures incorporating positional encoding methods",
+            "Performance metrics evaluation tools (calculating mAP and NDS)",
+            "Training environment with identical hyper-parameters, data splits, and optimizer configurations"
+          ],
+          "setup_steps": [
+            "Prepare the nuScenes validation set and enforce consistent data splits across experiments",
+            "Implement the baseline positional embedding system as per available standards",
+            "Integrate and configure the MLP for absolute position encoding",
+            "Implement or adapt the sine and cosine embeddings following established practices",
+            "Implement the proposed IWE approach, ensuring inclusion of the shifted variant",
+            "Apply identical training settings (hyper-parameters, optimizer configurations) to all model variants",
+            "Train each model variant under controlled, identical conditions",
+            "Collect and record key performance metrics (mAP and NDS) after training",
+            "Compile and compare results to validate the hypothesis regarding spatial proximity improvements"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Inter-model consistency",
+              "description": "Ensuring that all models differ only in the method of positional encoding while keeping other variables constant increases experimental rigor and complexity."
+            },
+            {
+              "source": "Reproducibility requirements",
+              "description": "Inclusion of detailed hyper-parameter settings, data splits, and optimizer configurations adds additional layers to the setup complexity."
+            },
+            {
+              "source": "Multi-faceted evaluation",
+              "description": "Combining both quantitative metrics (mAP/NDS) with qualitative assessments from tables and figures for spatial proximity entails integrating diverse methods of data analysis."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Baseline positional embedding system: The exact implementation and characteristics are not explicitly defined.",
+            "Absolute position encoding: Specific details on the MLP architecture, such as the number of layers and activation functions, are missing.",
+            "Sine and cosine embeddings: The parameter settings (like frequency selection and phase shifts) and implementation details are not clearly provided.",
+            "IWE approach: It is unclear whether multiple variants (shifted vs. standard) are systematically evaluated and how the shifted variant is implemented."
+          ],
+          "ambiguous_setup_steps": [
+            "Implementation details for the baseline and advanced positional encoding methods are not fully described, leading to uncertainty in their configuration.",
+            "Exact data preprocessing and normalization steps for the nuScenes validation set are not mentioned."
+          ],
+          "possible_modifications": {
+            "additional_variables": [
+              "Introduce an explicit variable that distinguishes between different variants of the IWE approach (e.g., shifted vs. standard).",
+              "Specify and vary additional hyper-parameters related to the positional encoding methods, such as the number of layers and layer sizes for the MLP, or frequency parameters for sin/cos embeddings."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {}
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic elements in training",
+          "description": "Variability in model training due to random initialization, stochastic gradient descent, dropout, and other randomness in the training process can lead to fluctuations in observed performance metrics (mAP and NDS). These random factors might obscure the real impact of the positional encoding methods under comparison.",
+          "impact": "Random fluctuations may lead to differences in model performance across runs, making it harder to attribute observed improvements solely to the IWE method. This may result in inconsistent outcome evaluations across different experimental replications.",
+          "possible_modifications": [
+            "Enforce fixed random seeds across all model training runs.",
+            "Run multiple training trials and average the results to account for randomness.",
+            "Conduct statistical analysis (e.g., confidence intervals) around performance metrics to quantify random variability."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguities in experimental design and parameter settings",
+          "description": "Lack of precise definitions for the baseline positional embedding system, specifics of the MLP architecture for absolute position encoding, sin/cos parameter settings, and the implementation of the IWE (including its shifted variant) introduces potential systematic bias.",
+          "impact": "These systematic uncertainties can lead to consistent misinterpretation or misconfiguration across experiments, thus potentially favoring one method over others due to imperfect or biased implementations rather than actual improvements in spatial feature capture.",
+          "possible_modifications": [
+            "Clearly define and standardize the baseline implementations and parameter settings for all positional encoding methods.",
+            "Specify the architecture details (e.g., MLP layer sizes, activation functions, sin/cos frequencies) to ensure comparability."
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1442 @@
+{
+    "questions": [
+        {
+            "method": "Replicate the interactive planning experiments on the nuPlan dataset using the provided Test14 benchmarks and simulation protocols as described in the paper. Set up experiments for three different simulation scenarios: open-loop (OL) planning tests where the open-loop score (OLS) is computed using displacement and miss rate metrics; closed-loop non-reactive (CL-NR) simulations; and reactive (Test14-Inter) simulations. Use the same test splits (Test14-Hard, Test14-Random, and Test14-Inter) and follow the detailed evaluation protocol that measures metrics such as average planning score, driving safety (e.g., CA and TTC), driving progress, comfort, and compliance (e.g., DDC) as well as the aggregated PDMScore metric. The simulation environment should replicate the exact settings of the paper, including the multi-step reduction training strategy and evaluation procedures. Training should be performed on 4 NVIDIA A100 GPUs using the AdamW optimizer with a learning rate of 1e-4 and a multi-step reduction schedule. The planning model should be trained for 25 epochs with a batch size of 128, while the prediction module should be trained for 30 epochs with a batch size of 256. Document all percentage improvements compared to baseline methods\u2014these include learning-based, rule-based, and hybrid planners\u2014with reference to performance improvements observed in Tables 2 and 3 and qualitative results shown in Figures 7 to 10. For instance, the evaluation should capture improvements in closed-loop simulation scores (e.g., a CLS gain of approximately +4.6%), enhanced driving safety (e.g., +2.7% in CA and +1.0% in TTC), and better compliance (+2.8% in DDC) under hard-case scenarios, as well as consistent improvements in general cases.",
+            "expected_outcome": "Experiments should demonstrate that BeTopNet achieves a statistically significant improvement over existing planning systems. Expected outcomes include a marked gain in performance metrics such as approximately +7.9% improvement in hard-case planning scores, around +6.2% improvement in closed-loop non-reactive simulation scores, and notable enhancements in reactive simulation scenarios. Detailed metrics should show improved values in driving safety (e.g., higher CA and TTC scores), driving progress, comfort, and compliance (e.g., higher DDC), thereby validating the hypothesis that the topological formulation of BeTopNet leads to superior interactive planning performance.",
+            "subsection_source": "4.1 Main Result",
+            "no_answer": "After thoroughly exploring the repository, I found that the planning pipeline in nuPlan is explicitly marked as a TODO item in the README.md file. The repository currently only contains the prediction part of BeTopNet implemented for the Waymo Open Motion Dataset (WOMD). There is a mention of a 'Scenario Token released for Test14-Inter' with a link to a YAML file, but this is just a configuration file, not the full implementation. The README also states 'Full code and checkpoints release is coming soon. Please stay tuned.' There are no scripts, notebooks, or code related to nuPlan, Test14 benchmarks, or the planning experiments described in the experiment question. Therefore, the repository does not currently contain the scripts needed to replicate the interactive planning experiments on the nuPlan dataset as described in the experiment question.",
+            "question": "BeTopNet\u2019s topological formulations significantly improve interactive planning performance over existing planning systems in both hard and general driving scenarios.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset_and_benchmark": [
+                        "nuPlan dataset",
+                        "Test14 benchmarks (Test14-Hard, Test14-Random, Test14-Inter)"
+                    ],
+                    "hardware_and_optimizer": [
+                        "4 NVIDIA A100 GPUs",
+                        "AdamW optimizer with learning rate 1e-4"
+                    ],
+                    "training_schedule": [
+                        "Planning: 25 epochs with batch size 128",
+                        "Prediction: 30 epochs with batch size 256",
+                        "Multi-step reduction training strategy"
+                    ]
+                },
+                "independent_variables": {
+                    "simulation_scenarios": [
+                        "Open-loop (OL) planning tests",
+                        "Closed-loop non-reactive (CL-NR) simulations",
+                        "Reactive (Test14-Inter) simulations"
+                    ],
+                    "test_split": [
+                        "Test14-Hard",
+                        "Test14-Random",
+                        "Test14-Inter"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Open-loop score (OLS)",
+                        "Closed-loop simulation scores (CLS/CLS-NR)",
+                        "Aggregated PDMScore",
+                        "Driving safety metrics (e.g., CA, TTC)",
+                        "Driving progress",
+                        "Comfort",
+                        "Compliance (e.g., DDC)",
+                        "Percentage improvements (e.g., +4.6% CLS gain, +2.7% CA, +1.0% TTC, +2.8% DDC, etc.)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "baseline_methods": "The definition and implementation details of the learning-based, rule-based, and hybrid planners are not explicitly provided.",
+                    "percentage_improvement_values": "The improvement percentages (e.g., +4.6%, +7.9%, +6.2%) are approximate and their exact statistical significance or computation methodology is not fully clarified.",
+                    "simulation_environment_details": "While the simulation protocol is described, some aspects like the exact multi\u2010step reduction training strategy and evaluation procedures are not detailed enough to reproduce them without additional context."
+                },
+                "possible_modifications": {
+                    "masking_variables": [
+                        "Hide or generalize the specific GPU configuration and learning rate details to test robustness to hardware variations."
+                    ],
+                    "adding_new_variables": [
+                        "Introduce additional variables such as different optimizer types (e.g., SGD, RMSProp) or varied learning rate schedules.",
+                        "Include alternative evaluation metrics or additional test splits to explore broader performance characteristics."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "nuPlan dataset and Test14 benchmarks (Test14-Hard, Test14-Random, Test14-Inter)",
+                    "Simulation modules for three scenarios (open-loop planning tests, closed-loop non-reactive simulations, reactive simulations)",
+                    "Evaluation metrics modules (OLS, CLS/CLS-NR, aggregated PDMScore, driving safety metrics such as CA and TTC, driving progress, comfort, compliance)",
+                    "Training components including planning model and prediction module",
+                    "Compute hardware (4 NVIDIA A100 GPUs)",
+                    "Optimization setup (AdamW optimizer with a learning rate of 1e-4 and multi-step reduction schedule)"
+                ],
+                "setup_steps": [
+                    "Obtain and set up the nuPlan dataset along with Test14 benchmark splits",
+                    "Configure the simulation environment for the three different scenarios (open-loop, closed-loop non-reactive, and reactive)",
+                    "Implement the evaluation protocol to compute metrics (OLS, CLS/CLS-NR, PDMScore, CA, TTC, DDC, etc.) as described",
+                    "Set up the training configuration: for the planning model (25 epochs, batch size 128) and for the prediction module (30 epochs, batch size 256)",
+                    "Apply the multi-step reduction training strategy during training",
+                    "Execute experiments and document percentage improvements relative to baseline methods as specified (e.g., performance improvements in Tables 2 and 3, and qualitative results in Figures 7 to 10)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multi-step Reduction Training Strategy",
+                        "description": "The training strategy requires clearly following and potentially replicating a multi-step reduction process, which may involve several sequential sub-steps and parameter adjustments."
+                    },
+                    {
+                        "source": "Percentage Improvement Documentation",
+                        "description": "The process for computing and documenting the approximate percentage improvements over baselines (e.g., +4.6% CLS gain, +2.7% in CA) adds extra complexity in ensuring consistency and statistical significance."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Baseline methods (learning-based, rule-based, hybrid planners): Their exact definitions, implementation details, and how they are integrated into the evaluation are not fully specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Exact replication of the simulation environment: Details on the multi\u2010step reduction training strategy and evaluation procedures are insufficient to fully reproduce the experiments.",
+                    "Methodology for computing the percentage improvement metrics: The statistical significance and the computation process for improvement percentages remain unclear."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Hide or generalize specific GPU configuration details to assess robustness under varied hardware conditions",
+                        "Omit precise learning rate and optimizer configuration to test adaptability across different optimization setups"
+                    ],
+                    "imply need for new setup steps": [
+                        "Incorporate a detailed, step-by-step guide to set up the simulation environment and replicate the multi-step reduction training strategy",
+                        "Include additional instructions and clarifications for computing and reporting the evaluation metrics and statistical significance"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict GPU usage by reducing the available hardware (e.g., using 2 NVIDIA A100 GPUs instead of 4), which would challenge the model's performance and training efficiency under limited compute resources."
+                    ],
+                    "time_constraints": [
+                        "Impose a tighter training schedule\u2014for example, reduce the planning model's training epochs from 25 to 20\u2014to assess how reduced training time affects overall interactive planning performance."
+                    ],
+                    "money_constraints": [
+                        "Limit the experimental budget by opting for less expensive cloud computing alternatives, thereby potentially reducing available compute power and forcing adaptations in training or simulation setups."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random stochasticity in training and simulation pipelines",
+                "description": "Random uncertainty is introduced when elements of the training and evaluation process are modified in an unpredictable manner. For instance, modifying the approach to drop tokens randomly (instead of in a controlled manner) during data pre-processing, or randomizing the order of data batches during training, could induce instability in the gradient updates and lead to fluctuations in performance metrics (e.g., OLS, CLS, PDMScore). Such randomness may also affect the multi-step reduction training strategy and lead to variations in reported percentage improvements under the Test14 benchmarks.",
+                "impact": "Inconsistencies in convergence behavior and performance evaluation; potential degradation in prediction accuracy; variability in measured closed-loop scores (e.g., CLS gains and improvements in safety metrics like CA and TTC) that complicate comparisons against baseline methods.",
+                "possible_modifications": [
+                    "Insert random token dropout in the planning model\u2019s training data to simulate noise, rather than dropping only unimportant tokens.",
+                    "Randomize the ordering of training batches or introduce random variations in hyperparameter schedules to test robustness.",
+                    "Apply slight random fluctuations to the multi-step reduction schedule to assess the sensitivity of performance metrics."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent biases introduced through dataset or evaluation protocol modifications",
+                "description": "Systematic uncertainty arises when intentional or unintentional modifications impose a consistent bias throughout the experimental process. For example, if the nuPlan dataset or the Test14 benchmarks are modified by consistently mislabeling or altering certain driving scenarios (e.g., always treating scenarios with specific characteristics as more challenging), the evaluation metrics such as closed-loop scores (CLS), driving safety metrics (CA, TTC), and compliance (DDC) will be consistently skewed. This resembles scenarios where a dataset is pre-modified to induce a bias (such as labeling long text reviews incorrectly in sentiment analysis experiments).",
+                "impact": "Results in a consistent over- or under-estimation of system performance, misrepresenting the actual improvements (e.g., the reported +7.9% gain in hard-case planning scores might not reflect true performance improvements). The aggregation of metrics like the PDMScore may also be impacted, leading to potentially misleading conclusions when comparing against baseline methods.",
+                "possible_modifications": [
+                    "Deliberately inject a consistent bias in the simulation environment by misconfiguring certain benchmark labels or safety thresholds across all evaluations.",
+                    "Modify the training dataset in a uniform manner (e.g., mislabel all instances of a particular driving feature) to test the model's robustness to systematic data shifts.",
+                    "Apply a fixed erroneous parameter in the multi-step reduction strategy that consistently skews the evaluation metrics, thereby assessing the effect of systematic bias."
+                ]
+            }
+        },
+        {
+            "method": "Implement the marginal and joint prediction experiments using the WOMD dataset following the leaderboard protocols. For marginal prediction, measure metrics including minADE, minFDE, Miss Rate, mAP, and Soft mAP as described in Table 4. For joint prediction, evaluate using similar metrics with a primary focus on mAP and Soft mAP as detailed in Table 5. Ensure that the experimental settings\u2014including data splits, scenario definitions, and evaluation metrics\u2014strictly adhere to those provided in the paper. Compare BeTopNet\u2019s performance with baselines such as TestReCoAt, HDGT, MTR/MTR++, MGTR, and recent game-theoretic approaches. Additionally, record and report the percentage improvements (for example, +2.7% to +3.4% improvement in mAP for marginal prediction and +4.1% improvement in mAP for joint prediction) to comprehensively assess the effectiveness of the proposed method. Include qualitative analyses from relevant figures, if available, to support the quantitative results.",
+            "expected_outcome": "Results are expected to demonstrate that BeTopNet outperforms all baseline methods in key evaluation metrics such as mAP, Soft mAP, and minFDE. The improvements should confirm that the topological formulations coupled with local attention mechanisms offer robust performance gains in both marginal and joint prediction tasks. Detailed percentage improvements, as well as qualitative simulation results, will further establish the efficacy of the proposed approach.",
+            "subsection_source": "4.1 Main Result",
+            "source": [
+                "/workspace/womd/tools/test.py",
+                "/workspace/womd/tools/submission.py"
+            ],
+            "usage_instructions": "To reproduce the marginal and joint motion prediction experiments on the WOMD dataset as described in Tables 4 and 5 of the paper:\n\n1. First, prepare the data following the instructions in /workspace/docs/womd/DataPrep_pred.md\n\n2. For marginal prediction evaluation (Table 4 metrics including minADE, minFDE, Miss Rate, mAP, and Soft mAP):\n   ```bash\n   cd /workspace/womd/tools\n   bash scripts/dist_test.sh [N_GPUS] --cfg_file cfg/BeTopNet_full_64.yaml --batch_size [BATCH_SIZE] --ckpt [PATH_TO_CHECKPOINT]\n   ```\n\n3. For joint prediction evaluation (Table 5 metrics with focus on mAP and Soft mAP):\n   ```bash\n   cd /workspace/womd/tools\n   python submission.py --cfg_file cfg/BeTopNet_full_64.yaml --batch_size [BATCH_SIZE] --ckpt [PATH_TO_CHECKPOINT] --output_dir [OUTPUT_DIR] --interactive\n   ```\n\n4. To compare with baseline methods (TestReCoAt, HDGT, MTR/MTR++, MGTR), you can run the same commands with different configuration files:\n   - For MTR++: `--cfg_file cfg/MTR_PlusPlus.yaml`\n   - For Wayformer: `--cfg_file cfg/Wayformer.yaml`\n\nThe evaluation results will be saved in the specified output directory, showing the performance metrics mentioned in Tables 4 and 5 of the paper, including the percentage improvements of BeTopNet over baseline methods.",
+            "requirements": [
+                "Step 1: Parse command line arguments including configuration file path, batch size, checkpoint path, and other parameters (/workspace/womd/tools/test.py:28-61, /workspace/womd/tools/submission.py:43-80)",
+                "Step 2: Load configuration from YAML file and set up environment (/workspace/womd/tools/test.py:52-59, /workspace/womd/tools/submission.py:71-78)",
+                "Step 3: Initialize distributed testing environment if specified (/workspace/womd/tools/test.py:86-93)",
+                "Step 4: Set up output directories and logging (/workspace/womd/tools/test.py:101-130, /workspace/womd/tools/submission.py:215-217)",
+                "Step 5: Build data loader for test dataset with appropriate configuration (/workspace/womd/tools/test.py:140-145, /workspace/womd/tools/submission.py:219-224)",
+                "Step 6: Build model according to configuration (/workspace/womd/tools/test.py:146, /workspace/womd/tools/submission.py:226)",
+                "Step 7: Load model parameters from checkpoint (/workspace/womd/tools/test.py:67-68, /workspace/womd/tools/submission.py:228)",
+                "Step 8: For marginal prediction: Evaluate model on test data and calculate metrics (/workspace/womd/tools/test.py:77-81)",
+                "Step 9: For joint prediction: Generate predictions and serialize them to the required format (/workspace/womd/tools/submission.py:165-181)",
+                "Step 10: For joint prediction: Save serialized predictions to file in the proper format for submission (/workspace/womd/tools/submission.py:83-113)",
+                "Final Step: Output evaluation results or submission file (/workspace/womd/tools/test.py:148-151, /workspace/womd/tools/submission.py:232-233)"
+            ],
+            "agent_instructions": "Create two Python scripts for evaluating motion prediction models on the Waymo Open Motion Dataset (WOMD) as described in the paper. The scripts should support both marginal prediction evaluation and joint prediction evaluation.\n\nScript 1: Evaluation Script\n- Create a script that evaluates a trained model on the WOMD test set for marginal motion prediction\n- The script should accept command line arguments for configuration file, batch size, checkpoint path, and other parameters\n- It should load model configuration from a YAML file\n- Support distributed testing across multiple GPUs\n- Build a data loader for the test dataset\n- Load a pre-trained model from a checkpoint\n- Evaluate the model on test data and calculate metrics including minADE, minFDE, Miss Rate, mAP, and Soft mAP\n- Save evaluation results to an output directory\n\nScript 2: Submission Script\n- Create a script that generates predictions for submission to the WOMD challenge\n- The script should accept similar command line arguments as the evaluation script\n- Support both marginal and joint prediction modes (controlled by an --interactive flag)\n- Load a pre-trained model from a checkpoint\n- Generate predictions on the test set\n- Serialize the predictions into the format required by the WOMD challenge\n- For joint prediction, properly handle the serialization of multiple agents' trajectories\n- Save the serialized predictions to a file in the proper format for submission\n\nBoth scripts should work with the BeTopNet model architecture and the WOMD dataset structure as described in the paper. The scripts should be compatible with the data preparation process outlined in the documentation.",
+            "masked_source": [
+                "/workspace/womd/tools/test.py",
+                "/workspace/womd/tools/submission.py"
+            ],
+            "question": "BeTopNet provides enhanced marginal and joint motion prediction accuracy on the WOMD dataset compared to existing state-of-the-art methods without relying on model ensembles or extra data.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "WOMD"
+                    ],
+                    "evaluation_protocol": [
+                        "Data splits, scenario definitions, and evaluation metrics as defined in the paper"
+                    ],
+                    "data_preparation": [
+                        "/workspace/docs/womd/DataPrep_pred.md guidelines"
+                    ]
+                },
+                "independent_variables": {
+                    "prediction_mode": [
+                        "marginal",
+                        "joint"
+                    ],
+                    "baseline_method": [
+                        "TestReCoAt",
+                        "HDGT",
+                        "MTR/MTR++",
+                        "MGTR",
+                        "game-theoretic approaches"
+                    ],
+                    "script_type": [
+                        "evaluation",
+                        "submission"
+                    ],
+                    "config_file": [
+                        "cfg/BeTopNet_full_64.yaml",
+                        "cfg/MTR_PlusPlus.yaml",
+                        "cfg/Wayformer.yaml"
+                    ]
+                },
+                "dependent_variables": {
+                    "minADE": "Average displacement error closest to ground truth",
+                    "minFDE": "Final displacement error closest to ground truth",
+                    "Miss Rate": "Percentage of cases where predictions miss certain criteria",
+                    "mAP": "Mean average precision as the primary accuracy metric",
+                    "Soft mAP": "Soft mean average precision capturing score-based performance"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "batch_size": "The exact numerical values for batch size are not specified and must be provided via command line.",
+                    "checkpoint_path": "The specific checkpoint file path is left as a parameter without example values.",
+                    "interactive_flag": "The behavior of the '--interactive' flag for joint prediction is mentioned but its detailed effect is not fully elaborated.",
+                    "percentage_improvements": "The improvement percentages (e.g., +2.7% to +3.4% in mAP) are illustrative and not tied to fixed experimental settings."
+                },
+                "possible_modifications": {
+                    "extend_evaluation_metrics": [
+                        "Introduce additional dependent variables such as latency or GPU memory to evaluate computational efficiency."
+                    ],
+                    "modify_configuration": [
+                        "Allow different values for 'batch_size' and 'checkpoint_path' to assess performance under varied hardware and model states."
+                    ],
+                    "mask_parameters": [
+                        "Hide or randomize certain configuration details (e.g., specific YAML config content) to test the model's robustness to incomplete configuration."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Evaluation Python script for marginal prediction",
+                    "Submission Python script for joint prediction",
+                    "YAML configuration files (e.g., cfg/BeTopNet_full_64.yaml, cfg/MTR_PlusPlus.yaml, cfg/Wayformer.yaml)",
+                    "Data loader built for the WOMD test dataset",
+                    "Distributed testing environment (support for multiple GPUs)",
+                    "Pre-trained BeTopNet model and checkpoint loading mechanism",
+                    "Logging and output directory setup for results"
+                ],
+                "setup_steps": [
+                    "Prepare data using the instructions provided in /workspace/docs/womd/DataPrep_pred.md",
+                    "Parse command line arguments (including configuration file path, batch size, and checkpoint path)",
+                    "Load configuration from a YAML file and set up the testing environment",
+                    "Initialize a distributed testing environment if required",
+                    "Build a data loader configured for the WOMD test set",
+                    "Load the pre-trained BeTopNet model using the provided checkpoint",
+                    "For marginal prediction: run the evaluation script using the provided bash command to compute metrics (minADE, minFDE, Miss Rate, mAP, Soft mAP)",
+                    "For joint prediction: execute the submission script (with --interactive flag) to generate and serialize predictions",
+                    "Compare the results against baseline methods by running the same commands with alternative configuration files",
+                    "Record and output evaluation results including percentage improvements as described in Tables 4 and 5"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Integration of baseline configurations",
+                        "description": "The need to run experiments across various baseline methods (TestReCoAt, HDGT, MTR/MTR++, MGTR, and game-theoretic approaches) adds complexity in managing multiple configuration files and their specific settings."
+                    },
+                    {
+                        "source": "Evaluation metric diversity",
+                        "description": "Handling a range of metrics for marginal prediction (minADE, minFDE, Miss Rate, mAP, Soft mAP) and joint prediction (with focus on mAP and Soft mAP) requires careful configuration and result interpretation."
+                    },
+                    {
+                        "source": "Distributed testing support",
+                        "description": "Setting up a distributed environment across multiple GPUs, including proper initialization and management of compute resources, increases the complexity of the experiment."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Batch size specification: The exact numerical value for batch size is left to be provided via command line.",
+                    "Checkpoint path: The specific value and location for the model checkpoint are not demonstrated in example values.",
+                    "Interactive flag (--interactive): While mentioned for joint prediction, its detailed effect on the prediction generation process is not fully elaborated.",
+                    "Percentage improvements: The illustrative improvement percentages (e.g., +2.7% to +3.4% in mAP) are not tied to fixed experimental settings."
+                ],
+                "ambiguous_setup_steps": [
+                    "The behavior and impact of the '--interactive' flag on joint prediction are mentioned but not clearly defined in terms of internal processing.",
+                    "Comparing experiments across baseline methods using different config files could be ambiguous if differences in additional parameters are not fully documented.",
+                    "Serialization steps for joint prediction: While steps for serializing predictions to the required submission format are listed, details on handling multi-agent trajectories remain insufficiently explained."
+                ],
+                "possible_modifications": {
+                    "extend_evaluation_metrics": [
+                        "Introduce additional dependent variables such as latency or GPU memory usage to evaluate computational efficiency."
+                    ],
+                    "modify_configuration": [
+                        "Allow for variability in batch size and checkpoint_path values to assess performance under different hardware and model states."
+                    ],
+                    "mask_parameters": [
+                        "Hide or randomize certain configuration details (e.g., specific content of the YAML config files) to test the model's robustness to incomplete or varied settings."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict the number of GPUs allowed during evaluation (e.g., limit to a single GPU) to test the model's performance under limited hardware resources.",
+                        "Enforce a cap on GPU memory usage to simulate a low-resource setting and evaluate model scalability without access to extensive computational resources."
+                    ],
+                    "time_constraints": [
+                        "Impose a strict time budget for inference (e.g., requiring all evaluations to complete within a shortened wall-clock time) to assess real-time prediction capabilities."
+                    ],
+                    "money_constraints": [
+                        "Limit the use of high-end cloud compute instances by using more cost-effective hardware setups, thereby simulating a scenario with constrained financial resources."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in experimental runtime settings and distributed evaluation",
+                "description": "Random uncertainty in this experiment can arise from fluctuations in evaluation settings such as random initialization of distributed testing, non-deterministic ordering in data loader construction, and potential randomized parameter fluctuations (e.g., slight variations in batch size values or random seed settings) during model loading and metric computation. Such randomness could inadvertently be introduced if, for example, the '--interactive' flag in joint prediction leads to stochastic behavior in serialization of predictions.",
+                "impact": "These factors may lead to minor variations in key evaluation metrics (such as minADE, minFDE, Miss Rate, mAP, and Soft mAP in Tables 4 and 5), resulting in instability when comparing BeTopNet's performance across different runs.",
+                "possible_modifications": [
+                    "Introduce random fluctuations in batch size or the order of test samples to assess metric robustness.",
+                    "Randomly perturb the distributed testing initialization to observe changes in reported performance.",
+                    "Temporarily apply random token dropping techniques during evaluation (similar to methods used to reduce pre-training cost) to simulate gradient update instabilities and measure their effect on result variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Fixed modifications in dataset preparation and configuration protocols",
+                "description": "Systematic uncertainty may be introduced by one-time modifications in the YAML configuration or during the dataset preparation phase (as outlined in /workspace/docs/womd/DataPrep_pred.md). For example, if the scenario definitions or data splits are altered\u2014even unintentionally\u2014a systematic bias may be introduced in the evaluation process, leading to consistently skewed metrics. This is analogous to corrupting a dataset (e.g., mislabeling or altering sample distributions) which would uniformly affect the computed metrics.",
+                "impact": "The effects include a consistent over- or under-estimation of BeTopNet's performance relative to baseline methods, impacting key metrics (such as the percentage improvements in mAP and Soft mAP reported in Tables 4 and 5) and potentially misleading conclusions about the model's efficacy.",
+                "possible_modifications": [
+                    "Apply a one-time alteration in the data preparation process (such as modifying scenario definitions or data splits) to test the sensitivity of evaluation metrics.",
+                    "Systematically change the content of YAML configuration files (e.g., misalignment of hyperparameters or evaluation protocol adjustments) to observe the impact on the reported improvements.",
+                    "Introduce a deliberate bias in the processing of the WOMD dataset (for example, biasing labels or selectively filtering certain cases) to evaluate robustness against systematic errors."
+                ]
+            }
+        },
+        {
+            "method": "a) For planning: Replicate the experiments on the nuPlan dataset using two baseline planners: PDM [69] and PlanTF [73]. Use the same hyperparameters, training configurations (e.g., 1M training cases with 8s horizon, as described in the paper), and evaluation protocols (including Test14-Random benchmark) to establish baseline planning scores such as OLS, CLS-NR, CLS, and average scores, along with additional safety metrics (CA, TTC, DDC). Reference quantitative results in Table 6 and Table 9 for detailed planning metrics. Then, augment each planner with the BeTop objective as described in the paper and compare the planning scores to assess performance improvements.\n\nb) For prediction: Using the WOMD dataset, replicate the experiments with two baseline predictors: MTR [22] and EDA [53]. Establish baseline metrics on the validation split including minADE, minFDE, Miss Rate, and mAP (and Soft-mAP if applicable), ensuring that data splits and evaluation protocols match those in the paper (e.g., using the same 20% partition of the WOMD train set for prediction experiments). Then, integrate BeTop into each predictor as detailed in the paper. Compare the performance changes by targeting reductions in prediction error measures and improvements in mAP. Additionally, consult Figures 9 and 10 for qualitative results demonstrating improvements in both joint and marginal prediction tasks.",
+            "expected_outcome": "Based on reported results (e.g., in Table 6 and Table 7), it is expected that the addition of the BeTop objective will yield improved planning performance with approximately +2.1% improvement for learning-based planners and +2.0% for rule-based planners. In terms of prediction performance, improvements are anticipated in mAP (around +1.1% to +2.4%) along with reduced prediction errors (minADE, minFDE, and Miss Rate).",
+            "subsection_source": "4.2 Ablation Study",
+            "source": [
+                "/workspace/womd/tools/scripts/dist_train.sh",
+                "/workspace/womd/tools/scripts/dist_test.sh"
+            ],
+            "usage_instructions": "For the prediction part of the experiment question, the repository provides scripts to train and evaluate BeTop integrated with existing SOTA predictors (MTR and Wayformer). First, train the baseline models using: `cd womd/tools && bash scripts/dist_train.sh N_GPUS --cfg_file cfg/MTR_PlusPlus.yaml --epoch 30 --batch_size BATCH --extra_tag baseline`. Then train the BeTop-enhanced versions using: `cd womd/tools && bash scripts/dist_train.sh N_GPUS --cfg_file cfg/BeTopNet_full_64.yaml --epoch 30 --batch_size BATCH --extra_tag betop`. Finally, evaluate both models using: `cd womd/tools && bash scripts/dist_test.sh N_GPUS --cfg_file cfg/MTR_PlusPlus.yaml --batch_size BATCH --ckpt PATH_TO_BASELINE_CKPT` and `cd womd/tools && bash scripts/dist_test.sh N_GPUS --cfg_file cfg/BeTopNet_full_64.yaml --batch_size BATCH --ckpt PATH_TO_BETOP_CKPT`. Compare the metrics (minADE, minFDE, Miss Rate, and mAP) between the baseline and BeTop-enhanced models. Note that the planning part of the experiment (nuPlan dataset with PDM and PlanTF planners) is not yet implemented in this repository as indicated in the README.md's TODO list.",
+            "requirements": [
+                "Step 1: Find an available port by randomly generating port numbers and checking if they are available (/workspace/womd/tools/scripts/dist_train.sh:8-16)",
+                "Step 2: Launch distributed training using PyTorch's distributed launch utility with the specified number of GPUs and port (/workspace/womd/tools/scripts/dist_train.sh:18)",
+                "Step 3: Pass all additional command-line arguments to the training script (/workspace/womd/tools/scripts/dist_train.sh:5,18)",
+                "Step 4: For testing, find an available port using the same method as in training (/workspace/womd/tools/scripts/dist_test.sh:8-16)",
+                "Step 5: Launch distributed testing using PyTorch's distributed launch utility with the specified number of GPUs and port (/workspace/womd/tools/scripts/dist_test.sh:18)",
+                "Step 6: Pass all additional command-line arguments to the testing script (/workspace/womd/tools/scripts/dist_test.sh:5,18)"
+            ],
+            "agent_instructions": "Create two bash scripts for distributed training and testing of motion prediction models on the Waymo Open Motion Dataset:\n\n1. Create a distributed training script that:\n   - Takes the number of GPUs as the first argument\n   - Passes all remaining arguments to the training script\n   - Finds an available network port dynamically\n   - Launches training using PyTorch's distributed launch utility\n\n2. Create a distributed testing script that:\n   - Takes the number of GPUs as the first argument\n   - Passes all remaining arguments to the testing script\n   - Finds an available network port dynamically\n   - Launches testing using PyTorch's distributed launch utility\n\nThese scripts will be used to train and evaluate baseline models (MTR) and BeTop-enhanced models, comparing their performance on motion prediction metrics (minADE, minFDE, Miss Rate, and mAP).",
+            "masked_source": [
+                "/workspace/womd/tools/scripts/dist_train.sh",
+                "/workspace/womd/tools/scripts/dist_test.sh"
+            ],
+            "question": "Does integrating BeTop as a synergistic objective with existing state-of-the-art (SOTA) planners and predictors improve planning and prediction performance on nuPlan and WOMD benchmarks?",
+            "design_complexity": {
+                "constant_variables": {
+                    "training_configuration": "The training hyperparameters such as 1M training cases with an 8s horizon for planning and 30 epochs with a specific batch size for prediction, as well as the evaluation protocols (e.g., Test14-Random benchmark for planning, 20% partition for WOMD) remain fixed.",
+                    "evaluation_protocols": "Metrics like OLS, CLS, CLS-NR, PDMScore, CA, TTC, DDC for planning and minADE, minFDE, Miss Rate, mAP (and Soft-mAP if applicable) for prediction are consistently used across experiments.",
+                    "dataset": [
+                        "nuPlan for planning",
+                        "WOMD for prediction"
+                    ]
+                },
+                "independent_variables": {
+                    "baseline_model_type": [
+                        "For planning: PDM and PlanTF",
+                        "For prediction: MTR and EDA"
+                    ],
+                    "integration_type": [
+                        "Baseline (without BeTop objective)",
+                        "Enhanced (with BeTop objective integrated)"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Planning: OLS, CLS, CLS-NR, average scores, additional safety metrics (CA, TTC, DDC)",
+                        "Prediction: minADE, minFDE, Miss Rate, mAP (and Soft-mAP if applicable)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "PlanTF": "The description of the PlanTF baseline planner is not detailed; its underlying mechanism or differences from other planners remain ambiguous.",
+                    "BATCH and N_GPUS": "The exact batch size and number of GPUs are represented as variables in the scripts but are not explicitly defined, leaving room for interpretation.",
+                    "BeTop objective integration": "While the BeTop objective is mentioned, the exact changes or modifications it brings to the training dynamics are not fully detailed, creating ambiguity on its implementation nuances.",
+                    "Safety metric definitions": "Metrics like CA, TTC, DDC are referenced, but their precise computation or thresholds are not explicitly mentioned."
+                },
+                "possible_modifications": {
+                    "mask_existing_variables": [
+                        "Conceal the exact value of 'BATCH' or allow a user-defined value to test the sensitivity of the overall training process."
+                    ],
+                    "imply_new_variables": [
+                        "Include a variable for 'GPU configuration' that specifies different GPU setups (e.g., single GPU vs. multi-GPU) to study the impact on model performance.",
+                        "Introduce a variable for 'integration intensity' of the BeTop objective to explore different weightings or degrees of integration."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "NuPlan dataset and WOMD dataset",
+                    "Baseline planning models (PDM and PlanTF) and prediction models (MTR and EDA)",
+                    "BeTop objective module integration",
+                    "Distributed training and testing scripts (dist_train.sh and dist_test.sh)",
+                    "PyTorch\u2019s distributed launch utility",
+                    "Dynamic port selection mechanism for network communication"
+                ],
+                "setup_steps": [
+                    "For planning experiments: Configure training with 1M training cases and an 8s horizon, set evaluation protocols such as Test14-Random benchmark, and prepare the metrics (OLS, CLS, CLS-NR, PDMScore, CA, TTC, DDC)",
+                    "Augment baseline planners with the BeTop objective and re-run training to compare with baseline results (as referenced in Table 6 and Table 9)",
+                    "For prediction experiments: Change into the appropriate directory (womd/tools), and execute the training script with provided configuration files (e.g., cfg/MTR_PlusPlus.yaml for baseline and cfg/BeTopNet_full_64.yaml for BeTop-enhanced versions)",
+                    "Ensure dynamic selection of an available port for distributed training/testing and pass additional command-line arguments (such as BATCH and N_GPUS)",
+                    "Evaluate the models using the provided testing script, comparing prediction metrics (minADE, minFDE, Miss Rate, mAP) between baseline and enhanced versions"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Integration of BeTop objective",
+                        "description": "The implementation details for incorporating the BeTop objective into existing planners and predictors are not fully elaborated, adding complexity to replicating the exact behavior."
+                    },
+                    {
+                        "source": "Distributed training and dynamic port selection",
+                        "description": "The scripts involve dynamically selecting network ports and handling distributed launches with PyTorch, which can introduce environment-specific challenges."
+                    },
+                    {
+                        "source": "Evaluation protocols and metric computation",
+                        "description": "Multiple metrics (e.g., OLS, CLS, safety metrics) and references to tables (e.g., Tables 6 and 9) need to be consistent across experiments, increasing integration complexity."
+                    },
+                    {
+                        "source": "Dual experiment tracks",
+                        "description": "Managing both planning experiments (which are currently not implemented in the repository) and prediction experiments adds additional overhead."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "PlanTF baseline planner: The description and underlying mechanism for PlanTF are not detailed, leaving its implementation and behavior ambiguous.",
+                    "BeTop objective integration: The exact modifications or changes in training dynamics introduced by the BeTop objective are not fully spelled out."
+                ],
+                "ambiguous_setup_steps": [
+                    "Specification of variables such as 'BATCH' and 'N_GPUS': The scripts refer to these as variables without defining specific values, potentially leading to different interpretations.",
+                    "Details for planning experiments: The planning part is not yet implemented in the repository (as noted in the README's TODO list), causing uncertainty in replication steps.",
+                    "Safety metric definitions: Metrics like CA, TTC, and DDC are mentioned but lack precise computation details or thresholds."
+                ],
+                "possible_modifications": {
+                    "mask_existing_variables": [
+                        "Conceal or let the user define the exact value of BATCH to test sensitivity in training.",
+                        "Omit specific GPU configurations in the instructions, requiring users to experiment with different setups."
+                    ],
+                    "imply_new_variables": [
+                        "Introduce an explicit variable for GPU configurations, such as single GPU versus multi-GPU settings.",
+                        "Define an 'integration intensity' parameter for the BeTop objective to allow tuning the weight or effect of the added objective."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Tighten the resource configuration by restricting the number of GPUs available for distributed training (e.g., limit to a single GPU or a smaller multi-GPU setup), which may produce slower training and affect performance comparisons."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed training duration (for example, fewer epochs or a shorter training horizon) to simulate a scenario with limited compute time."
+                    ],
+                    "money_constraints": [
+                        "Limit the budget by enforcing the use of local hardware or lower-cost cloud resources, which could potentially increase latency or reduce training throughput compared to the originally specified distributed setups."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Dynamic port selection and random initialization in distributed training",
+                "description": "In the provided training and testing scripts, an available port is determined by randomly generating port numbers and checking their availability. This randomness, along with potential instability in gradient updates (analogous to randomly dropping tokens in pre-training), introduces random uncertainty in the training process. This can lead to run-to-run variability in performance metrics, such as planning scores (OLS, CLS, CLS\u2010NR, and safety metrics like CA, TTC, DDC from Table 6 and Table 9) and prediction error metrics (minADE, minFDE, Miss Rate, mAP).",
+                "impact": "Variations in network communication and unstable gradient updates may result in inconsistent experimental outcomes and performance comparisons between baseline and BeTop-integrated models.",
+                "possible_modifications": [
+                    "Replace the dynamic port selection with a fixed port configuration to remove variability.",
+                    "Introduce artificial delays or jitter in port assignment to further assess the sensitivity of the process to random factors.",
+                    "Randomly perturb other hyperparameters (e.g., batch size or learning rate variations) to simulate additional random uncertainty."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "BeTop objective integration and potential dataset biases",
+                "description": "Integrating the BeTop objective introduces a systematic change in the training dynamics. This is akin to performing a one-time modification on the dataset (for instance, inducing label bias in a sentiment analysis task) where a consistent bias may creep into the results. In our experiment, the systematic effect is observed in the expected performance improvements (e.g., about +2.1% for learning-based planners and +1.1% to +2.4% mAP improvement in prediction). However, if a systematic error is introduced\u2014such as an unintended shift in safety metric threshold definitions or a biased integration of the BeTop objective\u2014this will persist across all runs.",
+                "impact": "Such systematic uncertainty could result in consistently skewed or degraded performance metrics, potentially misleading the efficacy of the BeTop objective compared to baseline models across both nuPlan and WOMD benchmarks.",
+                "possible_modifications": [
+                    "Deliberately modify the dataset (e.g., systematically label reviews with 50+ characters as negative) to test if the models can detect and compensate for bias.",
+                    "Adjust the integration intensity of the BeTop objective (by varying its weight) to observe how different levels of systematic incorporation affect performance.",
+                    "Change the computation of safety metrics (CA, TTC, DDC) to simulate a baseline shift and examine the robustness of the BeTop-enhanced models."
+                ]
+            }
+        },
+        {
+            "method": "Using the WOMD dataset (with the training partition defined in the paper and following the training configurations detailed in Section 4 and Appendix D), conduct a series of experiments by setting the number of future interactive agents (K) to a range of values (e.g., 4, 8, 16, 32, 64). For each K, train the BeTopNet model while keeping all other hyperparameters (optimizer, learning rate, batch size, etc.) constant. Evaluate each model using the same evaluation protocol as in the paper, measuring prediction mAP and other relevant metrics. Plot the resulting mAP against K to visualize the convergence behavior. Compare the outcomes with the trends presented in Figure 4 to verify the observed performance improvements and subsequent degradation.",
+            "expected_outcome": "It is expected that increasing K will initially result in a steady improvement in the prediction mAP (with a maximum improvement of around +3.7%). However, beyond an optimal value (approximately K=32), the performance is anticipated to deteriorate (with a drop of approximately \u22121.8% in mAP) due to the inclusion of non-interactive agents, thus confirming the trend observed in Figure 4.",
+            "subsection_source": "4.2 Ablation Study",
+            "source": [
+                "/workspace/womd/tools/train.py",
+                "/workspace/womd/tools/test.py"
+            ],
+            "usage_instructions": "To conduct the experiment on varying the number of interactive agents (K), create multiple configuration files based on the BeTopNet_full_64.yaml template, each with a different NUM_TOPO value (e.g., 4, 8, 16, 32, 64). For each configuration, run the training script followed by the evaluation script. For example:\n\n1. Create a config file for K=4: Copy /workspace/womd/tools/cfg/BeTopNet_full_64.yaml to /workspace/womd/tools/cfg/BeTopNet_full_K4.yaml and change the NUM_TOPO parameter from 32 to 4.\n2. Train the model: cd /workspace/womd/tools && bash scripts/dist_train.sh N_GPUS --cfg_file cfg/BeTopNet_full_K4.yaml --epoch 30 --batch_size BATCH --extra_tag K4\n3. Evaluate the model: cd /workspace/womd/tools && bash scripts/dist_test.sh N_GPUS --cfg_file cfg/BeTopNet_full_K4.yaml --batch_size BATCH --ckpt PATH_TO_CHECKPOINT\n4. Repeat steps 1-3 for K=8, K=16, K=32, and K=64.\n5. Compare the mAP results across different K values to observe the trend shown in Figure 4 of the paper.",
+            "requirements": [
+                "Step 1: Parse command line arguments including configuration file path, batch size, number of epochs, checkpoint path, etc. (/workspace/womd/tools/train.py:29-67)",
+                "Step 2: Initialize distributed training environment if specified (/workspace/womd/tools/train.py:112-124)",
+                "Step 3: Set up output directories for logs, checkpoints, and evaluation results (/workspace/womd/tools/train.py:137-141)",
+                "Step 4: Configure logging to track training progress (/workspace/womd/tools/train.py:142-157)",
+                "Step 5: Build data loader for training data (/workspace/womd/tools/train.py:159-168)",
+                "Step 6: Build the BeTopNet model according to configuration (/workspace/womd/tools/train.py:170)",
+                "Step 7: Move model to GPU and set up synchronous batch normalization if needed (/workspace/womd/tools/train.py:172-174)",
+                "Step 8: Build optimizer (Adam or AdamW) based on configuration (/workspace/womd/tools/train.py:176)",
+                "Step 9: Load pretrained model or checkpoint if specified (/workspace/womd/tools/train.py:182-210)",
+                "Step 10: Build learning rate scheduler based on configuration (/workspace/womd/tools/train.py:212-215)",
+                "Step 11: Set up distributed data parallel training if needed (/workspace/womd/tools/train.py:219-220)",
+                "Step 12: Build data loader for evaluation during training (/workspace/womd/tools/train.py:225-229)",
+                "Step 13: Train the model for the specified number of epochs (/workspace/womd/tools/train.py:237-259)",
+                "Step 14: Evaluate the trained model on test data (/workspace/womd/tools/train.py:273-284)",
+                "Step 15: Parse command line arguments for evaluation including configuration file path, checkpoint path, etc. (/workspace/womd/tools/test.py:28-61)",
+                "Step 16: Initialize distributed testing environment if specified (/workspace/womd/tools/test.py:86-93)",
+                "Step 17: Set up output directories for evaluation results (/workspace/womd/tools/test.py:101-117)",
+                "Step 18: Configure logging for evaluation (/workspace/womd/tools/test.py:118-130)",
+                "Step 19: Build data loader for test data (/workspace/womd/tools/test.py:140-145)",
+                "Step 20: Build the BeTopNet model according to configuration (/workspace/womd/tools/test.py:146)",
+                "Step 21: Load model checkpoint for evaluation (/workspace/womd/tools/test.py:67-71)",
+                "Step 22: Evaluate the model on test data and save results (/workspace/womd/tools/test.py:77-81)"
+            ],
+            "agent_instructions": "Your task is to implement scripts for training and evaluating a BeTopNet model for motion prediction, with a focus on varying the number of interactive agents (K). The experiment involves training models with different K values and comparing their performance.\n\nYou need to create two main scripts:\n\n1. A training script that should:\n   - Parse command line arguments including configuration file path, batch size, epochs, etc.\n   - Support distributed training across multiple GPUs\n   - Build a data loader for the BeTopNet dataset\n   - Initialize the BeTopNet model based on configuration\n   - Set up optimizer (AdamW) and learning rate scheduler\n   - Support loading pretrained models or resuming from checkpoints\n   - Train the model for the specified number of epochs\n   - Save checkpoints periodically\n   - Evaluate the model during training\n   - Log training progress and metrics\n\n2. An evaluation script that should:\n   - Parse command line arguments including configuration file path and checkpoint path\n   - Support distributed evaluation across multiple GPUs\n   - Build a data loader for the test dataset\n   - Load the trained model from a checkpoint\n   - Evaluate the model on test data\n   - Save evaluation results\n\nThe experiment requires creating multiple configuration files with different values for the NUM_TOPO parameter (4, 8, 16, 32, 64), which controls the number of interactive agents. For each configuration:\n1. Train a model using the training script\n2. Evaluate the model using the evaluation script\n3. Compare the mAP results across different NUM_TOPO values\n\nThe configuration should include settings for the BeTopNet model architecture, optimization parameters, and dataset paths. The model consists of an encoder (MTREncoder) and a decoder (BeTopDecoder) with attention mechanisms for processing agent and map data.",
+            "masked_source": [
+                "/workspace/womd/tools/train.py",
+                "/workspace/womd/tools/test.py"
+            ],
+            "question": "Will varying the number of interactive agents (K) in the topology-guided local attention module affect the prediction mAP, and is there an optimal K beyond which performance degrades? We hypothesize that while increasing K initially improves mAP, there exists a tipping point (around K=32) after which additional agents lead to performance degradation.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "WOMD training partition as defined in the paper",
+                    "training_hyperparameters": "optimizer (AdamW), learning rate, batch size, number of epochs, and all other training configurations remain constant",
+                    "evaluation_protocol": "The same evaluation protocol as detailed in the paper"
+                },
+                "independent_variables": {
+                    "NUM_TOPO": [
+                        "4",
+                        "8",
+                        "16",
+                        "32",
+                        "64"
+                    ]
+                },
+                "dependent_variables": {
+                    "prediction_mAP": "mAP measured on the prediction task, which is expected to improve initially and later degrade beyond an optimal K value (around 32)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "NUM_TOPO": "While NUM_TOPO is defined as the number of interactive agents, the exact mechanism or threshold for distinguishing interactive from non-interactive agents is not detailed explicitly in the task, which could lead to ambiguity in interpreting the performance drop.",
+                    "interactive_agents": "The definition of what qualifies as an 'interactive agent' relative to non-interactive agents is not fully specified in the task details."
+                },
+                "possible_modifications": {
+                    "modification_NUM_TOPO": [
+                        "Mask some of the NUM_TOPO values during the experiment (e.g., hide the optimal value) to infer the best setting without direct supervision.",
+                        "Introduce additional values for NUM_TOPO beyond the provided range to explore the behavior in more depth."
+                    ],
+                    "modification_interactive_agent_definition": [
+                        "Explicitly define the criteria or threshold for an agent being considered interactive versus non-interactive in the configuration or question."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "WOMD dataset (training partition as defined in the paper)",
+                    "Training script (dist_train.sh) with distributed training support",
+                    "Evaluation script (dist_test.sh) for model testing",
+                    "Multiple configuration files (derived from BeTopNet_full_64.yaml) with varied NUM_TOPO values",
+                    "Data loaders for training and test data",
+                    "BeTopNet model initialization (including topology-guided local attention module)",
+                    "Optimizer (AdamW) and learning rate scheduler setup",
+                    "Checkpoint and logging management"
+                ],
+                "setup_steps": [
+                    "Create multiple config files by copying the base BeTopNet_full_64.yaml and changing the NUM_TOPO parameter for each K value (e.g., 4, 8, 16, 32, 64)",
+                    "Parse command line arguments for configuration file path, batch size, number of epochs, checkpoint path, etc.",
+                    "Initialize distributed training (and evaluation) environments across multiple GPUs",
+                    "Set up output directories and logging for storing checkpoints and evaluation results",
+                    "Build data loaders for training and test datasets",
+                    "Initialize the BeTopNet model based on the provided configuration",
+                    "Train the model for a fixed number of epochs while keeping other hyperparameters constant",
+                    "Evaluate the model using the same evaluation protocol as described in the paper",
+                    "Plot the prediction mAP against the different NUM_TOPO (K) values to analyze convergence and performance trends"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Distributed Training and Evaluation",
+                        "description": "Proper initialization, synchronization across multiple GPUs, and checkpoint management add layers of complexity and require careful setup."
+                    },
+                    {
+                        "source": "Configuration Management",
+                        "description": "Handling multiple configuration files that differ only in the NUM_TOPO value and ensuring all other settings remain constant can be error-prone and adds to the experiment setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "NUM_TOPO parameter",
+                    "Definition of interactive versus non-interactive agents"
+                ],
+                "ambiguous_setup_steps": [
+                    "Determining the exact threshold or criteria that distinguish an interactive agent from a non-interactive agent when adjusting NUM_TOPO",
+                    "Interpreting how changes in NUM_TOPO specifically affect the topology-guided local attention module without explicit instructions on the mechanism"
+                ],
+                "possible_modifications": {
+                    "modification_NUM_TOPO": [
+                        "Introduce additional NUM_TOPO values beyond the provided range to explore behavior in more depth",
+                        "Mask some of the NUM_TOPO values during the experiment to require inference of the optimal setting without direct guidance"
+                    ],
+                    "modification_interactive_agent_definition": [
+                        "Explicitly define the criteria or threshold for an agent being considered interactive to remove ambiguity from the experimental setup"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in stochastic training components and distributed GPU synchronization",
+                "description": "Random uncertainty here comes from the inherent variability in training procedures such as random initialization, batch sampling, and possibly non-deterministic behavior during distributed training. These factors can introduce noise in the prediction mAP measurements when experimenting with different NUM_TOPO (K) values.",
+                "impact": "Variability in gradient updates and training dynamics may lead to fluctuations in the measured mAP for each K, potentially obscuring the true impact of the NUM_TOPO parameter on performance.",
+                "possible_modifications": [
+                    "Run multiple training trials with different random seeds to average out stochastic variations.",
+                    "Implement and control for deterministic training practices (e.g., fixing random seeds) to reduce uncertainty.",
+                    "Introduce controlled and consistent dropout or noise levels in the model rather than completely random perturbations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Inclusion of non-interactive agents due to increasing NUM_TOPO beyond optimal levels",
+                "description": "Systematic uncertainty stems from the experimental design itself: as the number of interactive agents (NUM_TOPO) is increased, the model may begin to incorporate agents that are not truly interactive. This leads to a systematic bias where performance (mAP) improves up to a point (around K=32) and then degrades as extra non-contributory or misleading agents are added.",
+                "impact": "The systematic inclusion of non-interactive agents affects the attention mechanism by polluting the signal used for prediction, resulting in a predictable performance drop (approximately \u22121.8% mAP after the optimal K). This trend is clearly observed in Figure 4 of the paper.",
+                "possible_modifications": [
+                    "Explicitly define and implement a criterion to distinguish interactive vs. non-interactive agents to filter out non-contributory agents.",
+                    "Adjust the experimental design to include additional NUM_TOPO values beyond the provided range to better pinpoint the tipping point.",
+                    "Conduct sensitivity analysis on the impact of each additional agent to develop a more robust threshold for interactive agent inclusion."
+                ]
+            }
+        },
+        {
+            "method": "Perform an ablation study on the nuPlan dataset using the Test14 benchmarks (including both Test14-Hard and Test14-Random setups). First, replicate the full BeTopNet model under the established training and evaluation settings (e.g., 1M training cases, 8s horizon, 25 epochs with a batch size of 128 for planning). Then, create several variants by disabling one or more components: (1) No branched planning, (2) No cost learning, (3) Sole BeTop configuration using only imitative learning, (4) No local attention, and (5) Using encoder modules only. For each model variant, measure the planning performance metrics, including the open-loop score (OLS) and closed-loop simulation metrics (CLS and CLS-NR), which aggregate statistics on driving safety, planning progress, ride comfort, and rule compliance. Also, refer to the reference values reported in Table 8 for the full model performance. Ensure that all other experimental settings, such as data splits, simulation parameters, horizon length, and computational resources, remain constant across experiments. Document additional details by comparing the trends in performance degradation with respect to the full model, and, where available, cross-check with qualitative simulation outputs (e.g., as suggested by Figures 7 and 8) for closed-loop performance consistency.",
+            "expected_outcome": "The full BeTopNet model is expected to exhibit the best overall performance. Each component should show a positive contribution, such that ablating any one (or more) of the key modules leads to a measurable degradation in planning performance. For example, the removal of cost learning is anticipated to result in approximately a 2.9% drop in CLS, while disabling branched planning or local attention should similarly reduce performance metrics. This systematic drop across different ablations will verify that the individual functions of branched planning, cost learning, local attention, and encoder modules each contribute to the robustness of BeTopNet's planning capability.",
+            "subsection_source": "4.2 Ablation Study",
+            "no_answer": "After thoroughly exploring the repository, I found that the planning pipeline for nuPlan is not yet released. The README explicitly states 'Full code and checkpoints release is coming soon' and lists 'Planning pipeline in nuPlan' as an uncompleted TODO item. The repository currently only contains the prediction pipeline for the Waymo Open Motion Dataset (WOMD), with no scripts related to nuPlan, planning, or ablation studies. Therefore, there are no scripts in the repository that can answer the experiment question about BeTopNet's component ablation study on the nuPlan dataset using Test14 benchmarks.",
+            "question": "Do the individual functionalities within BeTopNet\u2014specifically branched planning, cost learning, local attention, and encoder modules\u2014each contribute positively to its overall planning performance?",
+            "design_complexity": {
+                "constant_variables": {
+                    "training_dataset": "nuPlan with 1M training cases",
+                    "horizon_length": "8 seconds",
+                    "training_settings": "25 epochs with a batch size of 128 for planning",
+                    "data_splits_and_simulation": "Data splits, simulation parameters, and computational resources remain constant"
+                },
+                "independent_variables": {
+                    "model_configuration_variant": [
+                        "Full BeTopNet",
+                        "No branched planning",
+                        "No cost learning",
+                        "Sole BeTop using only imitative learning",
+                        "No local attention",
+                        "Using encoder modules only"
+                    ]
+                },
+                "dependent_variables": {
+                    "planning_performance_metrics": [
+                        "Open-loop score (OLS)",
+                        "Closed-loop simulation metrics (CLS and CLS-NR)"
+                    ],
+                    "sub_metrics": "Driving safety, planning progress, ride comfort, and rule compliance aggregated into CLS/CLS-NR"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "simulation_parameters": "The specific simulation parameters and computational resources are mentioned to be constant, but their exact values are not provided.",
+                    "qualitative_outputs": "References to qualitative simulation outputs (e.g., from Figures 7 and 8) are included, but no specific details are provided regarding how these outputs are measured or compared."
+                },
+                "possible_modifications": {
+                    "mask_simulation_settings": [
+                        "Explicitly define or mask the simulation parameter values and computational resources to test model robustness under variable conditions."
+                    ],
+                    "expand_ablation_options": [
+                        "Introduce additional ablation settings (e.g., varying the degree of cost learning or branched planning rather than completely disabling them) as new independent variables."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Full BeTopNet model (including branched planning, cost learning, local attention, encoder modules, and imitative learning)",
+                    "Ablation variants (No branched planning, No cost learning, Sole BeTop using only imitative learning, No local attention, Using encoder modules only)",
+                    "Test14 benchmarks (Test14-Hard and Test14-Random setups)",
+                    "Planning performance metrics (Open-loop score, Closed-loop simulation metrics CLS and CLS-NR including driving safety, planning progress, ride comfort, and rule compliance)"
+                ],
+                "setup_steps": [
+                    "Replicate the full BeTopNet model using provided training settings (1M training cases, 8s horizon, 25 epochs, batch size of 128)",
+                    "Generate ablation variants by disabling individual components (branched planning, cost learning, etc.)",
+                    "Ensure all constant variables (data splits, simulation parameters, computational resources) remain unchanged across experiments",
+                    "Run experiments on the nuPlan dataset using the Test14 benchmarks (both Hard and Random setups)",
+                    "Measure and collect planning performance metrics (OLS, CLS, CLS-NR) for each variant",
+                    "Compare experimental results with reference performance values (e.g., Table 8 for the full model) and analyze the degradation trends",
+                    "Cross-check with qualitative simulation outputs (as referenced in Figures 7 and 8) for closed-loop performance consistency"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Interdependencies of components",
+                        "description": "The planning performance is influenced by how each module interacts with others, making it challenging to isolate the individual contribution of each component."
+                    },
+                    {
+                        "source": "Constant experiment settings",
+                        "description": "Maintaining constant simulation parameters, data splits, and computational resources across variants adds complexity in ensuring that only the intended model modifications are being tested."
+                    },
+                    {
+                        "source": "Quantitative and qualitative metric integration",
+                        "description": "Combining quantitative metrics (OLS, CLS, CLS-NR) with qualitative simulation outputs (from Figures 7 and 8) introduces complexity in correlating observed performance degradations with changes in model behavior."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Simulation parameters and computational resources",
+                    "Qualitative simulation outputs measurement criteria"
+                ],
+                "ambiguous_setup_steps": [
+                    "Definition of specific simulation parameter values and how they are controlled or reported are not clearly provided",
+                    "Instructions on how to systematically compare and quantify qualitative simulation outputs (from Figures 7 and 8) lack detail"
+                ],
+                "possible_modifications": {
+                    "mask_simulation_settings": [
+                        "Explicitly define simulation parameter values and computational resource details, or mask them to test robustness under variable conditions"
+                    ],
+                    "expand_ablation_options": [
+                        "Introduce additional variants, such as varying the degree of cost learning or branched planning instead of completely disabling them, to provide a more nuanced analysis"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict compute resource variations by explicitly fixing GPU/CPU configurations (as detailed in Appendix D) to ensure that only the ablation components vary in performance.",
+                        "Optionally, reduce the available GPU memory or compute power to see if the model robustness holds under tighter resource conditions."
+                    ],
+                    "time_constraints": [
+                        "Impose stricter runtime settings by reducing the available training epochs or shortening simulation durations (e.g., a lower bound on epoch counts) to evaluate performance under limited time budgets.",
+                        "Enforce a fixed maximum runtime per simulation run to stress-test the ablation variants under time pressure."
+                    ],
+                    "money_constraints": [
+                        "Although there are no explicit monetary constraints stated, one possible modification is to simulate a cost-sensitive setup by restricting access to high-end compute resources, encouraging the use of more economical or cloud-based resources with limited budgets."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications in ablation study components",
+                "description": "Random uncertainty arises when components of the BeTopNet model (such as branched planning, cost learning, local attention, and encoder modules) are selectively disabled. This can lead to instability in gradient updates and introduce random fluctuations in the performance metrics (OLS, CLS, and CLS-NR), similar to the effect seen when randomly dropping tokens in transformer pre-training.",
+                "impact": "Such random variations may result in inconsistent performance results between training runs and make it difficult to isolate the true contribution of each module. Metrics such as driving safety, planning progress, ride comfort, and rule compliance\u2014as reported quantitatively (e.g., reference values from Table 8) and qualitatively (as shown in Figures 7 and 8)\u2014might exhibit increased variance from run to run.",
+                "possible_modifications": [
+                    "Perform multiple training runs with different random seeds to quantify the variability in performance results.",
+                    "Introduce controlled random perturbations by partially disabling components (e.g., apply a probabilistic dropout on certain modules) instead of complete removal.",
+                    "Inject random variations in simulation parameters (within a defined range) to analyze how such randomness affects closed-loop performance metrics."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Systematic changes in experimental setup and dataset bias",
+                "description": "Systematic uncertainty is introduced by deliberate, one-time modifications in the experimental framework. For instance, permanently disabling a specific component (such as cost learning) creates a consistent bias in performance, as evidenced by an expected drop (e.g., approximately 2.9% in CLS) compared to the full model. Similarly, any unnoticed corruption or bias in the training/validation splits\u2014like a fixed alteration in data partitioning\u2014can lead to systematic degradation.",
+                "impact": "This type of uncertainty causes a consistent pattern of performance degradation that reflects inherent issues in the chosen experimental setup rather than random fluctuations. It may lead to misinterpretations regarding the individual contributions of key modules if the bias is inherent in the simulation parameters or underlying dataset. The degradation trends, when compared with reference values in Table 8 and qualitative results from Figures 7 and 8, highlight the module\u2019s impact across experiments.",
+                "possible_modifications": [
+                    "Apply additional systematic modifications such as adjusting the Test14 data splits uniformly to check for consistent bias.",
+                    "Introduce controlled systematic perturbations, for example, varying the degree of ablation (rather than complete removal) to observe structured changes in metrics.",
+                    "Cross-check experimental results with qualitative simulation outputs to ensure that observed performance drops align with expected systematic biases."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you train the BeTopNet model on the Waymo Open Motion Dataset for autonomous vehicle trajectory prediction?",
+            "method": "Use the BeTopNet framework to train a model on the Waymo Open Motion Dataset (WOMD) for motion prediction, following the provided training pipeline.",
+            "expected_outcome": "A trained BeTopNet model with evaluation metrics showing performance on the validation set. The metrics should include average displacement error (ADE) and final displacement error (FDE) for trajectory prediction.",
+            "source": [
+                "/workspace/womd/tools/train.py",
+                "/workspace/womd/tools/scripts/dist_train.sh",
+                "/workspace/womd/tools/cfg/BeTopNet_full_64.yaml"
+            ],
+            "usage_instructions": "1. First, ensure the Waymo Open Motion Dataset is downloaded and preprocessed using the data_preprocess.py script.\n2. Configure the BeTopNet_full_64.yaml file with the correct paths to your data.\n3. Run the training script using the dist_train.sh wrapper with appropriate parameters:\n   - Specify the number of GPUs to use\n   - Set the configuration file to BeTopNet_full_64.yaml\n   - Define the number of training epochs (e.g., 30)\n   - Set an appropriate batch size based on available GPU memory\n   - Add an experiment tag for identification\n4. Monitor the training progress through the generated log files and TensorBoard visualizations.\n5. After training completes, the script will automatically evaluate the model on the validation set and report performance metrics.",
+            "requirements": [
+                "Step 1: Parse command line arguments for training configuration including config file path, batch size, epochs, number of workers, experiment tag, checkpoint path, etc. (/workspace/womd/tools/train.py:29-67)",
+                "Step 2: Set up distributed training environment if specified, determining the number of GPUs and initializing the distributed backend (/workspace/womd/tools/train.py:112-124)",
+                "Step 3: Configure batch size and number of epochs based on arguments or config file (/workspace/womd/tools/train.py:126-132)",
+                "Step 4: Create output directories for logs, checkpoints, and evaluation results (/workspace/womd/tools/train.py:137-140)",
+                "Step 5: Set up logging to track training progress (/workspace/womd/tools/train.py:142-157)",
+                "Step 6: Build training data loader with the Waymo Open Motion Dataset (/workspace/womd/tools/train.py:159-168)",
+                "Step 7: Build the BeTopNet model according to the configuration (/workspace/womd/tools/train.py:170-174)",
+                "Step 8: Create optimizer (Adam or AdamW) based on configuration (/workspace/womd/tools/train.py:176)",
+                "Step 9: Load checkpoint if resuming training or using pretrained model (/workspace/womd/tools/train.py:179-211)",
+                "Step 10: Build learning rate scheduler (cosine, lambdaLR, or linearLR) (/workspace/womd/tools/train.py:212-215)",
+                "Step 11: Set up distributed data parallel model if using multiple GPUs (/workspace/womd/tools/train.py:217-223)",
+                "Step 12: Build validation data loader for evaluation during training (/workspace/womd/tools/train.py:225-229)",
+                "Step 13: Train the model with the specified parameters, saving checkpoints at regular intervals (/workspace/womd/tools/train.py:234-259)",
+                "Step 14: Evaluate the final model on the validation set and report metrics including ADE and FDE (/workspace/womd/tools/train.py:265-287)"
+            ],
+            "agent_instructions": "Your task is to implement a training pipeline for the BeTopNet model on the Waymo Open Motion Dataset (WOMD) for autonomous vehicle trajectory prediction. The implementation should include the following components:\n\n1. A training script that:\n   - Loads and processes the Waymo Open Motion Dataset\n   - Builds the BeTopNet model architecture\n   - Implements a training loop with appropriate loss functions\n   - Supports distributed training across multiple GPUs\n   - Saves checkpoints and logs training progress\n   - Evaluates the model on a validation set\n\n2. A configuration file that specifies:\n   - Dataset parameters (paths, object types, sampling intervals)\n   - Model architecture (encoder/decoder structure, attention layers)\n   - Training hyperparameters (batch size, learning rate, optimizer)\n\n3. A shell script wrapper for launching distributed training\n\nThe BeTopNet model should be trained to predict future trajectories of vehicles, pedestrians, and cyclists. The model architecture consists of an encoder that processes agent and map features, and a decoder that generates multi-modal trajectory predictions.\n\nAfter training, the model should be evaluated on the validation set using metrics such as Average Displacement Error (ADE) and Final Displacement Error (FDE).\n\nEnsure that the training pipeline supports:\n- Loading pretrained models or resuming from checkpoints\n- TensorBoard logging for monitoring training progress\n- Configurable batch size and number of epochs\n- Learning rate scheduling\n\nThe training should be run with the appropriate configuration to achieve good performance on the trajectory prediction task.",
+            "design_complexity": {
+                "constant_variables": {
+                    "model_and_dataset": "BeTopNet framework with the Waymo Open Motion Dataset (WOMD) is fixed for the task"
+                },
+                "independent_variables": {
+                    "training_hyperparameters": [
+                        "batch size (e.g., values chosen based on GPU memory)",
+                        "number of training epochs (e.g., 30 or other values)",
+                        "learning rate and its schedule (e.g., cosine, lambdaLR, linearLR)",
+                        "optimizer type (e.g., Adam or AdamW)"
+                    ],
+                    "distributed_training_settings": [
+                        "number of GPUs (e.g., 1, 2, 4, 8)",
+                        "distributed backend configurations"
+                    ],
+                    "configuration_and_paths": [
+                        "path to the config file (e.g., BeTopNet_full_64.yaml)",
+                        "data paths (for preprocessed WOMD)",
+                        "checkpoint or pretrained model paths"
+                    ]
+                },
+                "dependent_variables": {
+                    "model_performance_metrics": [
+                        "Average Displacement Error (ADE)",
+                        "Final Displacement Error (FDE)"
+                    ],
+                    "training_output": "Trained model checkpoints, loss curves, and logged TensorBoard outputs"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "experiment_tag": "The format and allowed values for experiment tag are not explicitly specified.",
+                    "learning_rate_scheduler": "Although multiple schedulers are mentioned (cosine, lambdaLR, linearLR), the selection criteria and parameter settings are not detailed.",
+                    "checkpoint_path": "There is no clear specification on how checkpoint paths should be formatted or managed when resuming training.",
+                    "batch_size": "The term 'appropriate batch size' is vague as it depends on available GPU memory and no explicit values or ranges are provided."
+                },
+                "possible_modifications": {
+                    "modification_new_variables": [
+                        "Add explicit values for batch size (e.g., [16, 32, 64]) to remove ambiguity.",
+                        "Introduce a variable for 'data_augmentation' with values like [None, 'flip', 'crop'] to extend the design.",
+                        "Specify a variable for 'optimizer_settings' that includes both the optimizer type and its hyperparameters."
+                    ],
+                    "modification_masking_variables": [
+                        "Mask the specific scheduler type in the question to test if the agent can decide between cosine, lambdaLR, or linearLR based on validation performance.",
+                        "Omit exact checkpoint path specifications to evaluate if the agent identifies the need to handle checkpoint management flexibly."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Waymo Open Motion Dataset (WOMD)",
+                    "data_preprocess.py script for dataset preprocessing",
+                    "Configuration file (BeTopNet_full_64.yaml)",
+                    "Training script (train.py)",
+                    "Distributed training shell wrapper (dist_train.sh)",
+                    "TensorBoard logging and monitoring setup",
+                    "Checkpoint management system",
+                    "Distributed training environment (multiple GPUs, distributed backend)"
+                ],
+                "setup_steps": [
+                    "Ensure the WOMD is downloaded and preprocessed using the data_preprocess.py script",
+                    "Configure the paths and dataset parameters in the BeTopNet_full_64.yaml file",
+                    "Run the distributed training script (dist_train.sh) with appropriate parameters (number of GPUs, configuration file, number of training epochs, batch size, and experiment tag)",
+                    "Monitor training progress via generated log files and TensorBoard visualizations",
+                    "Evaluate the trained model on the validation set to calculate metrics like ADE and FDE"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Distributed Training",
+                        "description": "Setting up and initializing the distributed backend, managing multiple GPUs, and ensuring synchrony across compute nodes adds complexity."
+                    },
+                    {
+                        "source": "Hyperparameter and Optimizer Configuration",
+                        "description": "Determining the optimal values for batch size, learning rate, and scheduler type (cosine, lambdaLR, or linearLR) based on available hardware and experimental needs increases complexity."
+                    },
+                    {
+                        "source": "Checkpoint and Resume Training Management",
+                        "description": "Integrating checkpoint saving, resuming training from checkpoints, and managing checkpoint paths contributes to overall setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Experiment tag format: The allowable format and values for the experiment tag are not explicitly defined.",
+                    "Learning rate scheduler: Although multiple schedulers are mentioned, the criteria for choosing one and the exact parameter settings remain unclear.",
+                    "Checkpoint path: The specific format and management of checkpoint paths when resuming training are not detailed.",
+                    "Batch size: The term 'appropriate batch size' is vague since it depends on available GPU memory without explicit recommended values."
+                ],
+                "ambiguous_setup_steps": [
+                    "Distributed training configuration: Detailed instructions on setting up the distributed backend and managing multiple GPUs are not fully provided.",
+                    "Data preprocessing: The exact steps and required transformations in the data_preprocess.py script are not described.",
+                    "Optimizer and scheduler parameters: Although the process for setting up these components is mentioned, clear guidelines on parameter values are missing."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Specify explicit batch size values or a range (e.g., [16, 32, 64]) to guide users based on GPU memory.",
+                        "Clarify the selection criteria and provide detailed parameter settings for learning rate schedulers.",
+                        "Define a standardized format and protocol for specifying checkpoint paths when resuming training.",
+                        "Outline an explicit format and allowed values for experiment tags to remove ambiguity."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For a resource-constrained scenario, restrict distributed training to a single GPU or limit the available GPU memory, which may require reducing the batch size and adjusting model dimensions accordingly.",
+                        "Enforce training on lower-spec hardware (e.g., GPUs with reduced memory capacity) to evaluate the model\u2019s performance under limited compute resources."
+                    ],
+                    "time_constraints": [
+                        "Reduce the number of training epochs (e.g., from 30 to 10) to simulate a time-constrained environment and assess how shorter training impacts the model\u2019s prediction performance."
+                    ],
+                    "money_constraints": [
+                        "Limit the computational budget by mandating the use of cost-effective cloud resources or on-premise hardware, thus challenging the pipeline to deliver acceptable performance with lower-cost compute options."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in the training pipeline",
+                "description": "Random uncertainty arises from inherent randomness in the training process such as random initialization, data shuffling, dropout, or even modifications like randomly dropping tokens in intermediate representations. These variations can lead to instability during gradient updates and fluctuations in performance metrics such as ADE and FDE.",
+                "impact": "Inconsistent training outcomes and variable prediction accuracy, making it harder to reliably compare different runs or configurations.",
+                "possible_modifications": [
+                    "Introduce random data augmentations (e.g., random token dropping or random perturbations in agent features) during training to test the robustness of the pipeline.",
+                    "Randomly vary the order of the Waymo dataset samples during data loading to simulate unpredictable training scenarios."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biased data preprocessing or configuration errors in the training setup",
+                "description": "Systematic uncertainty occurs when a fixed bias is introduced in the training data or model configuration. For instance, modifying the data_preprocess.py script to filter or relabel trajectories in a biased way can consistently skew the training data. Similarly, misconfiguring key parameters in the BeTopNet_full_64.yaml (like using an inappropriate mapping for agent or map features) can lead to systematic errors.",
+                "impact": "A consistent degradation in the model's performance metrics (ADE and FDE) across training runs, leading to predictable but faulty biases in the predictions.",
+                "possible_modifications": [
+                    "Deliberately alter the preprocessing pipeline to introduce a one-time bias (for example, labeling trajectories based on an arbitrary rule such as trajectory length) to simulate systematic corruption.",
+                    "Modify the configuration file to misalign data paths or model parameters, thereby consistently skewing the learning process."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you evaluate a trained BeTopNet model on the Waymo Open Motion Dataset and generate predictions?",
+            "method": "Use the BeTopNet framework to evaluate a trained model on the Waymo Open Motion Dataset test set and generate prediction results.",
+            "expected_outcome": "Evaluation metrics for the model on the test set, including average displacement error (ADE) and final displacement error (FDE), along with visualization of the predicted trajectories.",
+            "source": [
+                "/workspace/womd/tools/test.py",
+                "/workspace/womd/tools/scripts/dist_test.sh",
+                "/workspace/womd/tools/render_tools/renderer.py"
+            ],
+            "usage_instructions": "1. Ensure you have a trained BeTopNet model checkpoint available.\n2. Run the evaluation script using the dist_test.sh wrapper with appropriate parameters:\n   - Specify the number of GPUs to use\n   - Set the configuration file to match the one used during training\n   - Set an appropriate batch size\n   - Provide the path to the trained model checkpoint\n3. The script will evaluate the model on the test set and generate prediction results.\n4. To visualize the predictions, use the renderer.py script which can plot the predicted trajectories along with the map and historical trajectories.\n5. Analyze the evaluation metrics in the generated log files to assess model performance.",
+            "requirements": [
+                "Step 1: Parse command line arguments to configure the evaluation process, including config file path, checkpoint path, batch size, and other parameters (/workspace/womd/tools/test.py:28-61)",
+                "Step 2: Initialize distributed testing environment if multiple GPUs are specified (/workspace/womd/tools/test.py:86-93, /workspace/womd/tools/scripts/dist_test.sh:3-18)",
+                "Step 3: Set up output directories for evaluation results and logging (/workspace/womd/tools/test.py:101-119)",
+                "Step 4: Build the test dataset and dataloader with appropriate configuration (/workspace/womd/tools/test.py:140-145)",
+                "Step 5: Build the BeTopNet model according to the configuration (/workspace/womd/tools/test.py:146)",
+                "Step 6: Load the trained model checkpoint (/workspace/womd/tools/test.py:67-68)",
+                "Step 7: Evaluate the model on the test dataset, computing metrics like ADE and FDE (/workspace/womd/tools/test.py:77-81, 149-151)",
+                "Step 8: Save prediction results to files if specified (/workspace/womd/tools/test.py:79-80)",
+                "Step 9: Load prediction files and scene data for visualization (/workspace/womd/tools/render_tools/renderer.py:91-97)",
+                "Step 10: Render visualizations showing map elements, historical trajectories, and predicted trajectories (/workspace/womd/tools/render_tools/renderer.py:99-173)",
+                "Final Step: Save visualization images to the specified output directory (/workspace/womd/tools/render_tools/renderer.py:171-173)"
+            ],
+            "agent_instructions": "Your task is to evaluate a trained BeTopNet model on the Waymo Open Motion Dataset (WOMD) test set and visualize the prediction results. Follow these steps:\n\n1. Create an evaluation script that:\n   - Takes command line arguments for configuration file path, model checkpoint path, batch size, and output directory\n   - Supports distributed evaluation across multiple GPUs\n   - Loads the BeTopNet model architecture according to the configuration\n   - Loads the trained model weights from a checkpoint\n   - Creates a test dataloader for the WOMD dataset\n   - Evaluates the model on the test set, computing metrics like Average Displacement Error (ADE) and Final Displacement Error (FDE)\n   - Saves prediction results to files\n\n2. Create a distributed testing wrapper script that:\n   - Takes the number of GPUs and other parameters as input\n   - Launches the evaluation script in distributed mode\n   - Handles port selection for distributed communication\n\n3. Create a visualization script that:\n   - Loads prediction files generated during evaluation\n   - Renders visualizations showing:\n     - Map elements (road network)\n     - Historical trajectories of agents\n     - Predicted future trajectories with confidence scores\n   - Saves visualization images to a specified directory\n\nThe evaluation should support both single-GPU and multi-GPU setups. The visualization should clearly show the predicted trajectories alongside the map context and historical trajectories.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "Waymo Open Motion Dataset (WOMD) is fixed as the evaluation target",
+                    "evaluation_framework": "BeTopNet evaluation process and visualization scripts remain unchanged"
+                },
+                "independent_variables": {
+                    "config_file_path": "Path to the experiment configuration which can vary depending on the training setup",
+                    "model_checkpoint": "Path to the trained BeTopNet model checkpoint; different checkpoints may be used",
+                    "batch_size": "A numerical value indicating the batch size during evaluation; can be modified as required",
+                    "num_gpus": "Number of GPUs used for the evaluation; supports both single-GPU and multi-GPU setups",
+                    "output_directory": "Directory path for saving prediction results, log files, and visualization images"
+                },
+                "dependent_variables": {
+                    "evaluation_metrics": "Metrics such as Average Displacement Error (ADE), Final Displacement Error (FDE), and possibly other safety and performance measures computed from the evaluation",
+                    "prediction_results": "Output prediction files and rendered visualizations (images) that display the predicted trajectories alongside map elements and historical trajectories"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_checkpoint": "It is not explicitly detailed which version or type of checkpoint should be used if multiple are available",
+                    "batch_size": "The optimal batch size is not specified and may depend on available hardware resources",
+                    "visualization_parameters": "The exact visual elements (e.g., color-coding of confidence scores or layout of map elements) are not fully specified in the task"
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional variables such as 'distributed_mode' with values [True, False] to explicitly include the option for distributed testing."
+                    ],
+                    "modification_2": [
+                        "Define or mask specific visualization parameters (like color scales or annotation details) to either hide or specify more details in the task."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Evaluation script (test.py) that parses command line arguments, sets up logging/output directories, and builds the test dataloader",
+                    "Distributed testing wrapper script (dist_test.sh) for multi-GPU support",
+                    "Visualization script (renderer.py) for rendering predicted trajectories over map elements and historical data",
+                    "Trained BeTopNet model checkpoint file",
+                    "Configuration file used during training and evaluation",
+                    "Hardware resources (GPUs and associated distributed environment setup)"
+                ],
+                "setup_steps": [
+                    "Parse command line arguments (config file path, model checkpoint path, batch size, output directory)",
+                    "Initialize distributed testing environment if multiple GPUs are specified",
+                    "Set up output directories for logging and saving results",
+                    "Build the test dataset and dataloader with appropriate configuration",
+                    "Build and initialize the BeTopNet model architecture according to the configuration",
+                    "Load the trained model checkpoint",
+                    "Evaluate the model on the WOMD test set computing metrics such as ADE and FDE",
+                    "Save prediction results to files",
+                    "Load prediction files and scene data for visualization",
+                    "Render visualizations that display map context, historical trajectories, and predicted trajectories",
+                    "Save visualization images to the specified output directory"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Distributed Environment Configuration",
+                        "description": "Handling distributed testing (multiple GPUs) requires port selection, proper synchronization, and can introduce extra complexity in setting up the environment."
+                    },
+                    {
+                        "source": "Visualization Rendering",
+                        "description": "The process of loading prediction outputs, matching them with scene data, and rendering detailed visualizations (with map elements and confidence scores) adds additional layers of complexity beyond straightforward metric computation."
+                    },
+                    {
+                        "source": "Hyperparameter Selection",
+                        "description": "Variables such as batch size may need adjustment based on hardware resources, adding to the complexity of setting up the experiment in various environments."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model checkpoint: It is not explicitly detailed which version or type of checkpoint to use when multiple options are available.",
+                    "Batch size: The optimal value is not specified and may vary depending on available hardware resources."
+                ],
+                "ambiguous_setup_steps": [
+                    "Visualization parameters: It is unclear what specific details (e.g., color coding, annotation details, layout) should be included in the visualizations.",
+                    "Distributed mode selection: The instructions do not clearly specify how to distinguish between single-GPU and multi-GPU setups, such as whether an explicit 'distributed_mode' flag is required."
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce an explicit variable or flag (e.g., 'distributed_mode') in the command line arguments to clarify whether distributed testing is to be used."
+                    ],
+                    "modification_2": [
+                        "Provide detailed specification or defaults for visualization parameters such as color scales, layout, and annotation details to reduce ambiguity."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Introduce an explicit 'distributed_mode' flag in the command line arguments to clearly specify whether to use multi-GPU or single-GPU evaluation based on the available hardware resources.",
+                        "If GPU memory is limited, consider enforcing a smaller batch size or using lower-memory settings to accommodate resource constraints."
+                    ],
+                    "time_constraints": [
+                        "Tighten the evaluation setup by reducing inter-process communication overhead in multi-GPU configurations, for example by limiting the number of GPUs used if runtime is a critical factor."
+                    ],
+                    "money_constraints": [
+                        "For scenarios with budget limitations, consider evaluating on less costly hardware or restrict computational iterations to reduce cost, while still aiming for acceptable metric performance."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Distributed evaluation processes and stochastic behaviors in model prediction",
+                "description": "Evaluation on multiple GPUs and random factors such as port selection, process initialization, and any inherent stochasticity in model components (e.g., dropout, data augmentation during evaluation) may introduce variability in computed metrics (ADE, FDE) and visualizations between runs.",
+                "impact": "Variations in reported evaluation metrics (e.g., slight differences in ADE/FDE) and prediction outputs that may lead to inconsistent performance comparisons if not averaged over multiple runs.",
+                "possible_modifications": [
+                    "Introduce controlled random seeds for distributed evaluation to reduce variability.",
+                    "Run multiple evaluation passes and aggregate the metrics to smooth out random fluctuations.",
+                    "Simulate additional stochasticity (e.g., random order of data loading) during testing to assess model robustness against random uncertainty."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset biases and configuration mismatches between training and evaluation setups",
+                "description": "Systematic uncertainty arises if there are persistent biases in the Waymo Open Motion Dataset (e.g., inherent data collection biases or configuration file mismatches) or systematic errors introduced by using an inappropriate or corrupted model checkpoint. For example, if the evaluation data or configuration used does not match the training setup, then the predictions could be consistently skewed.",
+                "impact": "Consistent deviation in evaluation metrics such as elevated ADE/FDE or predictable mispredictions in visualizations, which may mask the true performance of the BeTopNet model.",
+                "possible_modifications": [
+                    "Replace or verify the dataset with a clean, unbiased version if systematic bias is suspected.",
+                    "Implement a one-time dataset or configuration validation step before evaluation to detect and correct systematic errors.",
+                    "Introduce an explicit flag for distributed mode and ensure the configuration file, checkpoint selection and hyperparameters match those used during training to minimize systematic discrepancies."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you prepare a submission file for the Waymo Open Motion Dataset Prediction Challenge using a trained BeTopNet model?",
+            "method": "Use the BeTopNet framework to generate a submission file for the Waymo Open Motion Dataset Prediction Challenge leaderboard.",
+            "expected_outcome": "A properly formatted .tar.gz submission file that can be uploaded to the Waymo Open Motion Dataset Prediction Challenge leaderboard.",
+            "source": [
+                "/workspace/womd/tools/submission.py"
+            ],
+            "usage_instructions": "1. Ensure you have a trained BeTopNet model checkpoint available.\n2. Edit the submission.py file to update the submission_info dictionary with your personal information:\n   - Set your Waymo account email\n   - Provide a unique method name\n   - List the authors\n   - Set your affiliation\n   - Configure other required fields\n3. Run the submission script with appropriate parameters:\n   - Specify the configuration file to match the one used during training\n   - Set an appropriate batch size\n   - Provide the path to the trained model checkpoint\n   - Specify the output directory for the submission file\n   - Use the --eval flag if submitting to the evaluation portal\n   - Use the --interactive flag if submitting for the Interaction Prediction challenge\n4. The script will generate a .tar.gz file in the specified output directory.\n5. Upload this file to the appropriate Waymo Open Motion Dataset Challenge leaderboard.",
+            "requirements": [
+                "Step 1: Parse command-line arguments including configuration file path, batch size, checkpoint path, output directory, and flags for evaluation or interactive prediction (/workspace/womd/tools/submission.py:43-80)",
+                "Step 2: Define submission metadata including account name, method name, authors, affiliation, and model information (/workspace/womd/tools/submission.py:188-198)",
+                "Step 3: Set up logging based on whether the submission is for evaluation or testing (/workspace/womd/tools/submission.py:200-217)",
+                "Step 4: Build the test dataloader with appropriate configuration for either regular or interactive prediction (/workspace/womd/tools/submission.py:219-224)",
+                "Step 5: Initialize the BeTopNet model using the provided configuration (/workspace/womd/tools/submission.py:226)",
+                "Step 6: Load the trained model parameters from the specified checkpoint file (/workspace/womd/tools/submission.py:228-230)",
+                "Step 7: Generate predictions by running the model on the test dataset (/workspace/womd/tools/submission.py:232)",
+                "Step 8: Serialize the predictions into the format required by the Waymo Open Motion Dataset Challenge (/workspace/womd/tools/submission.py:115-162)",
+                "Step 9: Save the serialized predictions to a .proto file and compress it into a .tar.gz file for submission (/workspace/womd/tools/submission.py:83-113)",
+                "Final Step: Return the path to the generated submission file that can be uploaded to the Waymo Challenge leaderboard (/workspace/womd/tools/submission.py:233)"
+            ],
+            "agent_instructions": "Create a script that generates a submission file for the Waymo Open Motion Dataset Prediction Challenge using a trained BeTopNet model. The script should:\n\n1. Accept command-line arguments for:\n   - Configuration file path (matching the one used during training)\n   - Batch size for inference\n   - Path to the trained model checkpoint\n   - Output directory for the submission file\n   - Flag to indicate if submitting for evaluation (--eval)\n   - Flag to indicate if submitting for the Interactive Prediction challenge (--interactive)\n\n2. Include a dictionary for submission metadata with the following fields:\n   - Waymo account email\n   - Unique method name\n   - List of authors\n   - Affiliation\n   - Boolean flags for data types used (lidar, camera)\n   - Boolean flag for public model pretraining\n   - Public model names (if applicable)\n   - Number of model parameters\n\n3. Set up appropriate logging based on submission type.\n\n4. Build a dataloader for the test dataset with configuration appropriate for either regular or interactive prediction.\n\n5. Load the BeTopNet model architecture based on the provided configuration.\n\n6. Load the trained model parameters from the specified checkpoint file.\n\n7. Generate predictions by running the model on the test dataset.\n\n8. Serialize the predictions into the format required by the Waymo Open Motion Dataset Challenge:\n   - For regular prediction: format individual object trajectories with confidence scores\n   - For interactive prediction: format joint trajectories for multiple objects\n\n9. Save the serialized predictions to a .proto file and compress it into a .tar.gz file that can be uploaded to the Waymo Challenge leaderboard.\n\nThe final output should be a .tar.gz file in the specified output directory that meets all the requirements for submission to the Waymo Open Motion Dataset Prediction Challenge.",
+            "design_complexity": {
+                "constant_variables": {
+                    "submission_script_path": "/workspace/womd/tools/submission.py"
+                },
+                "independent_variables": {
+                    "command_line_arguments": [
+                        "configuration file path",
+                        "batch size",
+                        "checkpoint path",
+                        "output directory",
+                        "--eval flag",
+                        "--interactive flag"
+                    ],
+                    "submission_metadata": [
+                        "Waymo account email",
+                        "unique method name",
+                        "list of authors",
+                        "affiliation",
+                        "boolean flags for data types (lidar, camera)",
+                        "boolean flag for public model pretraining",
+                        "public model names",
+                        "number of model parameters"
+                    ]
+                },
+                "dependent_variables": {
+                    "submission_file": [
+                        ".tar.gz formatted submission file ready for upload to the Waymo Challenge leaderboard"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "data types flags": "The task states boolean flags for data types (lidar, camera) without clarifying allowed configurations.",
+                    "public model names": "No explicit list or examples are provided for acceptable public model names.",
+                    "batch size": "The recommended batch size is mentioned as a command-line argument but no range or typical values are specified."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional variables such as model version or training hyperparameters for extended tasks.",
+                        "Mask the actual values for submission metadata (e.g., account email or affiliation) to require inference or dynamic input."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "BeTopNet model architecture",
+                    "Trained BeTopNet model checkpoint",
+                    "submission.py script located at /workspace/womd/tools/submission.py",
+                    "Command-line arguments parser (configuration file, batch size, checkpoint path, output directory, --eval flag, --interactive flag)",
+                    "Submission metadata dictionary (Waymo account email, method name, authors, affiliation, data type flags, public model pretraining flags, public model names, number of model parameters)",
+                    "Logging setup tied to submission type",
+                    "Test dataloader builder for regular or interactive prediction",
+                    "Prediction generation process",
+                    "Serialization of predictions into the required .proto format",
+                    "Compression routine to generate a .tar.gz submission file"
+                ],
+                "setup_steps": [
+                    "Ensure availability of a trained BeTopNet model checkpoint",
+                    "Edit the submission.py to update the submission_info metadata (email, method name, authors, affiliation, etc.)",
+                    "Accept and parse command-line arguments for configuration file, batch size, checkpoint path, output directory, and flags",
+                    "Set up logging based on whether the submission is for evaluation or interactive prediction",
+                    "Build the test dataloader based on the provided configuration",
+                    "Initialize the BeTopNet model using the configuration",
+                    "Load model parameters from the specified trained checkpoint",
+                    "Generate predictions by running the model on the test dataset",
+                    "Serialize the predictions into the Waymo Challenge required format (handling both individual object trajectories for regular prediction and joint trajectories for interactive prediction)",
+                    "Save the serialized predictions into a .proto file and compress it into a .tar.gz file",
+                    "Return the path of the generated submission file ready for upload"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Flag usage (--eval and --interactive)",
+                        "description": "Different submission types (evaluation vs. interactive prediction) require varying configuration of logging and dataloader setup, adding conditional complexity."
+                    },
+                    {
+                        "source": "Configuration file consistency",
+                        "description": "The configuration file used for submission must exactly match the one used during training, which can introduce complexity if multiple configurations exist."
+                    },
+                    {
+                        "source": "Serialization format requirements",
+                        "description": "The need to serialize predictions into a .proto format and then compress them adds an extra layer of process that must follow strict formatting guidelines for the leaderboard."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Data types flags (lidar, camera): The acceptable configurations (e.g., combinations of true/false) are not explicitly defined.",
+                    "Public model names: There is no explicit list or examples provided on what constitutes a valid public model name."
+                ],
+                "ambiguous_setup_steps": [
+                    "Batch size: Although it is required as a command-line argument, no recommended values or ranges are specified.",
+                    "Submission metadata details: The process of filling out metadata is clear in structure, but lacks explicit guidance on allowable formats or examples."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional variables such as model version or training hyperparameters to the submission metadata for extended tasks.",
+                        "Mask exact values (e.g., account email, affiliation) to require dynamic input during runtime, thereby increasing the inference component."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended tasks, one could restrict GPU memory available by enforcing evaluation with reduced batch sizes or using model quantization techniques, while still generating the required .tar.gz submission file."
+                    ],
+                    "time_constraints": [
+                        "For extended tasks, one might impose a stricter inference latency requirement to simulate real-time constraints during submission generation."
+                    ],
+                    "money_constraints": [
+                        "For extended tasks, one could require the submission generation to occur on lower-cost hardware alternatives (e.g., less powerful GPUs or cloud instances) while maintaining the submission format."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in the prediction generation process and logging during submission file creation",
+                "description": "Random modifications such as injecting noise in the predictions, randomly shuffling dataloader order, or perturbing logging messages can introduce instability in the output submission file. This mimics a situation similar to randomly dropping tokens in a transformer model, where the randomness can lead to unpredictable serialization or misalignment in the submission format.",
+                "impact": "Results in unpredictable variations in the generated .tar.gz file, potentially altering the content or format of predictions. This can cause inconsistent evaluation metrics on the leaderboard and may lead to instability during gradient updates in model inference.",
+                "possible_modifications": [
+                    "Introduce random noise in the prediction outputs before serialization.",
+                    "Randomly shuffle the order of test samples in the dataloader.",
+                    "Inject randomness in the logging setup or submission metadata generation to simulate unstable runtime behavior."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Deliberate and fixed modifications of submission metadata or configuration parameters",
+                "description": "A systematic bias may be introduced by modifying the submission_info dictionary (for example, using an outdated or incorrect Waymo account email, affiliation or method name), or by employing a configuration file that deviates systematically from the training configuration. Such a deliberate one-time modification enforces a bias in the resulting submission file.",
+                "impact": "Every generated submission file will consistently contain the same error, leading to wrong metadata or corrupted prediction format. This could result in rejection by the Waymo leaderboard and misinterpretation of the model's performance.",
+                "possible_modifications": [
+                    "Set a fixed, incorrect email or affiliation in the submission_info dictionary.",
+                    "Use a modified configuration file that consistently misconfigures batch size or data type flags.",
+                    "Inject a predetermined error in the serialization protocol that affects all generated submissions."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you preprocess and cache the Waymo Open Motion Dataset for efficient training with the BeTopNet model?",
+            "method": "Use the BeTopNet data preprocessing tools to convert raw Waymo Open Motion Dataset files into a format suitable for training and cache them for efficient data loading.",
+            "expected_outcome": "Processed dataset files and cached data that can be efficiently loaded during model training.",
+            "source": [
+                "/workspace/womd/tools/data_tools/data_preprocess.py",
+                "/workspace/womd/tools/data_tools/cache_offline_data.py"
+            ],
+            "usage_instructions": "1. First, download the Waymo Open Motion Dataset scenario files from the official source.\n2. Run the data_preprocess.py script to convert the raw data into processed pickle files:\n   - Provide the path to the downloaded raw data as the first argument\n   - Provide the desired output path as the second argument\n   - The script will process training, validation, and testing data\n3. After preprocessing, run the cache_offline_data.py script to create cached versions of the data for efficient training:\n   - Specify the cache path where the cached data will be stored\n   - Provide the configuration file that defines the data processing parameters\n4. Update your configuration file to point to the processed and cached data paths.\n5. The cached data will significantly speed up the data loading during training.",
+            "requirements": [
+                "Step 1: Import necessary libraries including TensorFlow, numpy, pickle, and multiprocessing for data processing (/workspace/womd/tools/data_tools/data_preprocess.py:8-17)",
+                "Step 2: Define functions to decode track information from scenario protos, extracting object IDs, types, and trajectories (/workspace/womd/tools/data_tools/data_preprocess.py:22-38)",
+                "Step 3: Define functions to process map features from protos, including lanes, road lines, road edges, stop signs, crosswalks, and speed bumps (/workspace/womd/tools/data_tools/data_preprocess.py:49-151)",
+                "Step 4: Define functions to decode dynamic map states (traffic signals) from protos (/workspace/womd/tools/data_tools/data_preprocess.py:154-171)",
+                "Step 5: Implement function to process individual TFRecord files, extracting scenario data and saving as pickle files (/workspace/womd/tools/data_tools/data_preprocess.py:174-212)",
+                "Step 6: Implement parallel processing of multiple TFRecord files using multiprocessing (/workspace/womd/tools/data_tools/data_preprocess.py:215-232)",
+                "Step 7: Create functions to process training, validation, and testing data separately (/workspace/womd/tools/data_tools/data_preprocess.py:235-276)",
+                "Step 8: Import necessary libraries for the caching process, including PyTorch and dataset utilities (/workspace/womd/tools/data_tools/cache_offline_data.py:8-28)",
+                "Step 9: Define argument parser to handle configuration options for the caching process (/workspace/womd/tools/data_tools/cache_offline_data.py:31-71)",
+                "Step 10: Implement function to extract and save individual scenario data as NPZ files (/workspace/womd/tools/data_tools/cache_offline_data.py:74-90)",
+                "Step 11: Set up data loader with the specified configuration to iterate through the preprocessed data (/workspace/womd/tools/data_tools/cache_offline_data.py:112-121)",
+                "Step 12: Process each batch from the data loader and save as cached NPZ files (/workspace/womd/tools/data_tools/cache_offline_data.py:128-129)",
+                "Final Step: Execute the main functions when scripts are run directly, accepting command line arguments for input/output paths and configuration (/workspace/womd/tools/data_tools/data_preprocess.py:279-283, /workspace/womd/tools/data_tools/cache_offline_data.py:135-136)"
+            ],
+            "agent_instructions": "Your task is to create two Python scripts for preprocessing and caching the Waymo Open Motion Dataset (WOMD) for efficient training with the BeTopNet model:\n\n1. First script: Data Preprocessing\n   - Create a script that converts raw Waymo Open Motion Dataset TFRecord files into processed pickle files\n   - The script should extract and process the following from scenario protos:\n     * Track information (object trajectories, types, IDs)\n     * Map features (lanes, road lines, road edges, stop signs, crosswalks, speed bumps)\n     * Dynamic map states (traffic signals)\n   - Implement parallel processing using multiprocessing to handle multiple TFRecord files efficiently\n   - The script should take two command-line arguments: input path (raw data directory) and output path (processed data directory)\n   - Process training, validation, and testing data separately\n\n2. Second script: Data Caching\n   - Create a script that generates cached versions of the preprocessed data for efficient training\n   - Use the BeTopNet dataset loader to load the preprocessed data\n   - For each loaded batch, extract the relevant data and save it as NPZ files\n   - The script should accept command-line arguments including:\n     * cache_path: Path to store cached data\n     * cfg_file: Configuration file for the dataset\n     * batch_size: Batch size for data loading\n   - Implement proper logging of the caching process\n\nThe workflow should be:\n1. Run the first script to convert raw WOMD TFRecord files to processed pickle files\n2. Run the second script to create cached versions of the processed data for efficient training\n\nEnsure both scripts have proper error handling and progress reporting (e.g., using tqdm for progress bars).",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "Waymo Open Motion Dataset (WOMD) remains constant across experiments",
+                    "target_model": "BeTopNet, as all preprocessing/caching is tailored for this model"
+                },
+                "independent_variables": {
+                    "script_type": [
+                        "data_preprocessing",
+                        "data_caching"
+                    ],
+                    "command_line_args": [
+                        "For data_preprocessing: input_path and output_path",
+                        "For data_caching: cache_path, cfg_file, and batch_size"
+                    ]
+                },
+                "dependent_variables": {
+                    "output_files": [
+                        "Processed pickle files from raw TFRecord data",
+                        "Cached NPZ files for efficient data loading"
+                    ],
+                    "training_loading_efficiency": "The efficiency of training, which will depend on both the quality of preprocessing and success of caching (though the exact metrics are not specified)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mode": "The single provided mode 'A' is not elaborated upon, leaving unclear if other modes exist or how they differ.",
+                    "expected_outcome": "The term 'efficient training' and what constitutes efficient data loading is not quantitatively defined.",
+                    "requirements": "The exact format/structure of the processed and cached files is not detailed, and the interplay of libraries (TensorFlow used in preprocessing and PyTorch mentioned in caching) may confuse the expected software stack."
+                },
+                "possible_modifications": {
+                    "modification_script_type": [
+                        "Introduce additional variables such as a 'data_validation' script to assess preprocessing quality.",
+                        "Allow for an optional 'data augmentation' preprocessing step."
+                    ],
+                    "modification_command_line_args": [
+                        "Add variables for configuring the number of parallel processes or specifying logging verbosity.",
+                        "Specify options for file output formats or error handling modes."
+                    ],
+                    "modification_expected_outcome": [
+                        "Define quantitative metrics for 'efficient data loading', such as load time benchmarks or memory usage limits.",
+                        "Clarify the structure of cached data for easier verification."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Data Preprocessing Script (data_preprocess.py)",
+                    "Data Caching Script (cache_offline_data.py)",
+                    "TensorFlow, numpy, pickle, and multiprocessing libraries (for preprocessing)",
+                    "PyTorch and dataset utilities (for caching)",
+                    "Command-line interface for specifying input/output paths and configuration",
+                    "Parallel processing mechanism for TFRecord file handling",
+                    "Progress reporting (e.g., using tqdm) and error handling mechanisms"
+                ],
+                "setup_steps": [
+                    "Download raw Waymo Open Motion Dataset scenario files from the official source",
+                    "Run data_preprocess.py to convert TFRecord files into processed pickle files (processing training, validation, and testing data separately)",
+                    "Run cache_offline_data.py to generate cached NPZ files by providing cache_path, configuration file, and batch_size",
+                    "Update the configuration file to point to the processed and cached data paths",
+                    "Utilize proper logging, error handling, and progress indicators during both preprocessing and caching"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Mixed Software Stack",
+                        "description": "Using TensorFlow for data preprocessing and PyTorch for data caching may complicate dependency management and data format consistency."
+                    },
+                    {
+                        "source": "File Format Conversion",
+                        "description": "Converting raw TFRecord files to pickle files and then to NPZ files introduces complexity in ensuring data integrity and compatibility with the BeTopNet model."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Mode variable ('A') is mentioned without explanation regarding its purpose or differences with other potential modes.",
+                    "The term 'efficient training' is not quantitatively defined, leaving criteria for success ambiguous."
+                ],
+                "ambiguous_setup_steps": [
+                    "The exact file structure and expected format of the processed pickle and cached NPZ files is not detailed.",
+                    "The interplay between TensorFlow (used in preprocessing) and PyTorch (mentioned in caching) may lead to unclear expectations about data formats and compatibility."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Define explicit metrics for 'efficient training', such as load time benchmarks or memory usage limits.",
+                        "Clarify the expected structure and format of the processed and cached data files in the documentation.",
+                        "Standardize the tools by possibly consolidating the processing and caching under one software framework to reduce integration ambiguity.",
+                        "Introduce additional command-line options for configuring parallel processing counts and logging verbosity for better traceability."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "Define explicit metrics for efficient data loading, such as specifying maximum allowable load times and memory usage limits for the cached data.",
+                            "Introduce command-line arguments to restrict the number of parallel processing workers during preprocessing, thereby enforcing tighter control over resource usage.",
+                            "Mandate a specific file structure and output format for processed and cached data to ensure compatibility between TensorFlow-based preprocessing and PyTorch-based caching, reducing integration ambiguity."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Parallel Processing Variability",
+                "description": "The use of multiprocessing in the data preprocessing pipeline can introduce non-deterministic behavior in the order of file processing and writing. This randomness can lead to subtle differences in the output of processed pickle files and cached NPZ files across different runs. Similar to random token dropping in transformer-based models, this uncertainty may result in variations during training, such as inconsistent batch ordering and minor differences in the initialization of training gradients.",
+                "impact": "These random variations can affect the efficiency of data loading and potentially lead to slight instability during model training, impacting convergence and final prediction accuracy in an unpredictable manner.",
+                "possible_modifications": [
+                    "Enforce deterministic processing by setting fixed random seeds and establishing a defined order for file processing.",
+                    "Incorporate a verification step to compare outputs across runs to ensure that random order effects are minimized or eliminated.",
+                    "Simulate random disruptions (e.g., random token or field dropping) intentionally during testing to assess the model's robustness against such uncertainties."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Data Conversion Pipeline Bias",
+                "description": "The conversion process from raw TFRecord files to pickle files, and subsequently to NPZ files for caching, involves multiple steps and the use of different software frameworks (TensorFlow for preprocessing and PyTorch for caching). This mixed approach may introduce systematic biases in data representation, format integrity, or feature extraction. For example, any one-time modifications or inconsistencies in decoding protos could systematically skew the dataset's characteristics.",
+                "impact": "Such systematic biases can consistently affect the training process of the BeTopNet model, potentially leading to biased performance outcomes. The model might learn artifacts introduced by the conversion process rather than the true underlying patterns, thereby degrading its performance when applied to clean, unmodified data.",
+                "possible_modifications": [
+                    "Implement comprehensive validation tests that compare processed outputs with raw inputs to detect systematic deviations or biases.",
+                    "Standardize the data format and processing tools, possibly consolidating the conversion process under a single framework to avoid discrepancies.",
+                    "Introduce an alternate, independently verified dataset processing pipeline to cross-check the integrity of the processed and cached data."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Extend the evaluation of BeTopNet\u2019s planning performance to more diverse and dynamic urban driving datasets.",
+            "experiment_design": "Collect or utilize additional urban driving datasets with varying environmental conditions and scenarios. Replicate the interactive planning experiments under similar testing protocols while introducing variations such as adverse weather or unexpected obstacles. Compare performance metrics against the current results to assess the robustness and generalizability of BeTopNet\u2019s planning capabilities.",
+            "subsection_source": "4.1 Main Result"
+        },
+        {
+            "idea": "Investigate the impact of computational resource variations and hyperparameter tuning on the prediction accuracy and planning robustness of BeTopNet.",
+            "experiment_design": "Perform a controlled study where the model is trained and evaluated under different compute resource configurations (e.g., varying GPU/CPU setups, memory limits) and different hyperparameter settings (e.g., learning rate, optimizer type). Analyze the influence of these factors on the key metrics for both planning and prediction tasks. This follow-up work would verify the sensitivity of BeTopNet to system configurations and guide optimal deployment strategies.",
+            "subsection_source": "4.1 Main Result"
+        },
+        {
+            "idea": "Dynamic Selection of Interactive Agents: Investigate if an adaptive mechanism can dynamically select the optimal number of interactive agents (K) during inference rather than using a fixed value.",
+            "experiment_design": "Develop a framework where the model estimates the appropriate K based on scene complexity or interaction level. Train the model on the WOMD dataset with this dynamic module and evaluate performance against the static K baseline. Compare mAP across a range of scenarios and analyze if the dynamic selection improves overall prediction reliability and efficiency.",
+            "subsection_source": "4.2 Ablation Study"
+        },
+        {
+            "idea": "Extended Ablation Study Across Different Scenarios: Examine whether the contributions of individual BeTopNet components vary across diverse driving scenarios (e.g., dense urban vs. suburban conditions).",
+            "experiment_design": "Partition the nuPlan and WOMD datasets into distinct subsets based on scenario characteristics. Perform ablation studies (similar to the current experiment) within each scenario subset. Evaluate planning and prediction metrics for each configuration and analyze if certain components (e.g., cost learning or local attention) are more effective in complex urban scenarios compared to simpler environments.",
+            "subsection_source": "4.2 Ablation Study"
+        }
+    ],
+    "main_takeaways": [
+        "The paper provides a fully reproducible experimental setup with detailed descriptions of compute resources, training/test splits, and hyperparameter configurations, facilitating easy reproduction of results.",
+        "Experimental results are backed by both empirical validations (through official leaderboards and comprehensive figures/tables) and theoretical proofs, ensuring the robustness of the main claims.",
+        "The authors have taken care to report asymmetric error bars correctly and documented the methodology in extensive appendices, enhancing transparency and reproducibility.",
+        "The paper demonstrates that the proposed method achieves competitive performance compared to existing baselines, as evidenced by quantitative results reported in Section 4.1 and supported by detailed experiments.",
+        "Supplementary materials (Appendices B, C, and D) provide additional technical depth, including full analytical proofs and detailed experiment configurations (e.g., compute resources, hyperparameters, and model architecture details)."
+    ]
+}

@@ -1,0 +1,407 @@
+{
+  "questions": [
+    {
+      "question": "- **Does integrating MotionLoRA with AnimateDiff significantly improve motion smoothness compared to baseline methods?**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Evaluate whether adding MotionLoRA to AnimateDiff improves motion smoothness.  \n   - **Key Difference Between Methods:**  \n     - **Baseline:** AnimateDiff without MotionLoRA.  \n     - **Experimental:** AnimateDiff with integrated MotionLoRA and domain adapter (with adjustable \u03b1).   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Both systems use **Stable Diffusion V1.5**, **WebVid-10M**, and **personalized T2I models from Civitai/Hugging Face**.  \n   - AnimateDiff + MotionLoRA is fine-tuned with **20\u201350 reference videos** over **~2,000 iterations**.  \n   - **Smoothness evaluation** through visual inspection and user study rankings (e.g., Figure 1, 6, 7).  \n\n3. **Comparative Evaluation:**  \n   - **Baseline:** AnimateDiff  \n   - **Experimental:** AnimateDiff + MotionLoRA",
+      "expected_outcome": "- **MotionLoRA is expected to improve motion smoothness**, yielding a **user smoothness score of ~2.825**, outperforming baselines.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "base_model": "Stable Diffusion V1.5 and AnimateDiff framework remain fixed across experiments",
+          "training_data": "WebVid-10M dataset and fixed set of personalized T2I models"
+        },
+        "independent_variables": {
+          "MotionLoRA_integration": [
+            "Baseline",
+            "With MotionLoRA"
+          ],
+          "domain_adapter_scaler": [
+            "\u03b1 = 0.0",
+            "\u03b1 = 1.0"
+          ],
+          "MotionLoRA_configuration": {
+            "network_rank": [
+              "rank = 2",
+              "rank = 128"
+            ],
+            "number_of_reference_videos": [
+              "5",
+              "50",
+              "1000"
+            ]
+          }
+        },
+        "dependent_variables": {
+          "motion_smoothness": [
+            "User study scores",
+            "Frame-to-frame transition quality"
+          ]
+        }
+      },
+      "experiment_design_ambiguity": {
+        "ambiguous_variables": {
+          "domain_adapter_scaler": "Effect of intermediate \u03b1 values is unclear",
+          "MotionLoRA_configuration": "Exact parameter selection not tightly specified",
+          "personalized_T2I_domain_variability": "Domain diversity not precisely defined"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Stable Diffusion V1.5",
+            "AnimateDiff",
+            "MotionLoRA",
+            "Domain adapter (\u03b1)",
+            "WebVid-10M",
+            "Community T2I models",
+            "Evaluation: user study + visual quality"
+          ],
+          "setup_steps": [
+            "Train AnimateDiff motion module",
+            "Integrate MotionLoRA with domain adapter",
+            "Fine-tune with 20\u201350 reference videos",
+            "Generate animations using both configs",
+            "Evaluate visually and via user study"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Test more \u03b1 values (e.g., 0.25, 0.5, 0.75)",
+              "Add CLIP-based smoothness metrics"
+            ]
+          }
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "\u03b1's effect is underexplored",
+          "MotionLoRA parameterization",
+          "Personalized T2I domain variability"
+        ],
+        "ambiguous_setup_steps": [
+          "MotionLoRA integration process is high-level only",
+          "Reference video count granularity not detailed"
+        ]
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic training and sampling of reference videos",
+          "impact": "Smoothness scores may vary between runs",
+          "possible_modifications": [
+            "Run experiments multiple times",
+            "Use consistent random seeds",
+            "Inject controlled noise to simulate variability"
+          ]
+        },
+        "systematic_uncertainty": {
+          "source": "Bias from fixed dataset or \u03b1 settings",
+          "impact": "Could consistently favor integrated or baseline",
+          "possible_modifications": [
+            "Broaden \u03b1 value grid",
+            "Use varied T2I model domains"
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Will AnimateDiff achieve higher domain similarity scores compared to baselines such as Text2Video-Zero and Tune-a-Video?**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Compare domain consistency across three animation methods.  \n   - **Methods Compared:**  \n     - **AnimateDiff**  \n     - **Text2Video-Zero**  \n     - **Tune-a-Video**  \n\n2. **Experimental Design:**  \n   - Use **same personalized T2I models** from Civitai.  \n   - Generate animations using **reverse diffusion**.  \n   - Apply **domain adapter \u03b1** for AnimateDiff.  \n   - Evaluate using **CLIP metrics** and **user study**.\n\n3. **Evaluation Metrics:**  \n   - **CLIP domain similarity score**  \n   - **User study ranking of domain consistency**",
+      "expected_outcome": "- **AnimateDiff expected to outperform**, with CLIP score of **~87.29 vs. 84.84 (Tune-a-Video) and 80.68 (Text2Video-Zero)**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "dataset_and_models": "Personalized T2I models (Civitai), SD V1.5, and WebVid-10M",
+          "evaluation_procedure": "Reverse diffusion process"
+        },
+        "independent_variables": {
+          "animation_method": [
+            "AnimateDiff",
+            "Text2Video-Zero",
+            "Tune-a-Video"
+          ],
+          "domain_adapter_configuration": "\u03b1 setting for AnimateDiff"
+        },
+        "dependent_variables": {
+          "CLIP_metrics": [
+            "text",
+            "domain",
+            "smoothness"
+          ],
+          "user_study_scores": "Qualitative domain consistency"
+        }
+      },
+      "experiment_design_ambiguity": {
+        "ambiguous_variables": {
+          "domain_adapter_configuration": "Exact \u03b1 value not stated",
+          "user_study_design": "Participant details and criteria not provided",
+          "evaluation_metric_details": "CLIP aggregation method unclear"
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Personalized T2I models (Civitai)",
+          "AnimateDiff (SD V1.5)",
+          "Baseline methods: Text2Video-Zero, Tune-a-Video",
+          "Domain adapter (AnimateDiff)",
+          "CLIP and user study evaluation"
+        ],
+        "setup_steps": [
+          "Configure models and adapters",
+          "Generate animations using all methods",
+          "Run CLIP evaluations",
+          "Conduct user study on domain alignment"
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Exact \u03b1 in AnimateDiff",
+          "User study procedure"
+        ],
+        "ambiguous_setup_steps": [
+          "CLIP score computation steps",
+          "Evaluation prompt design"
+        ]
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Randomness in reverse diffusion and user evaluation",
+          "impact": "CLIP and user scores may vary between runs",
+          "possible_modifications": [
+            "Fix seeds and prompt order",
+            "Aggregate multiple trials"
+          ]
+        },
+        "systematic_uncertainty": {
+          "source": "Bias in dataset or \u03b1 setting",
+          "impact": "May favor AnimateDiff unless \u03b1 is tuned carefully",
+          "possible_modifications": [
+            "Diversify dataset",
+            "Test multiple \u03b1 values"
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does linearly combining individually trained weights for different shot types enhance the overall composition quality in generated animations?**",
+      "method": "1. **Task Setup:**\n   - **Goal:** Evaluate if linearly combining MotionLoRA weights improves composition quality.\n   - **Key Difference Between Methods:**\n     - **Baseline:** Standard AnimateDiff animation.\n     - **Experimental:** AnimateDiff + linearly combined MotionLoRA weights for shot type control.\n\n2. **Experimental Design:**\n   - Use the **same personalized T2I models** from Civitai.\n   - Configure two setups: one without shot control, one with MotionLoRA-based shot control (via linear combination).\n   - Evaluate animations using **AUR, CLIP**, and qualitative inspection.\n\n3. **Control Parameters:**\n   - Tune the **scaling factor \u03b1** (Eq. 4 in the paper) to control weight blending.",
+      "expected_outcome": "- Composition quality is expected to improve as seen in **Figure 4**, with better shot control and frame layout.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "base_framework": "AnimateDiff with Stable Diffusion V1.5 and pre-trained motion module",
+          "input_data": "Same personalized T2I models and prompts"
+        },
+        "independent_variables": {
+          "animation_configuration": [
+            "Standard AnimateDiff",
+            "AnimateDiff + combined MotionLoRA weights"
+          ],
+          "scaling_factor_alpha": "Controls weight influence"
+        },
+        "dependent_variables": {
+          "composition_quality": "Visual inspection, AUR, and CLIP domain similarity",
+          "motion_smoothness": "User study ranking"
+        }
+      },
+      "experiment_design_ambiguity": {
+        "ambiguous_variables": {
+          "diverse_personalized_models": "Selection criteria for T2I models not fully detailed",
+          "scaling_factor_alpha_values": "No fixed \u03b1 range given",
+          "quantitative_metric_thresholds": "Statistical significance thresholds unclear"
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "AnimateDiff + SD V1.5",
+          "MotionLoRA weights",
+          "Scaling factor \u03b1",
+          "CLIP & AUR evaluation tools"
+        ],
+        "setup_steps": [
+          "Integrate AnimateDiff and MotionLoRA",
+          "Select T2I models across domains",
+          "Generate animations with and without weight combination",
+          "Tune \u03b1 for blending control",
+          "Compare results visually and quantitatively"
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Selection protocol for T2I models",
+          "Scaling factor \u03b1 implementation"
+        ],
+        "ambiguous_setup_steps": [
+          "Precise execution of weight combination not fully defined",
+          "Model selection process unspecified"
+        ]
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Gradient instability when combining weights",
+          "impact": "Inconsistent animation quality across trials",
+          "possible_modifications": [
+            "Fix \u03b1 values",
+            "Use seed control",
+            "Aggregate results across \u03b1 values"
+          ]
+        },
+        "systematic_uncertainty": {
+          "source": "Unclear model selection and parameter specification",
+          "impact": "Biases in animation quality assessment",
+          "possible_modifications": [
+            "Define model sampling protocol",
+            "Fix \u03b1 test range",
+            "Refine metric thresholds"
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does the integration of an additional content safety checker (similar to that in Stable Diffusion) maintain performance metrics while enhancing compliance with ethical standards?**",
+      "method": "1. **Task Setup:**\n   - **Goal:** Assess if a content safety checker affects performance metrics.\n   - **Comparison:** AnimateDiff with and without an integrated safety checker module.\n\n2. **Experimental Design:**\n   - Use **personalized T2I models** from Civitai.\n   - Apply the **same prompts and domain adapter \u03b1** across both setups.\n   - Evaluate **text alignment, domain similarity, and motion smoothness**.\n\n3. **Evaluation Procedure:**\n   - Use **CLIP metrics** for quantitative evaluation.\n   - Conduct **user study** for qualitative assessment.",
+      "expected_outcome": "- Integration of the content safety checker should **not degrade performance**, while improving **ethical safety compliance**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "datasets": "Civitai models and WebVid",
+          "domain_adapter_settings": "Same \u03b1 and inference settings"
+        },
+        "independent_variables": {
+          "content_safety_checker": [
+            "integrated",
+            "not integrated"
+          ]
+        },
+        "dependent_variables": {
+          "text_alignment": "CLIP + user study",
+          "domain_similarity": "CLIP",
+          "motion_smoothness": "User ranking"
+        }
+      },
+      "experiment_design_ambiguity": {
+        "ambiguous_variables": {
+          "content_safety_checker": "Implementation details unclear",
+          "evaluation_prompts": "Prompt sourcing from model homepages introduces variability"
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "AnimateDiff system",
+          "Content safety checker module",
+          "Domain adapter \u03b1",
+          "Civitai T2I models",
+          "WebVid dataset",
+          "CLIP + user study evaluation"
+        ],
+        "setup_steps": [
+          "Add safety checker module to pipeline",
+          "Keep settings identical except safety checker",
+          "Generate animations using shared prompts",
+          "Evaluate using CLIP and user study scores"
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Content safety checker configuration",
+          "Prompt derivation method"
+        ],
+        "ambiguous_setup_steps": [
+          "Implementation of safety module thresholds",
+          "Exact procedure for collecting prompts"
+        ]
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in prompts and model generation",
+          "impact": "CLIP/user study outcomes fluctuate",
+          "possible_modifications": [
+            "Standardize prompts",
+            "Fix random seeds",
+            "Remove random operations in token handling"
+          ]
+        },
+        "systematic_uncertainty": {
+          "source": "Bias in dataset or safety checker thresholding",
+          "impact": "Can skew all output metrics consistently",
+          "possible_modifications": [
+            "Document safety module parameters",
+            "Include an ethics metric",
+            "Ensure clean dataset for evaluation"
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Is there a positive correlation between the CLIP metric for text alignment and the user study Average User Ranking (AUR) scores in evaluating animation quality?**",
+      "method": "1. **Task Setup:**\n   - **Goal:** Quantify the relationship between CLIP and AUR metrics.\n   - **Approach:** Use three animation methods and evaluate text alignment via CLIP and AUR.\n\n2. **Experimental Design:**\n   - Generate animations with **Text2Video-Zero, Tune-a-Video, and Ours** using fixed prompts and reference images.\n   - Compute **CLIP scores** and conduct a **user study** to get AUR scores.\n   - Analyze **correlation** between these two evaluation metrics.\n\n3. **Data Sources:**\n   - Use a **diverse set of T2I models from Civitai**.\n   - Reference prompts/images are taken from the **paper's supplementary materials**.",
+      "expected_outcome": "- A **positive correlation** is expected between CLIP scores and user AUR ratings.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "evaluation_conditions": "Same T2I models, text prompts, reference images"
+        },
+        "independent_variables": {
+          "animation_generation_method": [
+            "Text2Video-Zero",
+            "Tune-a-Video",
+            "Ours"
+          ]
+        },
+        "dependent_variables": {
+          "user_study_AUR_score": "Average ranking of text alignment",
+          "CLIP_metric_score": "Similarity between frames and references",
+          "correlation_coefficient": "Pearson correlation between metrics"
+        }
+      },
+      "experiment_design_ambiguity": {
+        "ambiguous_variables": {
+          "text_prompts_and_reference_images": "Provided only in supplementary materials",
+          "personalized_T2I_model_selection": "Selection criteria not defined",
+          "participant_details": "Demographics and number of evaluators unspecified"
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Personalized T2I models (Civitai)",
+          "Three animation methods",
+          "Fixed prompts + reference images",
+          "User study protocol",
+          "CLIP evaluation tool",
+          "Correlation analysis tools"
+        ],
+        "setup_steps": [
+          "Collect T2I models and prompts",
+          "Generate animations for each method",
+          "Compute CLIP alignment scores",
+          "Run user study to compute AUR",
+          "Analyze correlation between CLIP and AUR"
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Prompts and references not detailed",
+          "Model selection process",
+          "User study participant design"
+        ],
+        "ambiguous_setup_steps": [
+          "Data sourcing for prompts and images",
+          "Participant recruitment and scoring criteria"
+        ]
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic animation generation and user variability",
+          "impact": "Score inconsistency across trials",
+          "possible_modifications": [
+            "Control seeds and sampling steps",
+            "Use random token drop tests",
+            "Aggregate multiple runs"
+          ]
+        },
+        "systematic_uncertainty": {
+          "source": "Bias in dataset/prompts or user group",
+          "impact": "Skews correlation results",
+          "possible_modifications": [
+            "Test across unbiased model subsets",
+            "Try alternate prompt/reference sets",
+            "Vary participant demographics"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+    "questions": [
+        {
+            "question": "Does the zoom-out-zoom-in mechanism outperform traditional simple resize and sliding window methods in terms of both Dice score and inference time for volumetric CT segmentation?",
+            "method": "Conduct a controlled experiment on a volumetric CT dataset by implementing three segmentation configurations: (1) a simple resize method targeting a Dice score of approximately 0.4509 with an inference time of 65 ms per case; (2) a sliding window approach targeting a Dice score of about 0.6529 with an inference time of 3331 ms per case; and (3) the zoom-out-zoom-in mechanism targeting a Dice score of around 0.7298 with an inference time of 190 ms per case. Use the same dataset, identical pre-processing, and infer on equivalent cases using the same hardware configuration (e.g., 8 NVIDIA A100-SXM4-40GB). Measure and compare the median Dice scores and per-case inference times across the methods.",
+            "expected_outcome": "The zoom-out-zoom-in mechanism should yield the highest median Dice score (around 0.73) while maintaining much lower inference time compared to the sliding window approach, thereby confirming its superior balance of segmentation accuracy and computational efficiency compared to the simple resize and sliding window methods.",
+            "subsection_source": "3.2 Compared with SAM-like Interactive Methods"
+        },
+        {
+            "question": "Does combining semantic (text) prompts with spatial (bounding box) prompts improve segmentation accuracy compared to using either prompt individually on multiple anatomical segmentation tasks?",
+            "method": "Execute segmentation experiments across 19 anatomical tasks using three prompt configurations: (1) semantic prompt (text) only, expecting an average Dice score near 77.17%; (2) spatial prompt (bounding box) only, expecting an average Dice score near 79.69%; and (3) a combination of both semantic and spatial (bounding box+text) prompts, aiming for an average Dice score around 83.02%. Ensure all experiments are performed on the same split of test data and under identical pre-processing and model conditions. Record the Dice scores for each configuration across all anatomical structures and compare the performance improvements.",
+            "expected_outcome": "The experiments are expected to show that the combined use of semantic and spatial prompts significantly improves segmentation accuracy, achieving a higher Dice score (approximately 83.02%) compared to using either prompt individually, which supports the claim that semantic prompts clarify ambiguities inherent in spatial prompts.",
+            "subsection_source": "3.2 Compared with SAM-like Interactive Methods"
+        },
+        {
+            "question": "Does the zoom-out-zoom-in mechanism offer superior segmentation accuracy and efficiency compared to the simple resize strategy and the sliding window algorithm?",
+            "method": "Using the AMOS22 dataset with 48 cases covering 15 major organs of various sizes, perform segmentation experiments with three methods: (a) a simple resize strategy, (b) a sliding window approach that scans the entire 3D CT with thousands of windows, and (c) the proposed zoom-out-zoom-in mechanism that executes one global inference on the 3D CT followed by scanning the region of interest with dozens of windows. Measure performance through the Dice score and record the inference time per case using the same test split (20%).",
+            "expected_outcome": "The zoom-out-zoom-in mechanism is expected to achieve the best average Dice score while maintaining a competitive inference speed compared to the simple resize approach. Additionally, it should be far more efficient than the sliding window method in terms of computational cost, as it reduces the number of windows scanned.",
+            "subsection_source": "3.3 Ablation Studies"
+        },
+        {
+            "question": "Does scaling up the training dataset size improve the segmentation performance in terms of Dice score on the BTCV dataset?",
+            "method": "Conduct an ablation study using the BTCV dataset (which includes 13 major organs) by training separate models with increasingly larger training data sizes: one dataset, two datasets, eight datasets, and the full set of 25 datasets. Train each model for 500 epochs under the same configuration and evaluate on the 20% test split. Pay special attention to results in the text prompt setting to determine the effect of additional training data on the Dice score.",
+            "expected_outcome": "The experiment is expected to show that the Dice score increases rapidly with more training data, particularly in the text prompt setting, thereby demonstrating the scalability and benefit of using more extensive training data.",
+            "subsection_source": "3.3 Ablation Studies"
+        },
+        {
+            "question": "Does the combination of spatial and semantic prompts lead to improved segmentation accuracy compared to using each prompt individually?",
+            "method": "Evaluate segmentation performance on 19 segmentation tasks by testing different prompt configurations: (a) using only semantic prompts (text), (b) using only spatial prompts (point or bounding box), and (c) combining spatial prompts with semantic prompts (point+text and bbox+text). Quantitatively analyze the average Dice scores, noting that the bbox+text combination should show an improvement of approximately 5.85% over the text-only setting, and point+text should show a 4.62% improvement over using points alone.",
+            "expected_outcome": "It is expected that combining spatial and semantic prompts will yield higher Dice scores than when using either prompt individually, by reducing ambiguities in the spatial information and providing clearer anatomical references for segmentation.",
+            "subsection_source": "3.3 Ablation Studies"
+        },
+        {
+            "question": "Does the inclusion of semantic prompts effectively disambiguate the segmentation output when a single spatial prompt could correspond to multiple plausible anatomical structures?",
+            "method": "Collect a set of medical images where a single point or bounding box spatial prompt ambiguously corresponds to multiple possible targets (e.g., kidney tumor, left kidney, and the whole kidneys; or liver, liver tumor, and hepatic vessels). For each image, supply an additional text prompt that explicitly specifies the intended structure (e.g., 'kidney tumor' or 'liver'). Run the SegV ol segmentation algorithm on these images, ensuring that the semantic prompt is integrated into the segmentation process. Assess the results by comparing the output masks to the intended targets and verifying that only one clear and accurate mask is produced per image, as opposed to multiple plausible outputs.",
+            "expected_outcome": "The experiment should demonstrate that when a clear semantic prompt is provided in addition to the ambiguous spatial prompt, SegV ol produces a single, unambiguous segmentation mask that accurately corresponds to the specified anatomical target, thereby resolving the ambiguity inherent in the spatial prompt alone.",
+            "subsection_source": "3.4 Case Studies"
+        },
+        {
+            "question": "Can SegV ol accurately classify the semantic category of the segmentation result based solely on the spatial prompt and subsequent decoding of semantic information?",
+            "method": "Select medical images with clearly defined regions such as the liver and liver tumors. For each image, place a spatial prompt (e.g., a point or bounding box) on the target region. For the liver image, run SegV ol and decode the category using a pre-defined set of anatomical labels, applying the softmax function to obtain prediction probabilities. Record the probability for the liver category. Repeat the procedure for a liver tumor case, capturing the probabilities for both the 'liver tumor' and 'liver' categories. Compare the outputs to the expected values (e.g., a probability of approximately 0.997 for the liver on a liver segmentation, and for a liver tumor prompt, a higher probability for tumor (around 0.619) with a lower probability for liver (around 0.339)).",
+            "expected_outcome": "The results should indicate that SegV ol assigns a high probability to the correct organ category when a spatial prompt targets a specific structure, confirming that for a liver prompt, a liver probability near 0.997 is achieved, and for a liver tumor prompt, the probability favors the tumor category (approximately 0.619 over 0.339 for liver). This would validate the model's ability to accurately identify semantic categories from spatial-prompt segmentation results.",
+            "subsection_source": "3.4 Case Studies"
+        }
+    ],
+    "follow_up_work_ideas": [],
+    "main_takeaways": [
+        "The paper demonstrates that the proposed zoom-out-zoom-in mechanism for 3D medical image segmentation achieves higher accuracy (Dice score) than traditional methods. Specifically, it obtains a Dice score of 0.7298 compared to 0.6529 with the sliding window approach and 0.4509 with simple resize.",
+        "The zoom-out-zoom-in approach is computationally efficient. It requires one global inference on the full 3D CT and then refines the region of interest using a limited number of windows (dozens instead of thousands), resulting in significantly lower inference times (190 ms per case) than the sliding window method (3331 ms per case).",
+        "Increasing the amount of training data improves segmentation performance, with experiments showing higher Dice scores as the training dataset scales up.",
+        "Combining semantic prompts (text) with spatial prompts (bounding box, point) enhances segmentation performance. For example, using a combination such as 'Bbox+text' achieves a higher Dice score (83.02%) compared to using either prompt type alone (e.g., text-only scored 77.17% and point-only scored 73.67%).",
+        "The integration of semantic prompt information helps resolve ambiguities inherent in spatial prompts, reducing the risk of multi-plausible outputs in segmentation tasks."
+    ]
+}

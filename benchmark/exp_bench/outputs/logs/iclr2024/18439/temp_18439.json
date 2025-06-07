@@ -1,0 +1,42 @@
+{
+    "questions": [
+        {
+            "question": "Does the smooth reliability diagram provide a more accurate and visually interpretable calibration assessment than the traditional binned reliability diagram for deep neural network predictions?",
+            "method": "Using the ImageNet validation set (50,000 samples) and a ResNet32 model, generate two types of reliability diagrams: one using the classical binned method (with optimal bin selection via cross-validation for regression MSE) and one using the smooth reliability diagram produced by the provided Python package with a fixed kernel bandwidth \u03c3*. First, obtain the predicted probability distributions and predicted class (via argmax) from ResNet32. Then, compute the indicator for correct predictions and the confidence scores. For the binned diagram, aggregate data into bins chosen by cross-validation. For the smooth diagram, apply Nadaraya\u2013Watson kernel smoothing with a Gaussian kernel at bandwidth \u03c3* and generate corresponding kernel density estimates of the predictions. Collect both visual outputs and compute calibration error metrics (if available) based on the discrepancies between empirical frequencies and predicted confidence scores. Compare the diagrams both quantitatively (through calibration error numbers) and qualitatively (via visual inspection of smoothness, boundary adherence, and density estimates).",
+            "expected_outcome": "It is expected that the smooth reliability diagram will provide a more consistent and visually interpretable representation of calibration, with well-behaved boundary properties and stable density estimates, thereby indicating lower calibration error compared to the traditional binned method.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "question": "Does the smooth reliability diagram effectively capture non-monotonic conditional probability behavior compared to the binned reliability diagram on synthetic datasets?",
+            "method": "Create a synthetic dataset with 1,000 samples where each prediction fi is uniformly drawn from the interval [0, 1] and the true conditional probability E[yi|fi] follows a deliberately non-monotonic function (e.g., a sinusoidal or oscillatory pattern). Generate two types of reliability diagrams: (i) one based on the binned reliability diagram using optimally selected bins via cross-validation for regression test MSE, and (ii) one based on the smooth reliability diagram using kernel smoothing with a Gaussian kernel at a fixed bandwidth \u03c3*. Additionally, compute bootstrapped confidence bands around the estimated regressor for the smooth diagram. Assess whether each method captures the non-monotonic behavior by comparing the estimated conditional probabilities to the true non-monotonic function, both visually and quantitatively (using metrics such as bias or mean squared error between the estimated and true conditional probabilities).",
+            "expected_outcome": "The smooth reliability diagram is expected to trace the non-monotonicity more precisely with confidence bands that accurately reflect uncertainty, while the binned diagram may oversmooth or misrepresent the underlying oscillatory pattern due to rigid bin boundaries.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "question": "Can the smooth reliability diagram reliably reflect calibration quality across diverse domains such as deep learning, solar flare forecasting, and precipitation prediction?",
+            "method": "Select three datasets: (i) the ImageNet validation set for deep networks, (ii) the solar flare forecasting dataset (731 days with a known event occurrence rate of 25.7%), and (iii) the daily rain forecasts dataset from the Finnish Meteorological Institute (346 days, with discrete forecasts in 10% increments). For each dataset, generate two reliability diagrams: one using the traditional binned approach and one using the proposed smooth reliability diagram computed with a domain-appropriate kernel bandwidth \u03c3* (ensuring that kernel density estimates of predictions are included). For the solar flare and precipitation datasets, verify that the diagrams appropriately handle the prediction distributions (e.g., the discrete probabilities in the precipitation dataset). If available, calculate calibration error metrics and assess the consistency between the conditional mean estimates \u02c6y and density estimates \u02c6\u03b4. Evaluate the diagrams in terms of their visual clarity, consistency, and adherence to the [0,1] boundaries.",
+            "expected_outcome": "It is expected that across the three diverse domains, the smooth reliability diagrams will consistently display improved visual interpretability and robust calibration error assessment, with clear density estimates and proper handling of boundary constraints, while the binned methods may show instability or less interpretable aggregation, particularly in cases with non-uniform or discrete probability outputs.",
+            "subsection_source": "4 E XPERIMENTS"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate Adaptive Kernel Bandwidth Selection",
+            "experiment_design": "Extend the current work by developing a method for selecting the kernel bandwidth \u03c3 adaptively for each dataset based on its inherent data distribution characteristics. Design an experiment that runs the smooth reliability diagram generation with different adaptive bandwidth strategies (e.g., local bandwidth adaptation based on data density) on each of the three datasets (ImageNet, solar flares, and precipitation). Compare the performance in terms of calibration error and visual interpretability to that achieved using the fixed bandwidth \u03c3* from the current method. Use bootstrapping to quantify the statistical stability of the chosen bandwidth and its impact on calibration metrics.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "idea": "Assess Calibration Post-Processing Consistency",
+            "experiment_design": "Based on the theoretical claim that a SmoothECE value \u03b5 implies that perfect calibration can be obtained via an L1 perturbation of at most \u03b5, design an experiment that takes calibrated models from each dataset and applies a minimal stochastic post-processing adjustment. Measure how close the adjusted predictions come to perfect calibration. Compare the amount of adjustment required when using the smooth reliability diagram versus adjustments derived from traditional metrics. This experiment would involve perturbing predictions by different magnitudes, computing the resulting calibration error, and statistically comparing against the minimal adjustment predicted by the smooth calibration error metric.",
+            "subsection_source": "4 E XPERIMENTS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces SmoothECE (smECE), a hyperparameter\u2010free calibration measure that is consistent and represents a natural notion of distance in the prediction space.",
+        "SmoothECE can be used to post-process any predictive function to achieve perfect calibration with minimal L1 perturbation, making it both theoretically sound and practically useful.",
+        "A key contribution is the development of smoothed reliability diagrams, which use Nadaraya\u2013Watson kernel smoothing with a Gaussian kernel, providing a more principled and visually appealing alternative to traditional binned diagrams.",
+        "The paper includes a Python package that efficiently computes the SmoothECE and its associated diagrams, incorporating uncertainty quantification via bootstrapping.",
+        "Extensions are provided showing that the concept of SmoothECE generalizes to a broader class of metrics on the prediction space, including under specific conditions the consistency with respect to the \u21131 metric.",
+        "Experimental results on datasets such as ImageNet (using ResNet32) and meteorological data indicate that SmoothECE achieves lower calibration error (e.g., smECE = 0.138 \u00b1 0.016) compared to classical measures (e.g., ECE15 = 0.161)."
+    ]
+}

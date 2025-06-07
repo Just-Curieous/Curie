@@ -1,0 +1,791 @@
+{
+    "questions": [
+        {
+            "question": "Will the SPAG method (SPAG-1, SPAG-2, SPAG-3) outperform existing baseline methods on standard reasoning benchmarks in LLaMA-2-7B?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate the effectiveness of SPAG variants in improving reasoning performance in LLaMA-2-7B across multiple training regimes.\n    - **Objective:** \n    Compare SPAG-based training against baseline methods such as standard fine-tuning, Chain-of-Thought (CoT), AlpacaSFT variants (AlpacaSFT-1, AlpacaSFT-2, AlpacaSFT-3), and imitation learning approaches (20Q, Guess-My-City).\n\n2. **Testing Dataset:** \n    - Reasoning Benchmarks:\n        - MMLU\n        - BIG-Bench Hard (BBH)\n        - ARC Easy (ARC-e)\n        - ARC Challenge (ARC-c)\n        - Mutual\n        - WinoGrande\n        - LogiQA2\n        - PIQA\n    - Models are evaluated using a consistent dataset split and evaluation protocol, ensuring comparability across methods.\n3. **Comparative Evaluation:**  \n    - Baseline Methods:\n        - LLaMA-2-7B (no additional fine-tuning)\n        - LLaMA-2-7B-CoT\n        - AlpacaSFT-1, AlpacaSFT-2, AlpacaSFT-3\n        - Imitation learning methods (20Q, Guess-My-City)\n    - SPAG Variants:\n        - SPAG-1\n        - SPAG-2\n        - SPAG-3\n4. **Training Detail:**\nFor imitation learning,the learning rate is 5e-6 and the KL-penalty coefficient \u03b21 = 0.1.For SPAG training,the learning rate is 2e-6,the KL-penalty coefficient \u03b22=0.2,and the SFT coefficient \u03b1=0.5. For the Alpaca SFT baseline,we exactly follow the training setups of Alpaca and set the learning rate to 2e-6. Among all training stages,the batch size is 128 and the max sequence length is 2048. Each training\nprocess maintains one epoch over the offline collected trajectories The the decay parameter \u03b3 is set to 0.8.The maximum turn of the Adversarial Taboo is 5.\n\n5. **Evaluation Metrics:**\n    - The numerical score the model has on each benchmark\n    - For overall performance: Geometric Mean (GM) of numerical scores across all benchmarks.",
+            "expected_outcome": "It is expected that the SPAG variants, particularly SPAG-3, will exhibit improved performance by achieving higher average GM scores compared to baseline models. These results would support the claim that adversarial self-play learning in SPAG notably enhances reasoning abilities relative to standard imitation learning or continuous supervised fine-tuning.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "training_hyperparameters": "Learning rate, batch size, max sequence length, and other training details are fixed",
+                        "evaluation_setup": "Dataset splits, evaluation metrics, and GM computation over scores are kept constant",
+                        "hardware": "32 NVIDIA A100-SXM4 GPUs with 40GB memory are used for all experiments"
+                    },
+                    "independent_variables": {
+                        "training_regime": [
+                            "Original LLaMA-2-7B (baseline)",
+                            "LLaMA-2-7B-CoT",
+                            "AlpacaSFT-1",
+                            "AlpacaSFT-2",
+                            "AlpacaSFT-3",
+                            "Imitation Learning based on 20Q",
+                            "Imitation Learning based on Guess-My-City",
+                            "SPAG-1",
+                            "SPAG-2",
+                            "SPAG-3"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metrics": [
+                            "MMLU",
+                            "BIG-Bench Hard (BBH)",
+                            "ARC easy (ARC-e)",
+                            "ARC challenge (ARC-c)",
+                            "Mutual",
+                            "WinoGrande",
+                            "LogiQA2",
+                            "PIQA",
+                            "Geometric Mean (GM) of the above scores"
+                        ],
+                        "statistical_significance": "Paired test results from one full training epoch over offline-collected trajectories and additional sample efficiency and hyper-parameter effectiveness analyses"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "offline_trajectory_details": "The details regarding the offline-collected trajectories (such as size, source, and selection criteria) are not explicitly mentioned"
+                    },
+                    "possible_modifications": {
+                        "refine_offline_data_specifications": [
+                            "Provide clear definitions and possible values for the size and composition of offline trajectories",
+                            "Detail the criteria for data selection in offline collections"
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": "```json\n    \"experiment_constraints\": {\n        \"resource_constraints\": {},\n        \"time_constraints\": {},\n        \"money_constraints\": {},\n        \"possible_modifications\": {}\n    }\n```",
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochastic variability in training dynamics",
+                    "description": "The training processes (e.g., mini-batch sampling, weight initialization, and gradient updates) inherently involve stochastic elements that can lead to variations in performance. In this experiment, uncertainties are also introduced via unspecified hyperparameter numerical values and random elements in the offline data handling, which can cause performance metrics such as Geometric Mean (GM) scores to vary across different runs.",
+                    "impact": "Such random variability can result in inconsistent outcomes that make it challenging to ascertain if observed performance differences (e.g., SPAG-3 outperforming baselines) are statistically robust or merely due to chance.",
+                    "possible_modifications": [
+                        "Run multiple training iterations with different random seeds to average out noise from stochastic effects.",
+                        "Implement controlled noise injection experiments (e.g., deliberate token dropping) to assess the sensitivity of model performance to randomness.",
+                        "Explicitly document and fix random initialization and data shuffling procedures to reduce run-to-run variability."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Bias in offline data and fixed hyperparameter choices",
+                    "description": "Systematic uncertainty arises from potential biases introduced by the offline-collected trajectories whose size, source, and selection criteria are not defined, as well as from using hyperparameters strictly based on published specifications without exploration of alternatives. This may lead to consistent biases in training and evaluation, affecting the fairness and robustness of comparisons between SPAG methods and baselines.",
+                    "impact": "This uncertainty can skew evaluation metrics consistently, possibly inflating or deflating the real performance differences between methods. The systematic biases might also affect paired significance tests and the sample efficiency analyses, leading to conclusions that are not fully generalizable.",
+                    "possible_modifications": [
+                        "Obtain a clean, well-documented offline dataset with clear selection criteria to eliminate biases.",
+                        "Expand the independent variables to include a range of hyperparameter values to test robustness against systematic effects.",
+                        "Incorporate additional statistical tests (e.g., confidence interval analysis) and alternative evaluation metrics to mitigate the influence of potential biases."
+                    ]
+                }
+            },
+            "no_answer": "The repository contains the implementation of the SPAG method and shows in the README.md that it outperforms baseline methods on standard reasoning benchmarks in LLaMA-2-7B. However, there is no specific script in the repository that directly answers this experiment question. The repository mentions using the external 'lm-evaluation-harness' tool from EleutherAI for evaluation, but this tool is not included in the repository. The repository contains scripts for training SPAG models and collecting self-play episodes, but not for evaluating the models on reasoning benchmarks. To answer the experiment question, one would need to use the external 'lm-evaluation-harness' tool with the trained SPAG models, which requires additional setup and configuration not provided in this repository."
+        },
+        {
+            "question": "Does imitation learning using GPT-4 self-play episodes improve the reasoning performance of LLMs compared to their base versions?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Assess whether training open-source LLMs (e.g., LLaMA-2-7B and Baichuan-2-13B) with imitation learning from GPT-4 self-play episodes improves reasoning abilities.\n    - **Objective:** \n    Compare reasoning performance before and after imitation learning, ensuring improvements do not come at the cost of general language understanding.\n\n2. **Testing Dataset:** \n    Reasoning Benchmarks:\n        - MMLU\n        - BIG-Bench Hard (BBH)\n        - ARC Easy (ARC-e)\n        - ARC Challenge (ARC-c)\n    Establish baseline scores for LLMs before training.\n\n3. **Comparative Evaluation:**  \n    Baseline Models:\n        - LLaMA-2-7B (original version)\n        - Baichuan-2-13B (original version)\n        - Imitation Learning Models (IM):\n        - LLaMA-2-7B-IM (trained with GPT-4 self-play episodes).\n        - Baichuan-2-13B-IM (trained with GPT-4 self-play episodes).\n\n4. **Training Detail:**\n- Utilize collected GPT-4 self-play episodes for imitation learning.\n\n- For imitation learning,the learning rate is 5e-6 and the KL-penalty coefficient \u03b21 = 0.1.For SPAG training,the learning rate is 2e-6,the KL-penalty coefficient \u03b22=0.2,and the SFT coefficient \u03b1=0.5. For the Alpaca SFT baseline,we exactly follow the training setups of Alpaca and set the learning rate to 2e-6. Among all training stages,the batch size is 128 and the max sequence length is 2048. Each training process maintains one epoch over the offline collected trajectories The the decay parameter \u03b3 is set to 0.8.The maximum turn of the Adversarial Taboo is 5.\n\n5. **Evaluation Metrics:**\n    - Score on different benchmarks\n    - Track any changes in general language capacity, MMLU scores to ensure that reasoning improvements do not come at a significant cost to general performance.\n\n6. **Imitation Learning Data:**\nThe Taboo game is played one episode per target word, with attacker and defender prompts detailed:\n\n```markdown\n- Attacker Systme Prompt:\nLet's play a game. Do not mention you are an AI developed by OpenAI.",
+            "description_of_the_game": "**Game Name:** Adversarial Taboo  \n\n**Rules:**  \n1. There are two players in the game, one is called **attacker**, another is called **defender**.  \n2. At the beginning, the **attacker** will get a **target word**. It is talking with a **defender** who is **not informed** of the target word. The task of the **attacker** is to **induce** the **defender** to **utter** the target word **unconsciously**\u2014if successful, the **attacker wins** the game. At the same time, the **defender** is guessing the **target word**\u2014if the defender **identifies** the target word correctly, the **defender wins**.  \n3. The game will last for a total of **{maxturns} turns**. If nobody wins during **{maxturns} turns**, the game ends in a **tie**.",
+            "game_states": "**Role:** You are a **defender**. Make sure you understand the rules of the game.",
+            "attention": "1. **Do not utter your thinking process.**  \n2. **You can only guess once.**  \n3. If you have identified the target word, **utter**:  \n   **\"I know word! It is <targetword>\"**  \n   Rigorously in this form. If your target word is correct, you **win** the game, otherwise, you **lose**. You only have **one chance**, so be careful when uttering your answer.\n```\n\n- Due to resource limitations, GPT-4 self-play samples are collected for the top 30K words from V_target.\n\n- The maximum interaction turn is randomly selected in the range [3,8].\n- The results are collected as T_im for for imitation learning.",
+            "expected_outcome": "The imitation-learned (IM) models are expected to show uniform improvements on reasoning benchmarks with maintained or slightly altered general language capacity. This is supported by results indicating that, for instance, the IM LLaMA-2 model gains reasoning improvements when minor degradations occur in other metrics.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "evaluation_benchmarks": "A fixed set of reasoning benchmarks (MMLU, BBH, ARC-e, ARC-c) is used to measure performance for both base and imitation-learned models."
+                    },
+                    "independent_variables": {
+                        "llm_model": [
+                            "LLaMA-2-7B",
+                            "Baichuan-2-13B"
+                        ],
+                        "training_type": [
+                            "base version",
+                            "imitation learning (using GPT-4 self-play episodes)"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metrics": [
+                            "reasoning performance (quantitative scores on benchmarks)",
+                            "general language capacity (MMLU scores)"
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "GPT-4 self-play episodes",
+                        "Open-source LLMs (LLaMA-2-7B, Baichuan-2-13B)",
+                        "Baseline evaluation datasets (reasoning benchmarks: MMLU, BBH, ARC-e,ARC-c)",
+                        "Imitation learning training framework",
+                        "Performance evaluation and comparison tools"
+                    ],
+                    "setup_steps": [
+                        "Collect or generate GPT-4 self-play episodes",
+                        "Establish baseline performance metrics on selected reasoning benchmarks using the original models",
+                        "Prepare the training setup to perform imitation learning using the collected episodes",
+                        "Retrain the LLMs (imitation learning) and monitor the training process",
+                        "Evaluate the imitation-learned models on the same reasoning benchmarks",
+                        "Compare key numerical results and performance visualizations between base and IM models",
+                        "Analyze changes in general language capacity, particularly focusing on MMLU scores"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Data Collection and Processing",
+                            "description": "The process of generating, filtering, and validating GPT-4 self-play episodes can add significant complexity."
+                        },
+                        {
+                            "source": "System Integration",
+                            "description": "Integrating multiple components (episode generation, training pipeline, evaluation framework) introduces challenges in ensuring compatibility and synchronization."
+                        }
+                    ]
+                }
+            },
+            "experiment_constraints": "```json\n    \"experiment_constraints\": {\n        \"resource_constraints\": {},\n        \"time_constraints\": {},\n        \"money_constraints\": {},\n        \"possible_modifications\": {}\n    }\n```",
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in GPT-4 self-play episode generation and training randomness",
+                    "description": "The process of generating GPT-4 self-play episodes involves stochastic sampling methods and may yield episodes of varying quality. Additionally, random initialization and training procedures in imitation learning could result in fluctuations in performance metrics. This variability introduces random uncertainty in the observed outcomes across experimental runs.",
+                    "impact": "Random fluctuations can lead to discrepancies in reasoning performance scores and general language capacity measurements, making it more challenging to attribute observed improvements strictly to the imitation learning approach.",
+                    "possible_modifications": [
+                        "Increase the number of self-play episodes to average out the stochastic variations.",
+                        "Perform multiple training runs with different random seeds to assess the variability in performance metrics.",
+                        "Implement controlled random noise experiments, such as varying the temperature in GPT-4 responses, to quantify the effect of randomness on the learning outcomes."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Bias introduced during GPT-4 self-play episode selection and dataset preparation",
+                    "description": "The method of generating and selecting GPT-4 self-play episodes may inadvertently introduce systematic biases. For example, if the episodes overemphasize certain reasoning patterns or contain consistent errors, this bias will propagate through the imitation learning process. In addition, inconsistencies in evaluation benchmark composition may further exacerbate the effects of systematic bias on the performance assessment.",
+                    "impact": "Systematic bias could lead to uniformly inflated or deflated performance metrics on reasoning benchmarks, affecting the validity of comparisons between the base and imitation-learned models, as well as masking potential trade-offs in general language capacity.",
+                    "possible_modifications": [
+                        "Refine and document the criteria for episode generation and selection, ensuring a balanced and representative set of reasoning scenarios.",
+                        "Integrate additional quality control and filtering mechanisms to mitigate biases inherent in self-play episodes.",
+                        "Augment the evaluation benchmarks with a more diverse set of tasks to identify and correct for any systematic skew in performance improvements."
+                    ]
+                }
+            },
+            "no_answer": "While the repository contains scripts for training models with imitation learning using GPT-4 self-play episodes, it does not contain a specific script for evaluating the reasoning performance on the benchmarks mentioned in the question (MMLU, BBH, ARC-e, ARC-c). The README mentions using the external 'lm-evaluation-harness' repository for evaluation with 'the setups described in our paper', but these evaluation scripts are not included in this repository. The repository focuses on the training process (imitation learning and self-play) but relies on external tools for the evaluation part that would answer the specific experiment question about improved reasoning performance."
+        },
+        {
+            "question": "Will iterative self-play training with the SPAG methodology lead to further improvements in reasoning performance over successive epochs?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Investigate whether iterative self-play training using the SPAG methodology (SPAG-1, SPAG-2, SPAG-3) results in improved reasoning performance over multiple training epochs.\n    - **Objective:** \n    Compare the performance of models after each SPAG epoch with the initial imitation learning (IM) model to assess incremental improvements in reasoning tasks and overall performance.\n\n2. **Testing Dataset:** \n    - Reasoning Benchmarks:\n        - MMLU\n        - BIG-Bench Hard (BBH)\n        - ARC Easy (ARC-e)\n        - ARC Challenge (ARC-c)\n        - Mutual\n        - WinoGrande\n        - LogiQA2\n        - PIQA\n\n3. **Comparative Evaluation:**  \n    - Models:\n        - LLaMA-2-7B\n        - Baichuan-2-13B\n    - Use the same models that have already undergone imitation learning.\n    - Conduct self-play training for multiple epochs as the following algorithm:\n        ```markdown\n        ### Algorithm 2: Self-play of adversarial language games (SPAG)\n\n        **Inputs:**\n        - LLM policy \\( \\pi_\\theta(y|x) \\)\n        - Target word set \\( V_{\\text{target}} \\)\n        - Attacker and defender prompts \\( f_{\\text{attack}}, f_{\\text{defend}} \\)\n\n        **for self-play epoch iterations do:**\n        1. Make a copy of \\( \\pi_\\theta \\) as \\( \\bar{\\pi}_\\theta \\).\n        2. Set \\( \\bar{\\mu}_\\theta(u|s) = \\bar{\\pi}_\\theta(u|f_{\\text{attack}}(s)) \\) and \\( \\bar{\\nu}_\\theta(v|s') = \\bar{\\pi}_\\theta(v|f_{\\text{defend}}(s')) \\).\n        3. For each \\( w \\in V_{\\text{target}} \\), sample an episode \\( \\tau \\sim \\bar{\\mu}_\\theta \\times \\bar{\\nu}_\\theta \\). Collect \\( \\bar{T}_\\theta = \\{ \\tau \\sim \\bar{\\mu}_\\theta \\times \\bar{\\nu}_\\theta \\} \\).\n        4. Split the attacker-winning set \\( T_{\\text{attack}}^\\theta \\).\n        5. Update \\( \\pi_\\theta \\) with loss \\( L_{\\text{SPAG}}(\\pi_\\theta) \\).\n\n        **end for**\n        ```\n    - Denote the models after each epoch as SPAG-1, SPAG-2, and SPAG-3.\n\n4. **Training Detail:**\n- Utilize collected GPT-4 self-play episodes for imitation learning.\n\n- For imitation learning,the learning rate is 5e-6 and the KL-penalty coefficient \u03b21 = 0.1.For SPAG training,the learning rate is 2e-6,the KL-penalty coefficient \u03b22=0.2,and the SFT coefficient \u03b1=0.5. For the Alpaca SFT baseline,we exactly follow the training setups of Alpaca and set the learning rate to 2e-6. Among all training stages,the batch size is 128 and the max sequence length is 2048. Each training process maintains one epoch over the offline collected trajectories The the decay parameter \u03b3 is set to 0.8.The maximum turn of the Adversarial Taboo is 5.\n\n5. **Evaluation Metrics:**\n    - The numerical score the model has on each benchmark\n    - For overall performance: Geometric Mean (GM) of numerical scores across all benchmarks.",
+            "expected_outcome": "- It is expected that, across most reasoning benchmarks, performance will steadily improve with additional SPAG epochs, particularly from SPAG-1 to SPAG-2 and SPAG-3. However, for some models (e.g., Baichuan-2-13B), language-understanding metrics such as MMLU may slightly decline while overall performance (GM score) increases.\n\n- For LLaMA-2-7B, although the first-epoch SPAG model has a relatively lower performance than the imitation-learned (IM) model on WinoGrande, after an additional epoch of self-play iteration, SPAG-2 has achieved sufficient improvement to surpass the performance of the IM model. Considering the general language capability on MMLU, SPAG models cannot guarantee continuous improvement, especially for Baichuan-2-13B whose performance slightly decays during the SPAG training. Compared to the improvements in the reasoning benchmarks, this language-understanding decline is still within an acceptable range, since the overall performance (GM score) maintains increasing significantly.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "training_method": "SPAG iterative self-play training remains constant across experiments",
+                        "evaluation_setup": "Same evaluation framework used for all model conditions"
+                    },
+                    "independent_variables": {
+                        "llm_model": [
+                            "LLaMA-2-7B",
+                            "Baichuan-2-13B"
+                        ],
+                        "training_epoch": [
+                            "IM (initial model)",
+                            "SPAG-1",
+                            "SPAG-2",
+                            "SPAG-3"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metrics": [
+                            "Benchmark results (WinoGrande, BBH, other reasoning tasks)",
+                            "Language understanding performance (MMLU)",
+                            "Overall performance (GM score)"
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "LLM models (LLaMA-2-7B and Baichuan-2-13B)",
+                        "Initial imitation-trained model (IM) as baseline",
+                        "Self-play training module implementing the SPAG methodology",
+                        "Algorithm 2 for iterative self-play training",
+                        "Evaluation framework using benchmark tables",
+                        "Reasoning task benchmarks (WinoGrande, BBH, and other reasoning tasks)",
+                        "General language task benchmark (MMLU)",
+                        "Performance metrics computation (including overall GM score)"
+                    ],
+                    "setup_steps": [
+                        "Prepare the baseline imitation-trained models (IM) for each LLM",
+                        "Implement the SPAG self-play training algorithm as described in the Algorithm",
+                        "Train the models iteratively over multiple epochs, producing SPAG-1, SPAG-2, and SPAG-3",
+                        "Set up the evaluation framework",
+                        "Evaluate the models on both reasoning benchmarks (WinoGrande, BBH, etc.) and general language tasks (MMLU)",
+                        "Compare the performance of each SPAG epoch against the baseline IM model and analyze any trade-offs"
+                    ]
+                }
+            },
+            "experiment_constraints": "```json\n    \"experiment_constraints\": {\n        \"resource_constraints\": {},\n        \"time_constraints\": {},\n        \"money_constraints\": {},\n        \"possible_modifications\": {}\n    }\n```",
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in self-play training dynamics",
+                    "description": "The iterative self-play training process inherently involves random sampling during token generation and stochastic gradient updates. This randomness can lead to fluctuations in the models performance between runs, resulting in varying reasoning scores across SPAG epochs.",
+                    "impact": "Such random fluctuations may obscure the true effect of the SPAG methodology by introducing noise into the performance metrics. This can make it harder to determine whether improvements are due to the training method or simply random variation in the training process.",
+                    "possible_modifications": [
+                        "Introduce controlled random seed settings for training to reduce variability.",
+                        "Experiment with adjustments in mini-batch sampling or dropout rates to study their effect on performance stability.",
+                        "Simulate additional randomness by, for example, randomly dropping tokens during training to test the robustness of the model improvement."
+                    ]
+                }
+            },
+            "no_answer": "The repository contains code for training models using the SPAG methodology (imitation learning, self-play episode collection, reward assignment, and reinforcement learning), but it does not include scripts that directly evaluate the models on the reasoning benchmarks mentioned in the experiment question (MMLU, BBH, ARC-e, ARC-c, Mutual, WinoGrande, LogiQA2, PIQA). According to the README.md, the evaluation is done using an external tool called 'lm-evaluation-harness' with setups described in their paper, but this tool and the specific evaluation scripts are not included in this repository. Therefore, there is no direct script in this repository that answers the experiment question about whether iterative self-play training with SPAG methodology leads to further improvements in reasoning performance over successive epochs."
+        },
+        {
+            "question": "Does the adversarial game setup used in SPAG, which includes imitation learning of GPT-4 followed by self-play on game episodes (specifically via the adversarial Taboo game), provide superior reasoning improvements compared to non-adversarial setups like 20-Question and Guess-My-City?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Investigate whether the adversarial game setup in SPAG (using the Adversarial Taboo game for self-play) leads to superior reasoning improvements compared to non-adversarial setups (e.g., 20-Question and Guess-My-City).\n    - **Objective:** \n    Compare reasoning performance and game-play outcomes for LLaMA-2-7B and Baichuan-2-13B under adversarial and non-adversarial training regimes.\n\n2. **Testing Dataset:** \n    - Reasoning Benchmarks:\n        - MMLU\n        - BIG-Bench Hard (BBH)\n        - ARC Easy (ARC-e)\n        - ARC Challenge (ARC-c)\n        - Mutual\n        - WinoGrande\n        - LogiQA2\n        - PIQA\n    - Models are evaluated using a consistent dataset split and evaluation protocol, ensuring comparability across methods.\n3. **Training Regimes:**  \n    - Adversarial Setup (SPAG):\n        - Imitation learning via GPT-4 generated self-play episodes following the Adversarial Taboo game rules.\n        - Use target words from the top 50K most frequent words from CoCA (after excluding stop words).\n        - Iterative self-play learning to refine reasoning abilities.\n    - Non-Adversarial Setups:\n        - Imitation-20Q (based on the 20-Question game).\n        - Imitation-GuessCity (based on the Guess-My-City game).\n\n4. **Training Detail:**\nFor imitation learning,the learning rate is 5e-6 and the KL-penalty coefficient \u03b21 = 0.1.For SPAG training,the learning rate is 2e-6,the KL-penalty coefficient \u03b22=0.2,and the SFT coefficient \u03b1=0.5. For the Alpaca SFT baseline,we exactly follow the training setups of Alpaca and set the learning rate to 2e-6. Among all training stages,the batch size is 128 and the max sequence length is 2048. Each training\nprocess maintains one epoch over the offline collected trajectories The the decay parameter \u03b3 is set to 0.8.The maximum turn of the Adversarial Taboo is 5.\n\n5. **Evaluation Metrics:**\n    - The numerical score the model has on each benchmark\n    - For overall performance: Geometric Mean (GM) of numerical scores across all benchmarks.\n\n6. **Comparative Evaluation:**  \n    Models trained under different setups:\n        - adversarial setup using SPAG\n        - non-adversarial setups: 20-Question and Guess-My-City\n\n7. **Gaming Rule:**\n    Game rule descriptions to the non-adversarial games:\n        - 20-Question: one player (the oracle) thinks of an object, while the other player (the guesser) attempts to identify it by asking a series of yes-or-no questions. The game will have 20 rounds.\n        - Guess-My-City: one player (the oracle) thinks of a city, while the other player (the guesser) attempts to identify it by asking a series yes/no questions and open-ended questions. The game will have 20 rounds.\n    Game rule descriptions to the adversarial games:\n        - An attacker and a defender perform a conversation around a target word only visible to the attacker. The attacker aims to induce the defender to speak out the target word unconsciously; the defender tries to avoid unconscious utterance of the target word and guess the word from the dialogue history. To win the adversarial game in information-limited conversations, both players are required to have high-level language capacities in terms of expression, upstanding, and reasoning. Moreover, by collecting target words from a vast vocabulary, this game can cover a broad range of topics providing sufficient language versatility. Besides, the game outcomes can be automatically and explicitly judged: we only need to check whether the target word appears in the defender\u2019s utterances (attacker wins) or its inference patterns (defender wins).\\",
+            "expected_outcome": "The adversarial game setup (SPAG) is expected to yield superior performance compared to non-adversarial approaches.",
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Introduce a constraint requiring equivalent performance using a smaller model variant (e.g., using GPT-4o-mini instead of GPT-4) to limit compute resources.",
+                        "Reduce the batch size or model size to test the setup's efficiency under tighter memory constraints."
+                    ],
+                    "time_constraints": [
+                        "Limit the number of self-play iterations or epochs during imitation learning to examine if faster convergence is achievable without sacrificing performance."
+                    ],
+                    "money_constraints": [
+                        "Constrain the number of expensive GPT-4 API calls during imitation learning by substituting with a less costly, smaller model or fewer training episodes."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in self-play generation and model updates",
+                "description": "The adversarial self-play process, including GPT-4 imitation learning and iterative self-play rounds, introduces randomness. Variations in prompt responses, the order of generated episodes, and random selections of target words from the top 50K list can lead to inconsistent training paths and fluctuations in gradient updates and model performance.",
+                "impact": "This randomness can result in unstable gradient updates, variable normalized reasoning scores, and inconsistent win rates in game-play evaluations, making it challenging to precisely isolate the benefits of the adversarial setup relative to non-adversarial methods.",
+                "possible_modifications": [
+                    "Introduce controlled noise by varying the imitation learning prompt parameters to assess training robustness.",
+                    "Randomly drop tokens in selected self-play episodes to simulate unpredictable noise and test the model's resilience.",
+                    "Adjust random seed settings or randomly reorder self-play episodes to further explore the impact of training stochasticity."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases introduced by data collection and game-rule design",
+                "description": "The experimental setup employs specific game rules (e.g., the adversarial Taboo game rules and target word selection from the top 50K frequent words) that may inherently favor certain language patterns or reasoning structures. Moreover, variations in the generation of GPT-4 imitation learning episodes might systematically bias the training dataset, influencing both adversarial and non-adversarial outcomes.",
+                "impact": "These systematic biases can lead to an over- or under-estimation of the true performance improvements offered by the adversarial setup compared to non-adversarial methods, potentially skewing the interpretation of normalized reasoning scores and win rate metrics.",
+                "possible_modifications": [
+                    "Implement alternative target word filtering strategies to reduce inherent dataset bias.",
+                    "Retrieve a clean copy of the data or include additional datasets to cross-validate the model's performance and mitigate systematic pre-selection biases.",
+                    "Clarify and vary the game rules across experiments, including introducing new non-adversarial setups, to assess the impact of systematic bias in the experimental design."
+                ]
+            },
+            "no_answer": "After thoroughly exploring the repository, I couldn't find any specific scripts that directly compare the adversarial game setup (SPAG) with non-adversarial setups like 20-Question and Guess-My-City. The repository contains code for training models using the SPAG approach (imitation learning followed by self-play), but it doesn't include scripts for evaluating and comparing different training regimes. The README.md mentions that they use the lm-evaluation-harness repository for reasoning benchmarks evaluation, but there are no specific scripts in this repository that would answer the experiment question directly. Additionally, I couldn't find any implementation or mention of the non-adversarial setups (20-Question and Guess-My-City) in the codebase.",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_protocol": "Same dataset splits and evaluation metrics (e.g., scores on MMLU, BBH, ARC, etc.) and fixed training settings like batch size (128) and max sequence length (2048) across experiments"
+                },
+                "independent_variables": {
+                    "training_regime": [
+                        "Adversarial setup (SPAG with imitation learning followed by adversarial self-play using the Taboo game)",
+                        "Non-adversarial setups (20-Question and Guess-My-City)"
+                    ],
+                    "model": [
+                        "LLaMA-2-7B",
+                        "Baichuan-2-13B"
+                    ],
+                    "learning_parameters": [
+                        "Different learning rates and KL-penalty coefficients for SPAG, imitation learning, and Alpaca SFT baselines"
+                    ],
+                    "game_rules": [
+                        "Adversarial Taboo game rules vs. rules for 20-Question and Guess-My-City"
+                    ]
+                },
+                "dependent_variables": {
+                    "reasoning_performance": [
+                        "Numerical scores on several reasoning benchmarks (MMLU, BBH, ARC-e, ARC-c, Mutual, WinoGrande, LogiQA2, PIQA)",
+                        "Geometric Mean (GM) of scores across benchmarks"
+                    ],
+                    "gameplay_outcomes": [
+                        "Win rates of attacker versus defender in the adversarial game",
+                        "Game-play results in non-adversarial setups (e.g., success in guessing in 20-Question or Guess-My-City)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "imitation_learning_details": "The specifics of how GPT-4 imitation learning is implemented (e.g., prompt construction, episode selection) are not fully detailed, which could affect reproducibility.",
+                    "target_word_selection": "While target words are chosen from the top 50K most frequent words from CoCA after filtering stop words, the exact filtering criteria and impact on language variety remain implicit.",
+                    "game_rules_implementation": "The exact operationalization of the adversarial Taboo game and the non-adversarial game setups (20-Question and Guess-My-City) are described at a high level without detailed mechanisms, making it ambiguous how strictly rules are enforced or varied during training and evaluation."
+                },
+                "possible_modifications": {
+                    "modification_imitation_details": [
+                        "Provide explicit details on prompt design and episode selection criteria for GPT-4 imitation learning to reduce ambiguity."
+                    ],
+                    "modification_target_word_selection": [
+                        "Clarify the filtering criteria for the top 50K words and consider alternative vocabulary selection strategies."
+                    ],
+                    "modification_game_rules": [
+                        "Include a detailed breakdown of the game rules and their implementation for both adversarial and non-adversarial setups, possibly with pseudocode or flow diagrams."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Adversarial game setup (SPAG) using imitation learning via GPT-4 and iterative self-play",
+                    "Non-adversarial game setups (20-Question and Guess-My-City)",
+                    "Game rule modules for both adversarial (Taboo game) and non-adversarial games",
+                    "Training regime components including model specifications (LLaMA-2-7B, Baichuan-2-13B), learning rates, KL-penalty coefficients, batch size, and sequence length",
+                    "Dataset components for target word selection (from top 50K CoCA words) and reasoning benchmarks (MMLU, BBH, ARC-e, ARC-c, Mutual, WinoGrande, LogiQA2, PIQA)"
+                ],
+                "setup_steps": [
+                    "Define the experimental objective to compare adversarial (SPAG) and non-adversarial setups",
+                    "Set up imitation learning using GPT-4 generated self-play episodes under the adversarial Taboo game rules",
+                    "Implement iterative self-play to refine reasoning abilities in the SPAG setup",
+                    "Configure non-adversarial training regimes based on the 20-Question and Guess-My-City game rules",
+                    "Establish and align training details (e.g., learning rates, KL-penalty coefficients, batch size, and max sequence length) across setups",
+                    "Prepare the evaluation pipeline using fixed dataset splits and multiple reasoning benchmarks",
+                    "Execute training and collect both gameplay outcomes (win rates) and numerical scores for performance comparison"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Stochastic elements in training",
+                        "description": "Randomness in GPT-4 imitation learning outputs, self-play episode generation, and random selection of target words contributes to additional complexity."
+                    },
+                    {
+                        "source": "Hyperparameter tuning differences",
+                        "description": "Different learning rates and penalty coefficients for SPAG, imitation learning, and Alpaca SFT baselines add intertwined complexity to the overall training procedure."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "GPT-4 imitation learning details: The specific prompt construction and episode selection process are not fully detailed.",
+                    "Target word selection: The exact filtering criteria applied to the top 50K words from CoCA after stop-word removal is only vaguely described.",
+                    "Game rule enforcement: The operational details of enforcing and varying the adversarial Taboo rules versus non-adversarial rules lack comprehensive documentation."
+                ],
+                "ambiguous_setup_steps": [
+                    "Enforcement of game rules and determination of win conditions in the adversarial setup are described at a high level without implementation specifics.",
+                    "Details on how evaluation metrics (especially automatic judgment of game outcomes) are computed are not explicitly outlined."
+                ],
+                "possible_modifications": {
+                    "modification_imitation_details": [
+                        "Provide explicit documentation and examples for GPT-4 prompt design and criteria for self-play episode selection."
+                    ],
+                    "modification_target_word_selection": [
+                        "Clarify and document the filtering process and selection criteria for target words from the top 50K list."
+                    ],
+                    "modification_game_rules": [
+                        "Include detailed pseudocode or flow diagrams illustrating how game rules are implemented and enforced for both adversarial and non-adversarial setups.",
+                        "Detail the process for checking game outcomes, such as the automatic detection of target word occurrences."
+                    ]
+                }
+            }
+        },
+        {
+            "question": "How do key hyperparameters (imitation episode size, KL coefficients, and SFT coefficients) influence the overall performance of SPAG on reasoning tasks?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Conduct an ablation study to examine the impact of varying hyperparameters while keeping all other factors constant. Focus on the following parameters: imitation data size, KL coefficients for imitation learning, and coefficients for self-play training.\n    - **Objective:** \n    Understand how each hyperparameter affects the performance of models trained using the SPAG methodology, particularly in terms of sample efficiency and reasoning improvements.\n\n2. **Testing Dataset:** \n    - Reasoning Benchmarks:\n        - MMLU\n        - BIG-Bench Hard (BBH)\n        - ARC Easy (ARC-e)\n        - ARC Challenge (ARC-c)\n        - Mutual\n        - WinoGrande\n        - LogiQA2\n        - PIQA\n\n3. **Abalation Study Parts:**  \n    - Imitation Data Size:\n        - Vary the imitation data size by collecting GPT-4 self-play episodes based on top-k frequency (with \ud835\udc58=1,2,3,5,10,15,20,30).\n        - Measure the geometric mean (GM) scores.\n        - Track the performance changes as the number of episodes increases, and identify the point at which gains plateau (around 5K episodes).\n\n    - KL Coefficient:\u03b21 in Imitation Learning:\n        - Test \u03b21 values within the range [0, 0.4]\n\n    - Self-Play Training Coefficients:\n        - Vary the supervised fine-tuning (SFT) coefficient (\u03b1) and the SPAG loss KL coefficient (\u03b22).\n        - Inspect performance variations.\n\n5. **Evaluation Metrics:**\n    - For overall performance: Geometric Mean (GM) of numerical scores across all benchmarks.\n\n6. **Hyperparamter:**\nFor hyperparameter undefined before, use the following: (If the question test on that hyperparamter, just ignore this part)\n    - For imitation learning,the learning rate is 5e-6 and the KL-penalty coefficient \u03b21 = 0.1.For SPAG training,the learning rate is 2e-6,the KL-penalty coefficient \u03b22=0.2,and the SFT coefficient \u03b1=0.5. For the Alpaca SFT baseline,we exactly follow the training setups of Alpaca and set the learning rate to 2e-6. Among all training stages,the batch size is 128 and the max sequence length is 2048. Each training\n    process maintains one epoch over the offline collected trajectories The the decay parameter \u03b3 is set to 0.8.The maximum turn of the Adversarial Taboo is 5.",
+            "expected_outcome": "The results should confirm that increasing the imitation data size beyond 5K episodes does not contribute significant additional reasoning improvements. It is expected that the optimal KL coefficient for imitation learning is around 0.1, and that maintaining an SFT coefficient below 0.5 is critical for self-play training, with the best SPAG performance achieved at a KL coefficient of approximately 0.2.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "training_framework": "The SPAG training scheme and all non-varied training hyperparameters (e.g., network architecture, optimizer settings) remain constant"
+                    },
+                    "independent_variables": {
+                        "imitation_episode_size": [
+                            "k = 1",
+                            "k = 2",
+                            "k = 3",
+                            "k = 5",
+                            "k = 10",
+                            "k = 15",
+                            "k = 20",
+                            "k = 30"
+                        ],
+                        "KL_coefficient_imitation": "Values in the range [0, 0.4] (with expected optimum near 0.1)",
+                        "SFT_coefficient": "Various values with emphasis on values <= 0.5 (noting that values > 0.5 yield minimal improvements)",
+                        "SPAG_loss_KL_coefficient": "Tested values with an expected peak performance around 0.2"
+                    },
+                    "dependent_variables": {
+                        "reasoning_performance": "Measured via geometric mean (GM) scores"
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "SPAG training framework (constant training architecture and optimizer settings)",
+                        "Imitation learning module with a top-k episode selection mechanism (varied k values)",
+                        "Self-play training module integrating supervised fine-tuning (SFT) and KL loss",
+                        "Hyperparameter controllers for imitation episode size, KL coefficient  in imitation learning, SFT coefficient , and SPAG loss KL coefficient)",
+                        "Data collection system for acquiring GPT-4 game episodes based on top-k frequency",
+                        "Performance evaluation tools (recording geometric mean scores from Figure 3, supplemented by Tables 1, 2 and Figure 4 metrics)"
+                    ],
+                    "setup_steps": [
+                        "Fix all constant variables in the training framework (e.g., network architecture, optimizer settings, learning rate, batch size, number of epochs)",
+                        "Design the ablation study to vary only one hyperparameter at a time (imitation_episode_size, KL coefficient for imitation learning, SFT coefficient, and SPAG loss KL coefficient)",
+                        "For imitation data, collect GPT-4 game episodes using specified top-k criteria (k values: 1, 2, 3, 5, 10, 15, 20, 30) and record geometric mean scores",
+                        "Vary the KL coefficient in imitation learning in the range [0, 0.4] to identify performance peaks around 0.1",
+                        "Adjust the SFT coefficient and the SPAG loss KL coefficient in self-play training",
+                        "Collect and analyze performance data"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Interdependent Hyperparameter Effects",
+                            "description": "The simultaneous influence of multiple hyperparameters might introduce subtle, interactive complexities even though one parameter is varied at a time."
+                        },
+                        {
+                            "source": "Data Collection and Filtering Process",
+                            "description": "The method for selecting and filtering GPT-4 game episodes based on top-k frequency might introduce additional complexity if further selection criteria are applied."
+                        },
+                        {
+                            "source": "Performance Metric Computation",
+                            "description": "The normalization and specific calculation methods for geometric mean scores and supplementary metrics from Tables 1, 2 and Figure 4 add additional layers of complexity."
+                        }
+                    ]
+                }
+            },
+            "experiment_constraints": "```json\n    \"experiment_constraints\": {\n        \"resource_constraints\": {},\n        \"time_constraints\": {},\n        \"money_constraints\": {},\n        \"possible_modifications\": {}\n    }\n```",
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochastic variations in training and data selection",
+                    "description": "Random uncertainty arises from the inherent stochasticity in the training process, such as random initialization, sampling of mini-batches, and the procedure for selecting the top-k episodes. These random factors can lead to fluctuations in performance metrics like the geometric mean scores, even when hyperparameters are held constant.",
+                    "impact": "This randomness can cause variations in recorded performance across different runs, potentially masking the true effect of varying hyperparameters. It may result in noisy performance curves, making it harder to pinpoint the exact influence of each hyperparameter on reasoning improvements.",
+                    "possible_modifications": [
+                        "Introduce fixed random seeds for all stochastic components to reduce variability.",
+                        "Repeat each experiment multiple times and average the results to mitigate random fluctuations.",
+                        "Implement robust statistical tests to distinguish true performance changes from random noise."
+                    ]
+                }
+            },
+            "no_answer": "While the repository contains the implementation of the SPAG methodology and scripts for training with different hyperparameters (train.py, tools/play_llm_game.py, tools/assign_rewards.py), there is no dedicated script or set of scripts that specifically performs the ablation study described in the experiment question. The repository provides the basic building blocks for training models with different hyperparameter values, but users would need to manually run these scripts multiple times with different parameter settings and then evaluate the results using an external tool (lm-evaluation-harness) which is not included in the repository. There is no automated workflow or script that systematically varies the imitation episode size, KL coefficients, and SFT coefficients to analyze their impact on reasoning performance as described in the experiment question."
+        },
+        {
+            "mode": "A",
+            "question": "How can you run a self-play episode of the Adversarial Taboo game between two language models on a given target word?",
+            "method": "Use the play_llm_game.py script to simulate a game of Adversarial Taboo between two language models (attacker and defender) on a specific target word.",
+            "expected_outcome": "A JSON file containing the game history with alternating turns between attacker and defender, showing their conversation and the final game outcome.",
+            "source": [
+                "/workspace/tools/play_llm_game.py"
+            ],
+            "usage_instructions": "1. Create a file with a target word (e.g., 'conversation') in the data directory.\n2. Run the play_llm_game.py script with appropriate arguments:\n   - Specify the attacker and defender model paths (can be the same model)\n   - Set the maximum number of turns\n   - Provide the path to the target word file\n   - Set the output directory for results\n   - Choose between 'testing' (deterministic) or 'sampling' (stochastic) mode\n3. The script will simulate the game by having the models take turns generating responses.\n4. The attacker tries to make the defender say the target word without saying it themselves.\n5. The defender tries to guess the target word.\n6. The game continues until someone wins, the maximum turns are reached, or a player breaks the rules.\n7. The output will be a JSON file with the complete game history.",
+            "requirements": [
+                "Step 1: Load target words from a specified file path (/workspace/tools/play_llm_game.py:28-31)",
+                "Step 2: Load language models for both attacker and defender roles, with option to use the same model for both roles (/workspace/tools/play_llm_game.py:54-82, 93-99)",
+                "Step 3: Initialize game state for each target word with empty history and maximum turns (/workspace/tools/play_llm_game.py:115-118)",
+                "Step 4: Implement turn-based gameplay loop that alternates between attacker and defender (/workspace/tools/play_llm_game.py:120-187)",
+                "Step 5: For each turn, construct a prompt containing game rules, history, and role-specific instructions (/workspace/tools/play_llm_game.py:145-152, /workspace/utils.py:114-132)",
+                "Step 6: Configure model generation parameters based on task type (testing or sampling) (/workspace/tools/play_llm_game.py:124-142)",
+                "Step 7: Generate model responses using the constructed prompts (/workspace/tools/play_llm_game.py:162-168)",
+                "Step 8: Process model outputs to extract the actual response text (/workspace/tools/play_llm_game.py:170-177)",
+                "Step 9: Check for game ending conditions (defender guessing the word) (/workspace/tools/play_llm_game.py:179-183)",
+                "Step 10: Save complete game histories to JSON output files (/workspace/tools/play_llm_game.py:194-216)"
+            ],
+            "agent_instructions": "Your task is to create a script that simulates the Adversarial Taboo game between two language models. In this game, an attacker tries to make a defender say a target word without saying it themselves, while the defender tries to guess the word.\n\nThe script should:\n\n1. Accept command-line arguments for:\n   - Paths to attacker and defender language models (can be the same model)\n   - Maximum number of turns for the game\n   - Path to a file containing target words\n   - Output directory for results\n   - Mode of operation ('testing' for deterministic or 'sampling' for stochastic generation)\n\n2. Load the specified language models using the Hugging Face Transformers library\n\n3. For each target word, simulate a game where:\n   - Players alternate turns (attacker goes first)\n   - Each turn includes constructing a prompt with:\n     * Game rules explaining Adversarial Taboo\n     * Current game history\n     * Role-specific instructions (attacker knows the target word, defender doesn't)\n   - Generate responses from the appropriate model\n   - Track the conversation history\n   - Check for win conditions:\n     * Defender wins if they correctly guess the target word\n     * Attacker wins if they trick the defender into saying the target word\n     * Game ends in a tie if maximum turns are reached\n\n4. Save the complete game histories to JSON files in the specified output directory\n\nThe output JSON should contain the full conversation history with alternating turns between attacker and defender, along with the target word and game outcome.",
+            "design_complexity": {
+                "constant_variables": {
+                    "game_rules": "The fixed Adversarial Taboo game rules, including the roles (attacker and defender), win conditions, and turn limits.",
+                    "script_procedure": "The sequence of steps outlined in play_llm_game.py (e.g., loading models, reading target words, constructing prompts, and checking win conditions)."
+                },
+                "independent_variables": {
+                    "target_word": "The specific target word loaded from a file that the attacker is trying to induce the defender to say. (Can vary from one run to another.)",
+                    "llm_model_attacker": "The language model used by the attacker; possible values include different model checkpoint paths or even the same as the defender.",
+                    "llm_model_defender": "The language model used by the defender; configurable independently, which can be the same or different from the attacker.",
+                    "max_turns": "The maximum number of turns set for the game episode. (The actual number can be varied by the user.)",
+                    "mode": [
+                        "testing",
+                        "sampling"
+                    ]
+                },
+                "dependent_variables": {
+                    "game_outcome": "The result of the game (attacker win, defender win, or tie) determined by the conversation history and win conditions.",
+                    "game_history": "The complete conversation log (in JSON format) of alternating turns between attacker and defender."
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "llm_model_attacker": "It is not explicitly mentioned what details or variations (e.g., different architectures or hyperparameters) are allowed or expected.",
+                    "llm_model_defender": "Similar ambiguity as for the attacker model; details on model configuration aspects are not clarified.",
+                    "max_turns": "While a maximum turn number is provided, how it interacts with dynamic game conditions (like rule breaks) is not fully specified.",
+                    "mode": "The distinction between 'testing' (deterministic) and 'sampling' (stochastic) modes is mentioned but not fully elaborated in terms of parameter settings."
+                },
+                "possible_modifications": {
+                    "modification_target_word": [
+                        "Expand the target word list with additional or domain-specific words.",
+                        "Mask or filter out additional stop words to change the challenge level."
+                    ],
+                    "modification_llm_models": [
+                        "Introduce new variables such as model temperature or generation parameters to further control the model behavior for attacker and defender.",
+                        "Allow for a more detailed selection of model types or versions."
+                    ],
+                    "modification_turns": [
+                        "Allow dynamic adjustment of maximum turns during runtime or based on game progress."
+                    ],
+                    "modification_mode": [
+                        "Adjust or add more operation modes that modify the generation strategy (e.g., hybrid mode)."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Target word file (input file containing the target word)",
+                    "Attacker language model",
+                    "Defender language model",
+                    "Command-line argument parser",
+                    "Model loader (using Hugging Face Transformers)",
+                    "Game state initializer and conversation history tracker",
+                    "Prompt construction module (includes game rules, history, and role-specific instructions)",
+                    "Generation parameter configurator (for 'testing' vs. 'sampling' mode)",
+                    "Response processor (to extract actual response text from models)",
+                    "Game outcome checker (win/tie conditions)",
+                    "JSON output writer to save the complete game history"
+                ],
+                "setup_steps": [
+                    "Create a file with a target word in the designated data directory",
+                    "Run the play_llm_game.py script with appropriate command-line arguments (paths to attacker and defender models, maximum turns, target word file path, output directory, and mode)",
+                    "Load the target word from the specified file",
+                    "Load both language models (attacker and defender) using the Hugging Face Transformers library",
+                    "Initialize game state with an empty history and set the maximum number of turns",
+                    "Construct turn-based prompts that include game rules, conversation history, and role-specific instructions",
+                    "Configure generation parameters based on the chosen mode (deterministic 'testing' vs. stochastic 'sampling')",
+                    "Generate responses for each turn using the corresponding language model",
+                    "Process the generated outputs to extract the actual text responses",
+                    "Check for game-ending conditions (e.g., correct guess by defender, rule break, or exhaustion of maximum turns)",
+                    "Save the complete game history, including alternating turns and the final outcome, to a JSON file in the specified output directory"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Mode Configuration (testing vs. sampling)",
+                        "description": "Choice of deterministic versus stochastic generation introduces additional parameters and nuances in response behavior."
+                    },
+                    {
+                        "source": "Inter-model Dependencies",
+                        "description": "Using the same or different models for attacker and defender can impact game dynamics and requires careful setup."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "llm_model_attacker: Ambiguous details regarding model architecture, hyperparameters, or configuration options",
+                    "llm_model_defender: Similar ambiguity in expected configurations and variations as for the attacker",
+                    "mode: The difference and parameter settings between 'testing' (deterministic) and 'sampling' (stochastic) modes are not fully elaborated"
+                ],
+                "ambiguous_setup_steps": [
+                    "Configuration of generation parameters: Specific settings for deterministic versus stochastic output are not completely specified",
+                    "Prompt construction: While the structure is outlined, the exact content and order of game rules, history, and instructions is somewhat vague",
+                    "Game termination conditions: The process for deciding when a turn leads to a win, loss, or tie could use further clarification"
+                ],
+                "possible_modifications": {
+                    "modification_target_word": [
+                        "Expand the target word list with additional or domain-specific words",
+                        "Enhance filtering of stop words to adjust challenge levels"
+                    ],
+                    "modification_llm_models": [
+                        "Introduce detailed model configuration options such as temperature, beam search parameters, or specific hyperparameter settings",
+                        "Allow selection among varied architectures or checkpoint versions for attacker and defender"
+                    ],
+                    "modification_turns": [
+                        "Enable dynamic adjustment of maximum turns during runtime based on game progression",
+                        "Integrate conditions to modify turn limits depending on model performance or rule breaks"
+                    ],
+                    "modification_mode": [
+                        "Provide clearer explanation and configurable parameter settings for 'testing' versus 'sampling' modes",
+                        "Consider adding additional operation modes (e.g., hybrid mode) that adjust generation strategy"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce the use of a smaller or more optimized language model (e.g., GPT-4o-mini instead of a larger model) to simulate environments with limited compute resources."
+                    ],
+                    "time_constraints": [
+                        "Impose a stricter maximum execution time per game turn or overall self-play episode to mimic scenarios with limited processing time."
+                    ],
+                    "money_constraints": [
+                        "Restrict the use of premium API endpoints or paid model services by simulating the gameplay in a cost-efficient environment."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic Generation in 'sampling' Mode",
+                "description": "When running the game in 'sampling' mode, the language models generate responses with inherent randomness. This stochasticity introduces random uncertainty in the conversation history and may lead to unpredictable turn outcomes and game results.",
+                "impact": "Results in varying game histories and outcomes across repeated runs, making reproducibility and direct comparisons between experiments difficult.",
+                "possible_modifications": [
+                    "Switch to deterministic 'testing' mode to remove sampling variance.",
+                    "Standardize and fix generation parameters such as temperature and top-k sampling values.",
+                    "Conduct multiple simulations and aggregate outcomes to average out randomness."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Configuration Bias and Input File Integrity",
+                "description": "Systematic uncertainty can arise from potential biases in how the target word file is prepared or from consistent configuration settings of the language models (for both attacker and defender). For example, a one-time modification or corruption of the target word file may consistently influence game dynamics, or default model configurations might introduce biases in role-specific responses.",
+                "impact": "Leads to consistent skewing of game outcomes and could mislead the analysis by favoring certain results due to persistent bias.",
+                "possible_modifications": [
+                    "Implement validation checks on the target word file to ensure it is clean and unbiased.",
+                    "Diversify the set of input target words to mitigate potential systematic bias.",
+                    "Review and standardize language model configurations to avoid unintended bias in gameplay."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you evaluate the outcomes of Adversarial Taboo game episodes and assign rewards to player actions for reinforcement learning?",
+            "method": "Use the assign_rewards.py script to analyze game episodes, determine winners based on game rules, and assign appropriate rewards to player actions for reinforcement learning.",
+            "expected_outcome": "A JSON file containing the game episodes with assigned rewards for each player action, weighted to ensure balanced learning between attacker and defender roles.",
+            "source": [
+                "/workspace/tools/assign_rewards.py"
+            ],
+            "usage_instructions": "1. Start with a JSON file containing game episodes (output from play_llm_game.py).\n2. Run the assign_rewards.py script with appropriate arguments:\n   - Specify the input data path (game episodes JSON)\n   - Set the output data path for the processed data\n   - Optionally provide a path to SFT data for additional training\n   - Set the decay weight for reward calculation (default is 0.8)\n3. The script will:\n   - Analyze each game to determine the outcome (attacker wins, defender wins, or tie)\n   - Extract winning player actions and assign rewards\n   - Apply temporal discounting to rewards (earlier actions get higher rewards)\n   - Balance the dataset by weighting samples to ensure equal learning for both roles\n4. The output will be a JSON file with processed game episodes ready for reinforcement learning.",
+            "requirements": [
+                "Step 1: Load game episodes from an input JSON file (/workspace/tools/assign_rewards.py:152-153)",
+                "Step 2: Define functions to detect target word usage and predictions in player messages (/workspace/tools/assign_rewards.py:13-42)",
+                "Step 3: Implement game outcome determination logic based on Adversarial Taboo rules (/workspace/tools/assign_rewards.py:45-68)",
+                "Step 4: Process each game episode to determine winners and calculate rewards for winning player actions (/workspace/tools/assign_rewards.py:72-123)",
+                "Step 5: Apply temporal discounting to rewards (earlier actions get higher rewards) (/workspace/tools/assign_rewards.py:90-113)",
+                "Step 6: Balance the dataset by calculating weights for attacker and defender samples (/workspace/tools/assign_rewards.py:125-138)",
+                "Step 7: Optionally incorporate supervised fine-tuning data if provided (/workspace/tools/assign_rewards.py:157-165)",
+                "Step 8: Save the processed data with rewards and weights to an output JSON file (/workspace/tools/assign_rewards.py:167-168)"
+            ],
+            "agent_instructions": "Create a script that processes game episodes from the Adversarial Taboo game and assigns rewards for reinforcement learning. The Adversarial Taboo game involves two players: an attacker who tries to make a defender say a target word without saying it themselves, and a defender who tries to guess the target word.\n\nYour script should:\n\n1. Take input arguments for:\n   - Input data path (JSON file with game episodes)\n   - Output data path (where to save processed data)\n   - Optional path for supervised fine-tuning data\n   - Decay weight for temporal discounting (default: 0.8)\n\n2. Implement game outcome determination logic:\n   - Defender wins if they correctly predict the target word\n   - Attacker wins if defender says the target word or makes an incorrect prediction\n   - Game is tied if no one wins within the maximum number of turns\n\n3. Process each game episode to:\n   - Determine the winner based on game rules\n   - Extract winning player actions and assign rewards\n   - Apply temporal discounting (earlier actions get higher rewards)\n\n4. Balance the dataset by calculating weights for attacker and defender samples to ensure equal learning for both roles\n\n5. Optionally incorporate supervised fine-tuning data if provided\n\n6. Save the processed data with rewards and weights to an output JSON file\n\nThe script should handle fuzzy matching of target words (including plurals, verb forms, etc.) and properly format the game history for training.",
+            "design_complexity": {
+                "constant_variables": {
+                    "game_rules": "Fixed rules for determining outcomes (attacker wins, defender wins, tie) and the corresponding reward assignment logic including temporal discounting and dataset balancing."
+                },
+                "independent_variables": {
+                    "input_data_path": "File path to the JSON file containing game episodes.",
+                    "output_data_path": "File path where the processed JSON file with rewards and weights is saved.",
+                    "sft_data_path": "Optional file path for supervised fine-tuning (SFT) data.",
+                    "decay_weight": "Temporal discounting factor used in reward calculation (default is 0.8)."
+                },
+                "dependent_variables": {
+                    "game_outcome": [
+                        "attacker wins",
+                        "defender wins",
+                        "tie"
+                    ],
+                    "assigned_rewards": "Reward values assigned to player actions based on the game outcomes and temporal discounting.",
+                    "sample_weights": "Calculated weights to balance learning between attacker and defender roles."
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "fuzzy_matching": "The criteria for fuzzy matching (handling plurals, verb forms, etc.) of target words is not precisely specified.",
+                    "dataset_balancing": "The method for calculating weights to ensure equal learning for both roles might vary and is not explicitly detailed.",
+                    "temporal_discounting_details": "The exact formulation and parameter tuning of how earlier actions receive higher rewards may be interpreted differently."
+                },
+                "possible_modifications": {
+                    "mask_decay_weight": [
+                        "Remove explicit mention of the decay weight value, requiring implicit determination during evaluation."
+                    ],
+                    "introduce_fuzzy_match_threshold": [
+                        "Add a new variable for fuzzy matching sensitivity to allow fine-tuning of what constitutes a match."
+                    ],
+                    "imply_dataset_balance_factor": [
+                        "Imply or mask the calculation method for attacker/defender balancing, allowing for alternative weighting schemes."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "assign_rewards.py script",
+                    "Game outcome determination logic based on Adversarial Taboo rules",
+                    "Reward assignment mechanism for player actions",
+                    "Temporal discounting mechanism for earlier actions",
+                    "Dataset balancing functions for attacker and defender roles",
+                    "Fuzzy matching functions for target word variations",
+                    "Input/Output processing for JSON game episodes"
+                ],
+                "setup_steps": [
+                    "Load the input JSON file containing game episodes",
+                    "Detect target word usage in player messages using fuzzy matching",
+                    "Determine game outcomes (attacker wins, defender wins, or tie) based on game rules",
+                    "Extract winning player actions and assign rewards accordingly",
+                    "Apply temporal discounting to assign higher rewards to earlier actions",
+                    "Calculate weights for attacker and defender samples to balance learning",
+                    "Optionally incorporate supervised fine-tuning data if a file path is provided",
+                    "Save the processed data with rewards and weights into an output JSON file"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Fuzzy Matching Implementation",
+                        "description": "The criteria for handling different word forms (plurals, verb tenses, etc.) are not explicitly defined, which can complicate the matching process."
+                    },
+                    {
+                        "source": "Dataset Balancing Approach",
+                        "description": "The method for calculating weights to balance the attacker and defender roles is open to interpretation and may vary in implementation."
+                    },
+                    {
+                        "source": "Temporal Discounting Details",
+                        "description": "The exact formulation for temporal discounting (how the decay weight impacts reward calculations) is not exhaustively detailed, potentially leading to different reward scales."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Fuzzy matching criteria for detecting variations of target words",
+                    "Dataset balancing calculations for attacker versus defender samples",
+                    "Exact formulation of temporal discounting for reward assignment"
+                ],
+                "ambiguous_setup_steps": [
+                    "Implementation of fuzzy matching: It is unclear what threshold or method should be used to handle plurals, verb forms, etc.",
+                    "Game outcome determination: The rules for handling edge cases like ties or ambiguous predictions are not explicitly detailed",
+                    "Reward assignment: The process for adjusting reward values using temporal discounting is open to interpretation in terms of parameter tuning"
+                ],
+                "possible_modifications": {
+                    "mask_decay_weight": [
+                        "Remove explicit mention of the default decay weight value, requiring implicit determination during evaluation"
+                    ],
+                    "introduce_fuzzy_match_threshold": [
+                        "Add a new variable for fuzzy matching sensitivity to allow fine-tuning of what constitutes a match"
+                    ],
+                    "imply_dataset_balance_factor": [
+                        "Imply or mask the calculation method for attacker/defender balancing, allowing for alternative weighting schemes"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "mask_decay_weight": {
+                        "modifications": [
+                            "Remove the explicit mention of the default decay weight (0.8) so that its optimal value must be implicitly determined during evaluation."
+                        ]
+                    },
+                    "introduce_fuzzy_match_threshold": {
+                        "modifications": [
+                            "Add a parameter to control fuzzy matching sensitivity for handling variations (plurals, verb forms, etc.) of the target word."
+                        ]
+                    },
+                    "imply_dataset_balance_factor": {
+                        "modifications": [
+                            "Omit or mask the exact calculation method for balancing attacker and defender sample weights, allowing for alternative weighting schemes during later experiments."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in game play and fuzzy matching implementations",
+                "description": "The game episodes inherently involve random player actions, and the fuzzy matching used to detect target word variations may have fluctuating thresholds. These factors can produce random fluctuations in the reward assignment, leading to inconsistent gradients during reinforcement learning.",
+                "impact": "Random fluctuations in reward values can lead to instability in training and unpredictable performance variations across different reinforcement learning runs.",
+                "possible_modifications": [
+                    "Establish a fixed random seed for any stochastic components in data processing or fuzzy matching.",
+                    "Refine the fuzzy matching algorithm by setting a strict or tunable threshold to reduce arbitrary randomness in matching outcomes.",
+                    "Introduce mechanisms to quantify and report reward variability (e.g., statistical controls or confidence intervals) to enable more robust training evaluations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases in reward assignment logic and dataset balancing",
+                "description": "The reward assignment process relies on fixed rules such as a default decay weight (0.8) and specific dataset balancing methods. These design decisions can introduce systematic bias if, for example, the fuzzy matching criteria consistently favor one player role over another or if the decay parameter skews rewards consistently.",
+                "impact": "Persistent bias in the reward assignment could systematically advantage one role (attacker or defender) over the other, leading to biased reinforcement learning outcomes and potentially suboptimal model performance.",
+                "possible_modifications": [
+                    "Introduce a tunable parameter for the fuzzy matching threshold to allow adjustments and mitigate inherent bias.",
+                    "Reassess and adjust the fixed decay weight parameter to ensure that reward scaling does not favor any particular role.",
+                    "Revise the dataset balancing algorithm to explore alternative weighting schemes that counteract any systematic bias."
+                ]
+            }
+        }
+    ]
+}

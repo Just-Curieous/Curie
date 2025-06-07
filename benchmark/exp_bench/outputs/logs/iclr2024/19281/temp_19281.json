@@ -1,0 +1,75 @@
+{
+    "questions": [
+        {
+            "hypothesis": "MOLGEN accurately captures real-world molecular distributions, generating molecules that are not only valid but also structurally diverse and consistent with reference distributions across both synthetic and natural product domains.",
+            "method": "\u2022 Generate 10,000 synthetic molecules and 80,000 natural product molecules using the pre-trained MOLGEN model.  \u2022 Evaluate the generated molecules using the seven established metrics (Validity, Fragment (Frag), Scaffold (Scaf), Similarity to Nearest Neighbor (SNN), Internal Diversity (IntDiv), Fr\u00e9chet ChemNet Distance (FCD), and Novelty) as detailed in Appendix G.  \u2022 Compare MOLGEN\u2019s metric scores with those from baselines such as AAE, LATENT GAN, CHARRNN, VAE, JT-VAE, LIMO, and CHEMFORMER using Table 1.  \u2022 Perform a statistical analysis to verify whether MOLGEN's scores are significantly better, especially on natural products where structural complexity challenges most models.",
+            "expected_outcome": "MOLGEN is expected to achieve perfect or near-perfect validity (1.000) and outperform competing models in capturing fragment and scaffold distributions, with highest SNN scores and lowest FCD. Its performance on IntDiv and Novelty should indicate enhanced exploration of chemical space, particularly evidencing superior performance on natural product molecules.",
+            "subsection_source": "3.2 M AINRESULTS"
+        },
+        {
+            "hypothesis": "Incorporating the chemical feedback mechanism, which leverages properties such as p-logP, QED, and binding affinity, directly improves the generation of molecules with superior chemical properties, reducing molecular hallucinations in targeted molecule discovery tasks.",
+            "method": "\u2022 Utilize the chemical feedback paradigm to guide molecule generation on the synthetic dataset.  \u2022 Generate molecules optimized for p-logP and QED properties, and record the top-3 property scores.  \u2022 Assess binding affinities for two human protein targets (ESR1 and ACAA1) using AutoDockGPU, producing docking simulation outputs.  \u2022 Compare the optimized property scores and binding affinities with those obtained from leading baselines as shown in Table 2 and Table 3.  \u2022 Additionally, perform pre- and post-optimization comparisons for 1,000 molecules with initially low binding affinities for each target, visualizing improvements as in Figure 4.",
+            "expected_outcome": "The experiment should demonstrate that MOLGEN, through the chemical feedback mechanism, produces molecules with exceptionally high p-logP scores (e.g., up to 80.30) while maintaining QED performance comparable to or better than baselines. For binding affinity tasks, MOLGEN is expected to achieve markedly lower KD values and significant relative improvements (approximately 96.7% for ESR1 and 70.4% for ACAA1), confirming its enhanced ability to mitigate molecular hallucinations.",
+            "subsection_source": "3.2 M AINRESULTS"
+        },
+        {
+            "hypothesis": "MOLGEN effectively performs constrained molecular optimization, significantly improving property scores (e.g., p-logP) while maintaining high structural similarity between the input and optimized molecules, thus balancing property enhancement with the preservation of molecular identity.",
+            "method": "\u2022 Select 800 molecules from the ZINC250K dataset with the lowest initial p-logP scores.  \u2022 Apply the constrained optimization procedure using two similarity constraints (\u03b4 = 0.6 and \u03b4 = 0.4) as defined by Tanimoto similarity with Morgan fingerprints.  \u2022 Compute the mean and standard deviation of the p-logP improvements for each similarity constraint, and compare these with corresponding results from baseline methods presented in Table 4.  \u2022 Visualize a subset of before-and-after molecular structures to confirm that, despite property improvements, critical structural features are maintained.",
+            "expected_outcome": "MOLGEN is anticipated to demonstrate substantial improvements in p-logP (with mean improvements of approximately 12.08 for \u03b4 = 0.6 and 12.35 for \u03b4 = 0.4), outperforming other models. The results should confirm that the model can successfully explore proximate chemical space while preserving molecular similarity, thereby addressing the issue of molecular hallucinations.",
+            "subsection_source": "3.2 M AINRESULTS"
+        },
+        {
+            "hypothesis": "For natural product molecules, MOLGEN can elevate QED scores through constrained optimization while preserving the inherent structural diversity, even in the context of complex and elongated molecular architectures.",
+            "method": "\u2022 Focus on the natural products dataset and select molecules with suboptimal QED scores.  \u2022 Implement constrained optimization targeting an increase in QED, ensuring that a similarity constraint is maintained to preserve key structural elements.  \u2022 Measure the improvement in QED scores and evaluate the structural diversity pre- and post-optimization using similarity metrics and visual assessments (as illustrated in Figure 5 and Appendix H.3).  \u2022 Compare the optimization performance with previous results to confirm the balance between property improvement and diversity retention.",
+            "expected_outcome": "It is expected that MOLGEN will achieve significant elevation in QED scores (e.g., moving closer to or above 0.9478) for natural products while maintaining high structural similarity and diversity. The model\u2019s performance should support the claim that its optimization process does not excessively trade-off diversity for property enhancement.",
+            "subsection_source": "3.2 M AINRESULTS"
+        },
+        {
+            "hypothesis": "Does the pre-training stage of MOLGEN enable it to more accurately capture complex molecular properties (p-logP, QED, atom counts, ring counts, molecular weights, and Bertz complexity) compared to other generative models (GRAPH-based, VAE-based, SMILES-based PLMs)?",
+            "method": "Replicate the molecular distribution learning task on the synthetic MOSES dataset using four models: MOLGEN, a GRAPH-based model (Jin et al., 2018), a VAE-based model (Blaschke et al., 2018), and a SMILES-based PLM (Irwin et al., 2022). For each model: (a) Train under identical generation configurations; (b) Generate molecules and calculate comprehensive property distributions, including 2D histograms for p-logP and QED scores, and distributions for atom counts, ring counts, molecular weights, and Bertz complexity; (c) Compare the generated distributions against the training data distribution; (d) Quantitatively assess how closely each model fits the training distribution using relevant statistical metrics (e.g., KL-divergence) and visual analysis. The experimental details (dataset splits, training hyperparameters, and evaluation metrics) should mirror those provided in the MOSES dataset context.",
+            "expected_outcome": "Based on the paper, MOLGEN is expected to demonstrate slightly superior performance by producing molecular property distributions that are closer to the training data, particularly in matching the main modes of p-logP and QED, and by accurately capturing structural characteristics (atom and ring counts, molecular weight, and Bertz complexity).",
+            "subsection_source": "3.3 A C LOSER LOOK AT MOLGEN"
+        },
+        {
+            "hypothesis": "Does the integration of the chemical feedback mechanism in MOLGEN facilitate significant property optimization and mitigate molecular hallucinations compared to a configuration without chemical feedback?",
+            "method": "Perform an ablation study on MOLGEN by using two configurations: one with chemical feedback enabled and one without. Use a mixed batch of molecules from both natural products and synthetic compound domains. Steps include: (a) Generate a set of molecules using the version without chemical feedback to establish a baseline property score; (b) Generate molecules with the chemical feedback mechanism activated; (c) Compute and compare property scores (e.g., p-logP and QED) for both groups; (d) Visualize the distribution shifts in property scores (using plots similar to those in Figure 7 and detailed analysis in Appendix H.2); (e) Statistically test the significance of the shift in property scores. All experimental settings (dataset, training parameters) should be consistent with those mentioned in the paper.",
+            "expected_outcome": "It is expected that the configuration with chemical feedback will yield increased property scores from the initial to the concluding groups, indicating that the feedback provides an effective guiding signal and reduces instances of molecular hallucinations.",
+            "subsection_source": "3.3 A C LOSER LOOK AT MOLGEN"
+        },
+        {
+            "hypothesis": "Does MOLGEN, particularly when enhanced with domain-agnostic molecular prefixes, implicitly focus more on chemically meaningful substructures compared to SMILES-based PLMs, as assessed by the Sub-structure Attention Level (SAL) metric?",
+            "method": "Design an experiment to compare models using the following steps: (a) Select a set of 200 molecules from PubChem with simple structures (only 1-2 functional groups) to avoid dilution of attention; (b) For each model (MOLGEN with prefix enhancement, MOLGEN without the enhanced prefix, and a standard SMILES-based PLM), extract and normalize attention weights from the final self-attention layer for each molecule; (c) Calculate the SAL metric for each molecule, defined as the percentage of attention allocated to tokens corresponding to known chemically relevant substructures; (d) Aggregate and compare SAL distributions across the three models using box plots and distribution plots (as shown in Figure 8 and supported by Appendix F and H.4); (e) Evaluate whether the prefix-enhanced MOLGEN offers a statistically significant increase in SAL compared to the SMILES-based PLM.",
+            "expected_outcome": "The expected result is that both versions of MOLGEN will have higher SAL scores compared to the SMILES-based PLM, with the prefix-enhanced version exhibiting a slight edge, thereby confirming its superior capacity to focus on meaningful chemical substructures.",
+            "subsection_source": "3.3 A C LOSER LOOK AT MOLGEN"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of additional chemical properties on molecule generation performance.",
+            "experiment_design": "Extend the current experimental framework to include optimization targets such as synthetic accessibility and toxicity predictions. Use similar optimization procedures (incorporating chemical feedback) on both synthetic and natural product datasets, and evaluate performance using appropriate metrics and additional baseline comparisons. This will help determine if MOLGEN\u2019s framework can balance multiple property optimizations simultaneously without compromising structural diversity.",
+            "subsection_source": "3.2 M AINRESULTS"
+        },
+        {
+            "idea": "Assess the robustness and generalization capabilities of MOLGEN across new domains.",
+            "experiment_design": "Apply MOLGEN to an external dataset that includes molecules with greater diversity in size, complexity, and functional groups. Execute experiments analogous to the ones conducted in the paper (distribution capture, targeted molecule discovery, and constrained optimization) and compare the model\u2019s performance with those observed in synthetic and natural product datasets. Emphasis should be placed on robustness to input source variations and potential noise in molecular representations (e.g., exploring different descriptor formats such as modified SMILES or graph-based inputs).",
+            "subsection_source": "3.2 M AINRESULTS"
+        },
+        {
+            "idea": "Extend the evaluation of MOLGEN to more diverse molecular datasets, including real-world drug candidates or broader chemical libraries, to assess its generalizability across different molecular complexities.",
+            "experiment_design": "Utilize additional datasets beyond the synthetic MOSES and curated natural product sets, such as specialized databases of drug-like molecules. Maintain consistent training and generation configurations as in the original experiments. Evaluate performance using the same property metrics (p-logP, QED), structural diversity measures (atom counts, ring counts, molecular weights, Bertz complexity), and SAL for substructure attention. Compare whether the advantages observed for MOLGEN hold when applied to these new domains.",
+            "subsection_source": "3.3 A C LOSER LOOK AT MOLGEN"
+        },
+        {
+            "idea": "Investigate the robustness and efficiency of the chemical feedback mechanism in different optimization scenarios, including constrained molecular optimization tasks, to further balance property improvement with adherence to domain-specific structural constraints.",
+            "experiment_design": "Design experiments where MOLGEN is used in constrained optimization tasks, similar to setups outlined in Appendix Figure 4 of the original paper. Set explicit property constraints (e.g., fixed QED scores) and structural constraints. Test multiple conditions with and without the chemical feedback mechanism and compare the deviation from the constraints using detailed quantitative metrics and visual inspection. Analyze robustness by perturbing input molecules and documenting how well the model maintains desired properties while preserving structural integrity.",
+            "subsection_source": "3.3 A C LOSER LOOK AT MOLGEN"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces MOLGEN, a molecular generator that leverages a chemical feedback paradigm to optimize molecular properties such as p-logP and QED while preserving structural diversity.",
+        "SELFIES representation significantly outperforms SMILES in terms of validity, uniqueness, and novelty, particularly for longer and more complex molecules.",
+        "The experiments, illustrated in various tables (e.g., Table 1) and figures (e.g., Figure 6), demonstrate that MOLGEN can maintain high property scores (e.g., high p-logP and QED) and structural diversity simultaneously.",
+        "Comparative analyses show that even without chemical feedback, MOLGEN exhibits strong generative capabilities, and the incorporation of feedback further improves property alignment.",
+        "Extensive evaluation using multiple appendices and supplementary materials confirms the robustness and reproducibility of the proposed approach."
+    ]
+}

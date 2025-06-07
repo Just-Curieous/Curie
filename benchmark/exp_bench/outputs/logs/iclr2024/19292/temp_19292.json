@@ -1,0 +1,47 @@
+{
+    "questions": [
+        {
+            "hypothesis": "Removing the temporal downsampling structure from the Zipformer-M model will significantly degrade performance by increasing the Word Error Rates (WER) despite the model having more parameters.",
+            "method": "Use the baseline Zipformer-M configuration (with temporal downsampling) and train it on the LibriSpeech dataset under identical conditions (same epochs, GPU allocation, data augmentation, etc.). Then, modify only the encoder structure to remove the temporal downsampling component and instead use a Conv-Embed with a downsampling rate of 4 (as done in Conformer). Keep all other hyperparameters and training schedules constant. After training, evaluate both models on the test-clean and test-other sets, and compare the absolute WER values. Reference Table 5 for expected changes in WER.",
+            "expected_outcome": "Based on the ablation study, the model without temporal downsampling is expected to have a significantly higher WER (e.g., an increase from 65.6% to 94.2% on test-clean), indicating that the temporal downsampling structure enhances the modeling capacity without causing information loss.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "hypothesis": "Using the Swoosh activation functions (specifically, applying SwooshL for normally-off modules and SwooshR for convolution modules) will yield more stable training dynamics and lower WER compared to uniformly using the standard Swish activation function in the Zipformer model.",
+            "method": "Create two versions of the Zipformer-M model. In the first version, replace all activation functions with the tailored combination of SwooshL (for modules with bypass connections) and SwooshR (for convolution modules and embedding layers). In the second version, use Swish uniformly across all modules. Train both models on the LibriSpeech dataset under identical conditions (same epochs, optimizer settings, GPU setup, data augmentations, etc.). Monitor the training dynamics (such as bias learning in linear layers preceding bypass connections) and report the final WER on test-clean and test-other sets. Use the numbers provided in Table 5 to validate the outcomes.",
+            "expected_outcome": "The expectation is that the Swoosh configuration will result in slightly better or more stable training, with marginal improvements in WER relative to the uniform use of Swish. For example, as Table 5 indicates, while both configurations yield similar test-clean values (around 65.5%), the tailored Swoosh usage could prevent negative biases and produce lower or more consistent WER values (e.g., better test-other performance).",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "hypothesis": "Employing the ScaledAdam optimizer, which adjusts learning rates based on parameter scale, will lead to faster convergence and lower final WER compared to training with the standard Adam optimizer.",
+            "method": "Set up two training regimes for the Zipformer-M model on the LibriSpeech dataset. In one regime, use ScaledAdam with a base learning rate factor (\u03b1_base) of 0.045; in the other, use the standard Adam optimizer with a base learning rate factor of 7.5 and the same learning rate schedule (\u03b1_t = \u03b1_base \u00b7 t^(\u20130.5) scaling as per the referenced schedule). Ensure both training setups run for the same number of epochs and under identical hardware and data augmentation conditions. Record training loss, convergence speed (through learning rate and loss curves), and evaluate final performance by measuring WER on test-clean and test-other sets.",
+            "expected_outcome": "The ablation studies suggest that ScaledAdam should outperform Adam, reducing the WER by 0.17% on test-clean and 0.72% on test-other. Moreover, training with ScaledAdam is expected to converge faster due to its parameter-scale invariance and adaptive scaling mechanism.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "hypothesis": "The specific block structure of Zipformer (with its unique modules such as NLA and bypass, as well as attention weights sharing) is crucial for achieving optimal performance, and replacing it with alternative structures (e.g., stacking two Conformer-style blocks or removing key components) will degrade performance.",
+            "method": "Design an experiment using the Zipformer-M model as a base. Construct several variants: (a) replace each Zipformer block with two stacked Conformer blocks, (b) remove the Non-linear Activation (NLA) module, (c) remove both NLA and the attention weights sharing mechanism, and (d) remove the bypass connection. For each variant, train on the LibriSpeech dataset under exactly the same conditions (same epochs, optimizer, GPU setup, etc.) and evaluate the models on the test-clean and test-other sets. Compare these results with the baseline Zipformer-M performance. Detailed tracking of the number of parameters and inference speed should also be documented.",
+            "expected_outcome": "It is expected that the baseline Zipformer-M model will yield the best performance (with reported WER of 65.6%/2.21/4.79) compared to the modified variants. Specifically, slight improvements may be observed with double Conformer-style blocks on test-other; however, removing components such as NLA or bypass is expected to lead to performance degradation, thus supporting the importance of each component within the novel block structure.",
+            "subsection_source": "4 E XPERIMENTS"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the generalization of the temporal downsampling strategy to other sequence modeling tasks or domains, such as natural language processing or time-series forecasting, to evaluate its effectiveness in diverse contexts.",
+            "experiment_design": "Apply the Zipformer architecture with temporal downsampling on a different domain dataset (for example, a text-to-speech or a language modeling task). Compare its performance with a baseline model lacking temporal downsampling under controlled hyperparameters. Metrics such as prediction accuracy, convergence speed, and computational efficiency will be assessed.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "idea": "Explore a dynamic activation function selection mechanism that can adaptively choose between activation functions (e.g., SwooshR, SwooshL, and Swish) based on module-specific characteristics during training.",
+            "experiment_design": "Implement a variant of the Zipformer model where, during training, an auxiliary module monitors activation statistics and dynamically selects the best-suited activation function for each module. Train this adaptive model on the LibriSpeech dataset and compare it with fixed versions (only Swoosh or only Swish). Evaluate using metrics like WER and training stability to determine if dynamic selection can yield further improvements or robustness enhancements.",
+            "subsection_source": "4 E XPERIMENTS"
+        }
+    ],
+    "main_takeaways": [
+        "Temporal downsampling in the encoder not only improves efficiency but also enhances modeling capacity without significant information loss, as demonstrated by lower WERs compared to models without downsampling.",
+        "Ablation studies reveal that even small structural modifications (e.g., changes to block structure, normalization layers, or activation functions) lead to measurable differences in performance (WER on test-clean and test-other).",
+        "The use of additional constraints like the Balancer and Whitener helps ensure training consistency and stabilizes gradients, thereby avoiding badly trained modules, albeit with marginal improvements in WER.",
+        "Different model scales (Zipformer-S, -M, and -L) with varied layer numbers, embedding dimensions, and feed-forward dimensions allow flexible trade-offs between parameter count and performance.",
+        "The choice of optimizer (ScaledAdam vs. Adam) and hyperparameter configurations (as seen in tables comparing different base settings) is crucial, sometimes yielding improvements in WER and efficiency when appropriately tuned."
+    ]
+}

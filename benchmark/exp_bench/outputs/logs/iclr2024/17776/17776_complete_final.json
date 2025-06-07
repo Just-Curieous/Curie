@@ -1,0 +1,1688 @@
+{
+    "questions": [
+        {
+            "method": "Using the RepoBench-R dataset with down-sampled data to ensure parity between Java and Python (as detailed in Table 1), implement and compare three retrieval strategies: (a) Random Retrieval (execute 100 runs and average results), (b) Lexical Retrieval using Jaccard and Edit Similarity, and (c) Semantic Retrieval using encoder models such as InstructOR, UniXcoder, CodeBERT, among others. For each experiment, crop the last 3 lines (m = 3) from the in-file code context to form C[-m:] and compute similarity scores at the token level (using cosine similarity for semantic methods). Extend the evaluation by considering datasets with varied candidate statistics (e.g., Python Hard with ~17.8 candidates and Java Hard with ~25.5 candidates) and across related tasks (RepoBench-C and RepoBench-P). Use evaluation metrics including Exact Match, Edit Similarity, and CodeBLEU, and perform statistical significance testing to rigorously compare performance differences.",
+            "expected_outcome": "It is expected that InstructOR will consistently outperform the other models due to its superior semantic encoding capabilities, with UniXcoder achieving competitive performance despite having fewer parameters. Lexical methods (especially using Jaccard similarity) are anticipated to serve as a strong baseline, whereas random retrieval is expected to produce the lowest performance. Furthermore, evaluations across different languages and task difficulties should reinforce the robustness of semantic retrieval methods.",
+            "subsection_source": "4.1 REPOBENCH-R",
+            "source": [
+                "/workspace/run_repobench_r.py",
+                "/workspace/evaluate_retrieval.py"
+            ],
+            "usage_instructions": "1. First, run the retrieval experiment using run_repobench_r.py to compare different retrieval methods. For random retrieval, run 100 times and average the results. For lexical retrieval (Jaccard and Edit Similarity), run without specifying a model. For semantic retrieval (InstructOR and UniXcoder), specify the appropriate model name.\n\nExample commands:\n- For random retrieval (will be evaluated in evaluate_retrieval.py with print_random=True)\n- For lexical retrieval with Jaccard:\n  `python run_repobench_r.py --language python --similarity jaccard --keep_lines [3]`\n- For lexical retrieval with Edit Similarity:\n  `python run_repobench_r.py --language python --similarity edit --keep_lines [3]`\n- For semantic retrieval with UniXcoder:\n  `python run_repobench_r.py --language python --similarity cosine --keep_lines [3] --model_name microsoft/unixcoder-base`\n- For semantic retrieval with InstructOR:\n  `python run_repobench_r.py --language python --similarity cosine --keep_lines [3] --model_name hkunlp/instructor-base`\n\n2. Then, evaluate the results using evaluate_retrieval.py to compare the performance of different retrieval methods:\n  `python evaluate_retrieval.py --dir results/retrieval/unixcoder-base --print_random True`\n\nThe scripts will handle the RepoBench-R dataset with both Python and Java languages, and will crop the last 3 lines from the in-file code context as specified in the experiment. The evaluation will compute accuracy metrics for both easy and hard datasets.",
+            "requirements": [
+                "Step 1: Load the RepoBench-R dataset for both 'cross_file_first' and 'cross_file_random' settings for the specified language (/workspace/run_repobench_r.py:19-23)",
+                "Step 2: Set up the appropriate tokenizer based on the retrieval method (lexical or semantic) (/workspace/run_repobench_r.py:25-50)",
+                "Step 3: For each dataset setting (first and random), process each data point by cropping the code to keep only the specified number of lines (/workspace/run_repobench_r.py:58-67)",
+                "Step 4: Perform retrieval on the cropped code against candidate contexts using the specified similarity method (Jaccard, Edit, or Cosine) (/workspace/run_repobench_r.py:68-74)",
+                "Step 5: Record the ground truth index for each retrieval task (/workspace/run_repobench_r.py:76-77)",
+                "Step 6: Save the retrieval results to JSON files in the appropriate directory based on the retrieval method (/workspace/run_repobench_r.py:79-87)",
+                "Step 7: Load the retrieval results from the specified directory for evaluation (/workspace/evaluate_retrieval.py:14-16)",
+                "Step 8: Initialize a data structure to store accuracy metrics for both Python and Java languages, for both 'first' and 'random' settings, and for both 'easy' and 'hard' datasets (/workspace/evaluate_retrieval.py:18-39)",
+                "Step 9: For random retrieval baseline (if requested), run 100 trials with shuffled candidate orders and calculate average accuracy (/workspace/evaluate_retrieval.py:54-87, 120-156)",
+                "Step 10: Calculate accuracy@k metrics for each retrieval method on both easy and hard datasets (/workspace/evaluate_retrieval.py:89-116, 158-192)",
+                "Step 11: Print the evaluation results in a formatted table for both Python and Java languages (/workspace/evaluate_retrieval.py:194-213)"
+            ],
+            "agent_instructions": "Your task is to implement a system for evaluating different code retrieval methods on the RepoBench-R dataset. The system consists of two main components:\n\n1. A retrieval script that:\n   - Loads the RepoBench-R dataset for both Python and Java languages\n   - Supports multiple retrieval methods:\n     - Random retrieval (baseline)\n     - Lexical retrieval (using Jaccard similarity and Edit similarity)\n     - Semantic retrieval (using embedding models like UniXcoder and InstructOR)\n   - Crops code snippets to keep only a specified number of lines\n   - Performs retrieval to find the most relevant context for each code snippet\n   - Saves the retrieval results to JSON files\n\n2. An evaluation script that:\n   - Loads the retrieval results\n   - Calculates accuracy metrics (accuracy@k) for both easy and hard datasets\n   - For random retrieval, runs multiple trials and averages the results\n   - Compares the performance of different retrieval methods\n   - Outputs the evaluation results in a formatted table\n\nThe system should handle both 'cross_file_first' and 'cross_file_random' settings, and evaluate performance on both easy and hard datasets. The evaluation should calculate accuracy@1, accuracy@3, and accuracy@5 metrics.",
+            "masked_source": [
+                "/workspace/run_repobench_r.py",
+                "/workspace/evaluate_retrieval.py"
+            ],
+            "question": "Will semantic retrieval methods (particularly InstructOR and UniXcoder) significantly outperform both lexical retrieval (Jaccard and Edit Similarity) and random retrieval in identifying the most relevant code snippets for next-line prediction?",
+            "design_complexity": {
+                "constant_variables": {
+                    "keep_lines": [
+                        "3"
+                    ],
+                    "dataset": [
+                        "RepoBench-R (down-sampled for parity between Python and Java)"
+                    ],
+                    "evaluation_metrics": [
+                        "Exact Match",
+                        "Edit Similarity",
+                        "CodeBLEU"
+                    ]
+                },
+                "independent_variables": {
+                    "retrieval_strategy": [
+                        "Random Retrieval",
+                        "Lexical Retrieval (Jaccard Similarity, Edit Similarity)",
+                        "Semantic Retrieval (InstructOR, UniXcoder, and others such as CodeBERT, CodeGPT, CodeT5+, CodeGen)"
+                    ],
+                    "language": [
+                        "Python",
+                        "Java"
+                    ],
+                    "dataset_difficulty": [
+                        "Easy",
+                        "Hard"
+                    ],
+                    "candidate_statistics": [
+                        "Approximately 17.8 candidates (Python Hard)",
+                        "Approximately 25.5 candidates (Java Hard)"
+                    ],
+                    "task_context": [
+                        "RepoBench-R",
+                        "RepoBench-C",
+                        "RepoBench-P"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_measures": [
+                        "accuracy@1",
+                        "accuracy@3",
+                        "accuracy@5",
+                        "Exact Match",
+                        "Edit Similarity",
+                        "CodeBLEU"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "retrieval_strategy": "The task lists several semantic models (InstructOR, UniXcoder, CodeBERT, CodeGPT, etc.) but does not explicitly state if all these should be tested or if emphasis is only on InstructOR and UniXcoder.",
+                    "dataset_settings": "Variables such as 'cross_file_first' versus 'cross_file_random' settings are mentioned in the scripts but are not explicitly detailed in the experiment task description.",
+                    "candidate_statistics": "The candidate numbers for hard datasets are provided as averages (~17.8 for Python, ~25.5 for Java), but the variability or distribution is not explicitly defined."
+                },
+                "possible_modifications": {
+                    "extend_retrieval_methods": [
+                        "Introduce additional semantic or hybrid retrieval methods.",
+                        "Mask or provide a subset of the retrieval methods to assess robustness."
+                    ],
+                    "vary_keep_lines": [
+                        "Modify the cropping parameter to test other numbers of retained lines (beyond the fixed m = 3)."
+                    ],
+                    "adjust_dataset_parameters": [
+                        "Incorporate additional candidate statistic measures or simulate different candidate pool sizes.",
+                        "Introduce new dataset tasks or further subdivide existing ones."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "RepoBench-R dataset (down-sampled for parity between Python and Java)",
+                    "Retrieval script (run_repobench_r.py)",
+                    "Evaluation script (evaluate_retrieval.py)",
+                    "Retrieval methods: Random retrieval, Lexical retrieval (Jaccard and Edit Similarity), Semantic retrieval (using models such as InstructOR and UniXcoder)",
+                    "Tokenizers for both lexical and semantic methods",
+                    "Evaluation metrics: Exact Match, Edit Similarity, CodeBLEU, and accuracy@k metrics (accuracy@1, accuracy@3, accuracy@5)",
+                    "Settings for candidate selection (cross_file_first and cross_file_random)"
+                ],
+                "setup_steps": [
+                    "Load the RepoBench-R dataset for both Python and Java, ensuring parity between languages",
+                    "Set up and initialize the appropriate tokenizer based on the selected retrieval method (lexical or semantic)",
+                    "Crop the in-file code context to retain only the specified number of lines (m = 3 from the end)",
+                    "Execute retrieval operations using the specified strategies: running 100 trials for random retrieval and a single run for lexical and semantic methods",
+                    "Compute token-level similarity scores (using cosine for semantic methods and respective measures for lexical methods)",
+                    "Store the retrieval results in JSON format in designated directories based on the method",
+                    "Load the saved results using the evaluation script and compute evaluation metrics on both easy and hard dataset settings",
+                    "Aggregate and statistically test the results (including averaging for random retrieval trials) to compare performance across languages and methods"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset preparation",
+                        "description": "Down-sampling the dataset to ensure parity between Python and Java adds complexity in handling different candidate statistics and ensuring comparable experimental settings."
+                    },
+                    {
+                        "source": "Multiple retrieval methods and metrics",
+                        "description": "Implementing and integrating diverse retrieval strategies (random, lexical, semantic) along with different evaluation metrics (Exact Match, Edit Similarity, CodeBLEU, and accuracy at various k-levels) increases the interdependencies and overall experiment complexity."
+                    },
+                    {
+                        "source": "Variable settings in candidate selection",
+                        "description": "Handling both 'cross_file_first' and 'cross_file_random' settings, as well as datasets with different difficulty levels (Easy and Hard) and candidate pool sizes, further complicates the experimental setup."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Retrieval strategy specification: The task mentions multiple semantic models (InstructOR, UniXcoder, CodeBERT, etc.), but it is unclear whether all models should be evaluated or the primary focus is on InstructOR and UniXcoder.",
+                    "Dataset settings: The distinction between 'cross_file_first' and 'cross_file_random' is referenced in the code but not explicitly detailed in the experimental description."
+                ],
+                "ambiguous_setup_steps": [
+                    "Candidate statistics: Although average candidate numbers for hard datasets are provided (~17.8 for Python and ~25.5 for Java), the distribution and variability of these candidates are not clearly defined.",
+                    "Statistical significance testing: The instructions indicate significance testing but do not provide detailed guidelines or thresholds for determining statistical significance.",
+                    "Integration of retrieval and evaluation scripts: While commands are provided, there is some ambiguity in how the scripts interact, especially regarding parameter passing and result aggregation between different languages and retrieval methods."
+                ],
+                "possible_modifications": {
+                    "extend_retrieval_methods": [
+                        "Specify whether all mentioned semantic models (including CodeBERT, CodeGPT, CodeT5+, CodeGen) should be tested, or limit the scope to only InstructOR and UniXcoder.",
+                        "Introduce additional semantic or hybrid retrieval methods to assess further robustness."
+                    ],
+                    "vary_keep_lines": [
+                        "Allow the cropping parameter (currently fixed at m = 3) to be varied to evaluate its impact on code retrieval performance."
+                    ],
+                    "adjust_dataset_parameters": [
+                        "Provide a more detailed characterization of candidate pool distributions for hard datasets, possibly including variance or range values.",
+                        "Clarify the settings for 'cross_file_first' versus 'cross_file_random' to remove ambiguity in candidate selection."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random Retrieval Methodology",
+                "description": "When using random retrieval, the selection of candidates is inherently stochastic. By running 100 trials and averaging the results, the system attempts to mitigate this noise; however, variability in candidate ordering and the random selection process introduces uncertainty into the performance metrics such as accuracy@k, Exact Match, Edit Similarity, and CodeBLEU. This randomness can affect gradient updates during training if similar concepts were applied, or lead to inconsistency in evaluation outcomes when compared to more deterministic retrieval methods.",
+                "impact": "Results may vary significantly from run to run, potentially showing fluctuations in performance metrics. This instability could obscure the true effectiveness of other retrieval strategies or semantic models, especially when comparing across languages (Python and Java) and dataset difficulties (Easy and Hard).",
+                "possible_modifications": [
+                    "Increase the number of random retrieval trials to further average out variability and better understand the uncertainty range.",
+                    "Introduce controlled randomness (e.g., random seed management) to examine the sensitivity of performance to changes in candidate selection order.",
+                    "Intentionally inject additional noise in token-level similarity scores to evaluate how robust the evaluation metrics are against random perturbations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset Down-sampling and Candidate Statistics",
+                "description": "Systematic uncertainty arises from the deliberate down-sampling of the RepoBench-R dataset to ensure parity between Java and Python. This process may introduce biases that consistently affect retrieval performance, for example by altering candidate distribution statistics (e.g., ~17.8 candidates for Python Hard and ~25.5 candidates for Java Hard) and the overall representation of real-world code repositories. Additionally, fixed parameters such as cropping the last 3 lines (m = 3) add to this systematic setup which might be ideal for one type of retrieval but not for others.",
+                "impact": "Such systematic issues may lead to consistent over- or under-estimation of performance for a given retrieval method. This can affect comparative evaluations, where certain methods (e.g., semantic retrieval with InstructOR or UniXcoder) might appear superior due to the uniform bias introduced by the dataset preparation strategy.",
+                "possible_modifications": [
+                    "Evaluate using varied down-sampling strategies and candidate pool definitions to assess the impact of dataset-induced bias.",
+                    "Re-assess and potentially replace the dataset with additional or alternative benchmarks that have a more natural candidate distribution.",
+                    "Experiment with different m-values (number of lines cropped) to determine if the fixed choice of m = 3 introduces bias in favor of specific retrieval methods."
+                ]
+            }
+        },
+        {
+            "method": "Segment the RepoBench-R dataset by programming language (Python and Java) and further by the two subsets (Easy and Hard). Use a uniform experimental configuration with m = 3 and identical similarity calculations across all retrieval strategies. For each language and subset, run experiments using a variety of retrieval methods: baseline lexical strategies (Random, Lexical Jaccard, and Edit distance) and semantic methods (including models such as CodeGPT, UniXcoder, CodeBERT, CodeT5+, CodeGen, and InstructOR). Collect all relevant performance metrics as reported in Table 2, specifically acc@1 and acc@3 for the Easy subset and acc@1, acc@3, and acc@5 for the Hard subset. Analyze the results by comparing retrieval accuracies and other metrics between Python and Java, taking into account the differences in coding practices (for example, Python\u2019s tendency for proximate definition and use of function arguments versus Java\u2019s more complex class structures). Incorporate insights from the baseline weighted average results provided in Table 2 to contextualize the findings.",
+            "expected_outcome": "Based on prior observations from the paper, Python retrieval tasks are anticipated to yield higher accuracy, likely due to the inherent closeness of context cues in Python code. In contrast, Java\u2019s use of more complex class structures is expected to introduce challenges, resulting in lower retrieval performance. These differences should be evident across both the Easy and Hard subsets and should be quantifiable via the specified metrics (acc@1, acc@3, and acc@5).",
+            "subsection_source": "4.1 REPOBENCH-R",
+            "source": [
+                "/workspace/run_repobench_r.py",
+                "/workspace/evaluate_retrieval.py"
+            ],
+            "usage_instructions": "To compare retrieval accuracies between Python and Java code on RepoBench-R, follow these steps:\n\n1. First, run the retrieval experiments for both Python and Java using various retrieval methods with m=3:\n\n   For Python:\n   ```\n   # Run baseline lexical strategies\n   python run_repobench_r.py --language python --similarity jaccard --keep_lines [3] \n   python run_repobench_r.py --language python --similarity edit --keep_lines [3]\n   \n   # Run semantic methods\n   python run_repobench_r.py --language python --similarity cosine --keep_lines [3] --model_name microsoft/unixcoder-base\n   python run_repobench_r.py --language python --similarity cosine --keep_lines [3] --model_name microsoft/codebert-base\n   python run_repobench_r.py --language python --similarity cosine --keep_lines [3] --model_name microsoft/CodeGPT-small-py-adaptedGPT2\n   python run_repobench_r.py --language python --similarity cosine --keep_lines [3] --model_name Salesforce/codegen-350M-mono\n   ```\n\n   For Java:\n   ```\n   # Run baseline lexical strategies\n   python run_repobench_r.py --language java --similarity jaccard --keep_lines [3]\n   python run_repobench_r.py --language java --similarity edit --keep_lines [3]\n   \n   # Run semantic methods\n   python run_repobench_r.py --language java --similarity cosine --keep_lines [3] --model_name microsoft/unixcoder-base\n   python run_repobench_r.py --language java --similarity cosine --keep_lines [3] --model_name microsoft/codebert-base\n   python run_repobench_r.py --language java --similarity cosine --keep_lines [3] --model_name microsoft/CodeGPT-small-java-adaptedGPT2\n   python run_repobench_r.py --language java --similarity cosine --keep_lines [3] --model_name Salesforce/codegen-350M-multi\n   ```\n\n2. After running the retrieval experiments, evaluate the results for each model using the evaluate_retrieval.py script:\n\n   ```\n   # For each model directory in results/retrieval/\n   python evaluate_retrieval.py --dir results/retrieval/unixcoder-base\n   python evaluate_retrieval.py --dir results/retrieval/codebert-base\n   python evaluate_retrieval.py --dir results/retrieval/CodeGPT-small-py-adaptedGPT2\n   python evaluate_retrieval.py --dir results/retrieval/codegen-350M-mono\n   python evaluate_retrieval.py --dir results/retrieval/jaccard\n   python evaluate_retrieval.py --dir results/retrieval/edit\n   ```\n\n3. The evaluation script will output the acc@1, acc@3, and acc@5 metrics for both Python and Java across the Easy and Hard subsets, allowing you to compare the retrieval accuracies between the two languages.",
+            "requirements": [
+                "Step 1: Set up the necessary imports (libraries for data processing, model loading, and evaluation metrics) (/workspace/run_repobench_r.py:1-15)",
+                "Step 2: Define functions to load and preprocess the RepoBench-R dataset for retrieval tasks (/workspace/run_repobench_r.py:16-50)",
+                "Step 3: Implement lexical similarity methods (Jaccard and edit distance) for code retrieval (/workspace/run_repobench_r.py:51-90)",
+                "Step 4: Implement semantic similarity method using transformer models to generate embeddings for code snippets (/workspace/run_repobench_r.py:91-130)",
+                "Step 5: Create a function to compute similarity scores between query code and candidate code snippets (/workspace/run_repobench_r.py:131-160)",
+                "Step 6: Implement the main retrieval function that ranks candidate code snippets based on similarity to the query (/workspace/run_repobench_r.py:161-200)",
+                "Step 7: Process command line arguments and set up experiment configuration (/workspace/run_repobench_r.py:201-230)",
+                "Step 8: Run the retrieval experiment and save results to output directory (/workspace/run_repobench_r.py:231-270)",
+                "Step 9: Define evaluation metrics for retrieval tasks (acc@1, acc@3, acc@5) (/workspace/evaluate_retrieval.py:1-30)",
+                "Step 10: Load retrieval results from the specified directory (/workspace/evaluate_retrieval.py:31-50)",
+                "Step 11: Calculate and report retrieval accuracy metrics for both Python and Java across Easy and Hard subsets (/workspace/evaluate_retrieval.py:51-80)",
+                "Step 12: Process command line arguments and execute the evaluation (/workspace/evaluate_retrieval.py:81-100)"
+            ],
+            "agent_instructions": "Create two Python scripts for a code retrieval experiment using the RepoBench-R dataset:\n\n1. First script should implement a code retrieval system that:\n   - Takes command line arguments for language (python/java), similarity method (jaccard/edit/cosine), number of lines to keep, and model name (for semantic methods)\n   - Supports both lexical similarity methods (Jaccard and edit distance) and semantic similarity using transformer models\n   - Processes the RepoBench-R dataset for both Python and Java code\n   - Ranks candidate code snippets based on similarity to query code\n   - Saves retrieval results to an output directory\n\n2. Second script should evaluate retrieval results by:\n   - Loading results from a specified directory\n   - Calculating retrieval accuracy metrics (acc@1, acc@3, acc@5)\n   - Reporting results for both Python and Java across Easy and Hard subsets\n\nThe scripts should work together to enable comparing retrieval accuracies between Python and Java code using various retrieval methods.",
+            "masked_source": [
+                "/workspace/run_repobench_r.py",
+                "/workspace/evaluate_retrieval.py"
+            ],
+            "question": "Do language-specific coding practices lead to different retrieval accuracies, with Python code retrieval exhibiting higher accuracy than Java code retrieval on RepoBench-R?",
+            "design_complexity": {
+                "constant_variables": {
+                    "keep_lines": "Always set to 3 across experiments",
+                    "similarity_calculation": "The similarity score computation method remains identical for all retrieval strategies"
+                },
+                "independent_variables": {
+                    "programming_language": [
+                        "Python",
+                        "Java"
+                    ],
+                    "subset": [
+                        "Easy",
+                        "Hard"
+                    ],
+                    "retrieval_method": [
+                        "Random",
+                        "Lexical Jaccard",
+                        "Edit distance",
+                        "CodeGPT",
+                        "UniXcoder",
+                        "CodeBERT",
+                        "CodeT5+",
+                        "CodeGen",
+                        "InstructOR"
+                    ],
+                    "similarity_type": [
+                        "jaccard",
+                        "edit",
+                        "cosine"
+                    ]
+                },
+                "dependent_variables": {
+                    "retrieval_accuracy": [
+                        "acc@1",
+                        "acc@3",
+                        "acc@5 (for Hard subset)"
+                    ],
+                    "other_metrics": "Metrics such as Exact Match, Edit Similarity, and CodeBLEU (used in evaluation in RepoBench-C) could also be measured but primary focus is on acc@ metrics from Table 2"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_configuration": "The exact model parameters and adaptations (e.g., differences in CodeGPT-small for Python vs Java) are not fully elaborated in the task description",
+                    "similarity_metrics_detail": "The task mentions using 'identical similarity calculations' but does not specify the exact implementation details for lexical edit similarity and cosine similarity for the semantic methods",
+                    "subset_segmentation": "While the experiment instructs to segment by Easy and Hard subsets, the criteria for this segmentation is not explicitly detailed in the provided task"
+                },
+                "possible_modifications": {
+                    "mask_variable_details": [
+                        "Conceal some specific model configuration details to test if the agent can generalize based on high-level descriptions",
+                        "Mask the exact similarity computation formulas to force reliance on overall similarity strategy"
+                    ],
+                    "introduce_new_variables": [
+                        "Add a new variable for the number of preceding lines to keep (e.g., m = [3, 5, 10, ...]) to explore its impact on performance",
+                        "Introduce additional retrieval accuracy metrics such as CodeBLEU or Exact Match to widen the evaluation scope"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "RepoBench-R dataset (segmented into Python and Java, and Easy and Hard subsets)",
+                    "Retrieval experiment script (run_repobench_r.py)",
+                    "Evaluation script (evaluate_retrieval.py)",
+                    "Lexical similarity modules (Jaccard and Edit distance implementations)",
+                    "Semantic similarity modules (transformer-based models such as CodeGPT, UniXcoder, CodeBERT, CodeT5+, CodeGen, InstructOR)",
+                    "Command line argument parser",
+                    "Output results storage (directories for retrieval results)"
+                ],
+                "setup_steps": [
+                    "Segment RepoBench-R by programming language (Python and Java) and further by Easy and Hard subsets",
+                    "Set a uniform experimental configuration using m = 3 and identical similarity calculation methods for all retrieval strategies",
+                    "Run the retrieval experiment script (run_repobench_r.py) for each language and retrieval method (both lexical and semantic)",
+                    "Save and organize the retrieval results in the specified output directory",
+                    "Evaluate the retrieval outputs using the evaluation script (evaluate_retrieval.py) to compute metrics (acc@1, acc@3, and acc@5 for Hard)",
+                    "Analyze and compare the performance metrics across languages and subsets with respect to inherent coding practice differences"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Coding Practices Differences",
+                        "description": "Python's tendency for proximate definition and use of function arguments versus Java\u2019s more complex class structures introduces variability in retrieval performance."
+                    },
+                    {
+                        "source": "Multiple Retrieval Methods",
+                        "description": "The experiment employs a range of retrieval methods (both lexical and semantic), resulting in additional complexity in ensuring consistent similarity calculations across methods."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model configuration details for the semantic methods, especially differences between CodeGPT for Python and Java, are not fully elaborated",
+                    "Exact implementation details of similarity metrics (e.g., precise calculation formulas for lexical edit distance and cosine similarity) remain unspecified"
+                ],
+                "ambiguous_setup_steps": [
+                    "The criteria for segmenting the RepoBench-R dataset into Easy and Hard subsets are not explicitly defined",
+                    "The instruction to maintain 'identical similarity calculations' across retrieval strategies is vague regarding implementation specifics"
+                ],
+                "possible_modifications": {
+                    "mask_variable_details": [
+                        "Conceal specific details on transformer model parameter configurations to test if agents can generalize based on high-level descriptions",
+                        "Hide the exact similarity computation formulas to force reliance on overall similarity strategy descriptions"
+                    ],
+                    "introduce_new_variables": [
+                        "Incorporate an additional variable for the number of preceding lines (e.g., testing with m = [3, 5, 10, ...]) to assess its impact on performance",
+                        "Add extra retrieval metrics such as CodeBLEU or Exact Match to broaden the evaluation scope"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict available computational resources by enforcing a smaller model size or using quantized models, which may affect inference speed and accuracy."
+                    ],
+                    "time_constraints": [
+                        "Reduce the overall runtime by limiting the number of retrieval methods run concurrently or by processing a fixed subset of candidate snippets for each query."
+                    ],
+                    "money_constraints": [
+                        "Opt for cost-effective computing solutions (e.g., free, open-source tools or lower cost API tiers) to simulate evaluation under a limited money budget."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random selection in retrieval and quantization effects",
+                "description": "Random uncertainty arises due to the inherent randomness in the retrieval method\u2014such as the 'Random' baseline selecting cross-file context snippets without considering relevance\u2014and from potential instabilities introduced by using quantized models. This randomness may lead to unstable gradient updates, fluctuating retrieval metrics, and variation in performance (e.g., acc@1, acc@3, and acc@5) across runs.",
+                "impact": "This variability can cause inconsistent measurements of retrieval accuracy, making it difficult to assess the true performance differences between different retrieval methods and across programming languages.",
+                "possible_modifications": [
+                    "Run multiple iterations of the random retrieval experiments and average the results to reduce the impact of stochastic variation.",
+                    "Eliminate or reduce methods that introduce intentional randomness (e.g., random token dropping) to stabilize gradient updates and performance metrics.",
+                    "Set fixed random seeds for all experiments to ensure reproducibility and minimize variability due to random choices."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset segmentation and language-specific coding practices",
+                "description": "Systematic uncertainty is introduced by the way the RepoBench-R dataset is segmented by programming language (Python vs. Java) and by difficulty (Easy vs. Hard). Python\u2019s coding practices, such as the proximate definition and use of function arguments, may inherently favor higher retrieval accuracy compared to Java\u2019s more complex class structures. Additionally, any bias in how the Easy and Hard subsets are defined could skew the results consistently.",
+                "impact": "These systematic biases may lead to consistently higher retrieval performance for Python over Java, potentially obscuring other factors that could influence retrieval accuracy. This bias may also affect the interpretation of performance metrics (e.g., those reported in Table 2) and the overall validity of cross-language comparisons.",
+                "possible_modifications": [
+                    "Refine the criteria for segmenting the dataset into Easy and Hard subsets to ensure a balanced and unbiased representation across languages.",
+                    "Introduce a verification step to cross-check the dataset against an unmodified or clean version to rule out potential corruption or systematic bias in the data.",
+                    "Standardize model configurations (for example, ensuring similar settings for transformer-based semantic methods across languages) to mitigate systematic biases arising from differences in model handling or quantization."
+                ]
+            }
+        },
+        {
+            "method": "Replicate the RepoBench-C experiments by evaluating a range of autoregressive language models (e.g., CodeGen, CodeLlama, StarCoder, and Codex) for both Python and Java. Perform experiments under two context length settings: 2k and 8k. For the 2k setting, refer to the Level 2k token range (approximately 640\u20131,600 tokens), and for the 8k setting, refer to the token range approximations provided in RepoBench v1.1. For each model, execute the next-line prediction task by providing both the in-file context (Cin) and cross-file context (Cx) as inputs. Ensure data parity by adhering to the dataset constraints (e.g., a minimum token threshold of 12,000 for Python and 24,000 for Java, with the retrieval process requiring at least 10 candidates as detailed in Table 1). Measure performance using weighted average Exact Match (EM), Edit Similarity (Edit Sim), and CodeBLEU scores. Record additional metrics such as the mean number of candidates and tokens for each setting as reported in Table 1, and, where possible, include visual insights referenced in Figures 1\u20133 to reflect the impact of extended contexts.",
+            "expected_outcome": "Based on previous findings, it is expected that larger models\u2014particularly CodeLlama-34B for Python and Codex for Java\u2014will demonstrate higher predictive accuracy. An increase in context length from 2k to 8k should further boost performance metrics (EM, Edit Sim, and CodeBLEU), although the magnitude of improvement may depend on the model architecture and language-specific characteristics. Detailed analysis across these metrics will provide insights into the benefits of extended context lengths and repository-level training.",
+            "subsection_source": "4.2 REPOBENCH-C",
+            "source": [
+                "/workspace/run.py",
+                "/workspace/eval.py"
+            ],
+            "usage_instructions": "To replicate the RepoBench-C experiments with different context lengths (2k and 8k) for both Python and Java, follow these steps:\n\n1. First, run the experiments for Python models at 2k context length:\n   ```bash\n   CUDA_VISIBLE_DEVICES=0 python run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n                  --dataset_name \"tianyang/repobench_python_v1.1\" \\\n                  --language \"python\" \\\n                  --max_token_nums 1600 \\\n                  --levels \"2k\" \\\n                  --temperature 0.2 \\\n                  --top_p 0.95 \\\n                  --max_new_tokens 128 \\\n                  --batch_size 1\n   ```\n\n2. Run the experiments for Python models at 8k context length:\n   ```bash\n   CUDA_VISIBLE_DEVICES=0 python run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n                  --dataset_name \"tianyang/repobench_python_v1.1\" \\\n                  --language \"python\" \\\n                  --max_token_nums 7200 \\\n                  --levels \"8k\" \\\n                  --temperature 0.2 \\\n                  --top_p 0.95 \\\n                  --max_new_tokens 128 \\\n                  --batch_size 1\n   ```\n\n3. Repeat steps 1-2 for Java models:\n   ```bash\n   CUDA_VISIBLE_DEVICES=0 python run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n                  --dataset_name \"tianyang/repobench_java_v1.1\" \\\n                  --language \"java\" \\\n                  --max_token_nums 1600 \\\n                  --levels \"2k\" \\\n                  --temperature 0.2 \\\n                  --top_p 0.95 \\\n                  --max_new_tokens 128 \\\n                  --batch_size 1\n   ```\n\n4. Repeat for 8k context length with Java:\n   ```bash\n   CUDA_VISIBLE_DEVICES=0 python run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n                  --dataset_name \"tianyang/repobench_java_v1.1\" \\\n                  --language \"java\" \\\n                  --max_token_nums 7200 \\\n                  --levels \"8k\" \\\n                  --temperature 0.2 \\\n                  --top_p 0.95 \\\n                  --max_new_tokens 128 \\\n                  --batch_size 1\n   ```\n\n5. Repeat steps 1-4 for each model you want to evaluate (e.g., CodeGen, StarCoder, Codex).\n\n6. After generating completions for all models and settings, evaluate the results:\n   ```bash\n   python eval.py --path \"results/CodeLlama-34b-hf-python\" --language \"python\"\n   python eval.py --path \"results/CodeLlama-34b-hf-java\" --language \"java\"\n   ```\n\n7. Repeat step 6 for each model's results directory.\n\nThe evaluation will output Exact Match (EM), Edit Similarity (ES), and CodeBLEU (CB) scores for each setting (cross_file_first, cross_file_random, in_file) as well as weighted averages across all settings, allowing you to compare performance across different models and context lengths.",
+            "requirements": [
+                "Step 1: Load the specified dataset from Hugging Face based on the language (Python or Java) (/workspace/run.py:146-147)",
+                "Step 2: Filter the dataset by date range and context length levels (/workspace/run.py:149-153)",
+                "Step 3: Load the language model and tokenizer with appropriate configuration (/workspace/run.py:155-161)",
+                "Step 4: Create a directory structure to save results (/workspace/run.py:163-165)",
+                "Step 5: For each data point in the dataset, construct a prompt that includes repository context and code snippets (/workspace/run.py:167-170, /workspace/data/utils.py:3-59)",
+                "Step 6: Generate completions using the language model with specified parameters (temperature, top_p, etc.) (/workspace/run.py:172-173)",
+                "Step 7: Extract the first non-comment line from the generated code (/workspace/run.py:175-177, /workspace/run.py:12-79)",
+                "Step 8: Save the results (prediction, ground truth, metadata) to JSONL files (/workspace/run.py:179-180)",
+                "Step 9: Load the generated results for evaluation (/workspace/eval.py:14-33)",
+                "Step 10: Calculate Exact Match score by comparing predicted code with ground truth (/workspace/eval.py:40-43, /workspace/evaluation/metrics.py:4-27)",
+                "Step 11: Calculate Edit Similarity score using fuzzy string matching (/workspace/eval.py:44, /workspace/evaluation/metrics.py:31-53)",
+                "Step 12: Calculate CodeBLEU score for language-specific code quality evaluation (/workspace/eval.py:45, /workspace/evaluation/metrics.py:96-129)",
+                "Step 13: Compute weighted averages of metrics across all settings (/workspace/eval.py:47-61)",
+                "Final Step: Print evaluation results for each setting and the weighted averages (/workspace/eval.py:53-64)"
+            ],
+            "agent_instructions": "Create a system to evaluate large language models on code completion tasks using the RepoBench dataset. The system should consist of two main components:\n\n1. A script to run inference with language models:\n   - Load a code repository dataset (RepoBench) for either Python or Java\n   - Support filtering by context length (2k, 8k tokens)\n   - Construct prompts that include both cross-file context and in-file code\n   - Generate next-line completions using a specified language model\n   - Extract meaningful code (ignoring comments) from model outputs\n   - Save predictions alongside ground truth in a structured format\n\n2. An evaluation script that:\n   - Processes the generated completions\n   - Calculates three key metrics:\n     * Exact Match (EM): percentage of predictions that exactly match ground truth\n     * Edit Similarity (ES): string similarity between predictions and ground truth\n     * CodeBLEU (CB): code-specific BLEU score that considers syntax and semantics\n   - Reports results for different context settings (cross_file_first, cross_file_random, in_file)\n   - Computes weighted averages across all settings\n\nThe system should handle both Python and Java code, properly parse comments in both languages, and support various context lengths to evaluate how model performance changes with increasing context.",
+            "masked_source": [
+                "/workspace/run.py",
+                "/workspace/eval.py"
+            ],
+            "question": "Larger language models and increased context lengths yield better performance for code completion tasks on RepoBench-C, as evidenced by enhanced performance metrics when processing extended in-file and cross-file contexts.",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_parameters": [
+                        "temperature=0.2",
+                        "top_p=0.95",
+                        "max_new_tokens=128",
+                        "batch_size=1"
+                    ],
+                    "dataset_constraints": [
+                        "Python dataset: minimum token threshold of 12,000 tokens",
+                        "Java dataset: minimum token threshold of 24,000 tokens",
+                        "Retrieval process: at least 10 candidates required"
+                    ]
+                },
+                "independent_variables": {
+                    "llm_model": [
+                        "CodeGen",
+                        "CodeLlama",
+                        "StarCoder",
+                        "Codex"
+                    ],
+                    "language": [
+                        "python",
+                        "java"
+                    ],
+                    "context_length": [
+                        "2k (approximately 640\u20131,600 tokens)",
+                        "8k (extended context as defined in RepoBench v1.1)"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match (EM)",
+                        "Edit Similarity (ES)",
+                        "CodeBLEU (CB)"
+                    ],
+                    "additional_metrics": [
+                        "Mean number of candidates",
+                        "Token counts per setting"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "dataset_date_range": "The exact date range for filtering the dataset is not explicitly mentioned.",
+                    "retrieval_strategy": "It is not explicitly stated if the different retrieval strategies (e.g., cross_file_first, cross_file_random, in_file) need separate analysis or should be aggregated.",
+                    "visual_insights": "Figures 1\u20133 are referenced for visual insight, but no detailed explanation of their contents is provided."
+                },
+                "possible_modifications": {
+                    "variable_masking": [
+                        "Mask details related to retrieval strategies to test robustness of the evaluation.",
+                        "Mask some context length details to assess the impact of implicit large context usage."
+                    ],
+                    "new_variables": [
+                        "Introduce additional independent variables such as 'retrieval strategy' (e.g. Gold-Only vs Gold-Filled) for extended tasks.",
+                        "Include a new variable for 'prompt construction techniques' (e.g. specific handling of in-file vs cross-file contexts)."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Dataset loader for RepoBench-C (Python and Java) with filtering by token thresholds",
+                    "Preprocessing module to filter dataset by date range and context length levels (2k and 8k)",
+                    "Language model and tokenizer loader supporting multiple models (CodeGen, CodeLlama, StarCoder, Codex)",
+                    "Prompt construction engine that combines in-file context (import statements and preceding lines) and cross-file context",
+                    "Inference engine for next-line code completion with specified parameters (temperature, top_p, max_new_tokens, batch_size)",
+                    "Result saving system with a directory structure for each model and language",
+                    "Evaluation script that computes Exact Match (EM), Edit Similarity (ES), and CodeBLEU scores, and aggregates weighted averages",
+                    "Auxiliary metric collection for mean candidate count and token counts per setting"
+                ],
+                "setup_steps": [
+                    "Load the specified RepoBench-C dataset from Hugging Face based on the language (Python or Java)",
+                    "Filter the dataset by the provided date range (ambiguous) and verify token thresholds (12,000 for Python, 24,000 for Java)",
+                    "Select and load the target language model and associated tokenizer with proper configuration",
+                    "Construct prompts by combining in-file context (e.g., import statements and up to 30 or 60 preceding lines) with cross-file context (retrieved code snippets)",
+                    "Set experiment parameters such as context length (2k and 8k), temperature, top_p, max_new_tokens, and batch_size",
+                    "Run inference to generate next-line code completions for each data point",
+                    "Extract the first non-comment line from generated code and save predictions alongside ground truth in JSONL files",
+                    "Load the generated results and execute evaluation routines to compute EM, ES, and CodeBLEU for different settings (cross_file_first, cross_file_random, in_file)",
+                    "Aggregate results across settings and record additional metrics such as the mean number of candidates and token counts"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset Filtering",
+                        "description": "The dataset must be filtered not only by context length but also by a minimum token threshold, and an unspecified date range, increasing setup complexity."
+                    },
+                    {
+                        "source": "Prompt Construction",
+                        "description": "Merging in-file context with cross-file context (with possible different retrieval strategies like Gold-Only vs Gold-Filled) adds additional layers of complexity."
+                    },
+                    {
+                        "source": "Multiple Experimental Variables",
+                        "description": "Running experiments over several models, two programming languages, and two context lengths (2k/8k) creates a combinatorial setup requiring careful orchestration."
+                    },
+                    {
+                        "source": "Parameter and Metric Aggregation",
+                        "description": "The need to compute and aggregate multiple performance metrics (EM, ES, CodeBLEU) across differently structured experimental settings further increases the system complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Dataset date range filtering: The exact date range for filtering the dataset is not explicitly provided.",
+                    "Retrieval strategy details: It is ambiguous whether different strategies (e.g., cross_file_first, cross_file_random, in_file) should be analyzed independently or aggregated.",
+                    "Visual insights from Figures 1\u20133: Reference is made to figures for additional insights, but their contents are not clearly explained."
+                ],
+                "ambiguous_setup_steps": [
+                    "Precise construction of prompts: How to exactly merge in-file context with cross-file context (and when to apply which retrieval strategy) is not fully specified.",
+                    "Parameter filling for extended context: The method for utilizing any unused tokens from one context (in-file vs cross-file) to fill up the prompt remains partly ambiguous.",
+                    "Metric aggregation: The process for weighting and aggregating performance metrics across different settings lacks explicit detail in the instructions."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Mask specific retrieval strategy details (e.g., whether to use Gold-Only or Gold-Filled) to test robustness.",
+                        "Omit some context length parameters to assess whether the evaluation can implicitly handle larger contexts."
+                    ],
+                    "imply_need_for_new_setup_steps": [
+                        "Introduce explicit instructions for handling multiple prompt construction techniques or retrieval strategies.",
+                        "Require additional documentation on the exact token allocation and reuse strategy when merging in-file and cross-file contexts."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a stricter token budget across both in-file and cross-file contexts\u2014for example, reducing the allowed token count from 1600/7200 tokens to a lower threshold\u2014to assess performance under more limited resource conditions.",
+                        "Require the same or similar predictive accuracy using a smaller model (e.g., mandating that a mini version of CodeLlama match the performance of CodeLlama-34B), thereby tightening model size constraints."
+                    ],
+                    "time_constraints": [
+                        "Limit the number of data points or inference iterations to reduce computational runtime, effectively simulating faster turnaround times in evaluation."
+                    ],
+                    "money_constraints": [
+                        "Restrict experiments to models with open access (e.g., focusing on open-source models like CodeGen, CodeLlama, and StarCoder) to avoid potential costs associated with proprietary models such as Codex."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random token dropping and random retrieval strategy",
+                "description": "In the RepoBench-C experiments, randomness can be introduced by modifying token selection mechanisms. For example, if instead of dropping unimportant tokens, tokens are dropped at random during prompt construction and context merging, this may lead to instability during gradient updates and introduce noise in predictions. Similarly, using a purely random retrieval strategy for cross-file context (selecting code snippets without considering relevance) can further amplify random uncertainty in evaluation metrics such as EM, Edit Similarity, and CodeBLEU.",
+                "impact": "This uncertainty manifests as variations in model performance across trials, potentially leading to inconsistency in prediction accuracy and difficulty in comparing performance across different context lengths and model architectures.",
+                "possible_modifications": [
+                    "Introduce random token dropping during prompt construction to simulate the loss of important context.",
+                    "Employ a random retrieval strategy for selecting cross-file context snippets, disregarding their relevance.",
+                    "Randomize the candidate selection process during dataset filtering to mimic real-world variability in data."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent protocol modifications in dataset filtering and prompt construction",
+                "description": "Systematic uncertainty arises when there are one-time or consistent modifications that bias the experiment. For example, using an ambiguous date range or token thresholds for dataset filtering, or systematically altering the prompt construction mechanism (such as always excluding import statements or favoring a particular in-file context length) can impute a consistent bias on all outcomes. Such changes may lead to a persistent overestimation or underestimation of performance metrics across different models or context settings.",
+                "impact": "This type of uncertainty could result in a reproducible bias where model performance metrics (EM, Edit Similarity, CodeBLEU) are consistently affected regardless of model size or context length, thereby misleading comparisons across different experiments.",
+                "possible_modifications": [
+                    "Introduce a one-time modification of the dataset (e.g., altering token thresholds or filtering by an ambiguous date range) to simulate systematic bias.",
+                    "Consistently modify prompt construction by, for example, excluding key context elements like import statements or altering retrieval strategy to always favor one type (e.g., cross_file_random), creating a biased experimental setup.",
+                    "Implement a uniform change in the context combination approach (between in-file and cross-file contexts) across all experiments to assess its systematic effects on performance."
+                ]
+            }
+        },
+        {
+            "method": "Design an experiment where the same set of code completion tasks in RepoBench-C are evaluated separately for Python and Java. Use two subsets from RepoBench-C (the 2k and 8k subsets) to capture different prompt lengths and complexities. For Python, the 2k subset contains 12,000 XF-F, 5,000 XF-R, and 7,000 IF data points with a mean of 1,035 tokens, and the 8k subset contains 18,000 XF-F, 7,500 XF-R, and 10,500 IF data points with a mean of 3,967 tokens; use analogous settings for Java. Evaluate each model\u2014CodeGen (in various sizes), CodeLlama (all available parameter sizes), StarCoder, and Codex\u2014using consistent evaluation metrics such as Exact Match (EM), Edit Similarity, and CodeBLEU. Perform statistical comparisons (e.g., t-tests) on the reported scores in both settings to determine if specific models show significant performance advantages on one programming language over the other. Incorporate the detailed dataset configurations provided in RepoBench-C to ensure a comprehensive assessment of the models across varying context lengths and candidate complexities.",
+            "expected_outcome": "The experiment should reveal that, while some models perform competitively across both languages, particular models exhibit language-specific strengths. For instance, Codex is expected to maintain a performance edge in Java tasks, whereas models like CodeLlama-34B might excel in Python tasks. These outcomes would support claims regarding language-specific performance variations in code completion.",
+            "subsection_source": "4.2 REPOBENCH-C",
+            "source": [
+                "/workspace/run.py",
+                "/workspace/eval.py"
+            ],
+            "usage_instructions": "To evaluate different model architectures on language-specific code completion tasks in RepoBench-C, follow these steps:\n\n1. Run the Python dataset evaluation for each model architecture (CodeGen, CodeLlama, StarCoder, Codex) using the run.py script with the 2k and 8k subsets:\n\n```bash\n# Example for CodeLlama-34B on Python 2k subset\npython run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n           --dataset_name \"tianyang/repobench_python_v1.1\" \\\n           --language \"python\" \\\n           --levels \"2k\" \\\n           --max_token_nums 15800 \\\n           --temperature 0.2 \\\n           --top_p 0.95 \\\n           --max_new_tokens 128 \\\n           --batch_size 1 \\\n           --res_dir \"./results_python_2k\"\n\n# Example for CodeLlama-34B on Python 8k subset\npython run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n           --dataset_name \"tianyang/repobench_python_v1.1\" \\\n           --language \"python\" \\\n           --levels \"8k\" \\\n           --max_token_nums 15800 \\\n           --temperature 0.2 \\\n           --top_p 0.95 \\\n           --max_new_tokens 128 \\\n           --batch_size 1 \\\n           --res_dir \"./results_python_8k\"\n```\n\n2. Run the Java dataset evaluation for each model architecture using the same run.py script:\n\n```bash\n# Example for CodeLlama-34B on Java 2k subset\npython run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n           --dataset_name \"tianyang/repobench_java_v1.1\" \\\n           --language \"java\" \\\n           --levels \"2k\" \\\n           --max_token_nums 15800 \\\n           --temperature 0.2 \\\n           --top_p 0.95 \\\n           --max_new_tokens 128 \\\n           --batch_size 1 \\\n           --res_dir \"./results_java_2k\"\n\n# Example for CodeLlama-34B on Java 8k subset\npython run.py --model_name \"codellama/CodeLlama-34b-hf\" \\\n           --dataset_name \"tianyang/repobench_java_v1.1\" \\\n           --language \"java\" \\\n           --levels \"8k\" \\\n           --max_token_nums 15800 \\\n           --temperature 0.2 \\\n           --top_p 0.95 \\\n           --max_new_tokens 128 \\\n           --batch_size 1 \\\n           --res_dir \"./results_java_8k\"\n```\n\n3. Evaluate the results for each model and language using the eval.py script:\n\n```bash\n# Evaluate Python results\npython eval.py --path \"results_python_2k/CodeLlama-34b-hf-python\" --language \"python\"\npython eval.py --path \"results_python_8k/CodeLlama-34b-hf-python\" --language \"python\"\n\n# Evaluate Java results\npython eval.py --path \"results_java_2k/CodeLlama-34b-hf-java\" --language \"java\"\npython eval.py --path \"results_java_8k/CodeLlama-34b-hf-java\" --language \"java\"\n```\n\n4. Repeat steps 1-3 for all model architectures (CodeGen, CodeLlama in various sizes, StarCoder, and Codex).\n\n5. After collecting all evaluation results, perform statistical comparisons (t-tests) on the reported scores to determine if specific models show significant performance advantages on one programming language over the other.",
+            "requirements": [
+                "Step 1: Load a language-specific code completion dataset (Python or Java) from HuggingFace (/workspace/run.py:147)",
+                "Step 2: Filter the dataset by date range and complexity levels (2k, 8k, etc.) (/workspace/run.py:150-153)",
+                "Step 3: Load the language model and tokenizer (/workspace/run.py:156-161)",
+                "Step 4: Create a directory to save results (/workspace/run.py:164-165)",
+                "Step 5: For each example in the dataset, construct a prompt with repository context (/workspace/run.py:167-170, /workspace/data/utils.py:3-59)",
+                "Step 6: Generate code completions using the model with specified parameters (temperature, top_p, etc.) (/workspace/run.py:172-173)",
+                "Step 7: Extract the first non-comment line from the generated code (/workspace/run.py:176-177, /workspace/run.py:12-79)",
+                "Step 8: Save the predictions to a results file with metadata (/workspace/run.py:179-180)",
+                "Step 9: Load the prediction results for evaluation (/workspace/eval.py:14-33)",
+                "Step 10: Calculate Exact Match score between predictions and ground truth (/workspace/eval.py:43, /workspace/evaluation/metrics.py:4-27)",
+                "Step 11: Calculate Edit Similarity score between predictions and ground truth (/workspace/eval.py:44, /workspace/evaluation/metrics.py:31-53)",
+                "Step 12: Calculate CodeBLEU score between predictions and ground truth (/workspace/eval.py:45, /workspace/evaluation/metrics.py:96-129)",
+                "Step 13: Calculate weighted averages of all metrics across dataset levels (/workspace/eval.py:48-64)",
+                "Final Step: Display evaluation results for each level and the weighted averages (/workspace/eval.py:53-64)"
+            ],
+            "agent_instructions": "Create a system for evaluating language models on code completion tasks using the RepoBench-C benchmark. The system should consist of two main components:\n\n1. A code generation component that:\n   - Loads a language-specific code completion dataset (Python or Java) from HuggingFace\n   - Filters the dataset by complexity levels (e.g., 2k, 8k tokens)\n   - Loads a language model (e.g., CodeLlama, CodeGen, StarCoder)\n   - Constructs prompts that include repository context for each example\n   - Generates code completions using the model with appropriate parameters\n   - Extracts the first non-comment line from the generated code\n   - Saves the predictions to a results file\n\n2. An evaluation component that:\n   - Loads the prediction results\n   - Evaluates the predictions using three metrics:\n     - Exact Match (EM): Percentage of predictions that exactly match ground truth\n     - Edit Similarity (ES): Fuzzy string matching score between predictions and ground truth\n     - CodeBLEU (CB): Code-specific BLEU score that considers syntax and semantics\n   - Calculates metrics for different dataset levels (cross_file_first, cross_file_random, in_file)\n   - Computes weighted averages across all levels\n   - Displays the evaluation results\n\nThe system should support command-line arguments for specifying model name, dataset, language (Python or Java), complexity levels, and other generation parameters.",
+            "masked_source": [
+                "/workspace/run.py",
+                "/workspace/eval.py"
+            ],
+            "question": "Different model architectures exhibit language-specific strengths in code completion tasks.",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_setup": "All experiments are conducted using the same evaluation metrics (Exact Match, Edit Similarity, CodeBLEU), the same generation parameters (temperature, top_p, max_new_tokens, etc.), and the same prompt construction method across languages and dataset subsets."
+                },
+                "independent_variables": {
+                    "programming_language": [
+                        "Python",
+                        "Java"
+                    ],
+                    "dataset_subset": [
+                        "2k",
+                        "8k"
+                    ],
+                    "model_architecture": [
+                        "CodeGen (various sizes)",
+                        "CodeLlama (all available parameter sizes)",
+                        "StarCoder",
+                        "Codex"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match",
+                        "Edit Similarity",
+                        "CodeBLEU",
+                        "statistical significance (t-test results)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_architecture": "The exact sizes and configurations of CodeGen and CodeLlama models are not fully specified (e.g., what constitutes 'various sizes' or 'all available parameter sizes').",
+                    "dataset_configuration": "While the token ranges and number of datapoints are provided for the 2k and 8k subsets, details on how other complexity factors are managed (e.g., filtering by date, potential data leakage avoidance, etc.) remain unspecified.",
+                    "statistical_comparisons": "There is no mention of the significance level, correction for multiple comparisons, or effect size measures in the t-test analyses."
+                },
+                "possible_modifications": {
+                    "modification_model_details": [
+                        "Specify the exact parameter sizes and configurations for CodeGen and CodeLlama models.",
+                        "Include other model architectures or versions if available."
+                    ],
+                    "modification_dataset_subsets": [
+                        "Add additional dataset subsets beyond 2k and 8k (for example, 4k or 16k) to further capture a range of prompt lengths and complexities."
+                    ],
+                    "modification_statistical_analysis": [
+                        "Define significance levels, include multiple testing corrections, and report effect sizes to deepen the statistical analysis."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Dataset loader (for Python and Java datasets from HuggingFace)",
+                    "Code generation component (including prompt construction with repository context, model loading, inference execution)",
+                    "Evaluation component (script to load predictions and compute Exact Match, Edit Similarity, CodeBLEU scores)",
+                    "Statistical analysis module (performing t-tests on collected metric scores)",
+                    "Command-line interface (for specifying model names, language, complexity levels, and generation parameters)"
+                ],
+                "setup_steps": [
+                    "Configure and run the code generation script (run.py) with language-specific dataset filtering (Python or Java) and subset selection (2k and 8k)",
+                    "Set generation parameters such as temperature, top_p, max_token_nums, max_new_tokens, and batch_size",
+                    "Construct prompts using repository context (import statements, in-file context, cross-file context) for each code completion example",
+                    "Execute the model to generate code completions and extract the first non-comment line",
+                    "Save predictions and metadata into designated result directories",
+                    "Run the evaluation script (eval.py) to compute performance metrics (EM, ES, CodeBLEU) across different dataset levels",
+                    "Aggregate results and perform t-test based statistical comparisons between Python and Java completions for each model"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset configuration",
+                        "description": "Handling different data distributions and prompt lengths (mean tokens, numbers of data points) across subsets introduces added intricacy."
+                    },
+                    {
+                        "source": "Model diversity",
+                        "description": "Supporting multiple model architectures (CodeGen in various sizes, CodeLlama across available sizes, StarCoder, and Codex) requires standardized parameters despite potential differences in behavior and performance."
+                    },
+                    {
+                        "source": "Inter-script coordination",
+                        "description": "Coordinating between run.py and eval.py ensures consistency in prompt construction and evaluation, which adds an integration complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model architecture definitions: The exact sizes and configurations of 'various sizes' for CodeGen and 'all available parameter sizes' for CodeLlama are not specified.",
+                    "Dataset filtering and configuration: Details on filtering by date range or handling data leakage are not provided, creating uncertainty about dataset preparation."
+                ],
+                "ambiguous_setup_steps": [
+                    "Specification of generation parameters: While parameters like temperature, top_p, and max_new_tokens are provided, the rationale for choosing specific numerical values is not fully explained.",
+                    "Statistical analysis: There is ambiguity regarding the t-test specifications, including the significance level, correction for multiple comparisons, and effect size measures to be reported.",
+                    "Prompt construction details: The process for concatenating repository context elements (imports, in-file context, cross-file context) is described but leaves room for interpretation in terms of ordering and token budget allocation."
+                ],
+                "possible_modifications": {
+                    "modification_model_details": [
+                        "Specify the exact parameter sizes and configurations for CodeGen and CodeLlama models to reduce uncertainty."
+                    ],
+                    "modification_dataset_subsets": [
+                        "Include additional dataset subset configurations (e.g., 4k or 16k) or clarify filtering instructions to capture a broader range of prompt lengths and complexities."
+                    ],
+                    "modification_statistical_analysis": [
+                        "Define the significance level, include multiple testing corrections, and report effect sizes to clarify the t-test methodology."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Tighten model configuration by requiring that a smaller variant (e.g., a mini version of CodeLlama or CodeGen) achieves performance parity with its larger counterpart, thus reducing computational resource demands."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed inference or processing time per experiment run to test whether models can maintain performance under stricter time budgets."
+                    ],
+                    "money_constraints": [
+                        "Constrain the experimental budget by limiting paid API usage or cloud compute expenses, which may force the use of more cost-efficient model variants."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random variations in prompt construction and token sampling",
+                "description": "In the experiment, while standardized generation parameters (temperature, top_p, max_new_tokens) are used, slight randomness can still be introduced during prompt construction (e.g., ordering of repository context, random selection of tokens if context exceeds token limits) and during code generation. This is similar to known approaches like dropping unimportant tokens at random, which introduces noise in gradient updates and may affect prediction accuracy.",
+                "impact": "This randomness can lead to run-to-run variability in the performance metrics (Exact Match, Edit Similarity, CodeBLEU) and may obscure whether observed differences between Python and Java evaluations or among model architectures are due to inherent model performance or random variations in the evaluation process.",
+                "possible_modifications": [
+                    "Ensure determinism by disabling any random token dropping or random selection in prompt construction.",
+                    "Increase the number of runs and aggregate results to mitigate the effect of random fluctuations.",
+                    "Set seeds for all stochastic components (e.g., prompt ordering, token sampling) to reduce variability in gradient updates and predictions."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset curation and language-specific configurations",
+                "description": "The experiment relies on RepoBench-C datasets with defined subsets (2k and 8k) for Python and Java. However, differences in dataset characteristics such as mean token counts (e.g., 1,035 tokens for Python 2k vs. analogous Java settings) or filtering criteria (date range, complexity filtering) may introduce a systematic bias affecting one language over the other. This is akin to intentionally modifying a dataset (e.g., labeling reviews based on a fixed character threshold) that skews results consistently.",
+                "impact": "Systematic biases could lead to an apparent language-specific performance edge that is actually due to dataset discrepancies rather than true model capability differences. This may misinform the conclusions drawn from statistical comparisons (t-tests) between performance on Python and Java tasks.",
+                "possible_modifications": [
+                    "Validate and, if necessary, recalibrate the dataset curation steps to ensure similar complexity distributions across both Python and Java subsets.",
+                    "Include additional dataset subsets (such as 4k or 16k) to capture a broader range of prompt lengths and mitigate potential bias due to narrow complexity settings.",
+                    "Re-run experiments with a revised, clean copy of each programming language dataset to eliminate any systematic dataset biases."
+                ]
+            }
+        },
+        {
+            "method": "Set up a controlled experiment on the RepoBench-P task using the Codex (code-davinci-002) model with two configurations. In the Baseline configuration, reserve 1,600 tokens for the in-file context by cropping the 60 preceding lines, filling the remaining tokens with in-file content only up to a total prompt size of 6,400 tokens. In the Cross-file configuration, maintain the 1,600-token reservation for the in-file context (with the same 60-line crop) and append additional randomly selected cross-file code snippets until the total prompt reaches 6,400 tokens. The cross-file snippets can be selected following strategies similar to the 'gold-filled' approach where the gold snippet is included along with other random snippets. Run experiments on Python and Java test sets. Evaluate both configurations using Exact Match (EM), Edit Similarity (ES), and CodeBLEU metrics. Where appropriate, refer to the figures (e.g., Figure 1\u20133) and table entries reported in the ICLR 2024 publication to compare metric scores and provide visual insights into the performance differences.",
+            "expected_outcome": "Based on the reported results in the paper, the inclusion of cross-file context is expected to enhance performance metrics compared to using only in-file context. The experimental configuration that integrates cross-file snippets should achieve higher Exact Match, Edit Similarity, and CodeBLEU scores, thereby demonstrating that even randomly selected cross-file snippets can contribute to a better contextual understanding and improved code completion accuracy.",
+            "subsection_source": "4.3 REPOBENCH-P",
+            "source": [
+                "/workspace/inference_repobench_p.py",
+                "/workspace/evaluate_completion.py"
+            ],
+            "usage_instructions": "To compare the performance of code completion with and without cross-file context on the RepoBench-P task using Codex (code-davinci-002), run the following commands:\n\n1. First, run the baseline configuration (in-file context only):\n   ```\n   python inference_repobench_p.py --language python --mode baseline --model_name codex\n   ```\n   This will use only in-file context with up to 6400 tokens, cropping to the last 60 lines for the in-file context.\n\n2. Then, run the cross-file configuration with random snippets (similar to gold-filled approach):\n   ```\n   python inference_repobench_p.py --language python --mode random --model_name codex\n   ```\n   This will use 1600 tokens for in-file context (cropped to 60 lines) and fill the remaining tokens with randomly selected cross-file snippets up to a total of 6400 tokens.\n\n3. Evaluate the results for both configurations:\n   ```\n   python evaluate_completion.py --path results_new/pipeline/codex/baseline/python\n   python evaluate_completion.py --path results_new/pipeline/codex/random/python\n   ```\n\n4. Repeat steps 1-3 for Java by changing the language parameter to 'java'.\n\nThe evaluation will output Exact Match (EM), Edit Similarity (ES), and CodeBLEU metrics for both configurations, allowing you to compare the performance with and without cross-file context.",
+            "requirements": [
+                "Step 1: Load necessary libraries and set up the environment for code completion tasks (/workspace/inference_repobench_p.py:1-41)",
+                "Step 2: Initialize the tokenizer based on the selected model (codex or starcoder) (/workspace/inference_repobench_p.py:43-74)",
+                "Step 3: Load the RepoBench-P dataset with different context settings (cross-file and in-file) (/workspace/inference_repobench_p.py:76-84)",
+                "Step 4: For baseline mode: Process each data point by taking only in-file context (up to 60 lines) with a maximum of 6400 tokens (/workspace/inference_repobench_p.py:925-957)",
+                "Step 5: For random mode: Process each data point by taking in-file context (up to 60 lines, max 1600 tokens) and filling remaining context with randomly selected cross-file snippets up to a total of 6400 tokens (/workspace/inference_repobench_p.py:464-526)",
+                "Step 6: Generate code completions by querying the selected model with the prepared context (/workspace/inference_repobench_p.py:552-569)",
+                "Step 7: Save the generated completions along with ground truth labels to output files (/workspace/inference_repobench_p.py:571-583)",
+                "Step 8: Evaluate the generated completions using exact match and edit similarity metrics (/workspace/evaluate_completion.py:35-54)",
+                "Step 9: Calculate and report the average performance across different context settings (/workspace/evaluate_completion.py:57-62)",
+                "Final Step: Output the evaluation results in a formatted manner for comparison (/workspace/evaluate_completion.py:62)"
+            ],
+            "agent_instructions": "Create a system to compare code completion performance with and without cross-file context on the RepoBench-P dataset. The system should:\n\n1. Implement a script that generates code completions using a language model (like Codex) with two different context configurations:\n   - Baseline configuration: Using only in-file context (up to 60 lines) with a maximum of 6400 tokens\n   - Cross-file configuration: Using in-file context (up to 60 lines, max 1600 tokens) and filling the remaining context with randomly selected cross-file snippets up to a total of 6400 tokens\n\n2. The script should:\n   - Accept parameters for language (python/java), mode (baseline/random), and model name\n   - Load the RepoBench-P dataset with appropriate context settings\n   - Process each data point by preparing the context according to the selected mode\n   - Query the language model to generate the next line of code\n   - Save the results (ground truth and generated completions) to output files\n\n3. Implement an evaluation script that:\n   - Loads the generated completions and ground truth from the output files\n   - Calculates metrics including Exact Match (EM) and Edit Similarity (ES)\n   - Reports the performance for each context setting and the overall average\n\nThe system should support both Python and Java code completion and be able to compare the effectiveness of using cross-file context versus in-file-only context.",
+            "masked_source": [
+                "/workspace/inference_repobench_p.py",
+                "/workspace/evaluate_completion.py"
+            ],
+            "question": "Does incorporating cross-file context into the code completion pipeline improve performance over using only in-file context?",
+            "design_complexity": {
+                "constant_variables": {
+                    "llm_model": "Codex (code-davinci-002) is used in every experiment",
+                    "prompt_token_limits": "Fixed total prompt size of 6400 tokens with a reserved 1600 tokens for the in-file context (cropped to 60 lines)",
+                    "LM_generation_parameters": "Temperature set to 0.2, top_p is 0.95, and 64 tokens are generated per next-line prediction"
+                },
+                "independent_variables": {
+                    "configuration_mode": [
+                        "baseline (in-file context only)",
+                        "cross-file (in-file context with additional randomly selected cross-file snippets)"
+                    ],
+                    "programming_language": [
+                        "python",
+                        "java"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match (EM)",
+                        "Edit Similarity (ES)",
+                        "CodeBLEU"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "cross-file_snippet_selection": "The process for randomly selecting cross-file snippets is described as 'similar to gold-filled' but the exact selection criteria and how many snippets or tokens are chosen is not fully specified",
+                    "evaluation_metric_computation": "While metrics like EM, ES, and CodeBLEU are mentioned, the exact computation details (e.g., thresholds, aggregation method) are not explicitly defined",
+                    "figure_and_table_references": "References to figures (e.g., Figure 1\u20133) and table entries are made for performance comparison, yet the actual content and extraction details from these figures are missing"
+                },
+                "possible_modifications": {
+                    "mask_cross_file_details": [
+                        "Hide or abstract the specific criteria used for selecting the cross-file snippets to assess if the evaluation can implicitly determine an effective strategy"
+                    ],
+                    "introduce_additional_languages": [
+                        "Extend the experiment by adding additional programming languages beyond Python and Java to test robustness"
+                    ],
+                    "vary_token_allocation": [
+                        "Experiment with different token allocation values for the in-file context (e.g., varying the 1600 reserved tokens) and the total prompt size to examine their impact on performance"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Codex (code-davinci-002)",
+                    "RepoBench-P dataset",
+                    "In-file context extraction component (cropping to 60 preceding lines, reserving 1600 tokens)",
+                    "Cross-file context snippet retrieval component (using a 'gold-filled' random selection strategy)",
+                    "Prompt construction (combining in-file context, import statements, and cross-file snippets to reach 6400 tokens)",
+                    "Generation configuration (model parameters set with temperature 0.2, top_p 0.95, and 64 token output)",
+                    "Evaluation scripts (calculating Exact Match, Edit Similarity, and CodeBLEU)",
+                    "Tokenizer initialization for managing token limits",
+                    "Support for multiple programming languages (Python and Java)"
+                ],
+                "setup_steps": [
+                    "Load necessary libraries and set up the environment from the /workspace/inference_repobench_p.py script",
+                    "Initialize the tokenizer based on the selected model (Codex) per the provided setup",
+                    "Load and preprocess the RepoBench-P dataset, differentiating context types (in-file and cross-file)",
+                    "For baseline mode: Crop the in-file context to the last 60 lines, reserve 1600 tokens, and fill remaining prompt space up to 6400 tokens with in-file content only",
+                    "For cross-file mode: Crop the in-file context similarly and then append randomly selected cross-file snippets (ensuring the inclusion of the 'gold snippet') until reaching 6400 tokens",
+                    "Query the Codex model to generate code completions under both configurations using the specified generation parameters",
+                    "Save the generated completions along with ground truth labels to output files",
+                    "Run the evaluation script (/workspace/evaluate_completion.py) to compute Exact Match, Edit Similarity, and CodeBLEU metrics",
+                    "Repeat the entire process for both Python and Java test sets"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Prompt construction process",
+                        "description": "Integrating multiple components like import statements, in-file context, and cross-file snippets with strict token limitations adds complexity."
+                    },
+                    {
+                        "source": "Dataset preprocessing",
+                        "description": "The RepoBench-P dataset is categorized into various token range levels and requires handling of both in-file and cross-file contexts, introducing additional intricacy in setup."
+                    },
+                    {
+                        "source": "Model configuration and library dependencies",
+                        "description": "The use of quantized models and specific libraries for fast inference speeds may lead to discrepancies in results due to potential quantization effects."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Cross-file snippet selection: The description 'similar to gold-filled' lacks explicit criteria detailing how many snippets or tokens are chosen.",
+                    "Evaluation metric computation: Although metrics like Exact Match, Edit Similarity, and CodeBLEU are mentioned, the precise computation details (threshold values, aggregation methods) are not explicitly documented.",
+                    "Figure and table references: References to Figures 1\u20133 and specific table entries are made without detailed extraction of their content."
+                ],
+                "ambiguous_setup_steps": [
+                    "Processing of cross-file context: The random selection strategy for additional cross-file snippets is not fully specified, leaving ambiguity on the exact selection process.",
+                    "Evaluation procedures: The step for calculating metrics does not define how aggregated results are computed or what constitutes a correct match in ambiguous cases."
+                ],
+                "possible_modifications": {
+                    "mask_cross_file_details": [
+                        "Hide or abstract the specific criteria used for selecting cross-file snippets to assess if the evaluation can implicitly determine an effective strategy."
+                    ],
+                    "introduce_additional_languages": [
+                        "Extend the experiment by adding additional programming languages beyond Python and Java to further test robustness."
+                    ],
+                    "vary_token_allocation": [
+                        "Experiment with different token allocation strategies for the in-file context (e.g., varying the 1600 reserved tokens) and total prompt size to examine their impact on performance."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended tasks, enforce performance parity using a smaller model variant (e.g., require that a mini version of Codex achieve similar metrics) in order to simulate a stricter resource constraint."
+                    ],
+                    "time_constraints": [
+                        "Tighten the token allocation or prompt construction process (e.g., reduce the reserved 1600 tokens for in\u2010file context or lower the total prompt size) to increase the challenge in meeting performance targets."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random selection strategy for cross-file snippet retrieval",
+                "description": "In the cross-file configuration, additional code snippets are selected randomly (in a manner similar to the 'gold-filled' approach), which introduces inherent randomness into the prompt. This can lead to instability during generation as the randomly chosen snippets might vary greatly in relevance and quality, affecting the consistency of the Exact Match (EM), Edit Similarity (ES), and CodeBLEU scores.",
+                "impact": "Variability in performance metrics across runs, potential reduction in prediction accuracy, and inconsistent contextual support during code completion due to fluctuating cross-file snippet relevance.",
+                "possible_modifications": [
+                    "Perform multiple runs with different random seeds to average out the variability and better estimate the true performance.",
+                    "Refine the random snippet selection criteria to introduce a controlled level of randomness, making it less disruptive.",
+                    "Introduce systematic noise injection (like randomly dropping unimportant tokens) as a controlled experiment to quantify the effect of randomness."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Fixed token allocation and prompt construction decisions",
+                "description": "The experiment uses a fixed prompt structure\u2014reserving 1600 tokens (with last 60 lines) for in-file context and filling up to 6400 tokens total\u2014while appending the 'gold snippet' alongside other randomly selected cross-file snippets. These design decisions and the ambiguity in snippet selection criteria can introduce a systematic bias if, for instance, the cross-file content consistently carries a particular type of information. Such configuration choices might systematically affect the evaluation, resulting in better performance metrics not solely based on model capability but due to the prompt construction strategy.",
+                "impact": "Consistent over- or underestimation of performance across different programming languages and experimental setups, potentially skewing the evaluation outcomes and reducing the generalizability of the results.",
+                "possible_modifications": [
+                    "Re-run experiments using a clean, unaltered version of the dataset or varying the token allocation to assess the robustness of the prompt construction strategy.",
+                    "Establish alternative prompt construction methods (e.g., masking some cross-file snippet details) to compare and understand the extent of any systematic bias.",
+                    "Include additional languages or modify the token limits to probe the sensitivity of the performance metrics to these systematic design choices."
+                ]
+            }
+        },
+        {
+            "method": "Design an experiment comparing two cross-file retrieval strategies. In the baseline setting, implement a Random retrieval strategy by selecting cross-file snippets randomly until reaching the overall prompt size limit of 6400 tokens. In the alternative setting, use semantic retrieval based on UniXcoder: implement two variants, High-to-Low (UniXcoder-H2L) and Low-to-High (UniXcoder-L2H), to select snippets based on their relevance to the three preceding in-file lines. Both experiments will use an in-file context limited to 1600 tokens with a cropping limit of the 60 preceding lines, and any remaining space up to 6400 tokens will be filled by cross-file context. Run these experiments on both Python and Java datasets as per the RepoBench-P configuration (e.g., Python: 10,867 examples with an average of 24 candidates and 6,399 tokens in the IF subset; Java: 10,599 examples with an average of 26 candidates and 6,196 tokens in the IF subset, as detailed in Table 1). Use Codex (code-davinci-002) to complete the next line of code and evaluate performance using Exact Match, Edit Similarity, and CodeBLEU metrics. Where applicable, incorporate visual references to Figures 1-3 to illustrate the experimental setup and retrieval pipeline, and refer to data distribution insights from Table 1 to contextualize the candidate and token statistics.",
+            "expected_outcome": "It is expected that both UniXcoder variants will achieve improved performance compared to the random retrieval approach, as evidenced by higher EM, Edit Similarity, and CodeBLEU scores. This improvement would support the hypothesis that a relevance-based retrieval strategy, which leverages semantic similarity, enhances the effectiveness of next-line code completion. Additionally, improvements might be more pronounced in the Python dataset due to its localized function argument patterns, whereas Java's more complex class structures could present additional retrieval challenges.",
+            "subsection_source": "4.3 R EPOBENCH -P",
+            "no_answer": "After thoroughly examining the repository, I could not find any scripts that implement the experiment comparing UniXcoder-based retrieval methods (UniXcoder-H2L and UniXcoder-L2H) with random retrieval as described in the question. The repository contains code for the RepoBench benchmark, including scripts for running experiments (run.py) and evaluating results (eval.py) with metrics like EM, Edit Similarity, and CodeBLEU. However, there are no implementations of the specific semantic similarity retrieval methods using UniXcoder variants mentioned in the experiment question. The repository has code for different settings ('cross_file_first', 'cross_file_random', 'in_file'), but these don't correspond to the retrieval methods described in the experiment question.",
+            "question": "Will retrieval methods based on semantic similarity using UniXcoder variants (i.e., UniXcoder-H2L and UniXcoder-L2H) outperform random retrieval in the combined retrieval and completion pipeline across both Python and Java datasets, in terms of next-line prediction accuracy measured by EM, Edit Similarity, and CodeBLEU metrics?",
+            "design_complexity": {
+                "constant_variables": {
+                    "prompt_configuration": "Fixed in-file context of 1600 tokens with 60 lines cropping, remainder filled to reach a total prompt size of 6400 tokens",
+                    "llm": "Codex (code-davinci-002) used for next-line code completion",
+                    "completion_settings": "64 tokens generated per prediction with temperature 0.2 and top p 0.95"
+                },
+                "independent_variables": {
+                    "retrieval_method": [
+                        "Random retrieval",
+                        "UniXcoder-H2L",
+                        "UniXcoder-L2H"
+                    ],
+                    "dataset_type": [
+                        "Python",
+                        "Java"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match",
+                        "Edit Similarity",
+                        "CodeBLEU"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "retrieval_method_details": "The exact workings of the UniXcoder variants (High-to-Low vs Low-to-High) are not fully detailed, such as how relevance is computed or how the order is determined.",
+                    "candidate_selection": "It is not explicitly mentioned how candidates are filtered (e.g., thresholds or minimum candidate counts) besides filling the token limit.",
+                    "visual_references": "References to Figures 1-3 are included but no detailed descriptions are provided, potentially leaving ambiguity in interpreting the experimental setup."
+                },
+                "possible_modifications": {
+                    "mask_retrieval_details": [
+                        "Omit specific mechanism details of ranking in the question to test if the agent can deduce them from overall design.",
+                        "Introduce additional retrieval strategy variants, such as a lexical similarity based approach."
+                    ],
+                    "extend_candidate_selection": [
+                        "Explicitly add variables for candidate filtering thresholds or minimum candidate numbers.",
+                        "Define more granular conditions for snippet inclusion based on token statistics from Table 1."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "In-file context configuration: fixed 1600 token limit and cropping of the last 60 lines",
+                    "Cross-file retrieval strategies: Random retrieval, UniXcoder-H2L, UniXcoder-L2H",
+                    "Datasets: Python and Java datasets as per RepoBench-P (with specific candidate and token statistics from Table 1)",
+                    "Language model: Codex (code-davinci-002) for next-line code completion",
+                    "Evaluation metrics: Exact Match, Edit Similarity, and CodeBLEU",
+                    "Visual aids: References to Figures 1-3 to illustrate experimental setup and retrieval pipeline, and Table 1 for candidate/token statistics"
+                ],
+                "setup_steps": [
+                    "Configure the in-file context by setting a limit of 1600 tokens (and cropping the last 60 lines)",
+                    "Implement Random retrieval by randomly selecting cross-file snippets until reaching 6400 total tokens",
+                    "Implement semantic retrieval using UniXcoder with two variants (High-to-Low and Low-to-High) based on the semantic relevance to the three preceding in-file lines",
+                    "Allocate remaining prompt space (up to 6400 tokens) for the cross-file context after setting the in-file context",
+                    "Run the experiments on both Python and Java datasets following the RepoBench-P configuration (using dataset-specific candidate counts and token limits)",
+                    "Perform next-line predictions using Codex (code-davinci-002) with identical completion settings",
+                    "Collect results on performance metrics (Exact Match, Edit Similarity, and CodeBLEU)",
+                    "Include visual references to Figures 1-3 and contextualize candidate statistics using insights from Table 1 during analysis"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Candidate snippet management",
+                        "description": "Handling the retrieval of a variable number of snippets (up to token limits) from different parts of code repositories introduces complexity in maintaining a consistent prompt structure."
+                    },
+                    {
+                        "source": "Dataset-specific configurations",
+                        "description": "Different average candidate counts and token statistics between Python and Java datasets require careful tuning in the experimental pipeline."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Retrieval method details: The exact mechanism for ranking and ordering relevant snippets in the UniXcoder-H2L and UniXcoder-L2H variants is not fully detailed (e.g., how semantic similarity scores are computed or thresholds applied)",
+                    "Candidate selection: There is ambiguity regarding how candidates are filtered or prioritized when multiple snippets are available beyond just filling the token limit"
+                ],
+                "ambiguous_setup_steps": [
+                    "Implementation of the semantic retrieval variants: The steps for integrating UniXcoder into the retrieval process (such as how relevance is computed from only the three preceding in-file lines) are unclear",
+                    "Handling of token overflow and snippet inclusion: It is not specified how to manage cases where candidate snippets exceed the token capacity or require additional filtering",
+                    "Visual references: Although Figures 1-3 are mentioned for illustrating the setup, there are no detailed descriptions provided, leaving their interpretation ambiguous"
+                ],
+                "possible_modifications": {
+                    "mask_retrieval_details": [
+                        "Omit specific mechanism details of the ranking process using UniXcoder so that participants need to deduce or propose their own methods for computing semantic similarity",
+                        "Remove explicit ordering instructions for the High-to-Low versus Low-to-High variants to encourage exploration of ranking strategies"
+                    ],
+                    "extend_candidate_selection": [
+                        "Introduce explicit filtering thresholds or minimum candidate requirements based on token counts to clarify how candidates are selected",
+                        "Define more granular conditions or steps for snippet inclusion when the overall prompt token limit is near the threshold, possibly with reference to detailed statistics from Table 1"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Consider restricting LLM API usage by enforcing a stricter token budget, for example reducing the number of tokens generated per prediction or using a quantized/smaller version of Codex (e.g., Codex-mini instead of code-davinci-002) while trying to maintain performance.",
+                        "Limit the candidate snippet pool by enforcing more stringent token thresholds for snippet inclusion from the cross-file context."
+                    ],
+                    "time_constraints": [
+                        "Impose a capped time for executing the retrieval and completion pipeline for each experiment to simulate a time-constrained setting, which may further expose efficiency differences between retrieval strategies."
+                    ],
+                    "money_constraints": [
+                        "Enforce a budget cap on API calls (e.g., limiting the number of queries or using a monetarily cost-effective alternative for semantic retrieval calculations) to simulate financial limitations."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random selection in cross-file retrieval",
+                "description": "When using the random retrieval strategy, cross-file snippets are selected without considering their relevance. This introduces random variability in the prompt composition which can affect gradient updates during training and lead to instability in prediction accuracy. The randomness may cause inconsistent performance metrics such as EM, Edit Similarity, and CodeBLEU across different experimental runs.",
+                "impact": "This variability may lead to inconsistent retrieval quality, making it difficult to compare results between runs and potentially obscuring the true benefit of semantic retrieval over random methods. The unpredictability in the snippet quality or quantity (up to the 6400 token limit) may bias the evaluation metrics when compared with controlled semantic methods.",
+                "possible_modifications": [
+                    "Implement controlled random seeding to reduce run-to-run variability and average results over multiple runs.",
+                    "Simulate randomness by intentionally dropping a defined fraction of tokens, as suggested in related literature, to examine the method's sensitivity and robustness."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguities in semantic retrieval method implementation",
+                "description": "The UniXcoder-based retrieval variants (UniXcoder-H2L and UniXcoder-L2H) have unspecified ranking details such as how relevance scores are computed from the three preceding in-file lines and how candidates are filtered. This lack of clarity may introduce systematic bias in snippet selection. Additionally, differences in dataset characteristics (e.g., candidate counts and token statistics from Table 1 for Python versus Java) can compound this uncertainty.",
+                "impact": "A systematic error in the retrieval process can consistently skew the performance of the UniXcoder-based methods, either overstating or understating their effectiveness compared to random retrieval. This persistent bias affects the reliability of the comparative outcome, leading to potentially flawed conclusions about the overall performance advantage of a semantic similarity-based approach.",
+                "possible_modifications": [
+                    "Explicitly define the ranking algorithm and candidate filtering thresholds (e.g., setting a minimum candidate count or token limit per snippet) to control for systematic biases.",
+                    "Perform a controlled ablation study by modifying the UniXcoder retrieval details (such as alternating between High-to-Low and Low-to-High order) to assess the robustness of the semantic retrieval mechanism.",
+                    "Introduce a clean baseline or alternative retrieval strategy (e.g., lexical similarity based) to better contextualize the impact of the semantic method and isolate systematic issues."
+                ]
+            }
+        },
+        {
+            "method": "Set up an experiment using the RepoBench-P task where the cross-file context is composed of a gold snippet along with other randomly fetched snippets to fill the 6400-token capacity. Create two configurations: one where the gold snippet is placed at the beginning of the cross-file context (Gold-Filled-Head) and another where it is placed at the end (Gold-Filled-Tail). Use a fixed in-file context as described (1600 tokens with a limit of 60 preceding lines). Use Codex (code-davinci-002) for next-line prediction across both Python and Java datasets. Evaluate the performance of both configurations using Exact Match, Edit Similarity, and CodeBLEU metrics and analyze any statistically significant differences.",
+            "expected_outcome": "The expected outcome is that positioning the gold snippet at the head (i.e., closer to the in-file context and the prediction point) will result in better code completion performance compared to positioning it at the tail. This supports the claim that the proximity of relevant code snippets in the context improves the autoregressive prediction accuracy.",
+            "subsection_source": "4.3 R EPOBENCH -P",
+            "source": [
+                "/workspace/inference_repobench_p.py"
+            ],
+            "usage_instructions": "Execute the script with the following commands to run the experiment:\n\n1. For the Gold-Filled-Head configuration (gold snippet at the beginning):\n   ```\n   python inference_repobench_p.py --language python --mode gold-filled-head --model_name codex\n   python inference_repobench_p.py --language java --mode gold-filled-head --model_name codex\n   ```\n\n2. For the Gold-Filled-Tail configuration (gold snippet at the end):\n   ```\n   python inference_repobench_p.py --language python --mode gold-filled-tail --model_name codex\n   python inference_repobench_p.py --language java --mode gold-filled-tail --model_name codex\n   ```\n\n3. After running both configurations, evaluate the results using:\n   ```\n   python evaluate_completion.py --model codex/gold-filled-head\n   python evaluate_completion.py --model codex/gold-filled-tail\n   ```\n\nThe script will automatically handle the RepoBench-P task, compose the cross-file context with the gold snippet at the head or tail position, use Codex (code-davinci-002) for next-line prediction, and evaluate using Exact Match, Edit Similarity, and CodeBLEU metrics.",
+            "requirements": [
+                "Step 1: Import necessary libraries (argparse, os, json, tqdm, etc.) (/workspace/inference_repobench_p.py:1-10)",
+                "Step 2: Define argument parser to handle command-line arguments for language, mode, and model_name (/workspace/inference_repobench_p.py:12-20)",
+                "Step 3: Load the RepoBench-P dataset for the specified language (/workspace/inference_repobench_p.py:22-30)",
+                "Step 4: Set up the model (Codex/code-davinci-002) with appropriate parameters (/workspace/inference_repobench_p.py:32-40)",
+                "Step 5: Create a function to construct prompts with gold snippets at head or tail position based on the mode (/workspace/inference_repobench_p.py:42-70)",
+                "Step 6: Process each example in the dataset, constructing the cross-file context with gold snippets (/workspace/inference_repobench_p.py:72-90)",
+                "Step 7: Generate next-line predictions using the model (/workspace/inference_repobench_p.py:92-100)",
+                "Step 8: Extract the first non-comment line from the generated output (/workspace/inference_repobench_p.py:102-110)",
+                "Step 9: Save the predictions along with ground truth in the appropriate output directory structure (/workspace/inference_repobench_p.py:112-120)",
+                "Final Step: Execute the main function when the script is run directly (/workspace/inference_repobench_p.py:122-125)"
+            ],
+            "agent_instructions": "Create a script that performs next-line prediction on the RepoBench-P dataset using the Codex model (code-davinci-002). The script should:\n\n1. Accept command-line arguments for:\n   - language (python or java)\n   - mode (gold-filled-head or gold-filled-tail)\n   - model_name (codex)\n\n2. Load the RepoBench-P dataset for the specified language.\n\n3. Implement two different prompt construction strategies:\n   - gold-filled-head: Place the gold snippet (correct code) at the beginning of the context\n   - gold-filled-tail: Place the gold snippet (correct code) at the end of the context\n\n4. For each example in the dataset:\n   - Construct the cross-file context with the gold snippet positioned according to the specified mode\n   - Generate next-line predictions using the Codex model\n   - Extract the first non-comment line from the generated output\n   - Save the predictions along with ground truth for later evaluation\n\n5. Organize the output in a directory structure that can be used by the evaluation script, which will calculate Exact Match, Edit Similarity, and CodeBLEU metrics.\n\nThe script should handle both Python and Java code appropriately, including language-specific comment syntax.",
+            "masked_source": [
+                "/workspace/inference_repobench_p.py"
+            ],
+            "question": "Does the ordering of the retrieved snippets in the cross-file context (placing the gold snippet at the head versus the tail) affect the code completion performance?",
+            "design_complexity": {
+                "constant_variables": {
+                    "in_file_context": "Fixed context of 1600 tokens with a cropping limit of 60 preceding lines",
+                    "model": "Codex (code-davinci-002)",
+                    "cross_file_token_capacity": "6400 tokens",
+                    "evaluation_metrics": [
+                        "Exact Match",
+                        "Edit Similarity",
+                        "CodeBLEU"
+                    ]
+                },
+                "independent_variables": {
+                    "snippet_order": [
+                        "gold-filled-head",
+                        "gold-filled-tail"
+                    ],
+                    "language": [
+                        "python",
+                        "java"
+                    ]
+                },
+                "dependent_variables": {
+                    "completion_performance": [
+                        "Exact Match score",
+                        "Edit Similarity score",
+                        "CodeBLEU score"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "gold_snippet_selection": "It is not explicitly detailed how the gold snippet is selected or defined in the context of the overall cross-file snippets retrieval.",
+                    "random_snippet_fetching": "The method for selecting the additional random snippets to fill the 6400-token capacity is not thoroughly described, leaving ambiguity in reproducibility.",
+                    "statistical_significance_criteria": "The criteria or threshold for determining what constitutes a 'statistically significant difference' between configurations is not specified."
+                },
+                "possible_modifications": {
+                    "modification_gold_snippet": [
+                        "Specify the exact criteria or source for the gold snippet selection.",
+                        "Include additional configuration options such as placing the gold snippet in a middle position."
+                    ],
+                    "modification_random_snippets": [
+                        "Define the random fetching mechanism in detail or provide alternative selection strategies."
+                    ],
+                    "modification_statistical_analysis": [
+                        "Include explicit thresholds and methods for evaluating statistical significance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "RepoBench-P dataset (for both Python and Java)",
+                    "Codex model (code-davinci-002)",
+                    "In-file context generator (fixed 1600 tokens with 60 preceding lines)",
+                    "Cross-file context constructor (combining gold snippet and random snippets up to 6400 tokens)",
+                    "Prompt construction strategies (gold-filled-head and gold-filled-tail configurations)",
+                    "Evaluation metrics (Exact Match, Edit Similarity, CodeBLEU)",
+                    "Command-line interface and execution scripts"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries (argparse, os, json, tqdm, etc.)",
+                    "Define and parse command-line arguments (language, mode, model_name)",
+                    "Load the RepoBench-P dataset based on the specified language",
+                    "Set up the Codex (code-davinci-002) model with appropriate parameters",
+                    "Construct the in-file context with a fixed 1600-token limit and cropping of 60 preceding lines",
+                    "Build the cross-file context by integrating the gold snippet with randomly selected snippets to fill up to 6400 tokens",
+                    "Implement two prompt construction strategies: one with the gold snippet at the head and another at the tail",
+                    "Iterate over each example to generate next-line predictions using the Codex model",
+                    "Extract the first non-comment line from the generated output",
+                    "Save predictions along with ground truth in an organized output structure",
+                    "Execute an evaluation script to calculate Exact Match, Edit Similarity, and CodeBLEU metrics"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Random snippet fetching mechanism",
+                        "description": "The process for selecting additional random snippets to fill the token capacity is not fully detailed, which could introduce variability in results."
+                    },
+                    {
+                        "source": "Language-specific handling",
+                        "description": "Supporting both Python and Java may require additional adjustments for language-specific syntax, especially for comment delimiters and code formatting."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Gold snippet selection: The criteria or source for selecting the gold snippet is not explicitly detailed.",
+                    "Random snippet fetching: The exact mechanism for retrieving random snippets to complete the cross-file context is unclear."
+                ],
+                "ambiguous_setup_steps": [
+                    "Construction of the cross-file context: The ordering and integration of the gold snippet with random snippets may encounter edge cases that are not fully specified.",
+                    "Statistical significance analysis: The criteria or thresholds for judging a 'statistically significant difference' between configurations are not provided."
+                ],
+                "possible_modifications": {
+                    "modification_gold_snippet": [
+                        "Specify the exact criteria or algorithm for selecting the gold snippet from the repository.",
+                        "Include additional configuration options, such as positioning the gold snippet in the middle, to explore its impact."
+                    ],
+                    "modification_random_snippets": [
+                        "Detail the method for fetching random snippets, possibly including options for alternative selection strategies.",
+                        "Consider adding parameters for reproducibility, such as fixed random seeds."
+                    ],
+                    "modification_statistical_analysis": [
+                        "Define explicit thresholds and statistical tests for evaluating significance.",
+                        "Provide guidelines or a standard procedure for interpreting statistical results."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For an extended task, one could restrict the token budget further (e.g., decrease the cross-file context capacity from 6400 tokens to a lower value) to challenge the model's performance with less context.",
+                        "Alternatively, enforce model resource constraints by requiring performance parity using a smaller model variant (e.g., a Codex-mini instead of the full code-davinci-002) to simulate limited resource availability."
+                    ],
+                    "time_constraints": [
+                        "One possible extension is to reduce the allowed runtime by limiting the number of next-line predictions (for example, generating fewer tokens per prediction) so that any performance gap becomes more pronounced under time pressure."
+                    ],
+                    "money_constraints": [
+                        "An extended modification could simulate a limited budget scenario by restricting access to high-cost API endpoints, thereby necessitating the use of more economical models or inference methods."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random snippet fetching mechanism",
+                "description": "In the experiment, a portion of the cross-file context is filled with randomly fetched snippets to reach the 6400-token limit. Since these snippets are selected without relevance considerations, the random order and content variability introduce randomness into the context constructions. This randomness can affect the model's gradient updates and the consistency of predictions across different experimental runs.",
+                "impact": "This uncertainty can lead to inconsistent performance measurements (Exact Match, Edit Similarity, CodeBLEU) since different random selections may provide varying amounts of useful contextual information. Thus, the model's prediction accuracy may fluctuate due to the unpredictable quality of the random snippets.",
+                "possible_modifications": [
+                    "Define and use a fixed random seed during snippet selection to ensure reproducibility.",
+                    "Increase the number of experiment repetitions to average out the random noise effects.",
+                    "Consider a controlled selection strategy, such as using a deterministic retrieval method with a fallback to random selection only if necessary."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Gold snippet selection and placement",
+                "description": "The criteria for gold snippet selection and its placement within the cross-file context (head versus tail) are not fully specified, introducing a potential systematic bias. This ambiguity may skew the experimental outcomes, as the proximity of a known relevant snippet (gold snippet) to the in-file context could consistently enhance completion performance. As a result, any performance gain observed might systematically be tied to the snippet\u2019s placement rather than the model's inherent capability.",
+                "impact": "A systematic bias may result in overestimating the model\u2019s performance when the gold snippet is placed at the head, while the tail configuration may systematically underperform. Without controlling this variable, the experimental results could be misinterpreted, attributing gains or losses to the snippet order rather than the model's true prediction abilities.",
+                "possible_modifications": [
+                    "Explicitly define the gold snippet selection process to eliminate ambiguity and ensure the snippet is representative of relevant code.",
+                    "Consider testing additional placements (e.g., a middle position) to further investigate the impact of snippet ordering.",
+                    "Establish clear statistical significance criteria and thresholds to differentiate between systematic biases and random fluctuations in performance."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How does the performance of a small language model (e.g., GPT-2) compare to a larger code-specialized model (e.g., CodeLlama-7b) on the RepoBench Python dataset for the 'cross_file_first' setting?",
+            "method": "Use the provided run.py script to run both models on the RepoBench Python dataset with the 'cross_file_first' setting, and then use the eval.py script to compare their performance using the provided metrics.",
+            "expected_outcome": "A comparison of performance metrics (Exact Match, Edit Similarity, and CodeBLEU scores) between the two models, showing how model size and specialization affect performance on repository-level code completion tasks.",
+            "source": [
+                "/workspace/run.py",
+                "/workspace/eval.py",
+                "/workspace/data/utils.py"
+            ],
+            "usage_instructions": "1. Run the first model (GPT-2) on the RepoBench Python dataset using run.py with the 'cross_file_first' setting:\n   - Load the dataset from HuggingFace using the dataset_name parameter\n   - Filter the dataset by date range and level\n   - Load the model and tokenizer\n   - For each data point, construct a prompt using the construct_prompt function\n   - Generate completions using the model\n   - Save the results to a file\n\n2. Run the second model (CodeLlama-7b) using the same procedure but with a different model_name parameter\n\n3. Evaluate both models using eval.py:\n   - Load the generated completions\n   - Calculate Exact Match (EM), Edit Similarity (ES), and CodeBLEU (CB) scores\n   - Compare the performance of both models\n\n4. Analyze the results to determine how model size and specialization affect performance on repository-level code completion tasks",
+            "requirements": [
+                "Step 1: Load the RepoBench Python dataset from HuggingFace (/workspace/run.py:147-147)",
+                "Step 2: Filter the dataset by date range and specified levels (/workspace/run.py:150-153)",
+                "Step 3: Load the first model (GPT-2) and its tokenizer (/workspace/run.py:156-162)",
+                "Step 4: Create a directory to save the model's results (/workspace/run.py:164-165)",
+                "Step 5: For each data point in the dataset, construct a prompt that includes repository context and code snippets (/workspace/data/utils.py:3-59, /workspace/run.py:170-170)",
+                "Step 6: Generate code completions using the model with specified parameters (temperature, top_p, max_new_tokens) (/workspace/run.py:172-173)",
+                "Step 7: Process the generated completions to extract the first non-comment line (/workspace/run.py:175-177)",
+                "Step 8: Save the results (predictions and ground truth) to a file (/workspace/run.py:179-180)",
+                "Step 9: Repeat steps 3-8 with the second model (CodeLlama-7b) (/workspace/run.py:131-180)",
+                "Step 10: Load the generated completions for both models (/workspace/eval.py:23-33)",
+                "Step 11: Calculate Exact Match (EM) scores for both models (/workspace/eval.py:43-43, /workspace/evaluation/metrics.py:4-27)",
+                "Step 12: Calculate Edit Similarity (ES) scores for both models (/workspace/eval.py:44-44, /workspace/evaluation/metrics.py:31-53)",
+                "Step 13: Calculate CodeBLEU (CB) scores for both models (/workspace/eval.py:45-45, /workspace/evaluation/metrics.py:96-129)",
+                "Step 14: Calculate weighted averages of the metrics across all data points (/workspace/eval.py:58-64)",
+                "Final Step: Compare the performance metrics between the two models to determine how model size and specialization affect performance on repository-level code completion tasks (/workspace/eval.py:53-64)"
+            ],
+            "agent_instructions": "Your task is to compare the performance of a small language model (GPT-2) to a larger code-specialized model (CodeLlama-7b) on the RepoBench Python dataset for the 'cross_file_first' setting. Follow these steps:\n\n1. Create a script to run language models on the RepoBench Python dataset:\n   - Load the RepoBench Python dataset from HuggingFace\n   - Filter the dataset by date range and levels (focus on the 'cross_file_first' setting)\n   - For each model (GPT-2 and CodeLlama-7b):\n     - Load the model and its tokenizer\n     - For each data point, construct a prompt that includes repository context and code snippets\n     - Generate code completions using the model with appropriate parameters (temperature, top_p, max tokens)\n     - Process the generated completions to extract meaningful code\n     - Save the results (predictions and ground truth) to files\n\n2. Create an evaluation script to compare the models:\n   - Load the generated completions for both models\n   - Implement and calculate the following metrics:\n     - Exact Match (EM): percentage of predictions that exactly match ground truth\n     - Edit Similarity (ES): measure of string similarity between predictions and ground truth\n     - CodeBLEU (CB): specialized metric for code quality evaluation\n   - Calculate weighted averages of the metrics across all data points\n   - Output a comparison of the performance metrics between the two models\n\n3. Analyze the results to determine how model size and specialization affect performance on repository-level code completion tasks.\n\nThe key components you'll need to implement include:\n- A prompt construction function that handles repository context and code snippets\n- Model inference with appropriate parameters\n- Evaluation metrics implementation (Exact Match, Edit Similarity, and CodeBLEU)\n- Results processing and comparison logic\n\nYou'll need to use libraries like transformers, datasets, and potentially specialized code evaluation libraries.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "RepoBench Python dataset (with fixed date range filtering and level categorization)",
+                    "evaluation_procedure": "The use of provided scripts (run.py and eval.py) along with fixed prompt construction routines (via construct_prompt and utils functions)",
+                    "execution_parameters": "Constants such as temperature, top_p, and the fixed token allocation for prompts"
+                },
+                "independent_variables": {
+                    "llm_model": [
+                        "GPT-2",
+                        "CodeLlama-7b"
+                    ],
+                    "prompt_setting": [
+                        "cross_file_first"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match (EM)",
+                        "Edit Similarity (ES)",
+                        "CodeBLEU (CB)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "llm_model": "The exact versions or configurations of GPT-2 and CodeLlama-7b are not explicitly detailed, which might affect replication.",
+                    "prompt_setting": "The 'cross_file_first' setting is mentioned without a detailed definition of how cross-file context is selected or constructed relative to other options (e.g., gold-only vs gold-filled).",
+                    "dataset_filtering": "The filtering criteria (date range and levels) for the dataset are described in steps but might be interpreted differently if not strictly defined."
+                },
+                "possible_modifications": {
+                    "modification_model_versions": [
+                        "Include explicit model version numbers, configurations, or additional variants (e.g., a mid-sized model) to broaden the comparison."
+                    ],
+                    "modification_prompt_strategies": [
+                        "Introduce additional prompt settings such as 'gold-only' or 'gold-filled' to assess the impact of different cross-file context retrieval methods."
+                    ],
+                    "modification_dataset_filters": [
+                        "Vary the dataset filtering criteria (like different date ranges or level settings) to examine if performance trends hold under alternative conditions."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "RepoBench Python dataset from HuggingFace",
+                    "run.py script for model execution",
+                    "eval.py script for evaluation",
+                    "data/utils.py for prompt construction",
+                    "Two language models: GPT-2 and CodeLlama-7b",
+                    "Libraries such as transformers and datasets",
+                    "Evaluation metrics implementations (Exact Match, Edit Similarity, CodeBLEU)"
+                ],
+                "setup_steps": [
+                    "Load the RepoBench Python dataset using run.py, applying date range filtering and level filtering",
+                    "Load the first model (GPT-2) along with its tokenizer",
+                    "Create a directory to save the model's results",
+                    "For each data point in the dataset, construct a prompt using the construct_prompt function from data/utils.py that combines repository context and code snippets",
+                    "Generate code completions using the specified inference parameters (temperature, top_p, max tokens)",
+                    "Process the generated completions to extract meaningful code (e.g., first non-comment line)",
+                    "Save the predictions and ground truth to files",
+                    "Repeat the process with the second model (CodeLlama-7b) using the corresponding model_name parameter",
+                    "Load the generated completions for both models in eval.py",
+                    "Calculate Exact Match, Edit Similarity, and CodeBLEU scores for each model",
+                    "Compute weighted averages of the metrics across all data points",
+                    "Compare performance metrics between the two models to assess the impact of model size and code specialization"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Prompt Construction",
+                        "description": "Multiple context sources (in-file context including import statements and cross-file context) must be combined. This involves selecting which lines to include and handling token limits, especially under the 'cross_file_first' setting."
+                    },
+                    {
+                        "source": "Dataset Filtering",
+                        "description": "Filtering by date range and specific token level settings introduces further complexity because the exact criteria might influence the results."
+                    },
+                    {
+                        "source": "Model Configuration",
+                        "description": "The need to manage different configurations and inference parameters for GPT-2 versus CodeLlama-7b adds complexity in ensuring fair and equivalent comparisons."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model configurations: The exact versions or configurations for GPT-2 and CodeLlama-7b are not explicitly detailed, which may affect replication.",
+                    "Prompt construction details: While functions like construct_prompt are mentioned, the detailed implementation of how the cross_file_first setting selects and integrates cross-file context (e.g., whether to use gold-only or gold-filled strategies) is unclear."
+                ],
+                "ambiguous_setup_steps": [
+                    "Dataset filtering criteria: The instructions state filtering by date range and levels, but the precise boundaries and token limits might be interpreted differently.",
+                    "Processing of generated completions: The extraction of the 'first non-comment line' could be ambiguous if the prompt structure varies across data points."
+                ],
+                "possible_modifications": {
+                    "modification_model_versions": [
+                        "Include explicit model version numbers or configurations for GPT-2 and CodeLlama-7b to remove uncertainties related to model performance."
+                    ],
+                    "modification_prompt_strategies": [
+                        "Define and document the 'cross_file_first' setting more explicitly, such as clarifying whether to use a gold-only or gold-filled strategy for cross-file context retrieval."
+                    ],
+                    "modification_dataset_filters": [
+                        "Provide detailed filtering criteria (e.g., exact date range boundaries and token count thresholds) to avoid varying interpretations."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random sampling in model generation and prompt retrieval",
+                "description": "Random uncertainty arises from the inherent variability in generating code completions using sampling parameters (temperature, top_p) along with elements of randomness in prompt construction (e.g., the random selection of cross-file context snippets when token limits are reached). Such randomness can cause fluctuations in the Exact Match, Edit Similarity, and CodeBLEU scores across different runs.",
+                "impact": "This uncertainty leads to variability in the evaluation metrics, making it difficult to discern if performance differences are due to the intrinsic capabilities of GPT-2 versus CodeLlama-7b or merely due to random fluctuations in the output generation process.",
+                "possible_modifications": [
+                    "Control and fix the random seed for sampling to reduce variability.",
+                    "Perform multiple runs and average metrics to mitigate the impact of randomness.",
+                    "Avoid methods that introduce additional random token drops (e.g., avoid dropping unimportant tokens at random) to ensure consistent gradient updates and output generation.",
+                    "Reassess the 'cross_file_first' prompt construction to minimize random snippet inclusion."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguities in dataset filtering, prompt construction, and model configuration",
+                "description": "Systematic uncertainty originates from the ambiguities in defining the 'cross_file_first' setting, inconsistent dataset filtering criteria (date range, level filtering), and unspecified configurations for both GPT-2 and CodeLlama-7b. These factors may introduce a consistent bias in how context is retrieved and how the models are evaluated, potentially skewing the performance comparison.",
+                "impact": "Consistent biases in prompt construction and dataset selection may favor one model over the other, leading to an inaccurate assessment of their relative performance. For example, a particular way of integrating cross-file context could systematically benefit the larger CodeLlama-7b model due to its code specialization.",
+                "possible_modifications": [
+                    "Clearly define the 'cross_file_first' setting, specifying whether a gold-only or gold-filled strategy is used for cross-file context.",
+                    "Establish and document exact dataset filtering criteria (e.g., precise date ranges and token thresholds) to ensure consistency.",
+                    "Specify explicit model versions and their respective configurations to eliminate ambiguity in performance replication.",
+                    "Consider alternative prompt strategies (e.g., 'gold-only' vs 'gold-filled') to assess the sensitivity of the models to systematic biases in prompt construction."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How does the performance of a code completion model vary across different prompt lengths (2k, 4k, 8k tokens) in the RepoBench dataset?",
+            "method": "Use the run.py script to evaluate a model on different levels of the RepoBench dataset, corresponding to different prompt lengths, and compare the performance across these levels.",
+            "expected_outcome": "A comparison of performance metrics (Exact Match, Edit Similarity, and CodeBLEU scores) across different prompt lengths, showing how the model's ability to leverage context changes with increasing context length.",
+            "source": [
+                "/workspace/run.py",
+                "/workspace/eval.py",
+                "/workspace/data/utils.py"
+            ],
+            "usage_instructions": "1. Run the model on the RepoBench dataset with the '2k' level:\n   - Use run.py with the levels parameter set to ['2k']\n   - Specify a model using the model_name parameter\n   - Set the max_token_nums parameter appropriately for the model\n   - Generate completions and save the results\n\n2. Repeat the process for the '4k' and '8k' levels, keeping all other parameters the same\n\n3. Evaluate the performance for each level using eval.py:\n   - Calculate Exact Match (EM), Edit Similarity (ES), and CodeBLEU (CB) scores for each level\n\n4. Compare the performance across different levels to analyze how the model's ability to leverage context changes with increasing context length",
+            "requirements": [
+                "Step 1: Load the RepoBench dataset from Hugging Face (/workspace/run.py:147-147)",
+                "Step 2: Filter the dataset by specified levels (2k, 4k, 8k) (/workspace/run.py:153-153)",
+                "Step 3: Load the model and tokenizer from Hugging Face (/workspace/run.py:156-162)",
+                "Step 4: For each data point in the dataset, construct a prompt by combining cross-file and in-file context, respecting token length constraints (/workspace/data/utils.py:3-59)",
+                "Step 5: Generate completions using the model with specified parameters (temperature, top_p, max_new_tokens) (/workspace/run.py:173-173)",
+                "Step 6: Process the model outputs to extract the first non-comment line of code (/workspace/run.py:176-177)",
+                "Step 7: Save the results (predictions and ground truth) to a file for each dataset level (/workspace/run.py:179-180)",
+                "Step 8: Calculate evaluation metrics (Exact Match, Edit Similarity, and CodeBLEU) for the generated completions (/workspace/eval.py:43-45)",
+                "Step 9: Report performance metrics for each level and calculate weighted averages across all levels (/workspace/eval.py:53-64)",
+                "Final Step: Compare the performance metrics across different prompt lengths (2k, 4k, 8k) to analyze how the model's ability to leverage context changes with increasing context length (/workspace/eval.py:53-64)"
+            ],
+            "agent_instructions": "Your task is to create a system that evaluates how a code completion model's performance varies across different prompt lengths (2k, 4k, 8k tokens) in the RepoBench dataset. This will help understand how effectively the model leverages increasing context lengths.\n\nYou need to:\n\n1. Create a script to run a code completion model on the RepoBench dataset:\n   - Load the RepoBench Python dataset from Hugging Face\n   - Filter the dataset to include only specific levels (2k, 4k, 8k) that represent different prompt lengths\n   - Load a pretrained code completion model and its tokenizer\n   - For each data point, construct a prompt that combines repository context and file context\n   - Ensure prompts respect the token length constraints of the model\n   - Generate completions using the model\n   - Extract the first non-comment line from each completion\n   - Save the results (predictions and ground truth) for each level\n\n2. Create an evaluation script that:\n   - Calculates three key metrics for each level:\n     * Exact Match (EM): percentage of predictions that exactly match the ground truth\n     * Edit Similarity (ES): measure of how similar the predictions are to the ground truth\n     * CodeBLEU (CB): code-specific metric that evaluates the quality of generated code\n   - Reports the metrics for each level\n   - Calculates weighted averages across all levels\n\n3. Create a utility module that handles prompt construction:\n   - Combine cross-file context (information from other files in the repository) and in-file context\n   - Handle token length constraints by truncating if necessary\n\nThe system should allow you to run the model separately on each level (2k, 4k, 8k) and then compare the performance metrics to analyze how the model's ability to leverage context changes with increasing context length.",
+            "design_complexity": {
+                "constant_variables": {
+                    "model_parameters": "Settings such as temperature (0.2), top_p (0.95), max_new_tokens (64 tokens) remain fixed across experiments",
+                    "dataset": "The RepoBench dataset is used consistently",
+                    "processing_pipeline": "The steps for loading the dataset, filtering by level, constructing the prompt (including combining in-file and cross-file context), generating completions, and extracting the first non-comment line are kept constant"
+                },
+                "independent_variables": {
+                    "prompt_length": [
+                        "2k",
+                        "4k",
+                        "8k"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match (EM)",
+                        "Edit Similarity (ES)",
+                        "CodeBLEU (CB)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_name": "It is not explicitly stated if the evaluation should consider variations among different models or only one model specified by the user",
+                    "prompt_construction_details": "While the process of combining cross-file and in-file contexts is described, the exact strategy (e.g., ordering, truncation methods) may be subject to interpretation",
+                    "token_length_constraints": "The precise handling of unused tokens and the exact mechanism for ensuring that prompts fit within the token limits are not fully detailed"
+                },
+                "possible_modifications": {
+                    "model_comparison": [
+                        "Introduce a variable for model_name with additional values (e.g., different versions of a model) to compare across models"
+                    ],
+                    "prompt_construction": [
+                        "Mask or vary parts of the prompt construction process such as the treatment of import statements or the mechanism for snippet deduplication",
+                        "Introduce new variables that adjust how cross-file contexts are selected or filled (e.g., different retrieval strategies)"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "RepoBench dataset (including different levels: 2k, 4k, 8k tokens)",
+                    "run.py script (handles dataset loading, filtering, prompt construction, generation, and saving results)",
+                    "eval.py script (handles metric computation: Exact Match, Edit Similarity, CodeBLEU)",
+                    "data/utils.py module (manages prompt construction combining in-file and cross-file contexts, and enforces token length constraints)",
+                    "Pre-trained code completion model and its tokenizer (loaded from Hugging Face)",
+                    "Prompt components (in-file context including import statements and preceding code lines; cross-file context from additional repository snippets)"
+                ],
+                "setup_steps": [
+                    "Load the RepoBench dataset from Hugging Face using run.py",
+                    "Filter the dataset by specified levels (2k, 4k, and 8k) as indicated in run.py",
+                    "Load the model and tokenizer from Hugging Face, ensuring constant parameters like temperature, top_p, and max_new_tokens are maintained",
+                    "Construct prompts for each data point by combining in-file context and cross-file context, while respecting token length constraints (using data/utils.py)",
+                    "Generate code completions using the model with specified generation parameters (configured in run.py)",
+                    "Extract the first non-comment line from each generated completion",
+                    "Save the predictions and ground truth for each level to files",
+                    "Compute performance metrics (Exact Match, Edit Similarity, CodeBLEU) for each prompt length using eval.py",
+                    "Compare performance metrics across different prompt lengths to evaluate how context affects model performance"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Token length and prompt construction",
+                        "description": "Handling token limits by truncating or filling unused tokens with cross-file context adds complexity, especially given the different cropping limits and the need to combine multiple contexts."
+                    },
+                    {
+                        "source": "Deduplication and snippet retrieval",
+                        "description": "The process of deduplicating dataset snippets and determining retrieval strategies (e.g., Gold-Only, Gold-Filled) introduces additional intricacies."
+                    },
+                    {
+                        "source": "Consistent evaluation framework",
+                        "description": "Maintaining constant variables (like model parameters and processing pipelines) while systematically varying prompt lengths requires careful integration across multiple scripts."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "model_name specification: Unclear if the experiment should test multiple models or only one user-specified model",
+                    "Prompt construction strategy: While the combination of cross-file and in-file contexts is described, the exact ordering and truncation methods are not fully detailed"
+                ],
+                "ambiguous_setup_steps": [
+                    "Token length constraints enforcement: The precise method for filling unused tokens from the in-file context with cross-file context is not explicitly specified",
+                    "Data filtering by levels: The process of mapping token ranges (2k, 4k, 8k) to actual dataset samples may have implementation-specific ambiguities",
+                    "Extraction of the first non-comment line: Details about handling edge cases in prompt outputs are not thoroughly described"
+                ],
+                "possible_modifications": {
+                    "model_comparison": [
+                        "Introduce a variable for model_name to allow comparison among multiple models rather than a fixed model, which may further clarify performance implications"
+                    ],
+                    "prompt_construction": [
+                        "Vary the treatment of import statements or the mechanism for snippet deduplication to assess different retrieval strategies",
+                        "Provide explicit ordering and truncation mechanisms for combining in-file and cross-file contexts to reduce ambiguity"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce performance parity with a smaller or quantized model variant (e.g., a mini version) to simulate limited hardware resources."
+                    ],
+                    "time_constraints": [
+                        "Impose a maximum inference latency per prompt to mimic real-time deployment constraints and measure trade-offs between prompt length and processing time."
+                    ],
+                    "money_constraints": [
+                        "Set a strict API usage or computation cost budget that limits the number of token generations or the total computational expense during evaluation."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random retrieval strategy in cross-file context construction",
+                "description": "In the process of constructing prompts for code completion, randomly selecting cross-file context snippets can introduce variability in the generated prompts. This randomness may lead to unstable gradient updates and inconsistent performance metrics, as the model might occasionally receive irrelevant or suboptimal context information.",
+                "impact": "Leads to fluctuations in performance evaluations (Exact Match, Edit Similarity, and CodeBLEU scores) across different runs, making it harder to reliably compare the influence of increased context lengths.",
+                "possible_modifications": [
+                    "Replace random cross-file context selection with a deterministic, relevance-based retrieval strategy.",
+                    "Remove any random token dropping or random selection in prompt construction to ensure consistent input across runs.",
+                    "Implement fixed random seeds for any unavoidable random operations to reduce variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset bias and prompt construction truncation policies",
+                "description": "Systematic uncertainty arises from one-time modifications or biases in the experimental setup. For example, if the dataset is modified (e.g., through specific truncation of prompts or biased filtering of data points) or if the prompt construction rules (combining in-file and cross-file contexts) lead to consistent misrepresentation of context at different token limits, the performance metrics may be skewed.",
+                "impact": "This could result in uniformly lower or higher performance scores (Exact Match, Edit Similarity, and CodeBLEU) for certain prompt lengths, thus misrepresenting the model's true ability to leverage context as prompt lengths increase.",
+                "possible_modifications": [
+                    "Conduct thorough dataset validation to ensure there are no systematic biases in the data used for each prompt length.",
+                    "Standardize and document the prompt construction process (ordering, truncation, and component inclusion) to minimize unintentional biases.",
+                    "Replace any one-time dataset or processing modifications with regular updates or by retrieving a fresh, unbiased copy of the dataset if bias is detected."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How does the performance of a code completion model differ across the three settings in RepoBench: 'cross_file_first', 'cross_file_random', and 'in_file'?",
+            "method": "Use the run.py script to evaluate a model on all three settings of the RepoBench dataset, and compare the performance across these settings using the eval.py script.",
+            "expected_outcome": "A comparison of performance metrics (Exact Match, Edit Similarity, and CodeBLEU scores) across the three settings, showing how the model performs on different types of code completion tasks with varying cross-file dependencies.",
+            "source": [
+                "/workspace/run.py",
+                "/workspace/eval.py",
+                "/workspace/data/utils.py"
+            ],
+            "usage_instructions": "1. Run the model on all three settings of the RepoBench dataset:\n   - Use run.py with a specific model_name\n   - Set appropriate parameters for max_token_nums, temperature, top_p, and max_new_tokens\n   - The script will automatically run on all three settings: 'cross_file_first', 'cross_file_random', and 'in_file'\n   - Generate completions and save the results\n\n2. Evaluate the performance for each setting using eval.py:\n   - Specify the path to the results directory\n   - The script will calculate Exact Match (EM), Edit Similarity (ES), and CodeBLEU (CB) scores for each setting\n   - It will also calculate weighted averages across all settings\n\n3. Compare the performance across the three settings to analyze how the model handles different types of code completion tasks with varying cross-file dependencies",
+            "requirements": [
+                "Step 1: Load the RepoBench dataset with specified parameters (dataset name, date range, and levels) (/workspace/run.py:146-153)",
+                "Step 2: Load a pre-trained code completion model and its tokenizer from Hugging Face (/workspace/run.py:155-161)",
+                "Step 3: Create a directory to save the results (/workspace/run.py:163-165)",
+                "Step 4: For each subset in the dataset (cross_file_first, cross_file_random, in_file), construct prompts that include both cross-file context and in-file context (/workspace/run.py:167-170, /workspace/data/utils.py:3-59)",
+                "Step 5: Generate code completions using the model with specified parameters (temperature, top_p, max_new_tokens) (/workspace/run.py:172-173)",
+                "Step 6: Extract the first non-comment line from each generated completion (/workspace/run.py:175-177)",
+                "Step 7: Save the results (prediction and ground truth) to JSONL files, one for each subset (/workspace/run.py:179-180)",
+                "Step 8: Load the generated results for each subset (cross_file_first, cross_file_random, in_file) (/workspace/eval.py:14-33)",
+                "Step 9: Calculate performance metrics for each subset: Exact Match (EM), Edit Similarity (ES), and CodeBLEU (CB) (/workspace/eval.py:40-45)",
+                "Step 10: Print the performance metrics for each subset (/workspace/eval.py:53-55)",
+                "Step 11: Calculate and print weighted averages of the metrics across all subsets (/workspace/eval.py:58-64)"
+            ],
+            "agent_instructions": "Your task is to implement a system that evaluates a code completion model's performance across different settings in the RepoBench dataset. The system consists of two main components:\n\n1. A script to run a code completion model on the RepoBench dataset:\n   - The script should load a pre-trained code completion model from Hugging Face\n   - It should load the RepoBench dataset, which contains three settings: 'cross_file_first', 'cross_file_random', and 'in_file'\n   - For each setting, the script should:\n     - Construct prompts that include both cross-file context and in-file context\n     - Generate code completions using the model\n     - Extract the first non-comment line from each completion\n     - Save the results (predictions and ground truth) to separate files\n\n2. An evaluation script that:\n   - Loads the generated results for each setting\n   - Calculates three performance metrics for each setting:\n     - Exact Match (EM): Percentage of predictions that exactly match the ground truth\n     - Edit Similarity (ES): Similarity score based on edit distance\n     - CodeBLEU (CB): A specialized metric for code similarity\n   - Prints the metrics for each setting\n   - Calculates and prints weighted averages across all settings\n\nThe system should allow comparing how the model performs on different types of code completion tasks with varying cross-file dependencies. The implementation should handle proper prompt construction, token limits, and accurate metric calculation.",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_scripts": "run.py and eval.py are fixed components used for running the model and evaluating performance"
+                },
+                "independent_variables": {
+                    "repoBench_setting": [
+                        "cross_file_first",
+                        "cross_file_random",
+                        "in_file"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Exact Match (EM)",
+                        "Edit Similarity (ES)",
+                        "CodeBLEU (CB)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_parameters": "The specific values for parameters such as max_token_nums, temperature, top_p, and max_new_tokens are not explicitly defined in the task.",
+                    "retrieval_strategy": "Although the prompt construction is mentioned, the exact method of integrating cross-file contexts (e.g., order, snippet selection) is left ambiguous."
+                },
+                "possible_modifications": {
+                    "modification_repoBench_setting": [
+                        "Introduce additional settings or new variations in prompt construction, such as differing approaches to combine cross-file and in-file context."
+                    ],
+                    "modification_model_parameters": [
+                        "Explicitly vary hyperparameter values (e.g., temperature, max_new_tokens) to study their impact on performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "run.py script that loads the RepoBench dataset and generates model completions",
+                    "eval.py script that computes performance metrics (Exact Match, Edit Similarity, CodeBLEU)",
+                    "data/utils.py for constructing prompts (integrating in-file and cross-file contexts)",
+                    "Pre-trained code completion model and tokenizer from Hugging Face",
+                    "RepoBench dataset with three settings (cross_file_first, cross_file_random, in_file)"
+                ],
+                "setup_steps": [
+                    "Load the RepoBench dataset with specified parameters (e.g., dataset name, date range, levels)",
+                    "Load a pre-trained code completion model and its tokenizer",
+                    "Create a results directory to store output files",
+                    "For each dataset subset (cross_file_first, cross_file_random, in_file): construct prompts combining import statements, in-file context, and cross-file snippets",
+                    "Generate code completions using specified model parameters (max_token_nums, temperature, top_p, max_new_tokens)",
+                    "Extract the first non-comment line from each generated completion",
+                    "Save predictions and ground truth to JSONL files for each subset",
+                    "Load the generated results for each subset via eval.py",
+                    "Calculate performance metrics (Exact Match, Edit Similarity, CodeBLEU) for each setting",
+                    "Compute and print weighted averages across all settings"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Hyperparameter configuration",
+                        "description": "Specific values for model parameters such as max_token_nums, temperature, top_p, and max_new_tokens are not hard-coded and need to be appropriately determined, adding complexity to the experiment setup."
+                    },
+                    {
+                        "source": "Prompt construction strategy",
+                        "description": "The integration and ordering of cross-file and in-file contexts within prompts (e.g., how to concatenate multiple snippets) introduce additional technical intricacies."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model parameters such as max_token_nums, temperature, top_p, and max_new_tokens: The task does not specify the exact values to use.",
+                    "Retrieval strategy for cross-file context: The instructions mention constructing prompts with cross-file snippets but do not detail the order or selection process."
+                ],
+                "ambiguous_setup_steps": [
+                    "Prompt construction: While it is clear that both in-file context and cross-file context should be used, the exact method for combining these (e.g., order of import statements, handling token limits, selection strategy for snippets) is not fully specified.",
+                    "Evaluation details: There is ambiguity on how the weighted averages across different settings should be calculated."
+                ],
+                "possible_modifications": {
+                    "modification_repoBench_setting": [
+                        "Introduce additional settings or new variations in prompt construction strategies, such as different methods for concatenating cross-file and in-file contexts."
+                    ],
+                    "modification_model_parameters": [
+                        "Explicitly vary or mask hyperparameter values (e.g., temperature, max_new_tokens) to study their impact, thereby forcing users to determine optimal settings."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce performance parity using a smaller (e.g., quantized or mini) model instead of the full-sized version to tighten resource usage."
+                    ],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random retrieval strategy for cross-file context in the 'cross_file_random' setting",
+                "description": "In this setting, cross-file context snippets are selected randomly without evaluating their relevance until the token limit is reached. This randomness can introduce variability in the quality of the prompts, which in turn leads to variations in the performance metrics such as Exact Match, Edit Similarity, and CodeBLEU scores. Additionally, the inherent variability of the random selection procedure means that repeated runs may yield notably different outcomes.",
+                "impact": "This uncertainty can lead to instability in predicting code completions, potentially reducing prediction accuracy and making performance comparisons less reliable.",
+                "possible_modifications": [
+                    "Run multiple iterations and average the performance metrics to mitigate the inherent randomness.",
+                    "Replace the random retrieval strategy with a more deterministic method based on relevance (e.g., Jaccard Similarity or Edit Similarity) to reduce variability.",
+                    "Introduce controlled random noise (such as random token dropping) during prompt construction to systematically analyze the effect of randomness on model performance."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Prompt construction and dataset bias in integrating cross-file and in-file contexts",
+                "description": "The three settings use distinct methods for incorporating context: 'cross_file_first' and 'cross_file_random' include cross-file contexts while 'in_file' relies solely on the in-file context. This difference in prompt construction can systematically bias the performance evaluation if, for example, the model inherently benefits from additional context. Furthermore, ambiguity in how the cross-file context is ordered or selected (e.g., including import statements, handling token limits) may introduce a systematic error into the evaluation.",
+                "impact": "Such systematic biases might yield consistently higher or lower performance metrics in one setting compared to others, which in turn could mislead conclusions regarding the model's true capabilities.",
+                "possible_modifications": [
+                    "Standardize prompt construction across settings by clearly defining the order and selection criteria for concatenating cross-file and in-file contexts.",
+                    "Regularly verify and potentially update the dataset to remove any one-time biases introduced during data preparation.",
+                    "Experiment with alternative prompt construction methodologies (such as different orders of import statements and context snippets) to identify and mitigate systematic biases."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the effect of varying the number of preserved context lines (m) on retrieval performance.",
+            "experiment_design": "Design an ablation study on the RepoBench-R dataset where m is varied (for example, using 1, 3, 5, 10, or more lines). For each setting, conduct retrieval experiments using both lexical and semantic methods, keeping all other variables constant. Evaluate using the same performance metrics (Exact Match, Edit Similarity, CodeBLEU) to determine the optimal number of context lines. Analyze whether increasing or decreasing m leads to improved accuracy or causes performance to plateau or degrade.",
+            "subsection_source": "4.1 R EPOBENCH -R"
+        },
+        {
+            "idea": "Examine the benefits of integrating multi-modal contrastive learning approaches with semantic retrieval models to further enhance performance.",
+            "experiment_design": "Augment existing semantic retrieval models (e.g., UniXcoder) with an additional multi-modal contrastive learning component. Implement a modified training regime that leverages multi-modal data (such as code embeddings and auxiliary features) and retrain the model. Evaluate the modified model on RepoBench-R using the same cropping strategy (m = 3) and similarity computations (cosine similarity). Compare the performance against the baseline semantic retrieval outcomes to assess if multi-modal enhancements provide a measurable improvement.",
+            "subsection_source": "4.1 R EPOBENCH -R"
+        },
+        {
+            "idea": "Perform an ablation study on context components by separately evaluating the contributions of in-file context (Cin) and cross-file context (Cx) in code completion.",
+            "experiment_design": "Design experiments where, for a fixed set of models, one condition uses only the in-file context (Cin) for next-line prediction while another condition uses both Cin and cross-file context (Cx). Evaluate on RepoBench-C using the same metrics (EM, Edit Sim, CodeBLEU) across both Python and Java. Compare performance differences between the ablation conditions to understand the relative importance of each context source.",
+            "subsection_source": "4.2 R EPOBENCH -C"
+        },
+        {
+            "idea": "Extend the evaluation to additional programming languages to assess the generalizability of models on RepoBench-C.",
+            "experiment_design": "Collect and preprocess datasets for other popular programming languages that are not originally covered in RepoBench-C. Replicate the code completion task using the same autoregressive models and evaluation metrics. Perform cross-language analysis to investigate any shifts in performance trends and to determine if the observed strengths (e.g., Codex for Java, CodeLlama for Python) extend to other languages.",
+            "subsection_source": "4.2 R EPOBENCH -C"
+        },
+        {
+            "idea": "Investigate adaptive context allocation between in-file and cross-file snippets based on the complexity of the code file.",
+            "experiment_design": "Develop a method that dynamically adjusts the token budget allocated to in-file and cross-file contexts based on metrics like code complexity or length. Utilize complexity analysis tools to determine optimal token splits and run experiments on the RepoBench-P task using the Codex model. Compare performance metrics (EM, ES, CodeBLEU) with the fixed token allocation approach described in the paper.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        },
+        {
+            "idea": "Extend the evaluation to additional programming languages to assess the generality of retrieval and completion improvements.",
+            "experiment_design": "Select one or two new programming languages that differ structurally from Python and Java. Assemble appropriate datasets with similar characteristics (e.g., candidate snippet counts, context lengths) to the RepoBench datasets. Implement the best-performing retrieval strategies (e.g., UniXcoder-based retrieval) and run end-to-end pipeline experiments similar to RepoBench-P. Evaluate and compare performance metrics to see if the improvements observed for Python and Java hold for the new languages.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        }
+    ],
+    "main_takeaways": [
+        "The paper presents a code auto-completion system that leverages a two-stage process: first retrieving relevant code snippets (using techniques such as lexical and semantic similarity measures) and then predicting the next line of code.",
+        "It introduces two complementary tasks\u2014RepoBench-R for retrieval-based next-line prediction and RepoBench-P for an end-to-end pipeline that simulates systems like GitHub Copilot, incorporating both in-file and cross-file contexts.",
+        "The experiments demonstrate that factors such as the number of context lines, inclusion of import statements, and choice of retrieval method (lexical vs. semantic) have significant impacts on next-line prediction performance, as measured by metrics including Exact Match, Edit Similarity, and CodeBLEU.",
+        "Ablation studies on prompt construction and the number of lines kept during retrieval suggest that optimal configurations exist (e.g., short vs. long in-file contexts) and that these design choices directly influence retrieval and prediction accuracy.",
+        "The paper also addresses practical concerns such as down-sampling to ensure parity between Java and Python datasets and discusses potential discrepancies due to quantized models and inference library issues."
+    ]
+}
