@@ -33,7 +33,7 @@ key_dict = {
 
 ## 📊 Get your dataset ready
 
-Here we just down MNIST dataset to `/data` as an example:
+Here we just download MNIST dataset to `/data` as an example:
 ```
 sudo mkdir -p /data 
 wget https://raw.githubusercontent.com/fgnt/mnist/master/train-images-idx3-ubyte.gz
@@ -116,10 +116,16 @@ You can provide your own environment by providing an environment requirements fi
     ├── venv/ # exactly named as `venv`  
     └── ... # the rest of your codebase
     ```
-    
 
+4. **Generate a experiment report in the middle of Curie's experimentation process**
 
-4. **Customize the agent to your workload.**
+If you’d like to monitor progress partway through Curie’s experimentation—or if the experiment wasn’t run end-to-end—you can still generate a report from the available data:
+
+```python
+curie.generate_report(input_dir_path='/abs/path/logs/research_20250605231023_iter1/')
+```
+
+5. **Customize the agent to your workload.**
 Each agent and experiment stage is coupled with a system prompt, which you can fine-tune in order to let Curie understand your context better. 
 
     ```python
