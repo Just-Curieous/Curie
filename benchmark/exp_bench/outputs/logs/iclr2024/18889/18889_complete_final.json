@@ -1,0 +1,922 @@
+{
+    "questions": [
+        {
+            "question": "Will sequential integration of heterogeneous agents (starting with the L(64)P base agent and progressively adding C(384)E, L(32)S, and C(336)R agents) improve the overall detection performance of the collaborative system compared to using a single L(64)P agent? This experiment leverages an extensible framework for open heterogeneous collaborative perception that supports LiDAR, camera, and heterogeneous sensor modalities.",
+            "method": "Step 1: Train a baseline collaborative perception model using only the L(64)P agent (PointPillars with a 64-channel LiDAR) on the OPV2V-H dataset. Use a grid size of [0.4m, 0.4m] for feature encoding, downsample the feature map by 2\u00d7, and process it through 3 ConvNeXt blocks to shrink the feature dimension to 64. Train for 25 epochs with the Adam optimizer, starting with a learning rate of 0.002 and reducing it by a factor of 0.1 at epoch 15. Evaluate the performance using Average Precision (AP) metrics calculated over an expanded spatial range (x from \u2212204.8m to +204.8m and y from \u2212102.4m to +102.4m).\n\nStep 2: Sequentially incorporate additional heterogeneous agents as follows. First, integrate the C(384)E agent (a camera-based sensor using Lift-Splat with EfficientNet, with images resized to a height of 384 pixels). Next, add the L(32)S agent (a LiDAR-based sensor with 32 channels that employs the SECOND backbone). Finally, integrate the C(336)R agent (a camera-based sensor using Lift-Splat with ResNet50, with images resized to a height of 336 pixels). For every new configuration, retrain the collaborative system with the same training schedule and network settings, including:\n  - Multi-scale pyramid fusion with dimensions like [64, 128, 256].\n  - ResNeXt layers with block configurations such as [3, 5, 8].\n  - Foreground estimators using a 1\u00d71 convolution modulated by hyper-parameters \u03b1\u2113 = {0.4, 0.2, 0.1} for respective levels.\n  - Depth supervision for camera-based detections to refine the feature representations.\n\nStep 3: Compare the AP metrics at multiple IoU thresholds across the baseline configuration and each sequentially enriched configuration. Additionally, document any reductions in training cost and convergence time relative to earlier multi-agent methods. This experiment follows guidelines similar to those in the HEAL framework, which provides a unified platform for integrating heterogeneous agent types.",
+            "expected_outcome": "It is expected that the sequential integration of heterogeneous agents will yield incremental improvements in AP metrics across multiple IoU thresholds. Each added agent type is anticipated to contribute to a richer collaborative feature representation, thus achieving higher overall detection performance compared to using only the L(64)P agent. Moreover, the experiment should demonstrate that the proposed system not only enhances detection accuracy but also maintains lower training costs and reduced convergence times as compared with previous multi-agent collaborative perception methods.",
+            "subsection_source": "5.2 OPEN HETEROGENEOUS SETTINGS",
+            "source": [
+                "/workspace/opencood/tools/train.py",
+                "/workspace/opencood/tools/heal_tools.py",
+                "/workspace/opencood/tools/inference_heter_in_order.py"
+            ],
+            "usage_instructions": "To run the experiment for sequential integration of heterogeneous agents, follow these steps:\n\n1. First, train the L(64)P base agent (PointPillars with 64-channel LiDAR):\n   ```bash\n   mkdir -p opencood/logs/HEAL_m1_based/stage1/m1_base\n   cp opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml opencood/logs/HEAL_m1_based/stage1/m1_base/config.yaml\n   python opencood/tools/train.py -y None --model_dir opencood/logs/HEAL_m1_based/stage1/m1_base\n   ```\n\n2. After the base model is trained, prepare for sequential integration of additional agents:\n   ```bash\n   mkdir -p opencood/logs/HEAL_m1_based/stage2/m2_alignto_m1\n   mkdir -p opencood/logs/HEAL_m1_based/stage2/m3_alignto_m1\n   mkdir -p opencood/logs/HEAL_m1_based/stage2/m4_alignto_m1\n   \n   # Copy the best checkpoint from base model training\n   cp opencood/logs/HEAL_m1_based/stage1/m1_base/net_epoch_bestval_at*.pth opencood/logs/HEAL_m1_based/stage2/net_epoch1.pth\n   \n   # Create symbolic links to the checkpoint\n   ln -s opencood/logs/HEAL_m1_based/stage2/net_epoch1.pth opencood/logs/HEAL_m1_based/stage2/m2_alignto_m1\n   ln -s opencood/logs/HEAL_m1_based/stage2/net_epoch1.pth opencood/logs/HEAL_m1_based/stage2/m3_alignto_m1\n   ln -s opencood/logs/HEAL_m1_based/stage2/net_epoch1.pth opencood/logs/HEAL_m1_based/stage2/m4_alignto_m1\n   \n   # Copy configuration files for each agent type\n   cp opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage2/m2_single_pyramid.yaml opencood/logs/HEAL_m1_based/stage2/m2_alignto_m1/config.yaml\n   cp opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage2/m3_single_pyramid.yaml opencood/logs/HEAL_m1_based/stage2/m3_alignto_m1/config.yaml\n   cp opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage2/m4_single_pyramid.yaml opencood/logs/HEAL_m1_based/stage2/m4_alignto_m1/config.yaml\n   ```\n\n3. Train each additional agent type (can be done in parallel):\n   ```bash\n   # Train C(384)E agent (camera-based with EfficientNet)\n   python opencood/tools/train.py -y None --model_dir opencood/logs/HEAL_m1_based/stage2/m2_alignto_m1\n   \n   # Train L(32)S agent (LiDAR-based with SECOND backbone)\n   python opencood/tools/train.py -y None --model_dir opencood/logs/HEAL_m1_based/stage2/m3_alignto_m1\n   \n   # Train C(336)R agent (camera-based with ResNet50)\n   python opencood/tools/train.py -y None --model_dir opencood/logs/HEAL_m1_based/stage2/m4_alignto_m1\n   ```\n\n4. Combine all trained models and evaluate the sequential integration:\n   ```bash\n   mkdir -p opencood/logs/HEAL_m1_based/final_infer/\n   cp opencood/hypes_yaml/opv2v/MoreModality/HEAL/final_infer/m1m2m3m4.yaml opencood/logs/HEAL_m1_based/final_infer/config.yaml\n   \n   # Merge all models\n   python opencood/tools/heal_tools.py merge_final \\\n     opencood/logs/HEAL_m1_based/stage2/m2_alignto_m1 \\\n     opencood/logs/HEAL_m1_based/stage2/m3_alignto_m1 \\\n     opencood/logs/HEAL_m1_based/stage2/m4_alignto_m1 \\\n     opencood/logs/HEAL_m1_based/stage1/m1_base \\\n     opencood/logs/HEAL_m1_based/final_infer\n   \n   # Run inference with sequential integration of agents\n   python opencood/tools/inference_heter_in_order.py --model_dir opencood/logs/HEAL_m1_based/final_infer\n   ```\n\nThe `inference_heter_in_order.py` script will automatically evaluate the performance with sequential integration of agents (m1 \u2192 m1+m2 \u2192 m1+m2+m3 \u2192 m1+m2+m3+m4) and report Average Precision (AP) metrics at different IoU thresholds (0.3, 0.5, 0.7).",
+            "requirements": [
+                "Step 1: Set up the training environment for the base agent (L(64)P - PointPillars with 64-channel LiDAR) by loading configuration from YAML file (/workspace/opencood/tools/train.py:32-34)",
+                "Step 2: Build training and validation datasets for the base agent with appropriate preprocessing (/workspace/opencood/tools/train.py:36-40)",
+                "Step 3: Create data loaders with proper batch size, collation functions, and worker settings (/workspace/opencood/tools/train.py:42-57)",
+                "Step 4: Initialize the model architecture for the base agent (PointPillars) (/workspace/opencood/tools/train.py:59-60)",
+                "Step 5: Set up loss functions, optimizer, and learning rate scheduler for training (/workspace/opencood/tools/train.py:68-72, 87-88)",
+                "Step 6: Implement training loop with periodic validation and model checkpointing (/workspace/opencood/tools/train.py:102-179)",
+                "Step 7: Save the best model based on validation loss (/workspace/opencood/tools/train.py:163-173)",
+                "Step 8: Prepare for sequential integration by merging trained models using the heal_tools script (/workspace/opencood/tools/heal_tools.py:105-113)",
+                "Step 9: Implement the final model merging function that combines all trained agent models (/workspace/opencood/tools/heal_tools.py:115-130)",
+                "Step 10: Set up the sequential inference process with heterogeneous agents (/workspace/opencood/tools/inference_heter_in_order.py:61-101)",
+                "Step 11: Configure the evaluation environment with appropriate detection ranges and parameters (/workspace/opencood/tools/inference_heter_in_order.py:102-143)",
+                "Step 12: Implement sequential agent integration by controlling which agents are used in each evaluation (/workspace/opencood/tools/inference_heter_in_order.py:161-176)",
+                "Step 13: Process each batch of data through the model and calculate detection results (/workspace/opencood/tools/inference_heter_in_order.py:191-221)",
+                "Step 14: Calculate true positives and false positives for evaluation metrics at different IoU thresholds (/workspace/opencood/tools/inference_heter_in_order.py:248-262)",
+                "Step 15: Visualize detection results periodically during evaluation (/workspace/opencood/tools/inference_heter_in_order.py:272-284)",
+                "Step 16: Calculate and report final Average Precision (AP) metrics (/workspace/opencood/tools/inference_heter_in_order.py:287-288)"
+            ],
+            "agent_instructions": "Your task is to implement a system for sequential integration of heterogeneous agents for collaborative perception in autonomous driving. The system should follow these steps:\n\n1. First, implement a training script for a base agent that uses PointPillars with 64-channel LiDAR (L(64)P). The script should:\n   - Accept command line arguments for configuration file path and model directory\n   - Load configuration from YAML files\n   - Build appropriate datasets for training and validation\n   - Create a model based on the configuration\n   - Set up loss functions, optimizer, and learning rate scheduler\n   - Implement a training loop with periodic validation\n   - Save checkpoints and track the best model based on validation loss\n\n2. Create a utility script for merging heterogeneous agent models that can:\n   - Find the best checkpoint from a model directory\n   - Merge model dictionaries from different agents while handling overlapping parameters\n   - Support merging multiple models in sequence\n   - Save the merged model to a specified output directory\n\n3. Implement an inference script for sequential integration of heterogeneous agents that:\n   - Loads a merged model containing parameters for all agent types\n   - Configures the evaluation environment with appropriate detection ranges\n   - Supports controlling which agents are used in each evaluation run\n   - Processes data through the model and calculates detection results\n   - Evaluates performance using true/false positives at different IoU thresholds (0.3, 0.5, 0.7)\n   - Visualizes detection results periodically\n   - Reports final Average Precision (AP) metrics\n\nThe system should support four types of agents:\n- L(64)P: LiDAR-based agent with PointPillars backbone and 64 channels\n- C(384)E: Camera-based agent with EfficientNet backbone and 384x512 resolution\n- L(32)S: LiDAR-based agent with SECOND backbone and 32 channels\n- C(336)R: Camera-based agent with ResNet backbone and 336x448 resolution\n\nThe evaluation should show the performance improvement as agents are added sequentially: m1 \u2192 m1+m2 \u2192 m1+m2+m3 \u2192 m1+m2+m3+m4.",
+            "masked_source": [
+                "/workspace/opencood/tools/train.py",
+                "/workspace/opencood/tools/heal_tools.py",
+                "/workspace/opencood/tools/inference_heter_in_order.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "OPV2V-H remains constant across all experiments",
+                    "training_hyperparameters": "grid size ([0.4m, 0.4m]), downsampling factor (2\u00d7), ConvNeXt block configuration (3 blocks) remain unchanged",
+                    "evaluation_setup": [
+                        "evaluation range (x from \u2212204.8m to +204.8m, y from \u2212102.4m to +102.4m)",
+                        "AP calculation methodology"
+                    ]
+                },
+                "independent_variables": {
+                    "agent_types": [
+                        "L(64)P",
+                        "C(384)E",
+                        "L(32)S",
+                        "C(336)R"
+                    ],
+                    "agent_integration_sequence": [
+                        "base: m1 (L(64)P)",
+                        "m1+m2 (L(64)P with C(384)E)",
+                        "m1+m2+m3 (adds L(32)S)",
+                        "m1+m2+m3+m4 (adds C(336)R)"
+                    ],
+                    "model_architecture_extensions": [
+                        "multiscale pyramid dimensions (e.g., [64, 128, 256])",
+                        "ResNeXt block settings (e.g., [3, 5, 8])",
+                        "foreground supervision parameters (\u03b1\u2113 = {0.4, 0.2, 0.1})",
+                        "depth supervision for camera-based detections"
+                    ]
+                },
+                "dependent_variables": {
+                    "detection_performance": [
+                        "Average Precision (AP) at multiple IoU thresholds (e.g., 0.3, 0.5, 0.7)"
+                    ],
+                    "training_cost_and_convergence": "Measured as the total training cost and convergence time relative to earlier methods"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "multiscale_pyramid_dimensions": "The dimensions are indicated as 'like [64, 128, 256]' which suggests flexibility rather than fixed values",
+                    "ResNeXt_block_configuration": "The block configuration is given as an example (e.g., [3, 5, 8]) and may vary in practice",
+                    "foreground_supervision_hyperparameters": "The values for \u03b1\u2113 are provided as an example and their tuning or role in different layers might be ambiguous",
+                    "depth_supervision_details": "While depth supervision is applied for camera-based detections, the exact method and its parameterization are not fully specified"
+                },
+                "possible_modifications": {
+                    "modification_multiscale_pyramid": [
+                        "Specify fixed pyramid dimensions instead of using approximate examples",
+                        "Include additional scales to test sensitivity"
+                    ],
+                    "modification_resnext_layers": [
+                        "Provide explicit block counts rather than example configurations",
+                        "Test alternative configurations to assess impact on performance"
+                    ],
+                    "modification_foreground_supervision": [
+                        "Mask or modify the hyperparameter values to test system robustness",
+                        "Introduce alternative strategies for foreground object emphasis"
+                    ],
+                    "modification_depth_supervision": [
+                        "Describe alternative depth supervision strategies",
+                        "Allow the experiment to vary the depth supervision weighting and assess its effect"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Training script for the base agent L(64)P (PointPillars with 64-channel LiDAR)",
+                    "Utility script for merging heterogeneous agent models (heal_tools.py)",
+                    "Inference script for sequential integration of heterogeneous agents (inference_heter_in_order.py)",
+                    "Multiple configuration YAML files for different agent types",
+                    "Data preprocessing pipeline for handling LiDAR and camera modalities",
+                    "Multiscale pyramid fusion network components including ConvNeXt and ResNeXt blocks"
+                ],
+                "setup_steps": [
+                    "Train the base model using the training script with the L(64)P configuration",
+                    "Prepare the environment and datasets from the OPV2V-H dataset with fixed preprocessing parameters",
+                    "Copy checkpoints and create symbolic links to set up the sequential integration environment",
+                    "Copy and adjust configuration files for each heterogeneous agent (C(384)E, L(32)S, C(336)R)",
+                    "Independently train each additional agent maintaining consistent training schedules and network settings",
+                    "Merge all trained models using the merger utility to create a unified multi-agent model",
+                    "Run the sequential inference script to evaluate the integrated model and compute AP metrics"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Configuration Management",
+                        "description": "The use of multiple YAML configuration files that need to be correctly aligned with each training and merging stage increases the overall complexity."
+                    },
+                    {
+                        "source": "Hyperparameter Consistency",
+                        "description": "Maintaining consistent training hyperparameters (e.g., grid size, learning rate schedule, ConvNeXt block settings) across different agent types and integration stages introduces complexity in ensuring all components remain compatible."
+                    },
+                    {
+                        "source": "Multi-modal Fusion",
+                        "description": "Integrating data streams from LiDAR and camera sensors using heterogeneous architectures (PointPillars, SECOND, Lift-Splat with different backbones) and aligning them in a unified feature space adds to the system complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Multiscale pyramid dimensions: Described as 'like [64, 128, 256]' which suggests flexibility and can lead to different implementations.",
+                    "ResNeXt block configuration: Provided as an example (e.g., [3, 5, 8]) without fixed settings.",
+                    "Foreground supervision hyperparameters: The role and tuning of \u03b1\u2113 values (e.g., {0.4, 0.2, 0.1}) are not fully detailed.",
+                    "Depth supervision approach for camera-based detections: The exact method and parameterization remain unspecified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Model merging process: Details on handling overlapping parameters and merging dictionaries from different agent models are not fully explicit.",
+                    "Checkpoint selection: The instruction to 'copy the best checkpoint' does not specify criteria for evaluation or potential conflicts when merging.",
+                    "Integration of sequential agent evaluation: How agents are incrementally added (m1 \u2192 m1+m2 \u2192 m1+m2+m3 \u2192 m1+m2+m3+m4) could be clearer in terms of configuration adjustments between each stage."
+                ],
+                "possible_modifications": {
+                    "modification_multiscale_pyramid": [
+                        "Specify fixed pyramid dimensions rather than 'like [64, 128, 256]' to reduce flexibility and ambiguity.",
+                        "Include a detailed rationale for choosing additional scales and how they impact detection performance."
+                    ],
+                    "modification_resnext_layers": [
+                        "Provide explicit block counts and layer details to avoid ambiguity in the network architecture configuration.",
+                        "Offer alternative configurations as part of a sensitivity analysis."
+                    ],
+                    "modification_foreground_supervision": [
+                        "Clarify the role of \u03b1\u2113 hyperparameters across different layers and potentially standardize their values or provide tuning guidelines.",
+                        "Include examples of how different hyperparameter settings affect the foreground detection performance."
+                    ],
+                    "modification_depth_supervision": [
+                        "Elaborate on the method used for depth supervision and provide potential variations to test its influence on camera-based detections.",
+                        "Describe any weighting strategies or loss functions specific to depth supervision."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Specify fixed multiscale pyramid feature dimensions (e.g., [64, 128, 256]) rather than flexible approximations to ensure a predictable computational resource usage.",
+                        "Enforce an explicit configuration for ResNeXt block counts (e.g., exactly [3, 5, 8]) to avoid variability in resource allocation for network layers."
+                    ],
+                    "time_constraints": [
+                        "Tighten the training schedule by reducing the number of epochs (e.g., training for 20 epochs instead of 25) to assess if similar Average Precision (AP) metrics can be maintained with a faster convergence.",
+                        "Limit optimization iterations to force the model to reach comparable AP metrics in a shorter wall-clock time."
+                    ],
+                    "money_constraints": [
+                        "Impose a budget constraint by requiring a smaller model variant (for example, a compact version of PointPillars) to deliver comparable detection performance, thereby reducing compute cost."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in model training and integration procedures",
+                "description": "In the sequential integration experiment, random uncertainty may arise from the inherent stochasticity in training the different agent models, such as random initialization, gradient noise, and non-deterministic behavior in the data loading and merging processes. For example, slight variations in the order of data batches or random dropout in the network during training of the L(64)P, C(384)E, L(32)S, and C(336)R agents may lead to inconsistent training dynamics and fluctuations in Average Precision (AP) metrics across runs.",
+                "impact": "These random variations can cause instability in convergence rates and fluctuations in the reported detection performance. As agents are sequentially merged, model performance might vary from one execution to another, affecting the reproducibility and comparability of the results.",
+                "possible_modifications": [
+                    "Introduce controlled random perturbations in the training pipeline (e.g., varying random seeds or dropout probabilities) to evaluate the robustness of the system.",
+                    "Simulate random sensor noise during integration (e.g., randomly occluding parts of the sensor inputs) to assess the effect on AP metrics.",
+                    "Randomize the order of agent integration to determine if the sequential merging process is sensitive to training sequence variations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Potential biases in dataset preparation and sensor configuration",
+                "description": "Systematic uncertainty may be introduced if there is a one-time modification in the dataset or sensor configuration that creates a biased representation. For instance, if the OPV2V-H dataset contains inherent biases towards LiDAR detections (as noted in earlier works) or if the merging process selects a checkpoint that is particularly overfitted to one type of sensor modality, the integrated model may consistently favor LiDAR-based detections over camera-based ones.",
+                "impact": "Such biases can lead to consistently skewed AP metrics, systematically undervaluing the benefits of integrating heterogeneous sensors and potentially masking true performance improvements of the multi-agent system.",
+                "possible_modifications": [
+                    "Introduce a one-time systematic modification (e.g., re-labeling detections for a specific sensor modality based on a fixed rule) to test if the integration process can identify and correct for the bias.",
+                    "Apply a fixed sensor calibration shift or bias in preprocessing to simulate misalignment in sensor characteristics, and then compare performance with a clean dataset.",
+                    "Replace or augment parts of the OPV2V-H dataset with an alternative, thoroughly vetted dataset to evaluate if improvements persist without the systematic bias."
+                ]
+            }
+        },
+        {
+            "question": "Does the incorporation of different sensor modalities (LiDAR vs. Camera) in an open heterogeneous setup affect the collaborative perception performance, and do they complement each other in the unified feature space as implemented in the HEAL framework?",
+            "method": "Step 1: Using the OPV2V-H dataset as provided in the HEAL repository, create two controlled experimental setups following the sensor and model configurations described. For the first setup, use only LiDAR-based agents: L(64) P with PointPillars and L(32) S with SECOND to simulate high-resolution and real-world LiDAR detection capabilities. For the second setup, use only Camera-based agents: C(384) E with Lift-Splat using EfficientNet and C(336) R with Lift-Splat using ResNet50, where camera inputs are processed at a resolution of 800x600 and enhanced with integrated depth supervision. Ensure that all agents in each setup share identical training parameters\u2014a grid size of [0.4m, 0.4m], feature maps downsampled by 2\u00d7, feature dimensions reduced to 64 using three ConvNeXt blocks, and a 25-epoch training schedule with the Adam optimizer. Finally, perform all evaluations over the same spatial range using the Average Precision (AP) metric to assess and compare performance.",
+            "expected_outcome": "The experiment should reveal that LiDAR-based agents (with their 64- and 32-channel sensors) individually offer higher raw detection performance due to direct point cloud data advantage. However, the camera-based agents, when properly configured and with depth supervision, can provide complementary visual information that enhances scene understanding in a unified feature space. Ultimately, while isolated performance might initially favor LiDAR, the unified feature space shows that both sensor modalities complement each other and contribute unique information, leading to an improved overall collaborative perception system.",
+            "subsection_source": "5.2 OPEN HETEROGENEOUS SETTINGS",
+            "source": [
+                "/workspace/opencood/tools/inference_heter_in_order.py",
+                "/workspace/opencood/tools/heal_tools.py"
+            ],
+            "usage_instructions": "To compare LiDAR vs. Camera modalities in the HEAL framework, follow these steps:\n\n1. First, set up the experiment by creating two controlled setups as described in the paper:\n   - For LiDAR-only setup: Use the configuration files in `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml` (PointPillars) and `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m3_pyramid.yaml` (SECOND) which correspond to L(64) and L(32) respectively.\n   - For Camera-only setup: Use the configuration files in `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m2_pyramid.yaml` (Lift-Splat with EfficientNet) and `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m4_pyramid.yaml` (Lift-Splat with ResNet50) which correspond to C(384) and C(336) respectively.\n\n2. Run the inference script with the appropriate parameters to evaluate the performance of each setup:\n   ```\n   python opencood/tools/inference_heter_in_order.py --model_dir <path_to_model_checkpoint> --use_cav [1,2] --range 102.4,102.4\n   ```\n   - For LiDAR-only setup, use `--use_cav [1,3]` to include only LiDAR-based agents\n   - For Camera-only setup, use `--use_cav [2,4]` to include only Camera-based agents\n   - For the combined setup, use `--use_cav [1,2,3,4]` to include all modalities\n\n3. The script will automatically evaluate the performance using Average Precision (AP) metrics at different IoU thresholds (0.3, 0.5, 0.7) and output the results, allowing you to compare the performance of different sensor modalities and their complementary effects in the unified feature space.",
+            "requirements": [
+                "Step 1: Parse command line arguments to configure the experiment, including model directory, fusion method, detection range, and which CAVs to use (inference_heter_in_order.py:35-58)",
+                "Step 2: Load the YAML configuration file for the experiment based on the provided model directory (inference_heter_in_order.py:66)",
+                "Step 3: Update the detection range in the configuration based on command line arguments (inference_heter_in_order.py:72-84)",
+                "Step 4: Configure the heterogeneous agent setup, including mapping between modalities and setting the ego vehicle modality to m1 (inference_heter_in_order.py:86-102)",
+                "Step 5: Load the trained model from the checkpoint (inference_heter_in_order.py:118-127)",
+                "Step 6: Configure the communication range and agent assignment for the experiment (inference_heter_in_order.py:136-142)",
+                "Step 7: Set up LiDAR channel configurations based on the command line arguments (inference_heter_in_order.py:144-159)",
+                "Step 8: For each CAV configuration, build the dataset and data loader (inference_heter_in_order.py:161-178)",
+                "Step 9: Initialize result statistics dictionary for evaluation metrics at different IoU thresholds (0.3, 0.5, 0.7) (inference_heter_in_order.py:181-183)",
+                "Step 10: Process each batch of data through the model using the appropriate fusion method (inference_heter_in_order.py:191-242)",
+                "Step 11: Calculate true positives and false positives for each IoU threshold (inference_heter_in_order.py:248-262)",
+                "Step 12: Optionally visualize the detection results at specified intervals (inference_heter_in_order.py:272-284)",
+                "Step 13: Evaluate the final results using Average Precision metrics and output the performance (inference_heter_in_order.py:287-288)",
+                "Step 14: For late fusion, implement a function that processes each CAV's data individually and then combines the results (inference_heter_in_order.py:293-325)"
+            ],
+            "agent_instructions": "Create a script to evaluate and compare the performance of different sensor modalities (LiDAR vs. Camera) in a cooperative perception framework. The script should allow running inference on pre-trained models with different combinations of sensor modalities.\n\nThe evaluation should:\n\n1. Support comparing three setups:\n   - LiDAR-only: Using PointPillars (64 channels) and SECOND (32 channels) models\n   - Camera-only: Using Lift-Splat with EfficientNet (384x512) and Lift-Splat with ResNet50 (336x448) models\n   - Combined modalities: Using all available sensors\n\n2. Implement command-line arguments to control:\n   - Model directory path\n   - Fusion method (late, intermediate, or no fusion)\n   - Detection range\n   - Which specific CAVs (Connected Autonomous Vehicles) to use in the evaluation\n\n3. Process the data through these steps:\n   - Load the appropriate configuration based on the model directory\n   - Update detection range and agent configurations\n   - Load the trained model from checkpoint\n   - Build datasets and data loaders for each configuration\n   - Run inference using the specified fusion method\n   - Calculate evaluation metrics (precision/recall) at different IoU thresholds (0.3, 0.5, 0.7)\n   - Optionally visualize results\n\n4. For late fusion, implement a function that processes each agent's data individually before combining results.\n\n5. Output Average Precision metrics to compare the performance of different modality combinations.\n\nThe script should be flexible enough to handle different model architectures and sensor configurations, allowing researchers to analyze the complementary effects of different sensor modalities in the unified feature space.",
+            "masked_source": [
+                "/workspace/opencood/tools/inference_heter_in_order.py",
+                "/workspace/opencood/tools/heal_tools.py",
+                "/workspace/opencood/tools/inference_utils.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "training_parameters": "grid size [0.4m, 0.4m], feature map downsampling by 2, feature dimension reduction to 64 using three ConvNeXt blocks, 25-epoch training schedule, and use of the Adam optimizer",
+                    "evaluation_metrics": "Average Precision (AP) evaluated at multiple IoU thresholds (e.g., 0.3, 0.5, 0.7) over the same spatial detection range"
+                },
+                "independent_variables": {
+                    "sensor_modality": [
+                        "LiDAR-only",
+                        "Camera-only",
+                        "Combined modalities"
+                    ],
+                    "agent_model_configurations": [
+                        "LiDAR-only: L(64) P with PointPillars and L(32) S with SECOND",
+                        "Camera-only: C(384) E with Lift-Splat using EfficientNet and C(336) R with Lift-Splat using ResNet50"
+                    ],
+                    "fusion_method": [
+                        "late fusion",
+                        "intermediate fusion",
+                        "no fusion"
+                    ]
+                },
+                "dependent_variables": {
+                    "collaborative_perception_performance": "Measured as Average Precision (AP) scores reflecting detection performance"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "fusion_method": "While several fusion methods are mentioned, it is not explicitly clear how their differences affect integration of sensor modalities or if evaluations are directly comparable.",
+                    "agent_configuration_details": "The detailed environmental settings (beyond sensor type and sensor configuration) in the OPV2V-H dataset, such as traffic patterns or specific simulation parameters, are not fully described."
+                },
+                "possible_modifications": {
+                    "modification_addition": [
+                        "Introduce additional sensor modalities (e.g., radar) to the experiment to further assess modality complementarities.",
+                        "Vary the training schedule or optimization parameters to explore their impact on performance, adding another variable.",
+                        "Mask or vary the fusion_method details in the task prompt to require the agent to infer the best fusion strategy."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "OPV2V-H dataset with diverse sensor configurations (multiple LiDAR channels, RGB and depth cameras)",
+                    "LiDAR sensor agents: L(64) P with PointPillars and L(32) S with SECOND",
+                    "Camera sensor agents: C(384) E with Lift-Splat using EfficientNet and C(336) R with Lift-Splat using ResNet50",
+                    "Configuration files (YAML) specifying sensor models and parameters",
+                    "Unified feature space construction using grid size [0.4m, 0.4m], 2x downsampling, and feature dimension reduction via three ConvNeXt blocks",
+                    "Fusion mechanism implementation supporting late, intermediate, and no fusion methods",
+                    "Inference script (inference_heter_in_order.py) with detailed command-line argument parsing and configuration updates",
+                    "Pre-trained model checkpoints and standardized evaluation metrics (Average Precision at multiple IoU thresholds)"
+                ],
+                "setup_steps": [
+                    "Parse command-line arguments to set model directory, fusion method, detection range, and selected CAVs",
+                    "Load and update the YAML configuration for the chosen experimental setup",
+                    "Update the detection range and sensor agent assignments (mapping between LiDAR and camera setups)",
+                    "Load and initialize the pre-trained model from checkpoint",
+                    "Construct the heterogeneous agent configurations based on sensor modalities (LiDAR-only, Camera-only, or Combined)",
+                    "Build datasets and data loaders from the OPV2V-H simulated environment",
+                    "Process data batches through the model using specific fusion methods to share and align features",
+                    "Compute evaluation metrics (AP at IoU thresholds 0.3, 0.5, 0.7) to compare performance across setups"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Sensor Modalities and Fusion Integration",
+                        "description": "The process of integrating fundamentally different sensor modalities (LiDAR and Camera) in a unified feature space introduces complexity due to varying data representations, sensor characteristics, and the need to implement multiple fusion strategies (late, intermediate, and no fusion)."
+                    },
+                    {
+                        "source": "Simulation Environment Configuration",
+                        "description": "The OPV2V-H dataset involves diverse sensors with different configurations and additional simulation details via OpenCDA and CARLA, which adds layers of complexity in ensuring all environmental parameters (e.g., traffic patterns, sensor mounting offsets) are consistently managed."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Fusion method details: While late, intermediate, and no fusion are mentioned, the exact mechanisms and differences in how they integrate sensor data are not fully clarified",
+                    "Agent configuration details: Specific environmental settings beyond basic sensor type (e.g., traffic patterns, precise simulation parameters in OPV2V-H) are not comprehensively described"
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration of multiscale pyramid features and backward alignment: The description lacks detailed implementation steps or parameter choices, making it ambiguous how this alignment is achieved",
+                    "Updating sensor-specific parameters: The process of how to precisely update configurations for depth supervision in camera agents versus LiDAR agents is not fully specified"
+                ],
+                "possible_modifications": {
+                    "modification_addition": [
+                        "Introduce additional sensor modalities (e.g., radar) to further evaluate modality complementarities",
+                        "Vary the training schedule or optimization parameters to explore their impact on performance",
+                        "Mask some of the fusion method details in the documentation so users must infer or test the optimal strategy"
+                    ],
+                    "imply need for new setup steps": [
+                        "Provide clearer instructions on simulation environment parameters and traffic pattern settings",
+                        "Include explicit step-by-step guidelines for implementing feature alignment (multiscale pyramid and backward alignment) for new agent types"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification is to tighten the sensor configuration by requiring that the LiDAR-based agents use only a reduced number of channels (e.g., using 32-channel LiDAR instead of 64-channel) while still achieving comparable detection performance. Similarly, camera models could be constrained to operate with lower-resolution inputs or fewer depth channels."
+                    ],
+                    "time_constraints": [
+                        "Another modification could enforce a shorter training schedule (fewer than 25 epochs) to evaluate whether the models can reach similar AP performance with reduced training time."
+                    ],
+                    "money_constraints": [
+                        "A further modification might simulate budget limitations by mandating the use of less expensive sensor configurations or hardware simulation setups while aiming for performance parity with the original setup."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Sensor Pose Noise and Random Data Perturbations",
+                "description": "In the HEAL framework experiment, random uncertainty arises from inherent sensor noise and random perturbations during data processing. For example, as described in Figure 4, sensor pose is perturbed with Gaussian noise (N(0, \u03c3\u00b2) on x, y location and N(0, \u03c3\u00b2) on yaw angle). Additionally, analogous to the method of randomly dropping unimportant tokens in transformer pre-training, random modifications in the feature encoding or fusion process might lead to instabilities in gradient updates or feature misalignment in the unified feature space.",
+                "impact": "These random perturbations can cause variations in the Average Precision scores (AP at various IoU thresholds) and overall detection performance, leading to inconsistencies between experimental runs.",
+                "possible_modifications": [
+                    "Introduce varying levels of Gaussian noise to sensor poses to assess robustness of feature alignment.",
+                    "Randomly drop sections of sensor input data or features during inference to simulate real-world sensor dropouts.",
+                    "Apply random perturbations to the training parameters or data augmentation process to evaluate the stability of collaborative perception."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset or Calibration Bias in Sensor Modalities",
+                "description": "Systematic uncertainty in this experiment can occur if there is a one-time, consistent bias in the dataset or sensor configurations. For instance, a fixed miscalibration between LiDAR and Camera sensors or an intentional corruption in the dataset (such as mislabeling or a consistent depth error in camera inputs) can create a uniform bias in the unified feature space. This is similar to introducing systematic bias in a sentiment analysis dataset where, for example, longer reviews are misrepresented.",
+                "impact": "Such systematic biases would consistently skew the collaborative perception performance, potentially favoring one sensor modality over the other and leading to flawed conclusions about their complementary roles in the unified feature space.",
+                "possible_modifications": [
+                    "Modify the camera calibration parameters in a fixed manner (e.g., a constant shift in the depth measurement) to introduce a consistent bias.",
+                    "Systematically alter the dataset by misaligning sensor data (for example, consistently offsetting the camera field-of-view) to simulate sensor bias.",
+                    "Create a one-off data corruption in the dataset for one modality (similar to mislabeling in sentiment datasets) and evaluate its effect on the unified representation."
+                ]
+            }
+        },
+        {
+            "question": "Does the gradual incorporation of HEAL\u2019s components (multiscale pyramid feature encoding, foreground supervision, and backward alignment) lead to incremental improvements in detection performance on the OPV2V-H dataset? (When setting up your experiment, make sure to follow the data preparation instructions provided in the repository for OPV2V-H, which is available on the Huggingface Hub, and use the fixed agent type configuration as outlined in the guidelines.)",
+            "method": "Set up an ablation study using the OPV2V-H dataset with a fixed configuration of agent types (for example, one L(64) LiDAR-equipped agent combined with other agents providing C(384), E+L(32), and S+C(336) inputs). First, train a baseline model without any of the HEAL-specific enhancements and record AP50 and AP70 (with an expected baseline AP50 around 0.729). Next, add the multiscale pyramid module only and record the metrics. Then, sequentially add foreground supervision to the model with the multiscale pyramid, and finally include the backward alignment module. Ensure that throughout each configuration, the training regime (learning rate, batch size, epochs), dataset splits, and evaluation protocols remain constant. Finally, compare the detection performance changes to determine if each component contributes to incremental improvements.",
+            "expected_outcome": "It is expected that each component will incrementally improve the detection metrics. Starting from the baseline, the addition of each component (multiscale pyramid, then foreground supervision, and finally backward alignment) will yield a consistent improvement in performance, demonstrating that the combined effect of these innovations is crucial for achieving superior detection accuracy.",
+            "subsection_source": "5.3 Q UANTITATIVE RESULTS",
+            "source": [
+                "/workspace/opencood/tools/train.py",
+                "/workspace/opencood/tools/heal_tools.py",
+                "/workspace/opencood/tools/inference_heter_in_order.py"
+            ],
+            "usage_instructions": "To run the ablation study on HEAL's components using the OPV2V-H dataset, follow these steps:\n\n1. First, prepare the OPV2V-H dataset by downloading it from the Huggingface Hub as mentioned in the README.md.\n\n2. For the baseline model (without any HEAL-specific enhancements):\n   - Create a configuration file by modifying `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml` to disable the multiscale pyramid, foreground supervision, and backward alignment components.\n   - Run: `python opencood/tools/train.py -y /path/to/baseline_config.yaml`\n   - After training, evaluate: `python opencood/tools/inference_heter_in_order.py --model_dir /path/to/trained_model_dir`\n\n3. For the model with only multiscale pyramid module:\n   - Use the existing configuration file: `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml`\n   - Modify the loss section to disable foreground supervision by removing or setting the pyramid weight to 0\n   - Run: `python opencood/tools/train.py -y /path/to/pyramid_only_config.yaml`\n   - After training, evaluate: `python opencood/tools/inference_heter_in_order.py --model_dir /path/to/trained_model_dir`\n\n4. For the model with multiscale pyramid and foreground supervision:\n   - Use the existing configuration file: `/workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml` with default settings\n   - Run: `python opencood/tools/train.py -y /workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml`\n   - After training, evaluate: `python opencood/tools/inference_heter_in_order.py --model_dir /path/to/trained_model_dir`\n\n5. For the complete HEAL model (with backward alignment):\n   - First train the collaboration base with multiscale pyramid and foreground supervision:\n     `python opencood/tools/train.py -y /workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage1/m1_pyramid.yaml`\n   - Then train the other agent types (m2, m3, m4) using the stage2 configs:\n     `python opencood/tools/train.py -y /workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage2/m2_single_pyramid.yaml`\n     `python opencood/tools/train.py -y /workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage2/m3_single_pyramid.yaml`\n     `python opencood/tools/train.py -y /workspace/opencood/hypes_yaml/opv2v/MoreModality/HEAL/stage2/m4_single_pyramid.yaml`\n   - Merge the models using heal_tools.py:\n     `python opencood/tools/heal_tools.py merge_final /path/to/m2_model /path/to/m3_model /path/to/m4_model /path/to/m1_model /path/to/output_dir`\n   - Evaluate the final model:\n     `python opencood/tools/inference_heter_in_order.py --model_dir /path/to/output_dir`\n\nFor each step, make sure to use the same fixed agent type configuration (e.g., one L(64) LiDAR-equipped agent combined with other agents providing C(384), E+L(32), and S+C(336) inputs) as specified in the OPV2V-H dataset. The AP50 and AP70 metrics will be reported after each evaluation run.",
+            "requirements": [
+                "Step 1: Parse command line arguments to get the configuration file path, model directory, and fusion method (/workspace/opencood/tools/train.py:20-29)",
+                "Step 2: Load the YAML configuration file and build the dataset for training and validation (/workspace/opencood/tools/train.py:34-40)",
+                "Step 3: Create data loaders for training and validation datasets (/workspace/opencood/tools/train.py:42-57)",
+                "Step 4: Initialize the model based on the configuration (/workspace/opencood/tools/train.py:60-61)",
+                "Step 5: Set up the loss function, optimizer, and learning rate scheduler (/workspace/opencood/tools/train.py:68-88)",
+                "Step 6: Train the model for the specified number of epochs, with periodic validation and checkpointing (/workspace/opencood/tools/train.py:102-179)",
+                "Step 7: For the complete HEAL model, train the base model (m1) first using the stage1 configuration (/workspace/opencood/tools/train.py:102-179)",
+                "Step 8: Train the other agent types (m2, m3, m4) using the stage2 configurations (/workspace/opencood/tools/train.py:102-179)",
+                "Step 9: Merge the trained models using the heal_tools.py script (/workspace/opencood/tools/heal_tools.py:115-130)",
+                "Step 10: Evaluate the model performance using inference_heter_in_order.py (/workspace/opencood/tools/inference_heter_in_order.py:61-179)",
+                "Step 11: Calculate and report the AP50 and AP70 metrics for the model (/workspace/opencood/tools/inference_heter_in_order.py:287-288)"
+            ],
+            "agent_instructions": "Your task is to implement a system for training and evaluating the HEAL (HEterogeneous Agent Learning) framework for cooperative perception on the OPV2V-H dataset. The system should support training models with different components enabled/disabled for an ablation study.\n\nThe system should include:\n\n1. A training script that:\n   - Takes a configuration file path as input\n   - Loads the dataset and creates data loaders\n   - Sets up the model, loss function, optimizer, and learning rate scheduler\n   - Trains the model for a specified number of epochs\n   - Periodically validates the model and saves checkpoints\n\n2. A model merging tool that:\n   - Can combine models trained for different agent types\n   - Takes paths to the trained models and an output directory as input\n   - Creates a merged model that can handle heterogeneous inputs\n\n3. An evaluation script that:\n   - Takes a model directory and fusion method as input\n   - Loads the test dataset and the trained model\n   - Runs inference on the test set\n   - Calculates and reports AP50 and AP70 metrics\n\nThe HEAL framework consists of three main components that should be configurable:\n\n1. Multiscale pyramid module: A feature extraction approach that operates at multiple scales\n2. Foreground supervision: A technique to focus learning on foreground objects\n3. Backward alignment: A method to align features from different agent types\n\nFor the ablation study, you need to support four configurations:\n1. Baseline: All components disabled\n2. Pyramid only: Only multiscale pyramid enabled\n3. Pyramid + Foreground: Both multiscale pyramid and foreground supervision enabled\n4. Complete HEAL: All components enabled\n\nThe evaluation should be performed with a fixed agent type configuration as specified in the OPV2V-H dataset.",
+            "masked_source": [
+                "/workspace/opencood/tools/train.py",
+                "/workspace/opencood/tools/heal_tools.py",
+                "/workspace/opencood/tools/inference_heter_in_order.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "OPV2V-H dataset with fixed settings including sensor configurations (e.g., one 64-channel LiDAR agent and additional agents with C(384), E+L(32), and S+C(336) setups)",
+                    "training_regime": "Fixed learning rate, batch size, number of epochs, dataset splits, and evaluation protocol",
+                    "agent_configuration": "Fixed agent type configuration as specified (e.g., one L(64) LiDAR-equipped agent combined with other agents as detailed)"
+                },
+                "independent_variables": {
+                    "HEAL_components": [
+                        "multiscale pyramid module (enabled or disabled)",
+                        "foreground supervision (enabled or disabled)",
+                        "backward alignment (enabled or disabled)"
+                    ]
+                },
+                "dependent_variables": {
+                    "detection_performance": [
+                        "AP50",
+                        "AP70"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "HEAL_components": "The internal settings or parameter choices within the multiscale pyramid module, foreground supervision, and backward alignment are not fully detailed, which could lead to variations in implementation.",
+                    "agent_configuration": "While a fixed configuration is mentioned, the exact sensor settings and potential impacts on performance are not exhaustively specified.",
+                    "training_regime": "Specific values for learning rate, batch size, and number of epochs are not provided, which might create ambiguity in replication."
+                },
+                "possible_modifications": {
+                    "mask_training_parameters": [
+                        "Mask specific learning rates, batch sizes, or epochs in the experimental instructions to test robustness."
+                    ],
+                    "extend_HEAL_components": [
+                        "Include additional component options or toggle finer-grained parameters within each HEAL module."
+                    ],
+                    "vary_agent_types": [
+                        "Introduce new agent configurations or sensor modalities to assess how different inputs affect the ablation results."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "OPV2V-H dataset (with fixed sensor and agent type configurations)",
+                    "Baseline model (with all HEAL-specific components disabled)",
+                    "Multiscale pyramid module",
+                    "Foreground supervision module",
+                    "Backward alignment module",
+                    "Fixed agent type configuration (L(64) LiDAR agent plus agents with C(384), E+L(32), S+C(336) inputs)",
+                    "Training script (handles dataset loading, model initialization, loss setup, training, and checkpointing)",
+                    "Model merging tool (combines models trained for different agent types)",
+                    "Evaluation script (runs inference and calculates AP50 and AP70 metrics)"
+                ],
+                "setup_steps": [
+                    "Download and prepare the OPV2V-H dataset from the Huggingface Hub as described in the repository README",
+                    "Set up and modify YAML configuration files to define the baseline and component-specific setups (e.g., disabling/enabling multiscale pyramid, foreground supervision, and backward alignment)",
+                    "Train the baseline model using the training script (e.g., via opencood/tools/train.py)",
+                    "Evaluate the baseline using the evaluation script (inference_heter_in_order.py) and record detection metrics (AP50, AP70)",
+                    "Modify the configuration to enable the multiscale pyramid module only, then train and evaluate the model",
+                    "Further update the configuration to include both the multiscale pyramid and foreground supervision, then train and evaluate",
+                    "Finally, include backward alignment (complete HEAL model), merge models using the merging tool (heal_tools.py), and run the final evaluation",
+                    "Ensure that the training regime (learning rate, batch size, epochs) and dataset splits remain constant across all steps"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Configuration File Modifications",
+                        "description": "Adjusting YAML files to selectively disable/enable components requires precise edits and understanding of how each module is integrated."
+                    },
+                    {
+                        "source": "Model Merging Process",
+                        "description": "Utilizing the heal_tools.py script to merge different agent type models introduces extra steps and dependencies, potentially increasing integration complexity."
+                    },
+                    {
+                        "source": "Fixed Agent Type Configuration",
+                        "description": "Maintaining a consistent sensor and agent setup across experiments demands careful adherence to specific setups as described in Table 1 and the instructions."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "HEAL components internal parameter choices (e.g., exact settings within the multiscale pyramid module, shadow parameters of foreground supervision, and method details for backward alignment)",
+                    "Agent configuration specifics (while a fixed setup is provided, the exact sensor modalities and related parameters are not exhaustively detailed)"
+                ],
+                "ambiguous_setup_steps": [
+                    "Training regime details (exact learning rates, batch sizes, and number of epochs are not explicitly provided, which could lead to variations in results)",
+                    "The procedure to disable or modify specific HEAL components in the YAML configuration is described in a general manner but lacks fine-grained instructions",
+                    "Model merging order and potential dependencies between stage1 and stage2 models are not elaborated in depth"
+                ],
+                "possible_modifications": {
+                    "mask_training_parameters": [
+                        "Omit specific values for learning rates, batch sizes, and epochs, forcing users to decide on appropriate settings."
+                    ],
+                    "extend_HEAL_components": [
+                        "Introduce additional toggle options or finer parameter controls within each HEAL module to assess the sensitivity of detection performance."
+                    ],
+                    "vary_agent_types": [
+                        "Experiment with different agent configurations or introduce new sensor modalities to examine how varied inputs affect collaboration and detection performance."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For an extended task, require that the complete HEAL framework (with all components enabled) achieves comparable detection performance while using a reduced computational budget\u2014for example, by utilizing a smaller backbone network or reducing the number of training epochs."
+                    ],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in model training and configuration adjustments",
+                "description": "Random uncertainty in this experiment can arise from various sources such as stochastic gradient descent initialization, random data shuffling, and any potential randomness in feature processing (e.g., random perturbations in multiscale feature extraction). For example, similar to how dropping random tokens leads to instability during gradient updates in transformer pre-training, inadvertently introducing randomness (such as random feature degradation) during the ablation study might cause the detection performance (AP50 and AP70) to vary across runs even though the only change is the gradual introduction of HEAL components.",
+                "impact": "Variability in the detection metrics across different experimental runs might obscure the exact contribution of each HEAL component (multiscale pyramid, foreground supervision, backward alignment) due to inherent noise introduced by the training process.",
+                "possible_modifications": [
+                    "Introduce artificial random noise in the data augmentation pipeline during training to evaluate robustness of the incremental component effects.",
+                    "Randomly shuffle parts of the training sequence (e.g., order of agent inputs) to simulate gradient update instability.",
+                    "Randomly alter non-critical parameters in the feature encoding process to test how these perturbations affect the detection performance."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent misconfigurations or biases in dataset/sensor setup and model parameters",
+                "description": "Systematic uncertainty here refers to one-time or consistent modifications that bias the experiment. For instance, if the OPV2V-H dataset or YAML configuration files are deliberately or inadvertently altered (e.g., setting specific sensor parameters incorrectly or modifying agent configurations) such that one or more modalities are consistently misrepresented, it could skew the detection performance results. An example would be consistently mislabeling or corrupting a subset of agent inputs, similar to how dataset modifications (e.g., labeling reviews with 50+ characters as negative) introduce systematic bias in sentiment analysis.",
+                "impact": "This kind of uncertainty could lead to consistently lower or inflated detection metrics (AP50, AP70) across all configurations, misleading the assessment of each HEAL component\u2019s effectiveness. The incremental improvements seen in Table 4 (e.g., baseline AP50 around 0.729 reaching up to 0.894 with complete HEAL) could then be attributed partly to the systematic bias rather than purely to the added components.",
+                "possible_modifications": [
+                    "Intentionally introduce a bias in sensor configuration for a subset of agents (e.g., altering resolution or channel count) to assess the impact of systematic errors on detection performance.",
+                    "Modify the dataset by corrupting labels or ground truth positions in a consistent manner to simulate systematic bias.",
+                    "Apply uniform miscalibration in the YAML configuration files to examine how such systematic errors affect the model merging and subsequent evaluation processes."
+                ]
+            }
+        },
+        {
+            "question": "Will the incorporation of HEAL\u2019s Pyramid Fusion and backward alignment modules lead to substantially lower training costs (in terms of model parameters, FLOPs, and memory usage) while maintaining or improving state-of-the-art detection performance compared to baseline collaborative perception methods? (Conduct this evaluation using the OPV2V-H dataset as laid out in the HEAL framework instructions.)",
+            "method": "Design an experiment in which several collaborative perception models, including Late Fusion, HM-ViT, and HEAL, are trained using the OPV2V-H dataset. Follow the HEAL framework's guidelines to set up an incremental agent integration scenario (using the provided modality assignment and configuration protocols) and ensure consistency by training with a batch size of 1 on an RTX A40 GPU. During training, record the detection performance (using AP50 and AP70 metrics) as well as training cost metrics such as model parameters (in millions), FLOPs (in tera operations), and peak memory usage (in GB). Finally, compare the training throughput and calculate the percentage reduction in computational cost metrics to assess whether HEAL achieves competitive or superior detection performance with significantly reduced resource requirements.",
+            "expected_outcome": "The experiment is expected to demonstrate that HEAL not only matches or exceeds the detection performance of state-of-the-art methods but does so at a fraction of the training cost. Significant reductions in model size, computational complexity, and memory usage will be observed, confirming the efficiency benefits attributed to the Pyramid Fusion and backward alignment designs.",
+            "subsection_source": "5.3 Q UANTITATIVE RESULTS",
+            "source": [
+                "/workspace/opencood/tools/profiler/params_calc_multi.py",
+                "/workspace/opencood/tools/profiler/params_flops_multi.py",
+                "/workspace/opencood/tools/profiler/traintp_calc.py",
+                "/workspace/opencood/tools/inference_heter_in_order.py"
+            ],
+            "usage_instructions": "To evaluate HEAL's Pyramid Fusion and backward alignment modules on the OPV2V-H dataset, follow these steps:\n\n1. First, train the HEAL model following the instructions in the README (sections 'HEAL's Train Command' steps 1-3).\n\n2. After training, measure the model parameters, FLOPs, and memory usage using:\n   ```\n   python opencood/tools/profiler/params_calc_multi.py --hypes_yaml /path/to/HEAL/config.yaml\n   python opencood/tools/profiler/params_flops_multi.py --hypes_yaml /path/to/HEAL/config.yaml\n   python opencood/tools/profiler/traintp_calc.py --hypes_yaml /path/to/HEAL/config.yaml\n   ```\n   These scripts will output metrics for model parameters (in millions), FLOPs (in tera operations), and peak memory usage (in GB).\n\n3. Run the same profiling scripts on baseline models (Late Fusion, HM-ViT) for comparison.\n\n4. Finally, evaluate the detection performance using:\n   ```\n   python opencood/tools/inference_heter_in_order.py --model_dir /path/to/HEAL/final_infer\n   ```\n   This will evaluate HEAL's performance in an incremental agent integration scenario using the OPV2V-H dataset, reporting AP50 and AP70 metrics.\n\n5. Compare the results to determine if HEAL achieves competitive or superior detection performance with reduced computational costs compared to baseline methods.",
+            "requirements": [
+                "Step 1: Load the trained HEAL model from a checkpoint using the provided configuration file (/workspace/opencood/tools/profiler/params_calc_multi.py:33-54)",
+                "Step 2: Set up the detection range for evaluation, with options for full or half range (/workspace/opencood/tools/profiler/params_calc_multi.py:35-44)",
+                "Step 3: Prepare input data for different numbers of connected vehicles (1-5) from pre-saved pickle files (/workspace/opencood/tools/profiler/params_calc_multi.py:70-76)",
+                "Step 4: Move the model and input data to GPU and set model to evaluation mode (/workspace/opencood/tools/profiler/params_calc_multi.py:77-79)",
+                "Step 5: Calculate model parameters and FLOPs using FlopCountAnalysis (/workspace/opencood/tools/profiler/params_calc_multi.py:81)",
+                "Step 6: Measure inference throughput using both naive time measurement and CUDA event timing (/workspace/opencood/tools/profiler/params_calc_multi.py:82-83)",
+                "Step 7: Measure memory usage before and after model inference (/workspace/opencood/tools/profiler/params_calc_multi.py:97-109)",
+                "Step 8: Collect and save all metrics (throughput, FLOPs, memory) to output files (/workspace/opencood/tools/profiler/params_calc_multi.py:122-146)",
+                "Step 9: Measure training throughput by creating a dataset, dataloader, model, loss function, and optimizer (/workspace/opencood/tools/profiler/traintp_calc.py:98-118)",
+                "Step 10: Run a training loop to measure training speed and peak memory usage (/workspace/opencood/tools/profiler/traintp_calc.py:125)",
+                "Step 11: Save training performance metrics to an output file (/workspace/opencood/tools/profiler/traintp_calc.py:127-136)",
+                "Step 12: Set up heterogeneous agent evaluation with incremental agent addition (/workspace/opencood/tools/inference_heter_in_order.py:62-143)",
+                "Step 13: Create a dataloader for the test dataset with heterogeneous agents (/workspace/opencood/tools/inference_heter_in_order.py:168-178)",
+                "Step 14: Run inference with the specified fusion method (late, intermediate, etc.) (/workspace/opencood/tools/inference_heter_in_order.py:219-242)",
+                "Step 15: Calculate detection metrics (true positives, false positives) at different IoU thresholds (0.3, 0.5, 0.7) (/workspace/opencood/tools/inference_heter_in_order.py:248-262)",
+                "Step 16: Visualize detection results at specified intervals (/workspace/opencood/tools/inference_heter_in_order.py:272-284)",
+                "Final Step: Calculate and report final AP50 and AP70 metrics (/workspace/opencood/tools/inference_heter_in_order.py:287-288)"
+            ],
+            "agent_instructions": "You need to evaluate the HEAL model's Pyramid Fusion and backward alignment modules on the OPV2V-H dataset. This involves measuring computational efficiency metrics and detection performance in a heterogeneous collaborative perception setting.\n\nFirst, create scripts to measure the model's computational efficiency:\n1. Create a script to calculate model parameters and memory usage for different numbers of connected vehicles (1-5)\n2. Create a script to measure FLOPs (floating point operations) for different numbers of connected vehicles\n3. Create a script to measure training throughput and peak memory usage during training\n\nThen, create a script to evaluate detection performance:\n1. The script should support incremental addition of heterogeneous agents (different sensor modalities)\n2. It should run inference using the specified fusion method (intermediate fusion)\n3. It should calculate detection metrics (AP50 and AP70) for object detection\n4. It should visualize detection results at specified intervals\n\nThe evaluation should be performed on the OPV2V-H dataset, which contains heterogeneous agents with different sensor modalities. The scripts should load a pre-trained HEAL model from a checkpoint and evaluate its performance in terms of both computational efficiency and detection accuracy.\n\nMake sure to handle different detection ranges and support various fusion methods (late, intermediate, etc.). The final output should include metrics for model parameters, FLOPs, memory usage, and detection performance (AP50 and AP70).",
+            "masked_source": [
+                "/workspace/opencood/tools/profiler/params_calc_multi.py",
+                "/workspace/opencood/tools/profiler/params_flops_multi.py",
+                "/workspace/opencood/tools/profiler/traintp_calc.py",
+                "/workspace/opencood/tools/inference_heter_in_order.py",
+                "/workspace/opencood/tools/profiler/params_calc.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "OPV2V-H (fixed for all experiments)",
+                    "hardware": "RTX A40 GPU",
+                    "batch_size": "1 (same for all training runs)"
+                },
+                "independent_variables": {
+                    "collaborative_perception_models": [
+                        "Late Fusion",
+                        "HM-ViT",
+                        "HEAL"
+                    ],
+                    "fusion_methods": [
+                        "late",
+                        "intermediate"
+                    ],
+                    "agent_configuration": "Incremental heterogeneous agent addition (varying number of connected vehicles from 1 to 5)",
+                    "evaluation_scripts": "Specific profiler scripts for model parameters, FLOPs, training throughput, and memory usage"
+                },
+                "dependent_variables": {
+                    "detection_performance": [
+                        "AP50",
+                        "AP70"
+                    ],
+                    "computational_efficiency": [
+                        "model parameters",
+                        "FLOPs",
+                        "peak memory usage",
+                        "training throughput (and incremental addition effects)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "substantially_lower_training_costs": "The term 'substantially lower' is not numerically defined; the threshold for reduction in parameters, FLOPs, and memory is not specified.",
+                    "fusion_method": "Although both late and intermediate fusion methods are mentioned, it is ambiguous which fusion method should be adopted for final comparison.",
+                    "incremental_agent_integration": "Details on how agents are incrementally added (e.g., exact ordering or conditions for agent inclusion) are not completely explicit."
+                },
+                "possible_modifications": {
+                    "modification_new_variables": [
+                        "Introduce a variable with explicit thresholds for cost reductions (e.g., >50% reduction in model parameters).",
+                        "Add a variable to explicitly define fusion strategies with more granularity (e.g., distinguishing between late, intermediate, and early fusion)."
+                    ],
+                    "modification_masking": [
+                        "Mask the exact fusion method in the task instructions to require the model to infer which fusion strategy might yield efficiency benefits.",
+                        "Omit explicit agent integration order details so that the evaluation must account for various possible incremental configurations."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "OPV2V-H dataset with heterogeneous sensors (LiDAR and camera modalities)",
+                    "HEAL model and its Pyramid Fusion and backward alignment modules",
+                    "Baseline models (Late Fusion, HM-ViT)",
+                    "Profiler scripts for model parameters, FLOPs, training throughput, and memory usage (e.g., params_calc_multi.py, params_flops_multi.py, traintp_calc.py, inference_heter_in_order.py)",
+                    "Incremental heterogeneous agent integration mechanism (incrementally adding connected vehicles from 1 to 5)",
+                    "Fusion method configurations (late, intermediate)"
+                ],
+                "setup_steps": [
+                    "Train the HEAL model following the guide in the README (using HEAL\u2019s Train Command steps 1-3)",
+                    "Load the trained HEAL model from a checkpoint using the provided configuration file",
+                    "Set up the OPV2V-H dataset with heterogeneous agents and prepare input data (from pre-saved pickle files) for evaluation",
+                    "Run profiler scripts to measure model parameters, FLOPs, and memory usage for different numbers of connected vehicles",
+                    "Measure training throughput and peak memory usage during model training",
+                    "Set up and execute the incremental agent integration scenario, applying specified fusion methods (late or intermediate)",
+                    "Run inference using the designated script (inference_heter_in_order.py) to compute detection performance metrics (AP50 and AP70)",
+                    "Collect, compare, and analyze computational efficiency metrics against baseline methods"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Configuration and Sensor Modalities",
+                        "description": "The experiment involves a variety of sensor modalities and model setups (e.g., different LiDAR channels and camera resolutions) which increase the complexity of aligning heterogeneous agent features."
+                    },
+                    {
+                        "source": "Script Integration and Metric Collection",
+                        "description": "The use of multiple profiling and evaluation scripts (each handling different metrics and stages of evaluation) requires careful orchestration to ensure consistency across experiments."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Substantially lower training costs: The term is not numerically defined, leaving unclear what threshold or percentage reduction in parameters, FLOPs, and memory is considered 'substantial'.",
+                    "Fusion method specification: While both late and intermediate fusion methods are mentioned, the final evaluation strategy is ambiguous regarding which method should be the primary comparison point."
+                ],
+                "ambiguous_setup_steps": [
+                    "Incremental agent integration: The exact ordering, conditions, and criteria for adding heterogeneous agents (e.g., how to choose sensors or set integration order) are not completely explicit.",
+                    "Details for some profiler scripts: While the scripts are listed with line references, the precise configurations (e.g., detection range settings, preprocessing details) are not fully clarified in the setup instructions."
+                ],
+                "possible_modifications": {
+                    "modification_new_variables": [
+                        "Define explicit thresholds for 'substantially lower' training costs (e.g., specify a >50% reduction in model parameters, FLOPs, and memory usage as a target).",
+                        "Provide detailed criteria for selecting the fusion method (e.g., explicitly state whether 'intermediate' fusion must be used for the final comparison)."
+                    ],
+                    "modification_masking": [
+                        "Omit exact details of the incremental agent integration order to force the design of a more flexible evaluation protocol.",
+                        "Mask specific parameter values in the profiling scripts to let users introduce configurable options based on experimental insights."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce an explicit threshold whereby HEAL must reduce model parameters, FLOPs, and peak memory usage by at least 50% compared to baseline methods, while achieving comparable or superior AP50 and AP70 scores.",
+                        "Require that HEAL achieves competitive detection performance using a reduced computational budget, thereby necessitating tighter control over model size and complexity."
+                    ],
+                    "time_constraints": [
+                        "Limit the training procedure by enforcing a fixed maximum number of training iterations or epochs to emphasize efficiency gains."
+                    ],
+                    "money_constraints": [
+                        "Simulate reduced hardware availability by imposing constraints on GPU usage time (e.g., limiting the training on an RTX A40 GPU to a specific time window) to reflect cost-restricted scenarios."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic variations introduced during training and evaluation procedures, such as random token dropping and Gaussian pose noise (as shown in Figure 4) that can lead to fluctuating gradient updates and variable computational metrics.",
+                "description": "Random uncertainty arises when techniques that are supposed to reduce costs or improve training stability are modified in a stochastic manner. For instance, rather than carefully selecting unimportant tokens for dropout, dropping tokens at random can increase instability during training. Similarly, the injection of Gaussian noise for pose parameters introduces random perturbations. These random elements can lead to unpredictable variations in measured model parameters, FLOPs, memory usage, and even detection performance metrics (AP50/AP70).",
+                "impact": "Results may exhibit increased variability in training throughput and detection performance. This random fluctuation can make it harder to determine whether HEAL\u2019s Pyramid Fusion and backward alignment modules truly contribute to lower training costs while maintaining or improving detection accuracy.",
+                "possible_modifications": [
+                    "Replace stochastic random token dropping with a deterministic token selection method to reduce variability.",
+                    "Control the level of Gaussian noise applied to pose estimates so that the randomness does not overly affect gradient stability.",
+                    "Set fixed random seeds and use controlled dropout mechanisms during training to ensure consistency in computational and performance metrics."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "One-time modifications or corruptions in the dataset and evaluation protocol, such as introducing a systematic bias in the OPV2V-H dataset (for example, mislabeling or skewing the sensor configuration order during incremental agent integration).",
+                "description": "Systematic uncertainty can be introduced by deliberately altering the data or the evaluation pipeline in a consistent, non-random way that biases the results. An example could be modifying the dataset to label objects in vehicles with a specific sensor setup incorrectly (e.g., applying a fixed bias in object labels based on detected length in Table 1 configurations). This creates a consistent error which can potentially skew both computational cost measurements and detection performance, misleading the evaluation of HEAL\u2019s efficiency benefits.",
+                "impact": "Such systematic deviations will lead to consistently biased detection performance metrics (AP50 and AP70) and may either mask or exaggerate the computational cost savings attributed to HEAL\u2019s Pyramid Fusion and backward alignment modules. Over time, the performance benefits might be misinterpreted as genuine improvements when they are artefacts of the biased experimental setup.",
+                "possible_modifications": [
+                    "Ensure the use of a clean and verified copy of the OPV2V-H dataset without any tampering in labels or sensor configurations.",
+                    "Regularly audit the data integration steps, especially in the incremental heterogeneous agent addition process, to prevent systematic biases.",
+                    "Perform cross-validation on multiple splits of the dataset to check for consistent systematic errors."
+                ]
+            }
+        },
+        {
+            "question": "Does HEAL maintain robust detection performance under realistic conditions of imperfect localization when Gaussian noise is added to the agents' poses? (Note: The experiment should be performed using the OPV2V-H dataset, which is available on the Huggingface Hub as specified in the repository's data preparation instructions.)",
+            "method": "Conduct a robustness experiment using the OPV2V-H dataset. Perturb the accurate pose information of each agent by adding Gaussian noise sampled from N(0, \u03c3\u00b2_p) to the x and y positions and from N(0, \u03c3\u00b2_r) to the yaw angle. Vary the noise levels to simulate different degrees of localization error. Evaluate the detection performance using AP metrics such as AP50 and AP70 under these noisy conditions and compare the results with baseline models that lack design measures against pose errors. Provide a detailed analysis of the degradation curve of the AP metrics as the noise variance increases, and discuss how components like the multiscale feature encoding, foreground supervision, and backward alignment contribute to HEAL\u2019s robustness.",
+            "expected_outcome": "It is anticipated that HEAL will exhibit minimal performance degradation relative to baseline models even as the localization error increases. Due to the design features like multiscale feature encoding, foreground supervision, and backward alignment, HEAL is expected to maintain state-of-the-art detection performance in terms of AP metrics despite the introduction of realistic Gaussian noise in the agents' poses.",
+            "subsection_source": "5.3 QUANTITATIVE RESULTS",
+            "source": [
+                "/workspace/opencood/tools/inference_w_noise.py"
+            ],
+            "usage_instructions": "To evaluate HEAL's robustness under imperfect localization with Gaussian noise using the OPV2V-H dataset:\n\n1. First, ensure you have trained the HEAL model following the instructions in the README (or use a pre-trained model from the Huggingface Hub).\n\n2. Execute the following command:\n   ```\n   python opencood/tools/inference_w_noise.py --model_dir /path/to/your/HEAL/model/checkpoint --fusion_method intermediate\n   ```\n\n3. The script will automatically test the model with different levels of Gaussian noise (0, 0.2, 0.4, 0.6 meters for position and 0, 0.2, 0.4, 0.6 degrees for rotation) added to the agents' poses.\n\n4. Results will be saved in the model directory as 'AP030507.yaml', containing AP30, AP50, and AP70 metrics for each noise level.\n\n5. Visualizations of detection results will be saved in the 'vis_[noise_level]' subdirectory of your model directory.\n\n6. You can add the '--also_laplace' flag if you want to also test with Laplace distribution noise in addition to Gaussian noise.",
+            "requirements": [
+                "Step 1: Parse command line arguments including model directory path, fusion method, and optional flags for Laplace noise (/workspace/opencood/tools/inference_w_noise.py:23-36)",
+                "Step 2: Load model configuration from the specified model directory (/workspace/opencood/tools/inference_w_noise.py:43-53)",
+                "Step 3: Create and load the trained model from the checkpoint (/workspace/opencood/tools/inference_w_noise.py:54-64)",
+                "Step 4: Define noise levels for position (0, 0.2, 0.4, 0.6 meters) and rotation (0, 0.2, 0.4, 0.6 degrees) (/workspace/opencood/tools/inference_w_noise.py:67-70)",
+                "Step 5: Determine whether to use Laplace distribution in addition to Gaussian based on command line arguments (/workspace/opencood/tools/inference_w_noise.py:73-76)",
+                "Step 6: For each noise distribution type (Gaussian and optionally Laplace) (/workspace/opencood/tools/inference_w_noise.py:78-210)",
+                "Step 7: For each noise level combination, set up the noise parameters (/workspace/opencood/tools/inference_w_noise.py:82-97)",
+                "Step 8: Build the dataset with the current noise setting (/workspace/opencood/tools/inference_w_noise.py:100-110)",
+                "Step 9: Initialize result statistics dictionary for evaluation metrics (/workspace/opencood/tools/inference_w_noise.py:113-115)",
+                "Step 10: For each batch in the dataset, perform inference using the specified fusion method (/workspace/opencood/tools/inference_w_noise.py:120-154)",
+                "Step 11: Calculate true positives and false positives for evaluation at different IoU thresholds (0.3, 0.5, 0.7) (/workspace/opencood/tools/inference_w_noise.py:160-174)",
+                "Step 12: Periodically save visualization results of the detection (/workspace/opencood/tools/inference_w_noise.py:177-199)",
+                "Step 13: Calculate average precision metrics (AP30, AP50, AP70) for the current noise level (/workspace/opencood/tools/inference_w_noise.py:203-207)",
+                "Step 14: Save the evaluation results to a YAML file (/workspace/opencood/tools/inference_w_noise.py:209-210)"
+            ],
+            "agent_instructions": "Create a script to evaluate a cooperative perception model's robustness under imperfect localization conditions. The script should:\n\n1. Accept command line arguments for:\n   - Path to a trained model checkpoint\n   - Fusion method to use (intermediate, late, early, or no fusion)\n   - Optional flag to test with Laplace distribution noise in addition to Gaussian noise\n\n2. Test the model with different levels of noise added to agent poses:\n   - Position noise: 0, 0.2, 0.4, 0.6 meters\n   - Rotation noise: 0, 0.2, 0.4, 0.6 degrees\n   - Use Gaussian distribution by default, with option to also test Laplace distribution\n\n3. For each noise level:\n   - Load the dataset with the specified noise parameters\n   - Run inference using the specified fusion method\n   - Calculate detection metrics (Average Precision) at IoU thresholds of 0.3, 0.5, and 0.7\n   - Periodically save visualizations of detection results\n\n4. Save the evaluation results (AP30, AP50, AP70) for each noise level to a YAML file in the model directory.\n\nThe script should be compatible with the OPV2V-H dataset and support different fusion methods for cooperative perception. The implementation should handle loading the model, adding noise to agent poses, running inference, and evaluating detection performance.",
+            "masked_source": [
+                "/workspace/opencood/tools/inference_w_noise.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "OPV2V-H"
+                    ],
+                    "model_architecture": "HEAL with fixed components such as multiscale feature encoding, foreground supervision, and backward alignment"
+                },
+                "independent_variables": {
+                    "position_noise": [
+                        "0 m",
+                        "0.2 m",
+                        "0.4 m",
+                        "0.6 m"
+                    ],
+                    "rotation_noise": [
+                        "0\u00b0",
+                        "0.2\u00b0",
+                        "0.4\u00b0",
+                        "0.6\u00b0"
+                    ],
+                    "noise_distribution": [
+                        "Gaussian",
+                        "Laplace (optional)"
+                    ],
+                    "fusion_method": [
+                        "intermediate",
+                        "late",
+                        "early",
+                        "no fusion"
+                    ]
+                },
+                "dependent_variables": {
+                    "detection_performance_metrics": [
+                        "AP30",
+                        "AP50",
+                        "AP70"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "fusion_method": "It is not explicitly clear which fusion method should be prioritized or how differences among them impact robustness beyond serving as an independent variable.",
+                    "noise_variance_parameters": "While discrete noise levels (0, 0.2, 0.4, 0.6) are provided, the precise methodology for variance scaling and its interaction with pose error is not fully detailed.",
+                    "optional_noise_distribution": "The parameterization details for the Laplace noise option relative to the Gaussian noise are not fully specified.",
+                    "evaluation_metric_calculation": "The procedures for calculating AP metrics (e.g., exact IoU threshold handling and potential rounding differences) are not elaborated in the task."
+                },
+                "possible_modifications": {
+                    "modification_fusion_method": [
+                        "Mask or restrict certain fusion methods to observe the impact on robustness, or add new fusion method variants."
+                    ],
+                    "modification_noise_levels": [
+                        "Introduce additional or a continuous range of noise levels to better characterize the degradation curve."
+                    ],
+                    "modification_noise_distribution": [
+                        "Clearly define the parameters for Laplace noise or introduce additional noise distribution types."
+                    ],
+                    "modification_evaluation_metrics": [
+                        "Include other metrics such as detection latency, false positive rates, or robustness scores to provide a broader evaluation."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEAL model checkpoint with fixed components (multiscale feature encoder, foreground supervision, backward alignment)",
+                    "OPV2V-H dataset loader configured to inject noise",
+                    "Noise injection module (applies Gaussian noise to agent poses and optionally Laplace noise)",
+                    "Fusion module operating in different modes (intermediate, late, early, no fusion)",
+                    "Evaluation module to calculate detection metrics (AP30, AP50, AP70) and generate visualizations",
+                    "Command line interface for parsing arguments (model directory, fusion method, optional noise flag)"
+                ],
+                "setup_steps": [
+                    "Parse command line arguments to load model path, fusion method, and optional noise distribution flag",
+                    "Load the HEAL model configuration and checkpoint from the specified model directory",
+                    "Define noise levels for position (0, 0.2, 0.4, 0.6 m) and rotation (0, 0.2, 0.4, 0.6 degrees)",
+                    "Optionally set up Laplace noise in addition to the default Gaussian noise",
+                    "Build the OPV2V-H dataset with agent pose perturbations based on the defined noise parameters",
+                    "Run inference using the chosen fusion method on the noise-augmented dataset",
+                    "Compute detection metrics (AP30, AP50, AP70) for each noise level combination",
+                    "Save evaluation results to a YAML file and generate visualizations of detection outputs"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple independent variables",
+                        "description": "Different noise levels (position and rotation) and fusion methods increase the combinatorial complexity of experiments."
+                    },
+                    {
+                        "source": "Optional noise distribution",
+                        "description": "The inclusion of an optional Laplace noise test adds an extra branch to the experimental design."
+                    },
+                    {
+                        "source": "Inter-dependent evaluation metrics",
+                        "description": "Calculation of AP metrics at multiple IoU thresholds (AP30, AP50, AP70) requires careful synchronization of evaluation procedures across noise levels."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Fusion method: It is unclear which fusion method might be most prioritized or how the differences among fusion methods affect robustness",
+                    "Noise variance parameterization: The exact scaling and interaction of the defined noise levels for pose perturbation remain only partially specified"
+                ],
+                "ambiguous_setup_steps": [
+                    "Dataset preparation: The process for building the OPV2V-H dataset under noise injection, including exact variance scaling, is not fully elaborated",
+                    "Evaluation metric calculation: Specific details on handling IoU thresholds and potential rounding or aggregation procedures for AP metrics are not fully described",
+                    "Optional noise distribution: The parameterization for Laplace noise relative to Gaussian noise is mentioned but lacks explicit details"
+                ],
+                "possible_modifications": {
+                    "modification_fusion_method": [
+                        "Restrict or highlight a primary fusion method to reduce ambiguity and observe its isolated impact on robustness",
+                        "Provide a detailed comparison framework between different fusion modes"
+                    ],
+                    "modification_noise_levels": [
+                        "Include additional or continuous ranges of noise levels to derive more granular degradation curves",
+                        "Specify precise scaling factors for noise application to reduce uncertainty"
+                    ],
+                    "modification_noise_distribution": [
+                        "Clearly define parameter settings for Laplace noise to benchmark against Gaussian noise",
+                        "Introduce or test additional noise distribution types with detailed parameterizations"
+                    ],
+                    "modification_evaluation_metrics": [
+                        "Elaborate on the process of AP metric calculation, including IoU threshold handling and result aggregation",
+                        "Incorporate additional robustness metrics such as false positive rates or detection latency"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "If compute resources become limited, one modification could be to use a reduced subset of the OPV2V-H dataset or to implement a streamlined version of HEAL by reducing the complexity of the multiscale feature encoding (e.g., fewer channels or simpler backbone networks).",
+                        "Alternatively, require performance parity with a smaller variant of HEAL (analogous to using GPT-4o-mini instead of GPT-4o) to emphasize efficiency under resource constraints."
+                    ],
+                    "time_constraints": [
+                        "In a time-constrained scenario, one can limit the number of noise level combinations (e.g., testing fewer combinations of Gaussian noise intensities) to shorten the overall testing time while still examining robustness.",
+                        "Another modification is to restrict the evaluation cycle to only the primary fusion method (e.g., intermediate fusion) rather than testing all available fusion modes."
+                    ],
+                    "money_constraints": [
+                        "Under explicit monetary constraints, you might choose to run the experiment on a smaller subset of the dataset or limit the number of inference runs to reduce cloud compute costs.",
+                        "Additionally, adopting a simplified HEAL model variant (with reduced architecture complexity) could help reduce operational expenses if licensing or compute budgets are limited."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Injection of Gaussian (and optionally Laplace) noise into agent pose measurements",
+                "description": "In the experiment, random uncertainty is introduced by perturbing the accurate pose information of each agent. Gaussian noise sampled from N(0, \u03c3\u00b2_p) is added to the x and y locations and from N(0, \u03c3\u00b2_r) to the yaw angle. This random perturbation results in unpredictable misalignment between the agents, affecting the detection outputs and the calculated AP metrics (AP30, AP50, AP70).",
+                "impact": "The random noise causes variability in the detection performance over multiple runs. As the noise levels increase, the degradation in performance is observed through a degradation curve of AP metrics. Although HEAL\u2019s design features such as multiscale feature encoding, foreground supervision, and backward alignment help mitigate the negative effects, the random nature of the noise still introduces fluctuations in the robustness evaluation.",
+                "possible_modifications": [
+                    "Introduce additional randomness by testing a continuous range of noise levels rather than fixed discrete values to obtain a more granular degradation curve.",
+                    "Inject noise from alternative random distributions (e.g., only Laplace noise or a mix of Gaussian and Laplace) to further quantify the model's sensitivity to different random perturbations.",
+                    "Simulate other sources of random uncertainty such as sensor dropout or random occlusions in sensor data, which can affect detection performance similarly."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "One-time dataset-level modification (systematic bias) in agent pose information",
+                "description": "Systematic uncertainty could be introduced by applying a fixed offset or bias to the agents' pose data in the dataset (for example, a constant error added to all x, y positions or a fixed rotational error). This one-time modification corrupts the entire dataset in a similar manner, thereby creating a consistent bias in the localization measurements.",
+                "impact": "The systematic bias alters the pose information in a consistent manner across all agents, which could mislead the evaluation of the detection performance. Unlike random noise, the fixed bias might not be mitigated by the model\u2019s adaptive components and may require the agent to detect and correct the bias by fetching or reconstructing a clean dataset. This can adversely affect the AP metrics, leading to a systematic drop in performance.",
+                "possible_modifications": [
+                    "Apply a fixed bias offset to the angle or position data to simulate a systematic error and evaluate how the model's components (e.g., backward alignment) respond.",
+                    "Introduce systematic errors only in a specific sensor modality (e.g., only on LiDAR or camera data) to study whether cross-modal fusion helps to overcome the bias.",
+                    "Corrupt a subset of the dataset with a systematic error and compare performance against a clean subset, testing the model\u2019s ability to detect and adapt to such discrepancies."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Analyze the scalability of HEAL by extending the number of heterogeneous agents beyond four, including additional sensor modalities and varying agent densities.",
+            "experiment_design": "Using the same OPV2V-H dataset, design experiments where additional agent types (e.g., more LiDAR configurations with different channel counts or higher-resolution cameras) are introduced incrementally. Keep the training and network configurations consistent. Evaluate the AP metrics as the number of agents increases, and analyze at what point the performance gains reach diminishing returns. This setup will help understand the scalability limits and operational boundaries of the collaborative system.",
+            "subsection_source": "5.2 O PEN HETEROGENEOUS SETTINGS"
+        },
+        {
+            "idea": "Evaluate the impact of varying training regimes and hyperparameter settings on both performance and training efficiency in open heterogeneous settings.",
+            "experiment_design": "Conduct a series of controlled experiments altering key hyperparameters such as learning rate schedules, number of training epochs, and optimizer choices (e.g., comparing Adam with SGD). Retain the same sequential integration of the heterogeneous agents. Measure changes in both AP performance and training time (or cost) for each configuration. This follow-up study would help optimize the training process for deployment in practical scenarios where computational resources are limited.",
+            "subsection_source": "5.2 O PEN HETEROGENEOUS SETTINGS"
+        },
+        {
+            "idea": "Extend the evaluation of HEAL by applying it to additional real-world datasets beyond OPV2V-H and DAIR-V2X, particularly in urban environments with more diverse agent types.",
+            "experiment_design": "Select one or two real-world collaborative perception datasets with various sensor configurations. Adapt the HEAL framework to these datasets and perform a comparative analysis of detection performance and training cost metrics. Evaluate robustness under real-world conditions (e.g., varying weather, lighting, and dynamic traffic scenarios) and compare findings with those obtained from simulated datasets.",
+            "subsection_source": "5.3 Q UANTITATIVE RESULTS"
+        },
+        {
+            "idea": "Investigate adaptive feature compression techniques to further optimize bandwidth usage without sacrificing detection performance.",
+            "experiment_design": "Develop and integrate a dynamic compression module that adjusts the compression ratio based on real-time network or environmental conditions. Fine-tune this module in conjunction with HEAL on the OPV2V-H dataset, and compare detection performance and latency across different compression settings. Analyze how adaptive compression impacts both the computational efficiency and overall detection accuracy when contrasted with the fixed 32-fold compression baseline.",
+            "subsection_source": "5.3 Q UANTITATIVE RESULTS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces HEAL, a heterogeneous collaboration framework that leverages multiscale pyramid feature encoding, foreground supervision, and backward alignment to align features from diverse sensor modalities.",
+        "Component ablation studies demonstrate that each module\u2014multiscale pyramid, foreground supervision, and backward alignment\u2014contributes positively to the overall detection performance, with AP50 improving from 0.729 to 0.894 when all are enabled.",
+        "The new OPV2V-H dataset was designed to bridge the gap between LiDAR and camera modalities by including varied sensor configurations such as 64-channel, 16-/32-channel LiDAR, RGB cameras, and depth cameras.",
+        "Robustness tests involve introducing pose noise (with x, y location noise drawn from N(0, \u03c3\u00b2_p) and yaw angle noise from N(0, \u03c3\u00b2_r)) to validate the method\u2019s resilience under perturbations.",
+        "Visualization of feature alignment from various ResNeXt layers confirms that the encoded features from different agent types are well aligned and have similar responses for foreground and background regions, facilitating effective feature fusion."
+    ]
+}

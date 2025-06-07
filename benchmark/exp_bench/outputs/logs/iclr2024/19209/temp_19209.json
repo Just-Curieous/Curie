@@ -1,0 +1,63 @@
+{
+    "questions": [
+        {
+            "question": "Does the iterative prompt optimization process improve training accuracy and stabilize instruction quality on GSM8K?",
+            "method": "Using the GSM8K dataset, randomly sample 3.5% of the training examples and keep this subset fixed throughout the optimization process. Start with the initial instruction 'Let\u2019s solve the problem' (approximated training accuracy ~60.5%). Use PaLM 2-L-IT as the optimizer and pre-trained PaLM 2-L as the scorer under a temperature setting of 0 for evaluation. At each optimization step, generate 8 candidate instructions (from a meta-prompt including the best 20 instructions so far and 3 randomly sampled exemplars) and record the training accuracy. Plot the accuracy curve and measure the variance among the instructions generated at each step. The hypothesis will be validated if the optimization curve shows an overall upward trend in training accuracy and if the variance among candidate instructions decreases over time.",
+            "expected_outcome": "The expectation is that the training accuracy will increase progressively from the initial ~60.5% with several leaps during the process, and the generated instructions will become more uniform (lower variance), demonstrating that the iterative process effectively refines the instructions.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "question": "Do the optimized instructions discovered by OPRO outperform the baseline instructions ('Let's think step by step.' and the empty prompt) on BBH tasks?",
+            "method": "For the BBH evaluation, select 23 distinct tasks. Use 20% of each task\u2019s examples for prompt optimization (starting from an empty instruction) and reserve the remaining 80% for testing. Evaluate prompt optimization by employing both the PaLM 2-L-IT optimizer and text-bison as scorer in different configurations. Compare the final training accuracy of the optimized instructions against baseline prompts\u2014specifically 'Let's think step by step.' and the empty instruction\u2014across all tasks. Analyze the per-task accuracy differences, expecting that in at least 19 or 20 out of the 23 tasks, the optimized instructions outperform the baselines by more than 5%.",
+            "expected_outcome": "Based on the reported results, the optimized instructions should exceed the performance of the baselines by over 5% in the majority of the tasks, confirming that OPRO produces superior prompts compared to standard or naive starting instructions.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "question": "Are the optimized prompts found on GSM8K transferable to similar tasks in the same domain, such as MultiArith and AQuA?",
+            "method": "Take the top prompt instructions optimized on the GSM8K dataset and apply them directly to the MultiArith and AQuA mathematical reasoning benchmarks. Use the same scoring methods (for instance, utilizing pre-trained PaLM 2-L or text-bison) to evaluate training accuracy on these datasets. Compare the performance of the transferred optimized instructions against the baseline prompts originally used on these datasets to determine if the improvements seen on GSM8K are maintained. Detailed accuracy scores should be recorded and a comparative analysis should be performed.",
+            "expected_outcome": "It is expected that the optimized prompts will outperform the baseline prompts on both MultiArith and AQuA, thus demonstrating good transferability of the prompt optimization process across similar datasets within the mathematical reasoning domain.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "question": "Does the order of instructions in the meta-prompt (i.e., lowest to highest vs. highest to lowest vs. random) affect the final accuracy and convergence speed of prompt optimization for tasks such as GSM8K and BBH sports_understanding?",
+            "method": "Use text-bison as the scorer and PaLM 2-L as the optimizer. Construct three meta-prompts for each task with different instruction orderings: (1) ascending order (lowest to highest, the default), (2) descending order (highest to lowest), and (3) random order. For GSM8K, run optimizations over 200 steps (recording performance at steps 0, 100, and 200) and for sports_understanding, run over 1600 steps (recording performance at predetermined intervals such as 0, 800, and 1600 steps). Repeat the experiment three times to compute average accuracies and standard deviations. Compare the final accuracies and convergence profiles between the three ordering strategies.",
+            "expected_outcome": "It is expected that the default incremental ordering (ascending - lowest to highest) will result in better final accuracy and faster convergence, potentially due to LLM recency bias as later instructions in the meta-prompt exert more influence.",
+            "subsection_source": "5.3 A BLATION STUDIES"
+        },
+        {
+            "question": "How does the number of generated instructions per optimization step influence the performance and stability of the prompt optimization process for datasets like GSM8K and BBH sports_understanding?",
+            "method": "Employ text-bison as the scorer and PaLM 2-L as the optimizer. Design experiments where the only variable is the number of instructions generated per optimization step: test values of 1, 2, 4, 8, and 16. For each setting, run the optimization while keeping the total number of evaluated instructions roughly constant (e.g., if using 8 per step, run 200 steps; adjust accordingly for other settings). Record the training accuracy over time (e.g., at intervals that reflect the cumulative number of evaluated instructions) and evaluate both the convergence speed and the final accuracy. Aggregate results over three independent runs to reduce variance and assess the stability of each configuration.",
+            "expected_outcome": "The configuration where 8 instructions are generated per step is anticipated to yield optimal performance due to a balance between reducing gradient variance (multiple instructions sampled) and allowing a higher number of optimization steps for richer information integration. Sampling too few instructions may lead to high variance, while sampling too many may limit the total number of optimization iterations.",
+            "subsection_source": "5.3 A BLATION STUDIES"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of different optimizer LLMs on convergence speed and final prompt quality.",
+            "experiment_design": "Conduct a systematic comparison across several optimizer LLMs (e.g., PaLM 2-L-IT, gpt-3.5-turbo, GPT-4) while keeping the scorer (e.g., pre-trained PaLM 2-L) constant. Run the prompt optimization process on a fixed subset of GSM8K or BBH tasks and record the number of optimization steps required to reach predefined accuracy milestones. Additionally, analyze the semantic quality and conciseness of the resulting instructions. This experiment will help understand if certain optimizers enable faster convergence or produce qualitatively different prompts.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "idea": "Evaluate the robustness of optimized instructions against changes in dataset characteristics or adversarial inputs.",
+            "experiment_design": "Use one or more BBH tasks and introduce controlled perturbations or noise into the test examples (such as altering phrasing or adding irrelevant context). Compare the performance drop (in training accuracy) of the optimized instructions against the baseline (e.g., 'Let's think step by step.') under these perturbed conditions. This setup should reveal how robust the optimized prompts are when exposed to data that deviates from the training distribution or follows adversarial patterns.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "idea": "Investigate adaptive meta-prompt ordering strategies that dynamically adjust the instruction order based on feedback from previous optimization iterations.",
+            "experiment_design": "Develop a dynamic meta-prompt that reorders instructions based on their observed contribution to the improvement of training accuracy. Compare the dynamic ordering with the fixed ascending ordering over the same tasks (GSM8K and BBH sports_understanding) using the same evaluation metrics. Assess whether adaptive ordering could further accelerate convergence and improve final accuracy.",
+            "subsection_source": "5.3 A BLATION STUDIES"
+        },
+        {
+            "idea": "Extend the ablation studies to other aspects of the optimization framework, such as the impact of different temperature settings for the optimizer and scorer LLMs or the composition of the meta-prompt (e.g., number of past best instructions included).",
+            "experiment_design": "Set up experiments on GSM8K and BBH sports_understanding with varying temperature settings for the optimizer (e.g., 0.8, 1.0, 1.2) and test different sizes of the meta-prompt (e.g., top 10 versus top 20 instructions). Measure the resulting training accuracy and convergence rate. This would help in understanding sensitivity to hyperparameters and potentially in further stabilizing or enhancing performance.",
+            "subsection_source": "5.3 A BLATION STUDIES"
+        }
+    ],
+    "main_takeaways": [
+        "Prompt optimization starting from an empty string can effectively discover task-specific instructions that drive high training accuracy across a diverse set of BBH tasks.",
+        "Different scoring and optimization strategies (e.g., using PaLM 2-L, GPT-3.5-turbo, and text-bison scorers) yield distinct refined instructions for tasks such as boolean_expressions, causal_judgement, and date_understanding, suggesting that the choice of scorer influences the final prompts.",
+        "The training accuracy curves across 23 BBH tasks show that some tasks (like disambiguation_qa and logical_deduction_seven_objects) achieve near-perfect training accuracy rapidly, whereas others require more steps, highlighting variable task difficulties and learning dynamics.",
+        "The study provides concrete numerical evidence (e.g., accuracy progressions over steps for tasks such as ruin_names, sports_understanding, and formal_fallacies) that prompt optimization can be a systematic approach to tailoring prompts for improved performance.",
+        "The method demonstrates the potential to generalize the optimization framework across different tasks, opening pathways to further analyze how prompt design choices correlate with downstream performance metrics."
+    ]
+}

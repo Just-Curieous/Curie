@@ -1,0 +1,1215 @@
+{
+    "questions": [
+        {
+            "question": "Does the tensor-based RL model achieve higher success rates on minitasks with immediate rewards compared to those with sparse, delayed rewards?",
+            "method": "Select a representative set of minitasks from the evaluation, clearly categorizing tasks into two groups: (1) tasks that provide explicit, immediate rewards (e.g., the 'CityTileWonder' minitask that has demonstrated \u223c90% success rate) and (2) tasks that provide sparse or delayed rewards, requiring longer-term strategic planning. For each task in both groups, train the tensor baseline model from scratch using the same architecture and training hyperparameters for 40,000 steps over 3 random seeds. Record the success rate for each training run. Additionally, analyze training curves and convergence trends as illustrated in Figure 6. Compute the average success rate and standard deviation for both groups, and perform a statistical analysis (e.g., a t-test or ANOVA) to determine if the observed differences are statistically significant. Incorporate summary statistics from Table 1 if applicable, and detail any observed trends or anomalies in performance across training steps.",
+            "expected_outcome": "It is anticipated that minitasks offering immediate rewards will yield significantly higher success rates, as the tensor-based RL model benefits from clear and frequent feedback. In contrast, tasks with sparse, delayed rewards are expected to show markedly lower success rates due to the difficulty in aligning long-term strategic planning with reinforcement signals. The statistical analysis should confirm the significance of these differences, thereby validating the model's relative strengths and weaknesses as depicted in the experimental results (e.g., Figure 6).",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING",
+            "source": [
+                "/workspace/examples/run.py",
+                "/workspace/examples/parse_tb.py"
+            ],
+            "usage_instructions": "To compare tensor-based RL model performance on minitasks with immediate rewards versus sparse/delayed rewards, follow these steps:\n\n1. First, identify the minitasks that provide immediate rewards (e.g., development_citytile_wonder) and those with sparse/delayed rewards (e.g., battle_* minitasks).\n\n2. Run the experiment using the run.py script with the appropriate minitask configurations:\n   ```bash\n   cd /workspace/examples\n   python run.py --webdir /path/to/freeciv-web\n   ```\n   This will automatically run all minitasks defined in the run_configs directory with 3 random seeds for each, training for 40,000 steps as specified in the default configuration.\n\n3. After training is complete, use parse_tb.py to analyze and visualize the results:\n   ```bash\n   cd /workspace/examples\n   python parse_tb.py\n   ```\n   This will generate plots showing success rates and other metrics for each minitask type, allowing you to compare performance between immediate reward tasks and delayed reward tasks.\n\n4. The plots will be saved in the ./minitask directory, where you can examine the 'success rate' metric specifically to compare performance between the two groups of minitasks.\n\n5. For statistical analysis, you can modify the parse_tb.py script to perform t-tests or ANOVA on the success rates between the two groups of minitasks.",
+            "requirements": [
+                "Step 1: Import necessary libraries including gymnasium, civrealm, ray, and other utilities for logging and configuration (/workspace/src/civrealm/random_game_minitask.py:16-22)",
+                "Step 2: Set up the experiment configuration with parameters for minitask patterns, batch size, and maximum training steps (/workspace/src/civrealm/runners/parallel_tensor_runner.py:12-24)",
+                "Step 3: Initialize the TensorBoard logger to track experiment metrics (/workspace/src/civrealm/runners/parallel_tensor_runner.py:13-17)",
+                "Step 4: Create the tensor-based minitask environment with appropriate wrappers for reward handling (/workspace/src/civrealm/envs/freeciv_tensor_minitask_env.py:26-51)",
+                "Step 5: Configure the environment to use either immediate rewards (MinitaskDenseReward) or delayed/sparse rewards (MinitaskDelayedReward) based on the minitask type (/workspace/src/civrealm/envs/freeciv_wrapper/reward_wrapper.py:37-72)",
+                "Step 6: Run training for each minitask configuration with multiple random seeds (/workspace/src/civrealm/runners/parallel_tensor_runner.py:32-43)",
+                "Step 7: Collect and store metrics including success rates for each minitask type (/workspace/src/civrealm/envs/freeciv_minitask_env.py:233-245)",
+                "Step 8: Parse the TensorBoard logs to extract performance metrics for each minitask type (/workspace/src/civrealm/envs/freeciv_minitask_env.py:123-135)",
+                "Step 9: Generate visualizations comparing performance between immediate reward minitasks and sparse/delayed reward minitasks (/workspace/src/civrealm/random_game_minitask.py:46-49)",
+                "Final Step: Analyze the results to determine the impact of reward structure (immediate vs. delayed) on learning performance (/workspace/src/civrealm/envs/freeciv_minitask_env.py:216-225)"
+            ],
+            "agent_instructions": "Create a system to compare the performance of tensor-based reinforcement learning models on different types of minitasks in the Freeciv game environment. The system should:\n\n1. Set up an experiment that compares performance on two categories of minitasks:\n   - Minitasks with immediate rewards (like development_citytile_wonder)\n   - Minitasks with sparse/delayed rewards (like battle_* minitasks)\n\n2. Create a script that:\n   - Configures the Freeciv environment with appropriate parameters\n   - Sets up TensorBoard logging to track metrics\n   - Runs training on both types of minitasks with multiple random seeds\n   - Uses a consistent training duration (around 40,000 steps)\n\n3. Create a second script that:\n   - Parses the TensorBoard logs after training is complete\n   - Extracts success rates and other relevant metrics for each minitask type\n   - Generates visualizations comparing performance between immediate reward tasks and delayed reward tasks\n   - Saves the plots to a designated directory\n\nThe goal is to analyze whether the RL model performs better on tasks with immediate feedback versus those with delayed rewards.",
+            "masked_source": [
+                "/workspace/src/civrealm/random_game_minitask.py",
+                "/workspace/src/civrealm/envs/freeciv_tensor_minitask_env.py",
+                "/workspace/src/civrealm/envs/freeciv_wrapper/reward_wrapper.py",
+                "/workspace/src/civrealm/envs/freeciv_minitask_env.py",
+                "/workspace/src/civrealm/runners/parallel_tensor_runner.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "training_steps": "40,000 steps for all experiments",
+                    "random_seeds": "3 random seeds used consistently",
+                    "RL_model_architecture": "Tensor-based RL model configuration remains the same across tasks",
+                    "environment_setup": "Freeciv minitask environment with fixed wrappers and logging"
+                },
+                "independent_variables": {
+                    "minitask_reward_structure": [
+                        "immediate (e.g., development_citytile_wonder)",
+                        "sparse/delayed (e.g., battle_* minitasks)"
+                    ],
+                    "minitask_task": [
+                        "specific task selection within each reward type category"
+                    ]
+                },
+                "dependent_variables": {
+                    "success_rate": "Success rate measured from each training run",
+                    "training_convergence": "Trends observed in training curves over 40,000 steps",
+                    "policy_loss": "Policy loss as recorded during training",
+                    "statistical_significance": "Results from t-test/ANOVA analyzing differences between groups"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "minitask_reward_structure": "The criteria for categorizing tasks as having immediate versus sparse/delayed rewards is only partially defined by examples and could be open to interpretation.",
+                    "minitask_task": "It is unclear if the selected minitasks fully represent the entire spectrum of task difficulty or reward structures beyond the provided examples.",
+                    "statistical_analysis_method": "The specific statistical method (t-test, ANOVA, etc.) is suggested but not explicitly dictated, potentially leading to varied interpretations."
+                },
+                "possible_modifications": {
+                    "modification_reward_categories": [
+                        "Clarify and possibly expand the definition of reward structures to include additional or intermediate reward schemes."
+                    ],
+                    "modification_task_selection": [
+                        "Include new variables that explicitly enumerate all minitask options or reward characteristics beyond the two provided examples."
+                    ],
+                    "modification_statistical_method": [
+                        "Mandate a specific statistical test or provide clear guidelines for when each method should be used."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Freeciv minitask environment with reward wrappers (immediate and sparse/delayed rewards)",
+                    "Tensor-based RL model architecture (fixed configuration for all tasks)",
+                    "TensorBoard logging setup for tracking metrics",
+                    "run.py script for executing training runs",
+                    "parse_tb.py script for parsing logs and generating visualizations",
+                    "Statistical analysis components (e.g., t-test/ANOVA functionality)"
+                ],
+                "setup_steps": [
+                    "Identify and categorize minitasks into immediate reward tasks and sparse/delayed reward tasks",
+                    "Configure the Freeciv environment with the correct reward wrappers based on task type",
+                    "Set uniform training parameters (40,000 steps, 3 random seeds) across all tasks",
+                    "Run training using run.py for each minitask configuration",
+                    "Log performance metrics (success rates, policy loss, value loss, etc.) via TensorBoard",
+                    "Execute parse_tb.py to extract and visualize performance metrics",
+                    "Perform a statistical analysis on the extracted metrics to compare task groups"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Reward Structure Configuration",
+                        "description": "Modifying environment wrappers to support both immediate and delayed reward schemes requires coordination across multiple files."
+                    },
+                    {
+                        "source": "Script and Pipeline Integration",
+                        "description": "Ensuring that run.py, parse_tb.py, and other configuration scripts interoperate smoothly adds to the overall system complexity."
+                    },
+                    {
+                        "source": "Statistical Analysis Setup",
+                        "description": "Deciding on and implementing a specific statistical test introduces additional layers of complexity if not clearly defined."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "minitask_reward_structure: The criteria for distinguishing between immediate and sparse/delayed rewards is only partially defined.",
+                    "minitask_task: It is unclear if the selected examples comprehensively represent all task difficulties or reward structures.",
+                    "statistical_analysis_method: The specific choice of t-test, ANOVA, or other tests is suggested but not explicitly mandated."
+                ],
+                "ambiguous_setup_steps": [
+                    "Modifying parse_tb.py for statistical analysis: The process for integrating and executing the statistical tests is under-specified.",
+                    "Configuring reward wrappers: Detailed instructions for ensuring correct categorization of reward schemes are not fully provided."
+                ],
+                "possible_modifications": {
+                    "modification_reward_categories": [
+                        "Clarify and expand the definition of immediate versus sparse/delayed reward structures, possibly including intermediate reward schemes."
+                    ],
+                    "modification_task_selection": [
+                        "Specify an explicit enumeration of minitask options and corresponding characteristics to ensure representative coverage."
+                    ],
+                    "modification_statistical_method": [
+                        "Mandate a specific statistical test or provide clear guidelines on when to use t-test versus ANOVA."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a constraint on the computational budget by requiring that a scaled-down version of the tensor-based RL model (e.g., a mini variant) achieves comparable performance, thereby reducing the hardware resource demands."
+                    ],
+                    "time_constraints": [
+                        "Tighten the training schedule by reducing the total training duration (e.g., from 40,000 steps to a lower number) to assess if the performance gap between immediate and sparse/delayed reward minitasks persists under a more time-constrained setup."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochasticity in reinforcement learning and gradient updates",
+                "description": "The tensor-based RL experiment inherently involves randomness from several sources: the use of 3 random seeds, stochastic environment interactions, and the inherent noise in policy gradient updates. This variability may cause fluctuations in the success rates across training runs and might obscure the true difference in performance between immediate reward tasks and sparse/delayed reward tasks. Similar to the method of randomly dropping tokens in LLM pre-training, any randomness introduced in the reward signal (or by unintended noise in training) can lead to inconsistent convergence and variability in results.",
+                "impact": "Results in variations in recorded success rates and convergence trends, making it more challenging to attribute performance differences solely to the reward structure. Random instability might lead to overlapping confidence intervals between groups if not adequately controlled.",
+                "possible_modifications": [
+                    "Introduce controlled noise injection into the reward processing to further test the model's robustness.",
+                    "Vary the random seed configurations more extensively to quantify the effect of stochasticity.",
+                    "Simulate additional random fluctuations (e.g., random delays in reward computation) to directly model uncertainty in gradient updates."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias in task categorization and reward structure configuration",
+                "description": "Systematic uncertainty might arise from the way minitasks are classified into immediate and sparse/delayed reward categories. If the criteria for categorization are ambiguous or partially defined, this could bias the experimental outcomes. For instance, a misclassification or an over-simplification in reward wrapper configurations might consistently favor tasks with immediate rewards, as the clear, frequent feedback naturally benefits learning. This is analogous to modifying a dataset in a one-time manner to introduce bias, such as labeling all long movie reviews as negative.",
+                "impact": "Could lead to a consistent overestimation or underestimation of the model's performance in one group over the other, thereby affecting the statistical analysis (e.g., t-tests or ANOVA) and the interpretation of the model's true strengths and weaknesses.",
+                "possible_modifications": [
+                    "Refine and expand the definition of immediate versus delayed reward structures to include intermediate reward schemes.",
+                    "Explicitly enumerate and validate minitask options to ensure representative coverage of both reward types.",
+                    "Mandate a specific statistical test and clear guidelines for task categorization to minimize bias from experimental setup."
+                ]
+            }
+        },
+        {
+            "question": "Does the current unit production-focused strategy in full games result in a myopic performance that achieves high immediate scores at the expense of long-term development? Can a modified reward scheme that adds a bonus for early city expansion\u2014despite an initial dip in population\u2014lead to improved overall game scores when considering multi-faceted metrics such as population, technology researched, and economic growth?",
+            "method": "Conduct an experiment on the full game scenario under two experimental conditions as depicted in Figure 7. For the baseline condition, train the tensor RL model for 2 million steps using the original reward structure that heavily weights unit production. In the modified condition, adjust the reward configuration to incorporate a bonus for the early establishment of cities, aiming to stimulate long-term strategic planning even if it causes a short-term decline in population scores. Both conditions should use the same architecture, hyperparameters, and at least 3 random seeds to ensure robust and statistically significant comparisons. Record raw data on the overall game scores along with sub-metrics such as population, technology researched, and units built/killed over the training period. Analyze and compare the evolution of the overall scores and the detailed breakdown of game metrics using appropriate statistical methods to determine if the modified reward scheme effectively promotes exponential long-term growth.",
+            "expected_outcome": "The baseline condition is expected to produce high immediate scores driven predominantly by unit production; however, it may lack long-term strategic growth. In contrast, the modified reward scheme is anticipated to eventually outperform the baseline by fostering early investment in city expansion, leading to exponential growth in population, technology, and economic metrics. This would validate that incentivizing early city expansion can mitigate the myopic tendencies of the original reinforcement learning strategy.",
+            "subsection_source": "5.1 TENSOR-BASED REINFORCEMENT LEARNING",
+            "no_answer": "The experiment described in the question, which compares a unit production-focused strategy with a city expansion strategy in full games, is not implemented in the current repository. According to the documentation, the tensor-based reinforcement learning agents are implemented in a separate repository called 'civrealm-tensor-baseline' (https://github.com/bigai-ai/civrealm-tensor-baseline), which is not included in this workspace. The current repository only provides the environment for the Freeciv-web game, but not the specific experiment scripts mentioned in the question.",
+            "design_complexity": {
+                "constant_variables": {
+                    "architecture": "The same underlying tensor RL architecture is used for both conditions",
+                    "hyperparameters": "All hyperparameters remain identical between experiments",
+                    "training_steps": "Both conditions are trained for 2 million steps",
+                    "random_seeds": "Each condition is run with at least 3 different seeds"
+                },
+                "independent_variables": {
+                    "reward_configuration": [
+                        "unit production-focused (baseline)",
+                        "city expansion bonus (modified)"
+                    ]
+                },
+                "dependent_variables": {
+                    "overall_game_score": "Overall score that aggregates various aspects of performance",
+                    "sub_metrics": [
+                        "population",
+                        "technology researched",
+                        "units built/killed"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "reward_bonus_magnitude": "The exact bonus applied for early city expansion is not specified in the task",
+                    "reward_weighting": "It is unclear how much weight is given to unit production versus city expansion, and whether these weights differ continuously or discretely",
+                    "statistical_comparison_method": "The specific statistical methods to compare performance across conditions are not detailed",
+                    "time_resolution_of_metrics": "It is not explicitly stated how frequently the metrics (like population, technology, etc.) are recorded over training"
+                },
+                "possible_modifications": {
+                    "mask_reward_details": [
+                        "Omit explicit mention of the bonus magnitude to imply it needs to be tuned",
+                        "Introduce additional reward factors (e.g., environmental impact, diplomatic outcomes) to extend the experiment"
+                    ],
+                    "imply_additional_variables": [
+                        "Suggest including more fine-grained temporal metrics (e.g., scores per 100K steps) to analyze short-term vs long-term trends"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Tensor RL architecture (consistent across conditions)",
+                    "Reward configurations (baseline unit production-focused vs modified with city expansion bonus)",
+                    "Hyperparameter settings (identical for both experiments)",
+                    "Training steps (2 million steps per condition)",
+                    "Random seed management (at least 3 seeds per condition)",
+                    "Metrics collection modules (overall game score, population, technology, units built/killed)",
+                    "Statistical analysis framework"
+                ],
+                "setup_steps": [
+                    "Set up the full game environment with the tensor RL model",
+                    "Configure the baseline experiment with the original reward structure",
+                    "Configure the modified experiment with an added bonus for early city expansion",
+                    "Initialize both experiments with the same architecture, hyperparameters, and training steps",
+                    "Run experiments with multiple random seeds to ensure statistical significance",
+                    "Record raw data for overall scores and sub-metrics over the training period",
+                    "Perform statistical analysis to compare score evolution and detailed metrics"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Reward Configuration Tuning",
+                        "description": "Balancing the reward weighting between unit production and city expansion may involve iterative tuning and additional adjustments not explicitly detailed."
+                    },
+                    {
+                        "source": "Metric Recording Frequency",
+                        "description": "Deciding on the time resolution for recording metrics (e.g., every 100K steps) may introduce additional complexity in data aggregation and analysis."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Reward bonus magnitude: The exact bonus value for early city expansion is not specified.",
+                    "Reward weighting: The relative importance of unit production versus city expansion rewards is unclear.",
+                    "Statistical comparison method: The specific methods for comparing performance metrics are not detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Configuration of reward parameters: It is not explicitly stated how to set or tune the bonus for city expansion.",
+                    "Temporal resolution for metric collection: The frequency of recording sub-metrics (e.g., population, technology, etc.) is ambiguous."
+                ],
+                "possible_modifications": {
+                    "mask_reward_details": [
+                        "Omit the explicit mention of the bonus magnitude, requiring users to tune this parameter.",
+                        "Mask specific reward weighting instructions so that users need to experiment with different settings."
+                    ],
+                    "imply_additional_variables": [
+                        "Suggest including more fine-grained temporal metrics (e.g., scores per 100K steps) to better analyze short-term versus long-term trends.",
+                        "Propose integrating additional reward factors (e.g., environmental impact or diplomatic outcomes) to extend the experiment."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification is to restrict available computational resources (e.g., lower GPU memory or compute nodes) to test whether the modified reward scheme can still yield improved long-term performance under tighter resource conditions."
+                    ],
+                    "time_constraints": [
+                        "An extended task might impose a stricter time constraint by reducing the training duration from 2 million steps to a lower budget (e.g., 1 million steps), thereby requiring the modified reward scheme to achieve comparable improvements in long-term metrics within a shorter training time."
+                    ],
+                    "money_constraints": [
+                        "One possible money-related modification is to limit the experimental budget (for example, by using less expensive cloud computing instances), which could force additional hyperparameter tuning to achieve similar results under a reduced financial envelope."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Inherent noise from RL training and ambiguity in reward tuning",
+                "description": "Random uncertainty arises from factors such as the stochasticity of random seed initialization, gradient updates, and the ambiguous specification of parameters like the bonus magnitude for early city expansion. This stochastic variability can lead to fluctuations in overall game scores and sub-metrics even under the same experimental conditions.",
+                "impact": "This uncertainty may cause inconsistent performance comparisons between experimental conditions, making it harder to reliably attribute observed differences to the reward scheme modification rather than randomness in training.",
+                "possible_modifications": [
+                    "Increase the number of random seeds to average out variability.",
+                    "Intentionally inject additional noise in the reward bonus (e.g., randomly varying the bonus magnitude) to test model robustness.",
+                    "Regularize the training process or adopt noise-injection strategies to simulate gradient instability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Deliberate reward-style modification and potential mis-calibration of reward weights",
+                "description": "Systematic uncertainty is introduced by intentionally altering the reward configuration\u2014specifically, adding a bonus for early city expansion. This change consistently biases the agent's incentives, potentially leading to a stable yet skewed performance outcome which favors long-term strategic benefits over immediate unit production.",
+                "impact": "The systematic bias might result in persistent over- or underestimation of certain performance metrics (such as population, technology, and economic growth) across experiments. It can mask true performance differences by attributing improvements or declines to the modified reward scheme rather than inherent game dynamics.",
+                "possible_modifications": [
+                    "Conduct ablation studies that vary reward bonus magnitudes to understand their systematic effects.",
+                    "Introduce a control experiment to compare outcomes with and without the reward bonus to isolate the systematic bias.",
+                    "Supplement the reward scheme with additional metrics (e.g., environmental impact or diplomatic outcomes) to cross-validate long-term performance trends."
+                ]
+            }
+        },
+        {
+            "question": "Does incorporating a hierarchical decision architecture improve strategic expansion and overall game performance in CivRealm?",
+            "method": "Design an experiment comparing two language-based agents: one using a hierarchical decision architecture (Mastaba) and one relying on local observations without global oversight (BaseLang). Run 5 full games on each of 10 maps with distinct and diverse geographic features (including coastal, inland, and mixed terrains as illustrated in Figures 1 and 2). For each game, record detailed metrics such as population size, number of military units, overall game score, and extent of map expansion (e.g., area settled, with specific attention to turn milestones when significant expansion events occur). Additionally, document the impact of specific game-mechanic triggers (e.g., pirate invasions, diplomatic events) on each agent's performance. Supplement the quantitative metrics with timeline analyses by comparing progress at specified turns (for example, preliminary evaluations indicate that Mastaba may reach extensive map expansion by turn 113 compared to BaseLang\u2019s progress around turn 210). Moreover, consider and record in-game events and indicators as provided in Table 1 that outline performance metric benchmarks. Analyze the collected data using appropriate statistical tests (such as t-tests or ANOVA) to assess differences in performance across all measured outcomes. This refined setup leverages both the strategic overviews depicted in the figures and the structured metrics from the full game environment to comprehensively evaluate the benefits of a hierarchical decision architecture.",
+            "expected_outcome": "It is expected that the hierarchical agent (Mastaba) will demonstrate significantly improved performance compared to BaseLang. Specifically, Mastaba should achieve a larger population, produce more military units, secure higher overall game scores, and exhibit faster map expansion. These findings would confirm that adopting a global perspective through a hierarchical decision architecture leads to improved strategic decisions and overall game performance in complex environments like CivRealm.",
+            "subsection_source": "5.2 LANGUAGE-BASED AGENTS: BASELANG AND MASTABA",
+            "no_answer": "After thoroughly exploring the repository, I found that this is the CivRealm repository which provides an environment for the Freeciv-web game. The LLM agents (Mastaba and BaseLang) mentioned in the experiment question are implemented in a separate repository called civrealm-llm-baseline. While the main.py file in that repository can be used to run either agent individually, there is no specific script or set of scripts in the current repository that directly answers the experiment question about comparing the hierarchical decision architecture (Mastaba) with the non-hierarchical one (BaseLang) across multiple maps and games. The experiment would require running multiple games with different maps and collecting detailed metrics, which is not implemented in any of the existing scripts.",
+            "design_complexity": {
+                "constant_variables": {
+                    "game_setup": "5 full games per agent on each of 10 maps with diverse geographic features",
+                    "measured_metrics": "Population size, number of military units, overall game score, map expansion metrics (e.g., area settled at specific turn milestones), and record of specific in-game triggers (e.g., pirate invasions, diplomatic events)"
+                },
+                "independent_variables": {
+                    "agent_type": [
+                        "Mastaba (hierarchical decision architecture)",
+                        "BaseLang (local observations)"
+                    ],
+                    "map_geography": [
+                        "coastal",
+                        "inland",
+                        "mixed"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Aggregated quantitative outcomes including population size, military units count, overall game score, map expansion (with timeline milestones) and impact of in-game events (as benchmarked in Table 1)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "map_geography": "While maps are described as having distinct geographic features (coastal, inland, and mixed), the exact criteria for these classifications are not explicitly defined.",
+                    "in_game_triggers": "The specific game-mechanic triggers (e.g., pirate invasions, diplomatic events) that affect performance are mentioned without detailed definitions or thresholds.",
+                    "performance_metrics_aggregation": "The process for aggregating and statistically analyzing the various performance metrics (e.g., combining timeline evaluations and quantitative scores) is not fully detailed."
+                },
+                "possible_modifications": {
+                    "modification_map_definition": [
+                        "Provide explicit definitions or thresholds for what constitutes coastal, inland, and mixed maps."
+                    ],
+                    "modification_event_detail": [
+                        "Specify the exact game-mechanic triggers to be recorded and their expected impact thresholds."
+                    ],
+                    "modification_metric_aggregation": [
+                        "Clarify the method for aggregating multiple performance metrics, potentially by outlining a scoring rubric or weighting system."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Game environment (CivRealm) that supports full game simulations with diverse maps",
+                    "Two language-based agents: Mastaba (hierarchical decision architecture) and BaseLang (local observation-based)",
+                    "Multiple maps (10 maps with varied geographic features such as coastal, inland, and mixed)",
+                    "Data logging and metrics collection systems for population, military units, game score, map expansion, and in-game event impacts",
+                    "Statistical analysis tools/processes (e.g., t-tests, ANOVA) to compare performance metrics"
+                ],
+                "setup_steps": [
+                    "Select and define 10 maps with diverse geographic features",
+                    "Initialize and configure the CivRealm game environment for a full game simulation",
+                    "Deploy each language-based agent (Mastaba and BaseLang) in separate runs across 5 full games per map",
+                    "Record quantitative performance metrics: population size, number of military units, overall game score, and map expansion (with specific turn milestones)",
+                    "Document triggering in-game events such as pirate invasions or diplomatic events along with their timing",
+                    "Conduct timeline analyses comparing progress (e.g., turn 113 for Mastaba and turn 210 for BaseLang) and aggregate results",
+                    "Perform statistical tests on the aggregated data to determine significant differences in performance"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Integration with external repository (civrealm-llm-baseline)",
+                        "description": "The implementation of the agents (Mastaba and BaseLang) is located in a separate repository, requiring coordination between codebases and ensuring compatibility with the main CivRealm environment."
+                    },
+                    {
+                        "source": "In-game event triggers",
+                        "description": "Tracking and correlating complex, dynamic in-game events with performance metrics adds further complexity, especially when considering variations in event timings and outcomes."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Map geography classification",
+                    "In-game triggers (e.g., pirate invasions, diplomatic events)",
+                    "Methods for aggregating and statistically analyzing diverse performance metrics"
+                ],
+                "ambiguous_setup_steps": [
+                    "Criteria for selecting and categorizing maps as coastal, inland, or mixed are not explicitly defined",
+                    "Specific details on how in-game triggers are detected, recorded, and adjusted for in the analysis are lacking",
+                    "The process for timeline-based metric aggregation alongside quantitative scores is not fully detailed"
+                ],
+                "possible_modifications": {
+                    "modification_map_definition": [
+                        "Provide explicit definitions or thresholds for classifying maps (e.g., distance from water bodies, terrain features) to ensure consistency."
+                    ],
+                    "modification_event_detail": [
+                        "Specify and standardize the exact in-game triggers (such as precise conditions for pirate invasions or diplomatic events) along with their expected impact metrics or thresholds."
+                    ],
+                    "modification_metric_aggregation": [
+                        "Clarify and document the method for aggregating performance metrics, potentially by outlining a scoring rubric or weighting system that combines timeline analyses with quantitative outcomes."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "experimental_design": {
+                        "modifications": [
+                            "Provide explicit definitions or thresholds for classifying maps as coastal, inland, or mixed (for example, using specific distances from water bodies or terrain characteristics) to remove ambiguity in map selection.",
+                            "Specify detailed criteria for game-mechanic triggers (e.g., precise conditions for pirate invasions and diplomatic events) to standardize how they are recorded and assessed.",
+                            "Define a clear aggregation method for the performance metrics (population, military units, game score, map expansion timelines) by developing a scoring rubric or weighting system for more rigorous statistical analysis.",
+                            "Tighten simulation parameters by enforcing consistent full game setup conditions (e.g., fixed turn milestones and simulation iterations) to better illuminate differences between the hierarchical and non-hierarchical agents."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic in-game events and simulation noise",
+                "description": "Random fluctuations inherent in game simulations (e.g., unpredictable timings of pirate invasions, diplomatic events, and other in-game triggers) and slight variations in how metrics such as map expansion milestones or military unit counts are recorded can lead to variations in performance outcomes across what are meant to be identical experimental runs.",
+                "impact": "These random variations can obscure true performance differences between the hierarchical agent (Mastaba) and the local observation agent (BaseLang), affect statistical test sensitivity (e.g., t-tests or ANOVA), and lead to inconsistent metric aggregations across runs.",
+                "possible_modifications": [
+                    "Introduce artificial delays or slight random perturbations in triggering in-game events to assess the robustness of metric logging.",
+                    "Randomly vary the noise levels in data logging for metrics like population size and map expansion, to further test agent resilience under stochastic conditions.",
+                    "Apply a random token dropping modification similar to the transformer pre-training approach (dropping unimportant tokens randomly) to inject randomness in the agents' decision pipelines."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Experimental design choices and biased metric aggregation",
+                "description": "Systematic uncertainty arises from one-time design choices such as how maps are classified (coastal, inland, or mixed), the specific definitions for in-game triggers, and the aggregation method of performance metrics. If these definitions or thresholds are ambiguous or biased, the experimental setup could consistently favor one agent over the other.",
+                "impact": "This may lead to consistently skewed performance assessments\u2014such as earlier or later map expansion milestones, biased overall game scores, or misinterpreted impacts of in-game events\u2014thereby undermining the validity of the experimental findings comparing Mastaba and BaseLang.",
+                "possible_modifications": [
+                    "Define explicit and unbiased criteria (e.g., numerical thresholds for distance from water bodies) for classifying maps as coastal, inland, or mixed.",
+                    "Standardize the identification and recording of in-game triggers (such as precise conditions for pirate invasions and diplomatic events) using detailed guidelines, as implied in Table 1 benchmarks.",
+                    "Develop and document a rigorous aggregation method or scoring rubric for combining diverse performance metrics, ensuring consistency and mitigating systematic bias during statistical analysis."
+                ]
+            }
+        },
+        {
+            "question": "Does the triggering of built-in game mechanics, such as pirate invasions when the score threshold is reached, affect the survival durations of hierarchical versus non-hierarchical agents?",
+            "method": "Using the same experimental setup as above, record not only the primary performance metrics but also the timing and consequences of game-mechanic triggers. For each game, log the following details using a data structure similar to that in Table 1 (with three columns: Game Score at Trigger, Trigger Turn, and Post-Trigger Survival Duration): (a) the game score at which the pirate invasion is triggered, (b) the turn number of the trigger, and (c) the number of additional turns (i.e., survival duration) played after the invasion. Additionally, record detailed metrics for phase transitions and common indicators, such as rewards, scores, success rate, policy loss, and value loss, as illustrated in Figures 18 to 24. Perform statistical correlation and survival analysis to compare the timing and severity of these invasions for both Mastaba and BaseLang. In particular, assess whether an earlier triggering of the pirate invasion correlates with a reduction in survival time, and determine if the hierarchical decision-making framework of Mastaba, which may rapidly increase scores and trigger events earlier, yields overall strategic gains at the expense of shorter sustained play post-event.",
+            "expected_outcome": "It is anticipated that Mastaba\u2019s hierarchical approach will lead to a rapid increase in game score and consequently earlier triggering of built-in game mechanics such as pirate invasions. This earlier triggering may lead to a shorter survival duration (i.e., fewer turns played after the invasion) compared to BaseLang. However, even with a reduction in survival time post-trigger, the overall strategic performance and rapid expansion gains of Mastaba may validate its hierarchical decision framework. The trade-off between quick expansion and vulnerability to in-game penalties will be quantified using survival analysis and correlation statistics based on the logged metrics.",
+            "subsection_source": "5.2 LANGUAGE-BASED AGENTS : BASELANG AND MASTABA",
+            "no_answer": "After thoroughly exploring the repository, I could not find any scripts that specifically address the experiment question about comparing the survival durations of hierarchical versus non-hierarchical agents when game mechanics like pirate invasions are triggered. While the repository contains code for both BaseLang (non-hierarchical) and Mastaba (hierarchical) agents, and there are evaluation mechanisms in the FreecivBaseEnv class that can track game scores, population, and other metrics, there are no scripts that specifically log or analyze the timing of pirate invasions, the game score at which they are triggered, or the post-trigger survival duration. The repository has general game evaluation capabilities through methods like evaluate_game(), plot_game_scores(), and get_game_results(), but these do not specifically track the metrics required for the experiment question about game mechanic triggers and their effects on different agent types.",
+            "design_complexity": {
+                "constant_variables": {
+                    "experimental_setup": "The game environment configuration remains fixed. This includes the built-in game mechanics such as triggering pirate invasions at a predetermined score threshold.",
+                    "mechanic_trigger_threshold": "The score value at which the pirate invasion is triggered is kept constant across experiments."
+                },
+                "independent_variables": {
+                    "agent_type": [
+                        "Mastaba (hierarchical)",
+                        "BaseLang (non-hierarchical)"
+                    ]
+                },
+                "dependent_variables": {
+                    "game_score_at_trigger": "The game score at which the pirate invasion is triggered",
+                    "trigger_turn": "The turn number when the triggering event occurs",
+                    "post_trigger_survival_duration": "The number of additional turns played after the invasion",
+                    "other_metrics": "Additional indicators such as phase transitions, rewards, scores, success rate, policy loss, and value loss"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mechanic_trigger_threshold": "It is not explicitly stated what the exact threshold value is or how it is determined; it is assumed to be fixed but the value is not provided.",
+                    "post_trigger_survival_duration": "The definition of a 'turn' and how survival duration is measured (e.g., in-game time vs. decision steps) is not clearly specified.",
+                    "other_metrics": "The detailed metrics (such as policy loss, value loss, rewards, etc.) are mentioned without explicit definitions or units, making their interpretation ambiguous."
+                },
+                "possible_modifications": {
+                    "modification_trigger_threshold": [
+                        "Specify or vary the exact score threshold to test how sensitive the outcome is to different trigger points."
+                    ],
+                    "modification_survival_duration": [
+                        "Clarify or alter the definition of a 'turn' and measurement method of survival duration."
+                    ],
+                    "modification_other_metrics": [
+                        "Include a more detailed description or additional variables for the additional metrics (e.g., exact scoring criteria, reward scales) to reduce ambiguity."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Game environment configuration with built-in mechanics (e.g., pirate invasions triggered by a score threshold)",
+                    "Hierarchical agent (Mastaba)",
+                    "Non-hierarchical agent (BaseLang)",
+                    "Metric logging system to record game score at trigger, trigger turn, and post-trigger survival duration (using a structure similar to Table 1)",
+                    "Additional evaluation modules to record phase transitions, rewards, scores, success rate, policy loss, and value loss",
+                    "Statistical analysis pipeline for correlation and survival analysis"
+                ],
+                "setup_steps": [
+                    "Configure the game environment with a fixed score threshold for triggering events",
+                    "Implement logging to capture critical metrics (game score at trigger, trigger turn, post-trigger survival duration)",
+                    "Run experiments for both hierarchical (Mastaba) and non-hierarchical (BaseLang) agents using the same setup",
+                    "Record additional evaluation metrics during gameplay (phase transitions, rewards, scores, etc.)",
+                    "Perform statistical correlation and survival analysis based on the logged metrics"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Integration of additional evaluation metrics",
+                        "description": "Incorporating detailed logging for extra metrics such as phase transitions, policy loss, and value loss alongside the primary mechanics tracking increases the overall experiment setup complexity."
+                    },
+                    {
+                        "source": "Data processing for survival analysis",
+                        "description": "The need to post-process and analyze diverse data types (timing of trigger events, survival duration, etc.) further adds complexity to the experimental design."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "mechanic_trigger_threshold: The exact score value and its selection method are not explicitly stated",
+                    "post_trigger_survival_duration: The measurement unit of a 'turn' (in-game time vs. decision step) is unclear",
+                    "other_metrics: Definitions and measurement units for rewards, policy loss, value loss, and other indicators are not clearly provided"
+                ],
+                "ambiguous_setup_steps": [
+                    "Determining how a 'turn' is defined for measuring post-trigger survival duration",
+                    "Clarifying the exact moment when the triggering event is recorded and how it corresponds with game progression"
+                ],
+                "possible_modifications": {
+                    "modification_trigger_threshold": [
+                        "Specify the exact score threshold at which the pirate invasion is triggered to eliminate ambiguity."
+                    ],
+                    "modification_survival_duration": [
+                        "Provide a clear definition of what constitutes a 'turn' (e.g., in-game turn vs. decision step) and detail the method for measuring survival duration."
+                    ],
+                    "modification_other_metrics": [
+                        "Offer detailed descriptions and units for each additional metric such as rewards, policy loss, and value loss to ensure consistent interpretation."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "experiment_setup": {
+                        "modifications": [
+                            "Specify the exact game score threshold that triggers the pirate invasion to remove ambiguity about mechanic_trigger_threshold.",
+                            "Provide a clear and consistent definition of a 'turn' (e.g., in-game time vs. decision step) for measuring post_trigger_survival_duration.",
+                            "Detail the units and criteria for additional metrics (rewards, policy loss, value loss, etc.) to ensure consistent interpretation across experiments.",
+                            "Optionally, enforce a model capacity constraint by requiring comparable performance with a smaller model variant (e.g., using GPT-4o-mini instead of a larger model) to further challenge the agents' strategic efficiency."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Inherent stochasticity in the game simulation and metric logging noise",
+                "description": "Even with a fixed game environment and predefined trigger thresholds, the game mechanics (e.g., timing of pirate invasions) may be subject to random fluctuations due to simulation randomness. This results in variability in the recorded trigger turn and post-trigger survival duration. Additionally, any inadvertent noise in metric collection (such as slight delays or random perturbations in logging phase transitions, rewards, or losses) can further compound this uncertainty.",
+                "impact": "This randomness can lead to fluctuations in the survival duration and the correlation analysis between early triggers and reduced post-trigger play time. It may obscure the true impact of the hierarchical decision-making framework compared to the non-hierarchical approach by introducing non-deterministic effects in the recorded performance metrics.",
+                "possible_modifications": [
+                    "Introduce controlled random seed variations to systematically study the impact of simulation randomness on trigger timings.",
+                    "Intentionally inject small random delays or perturbations in metric logging (e.g., random offset in turn measurements) to test the robustness of survival analysis.",
+                    "Vary the intensity of other random in-game events during testing to assess whether the observed effects are consistent over different levels of inherent randomness."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguities and fixed experimental design parameters in the measurement setup",
+                "description": "The experimental design introduces systematic uncertainty by relying on fixed values and ambiguous definitions, such as the exact game score threshold for triggering the pirate invasion, the definition of a 'turn' for measuring survival duration, and the units for additional metrics like rewards, policy loss, and value loss. Such ambiguous or biased setups can consistently skew measurements, favoring one agent type over the other or misrepresenting the true strategic trade-offs.",
+                "impact": "This can lead to systematic misinterpretation of when the game mechanics are triggered and the subsequent impact on survival duration. For instance, a rigid trigger threshold may disproportionately penalize hierarchical agents (Mastaba) if they tend to reach high scores more rapidly, thus biasing the survival analysis against them regardless of their true strategic strengths.",
+                "possible_modifications": [
+                    "Specify and document the exact game score threshold that triggers the pirate invasion to remove ambiguity about the mechanic_trigger_threshold.",
+                    "Clearly define what constitutes a 'turn' (e.g., in-game turn vs. decision step) and standardize the method for measuring post-trigger survival duration.",
+                    "Offer detailed descriptions and units for all additional metrics (rewards, policy loss, value loss, etc.) to ensure consistent interpretation and reduce systematic biases in the evaluation."
+                ]
+            }
+        },
+        {
+            "mode": "B",
+            "question": "How can you create a simple rule-based agent that prioritizes city building in the CivRealm environment?",
+            "method": "Create a RandomAgent class that inherits from BaseAgent and implements the act method to prioritize building cities when possible, otherwise moving units randomly.",
+            "expected_outcome": "A working agent that builds cities with 80% probability when possible, otherwise moves units randomly. The agent should be able to play through multiple turns in the CivRealm environment.",
+            "source": [
+                "/workspace/docs/getting_started/first_agent.md",
+                "/workspace/src/civrealm/agents/base_agent.py",
+                "/workspace/src/civrealm/random_game.py"
+            ],
+            "usage_instructions": "1. Create a RandomAgent class that inherits from BaseAgent.\n2. Implement the random_action_by_name method to find actions by name in the valid_action_dict.\n3. Implement the act method to get the next valid actor and its actions.\n4. If a unit can build a city, make it do so with 80% probability.\n5. Otherwise, make the unit move randomly.\n6. Create a main function that initializes the FreecivBase-v0 environment.\n7. Create an instance of your RandomAgent.\n8. Implement a game loop that gets observations, calls the agent's act method, and steps the environment.\n9. Print information about each step, including step number, turn, reward, termination status, and action taken.\n10. Close the environment and plot the game scores when done.",
+            "requirements": [
+                "Step 1: Import necessary libraries including random and BaseAgent (/workspace/docs/getting_started/first_agent.md:8-9)",
+                "Step 2: Create a RandomAgent class that inherits from BaseAgent (/workspace/docs/getting_started/first_agent.md:11-13)",
+                "Step 3: Implement a method to find actions by name in the valid action dictionary (/workspace/docs/getting_started/first_agent.md:15-22)",
+                "Step 4: Implement the act method to get the next valid actor and its actions (/workspace/docs/getting_started/first_agent.md:24-27)",
+                "Step 5: Check if the actor can build a city, and if so, make it do so with 80% probability (/workspace/docs/getting_started/first_agent.md:31-34)",
+                "Step 6: Otherwise, make the unit move randomly (/workspace/docs/getting_started/first_agent.md:36-37)",
+                "Step 7: Create a main function that initializes the FreecivBase-v0 environment (/workspace/docs/getting_started/first_agent.md:57-59)",
+                "Step 8: Create an instance of the RandomAgent (/workspace/docs/getting_started/first_agent.md:59)",
+                "Step 9: Reset the environment and get initial observations (/workspace/docs/getting_started/first_agent.md:61)",
+                "Step 10: Implement a game loop that gets observations, calls the agent's act method, and steps the environment (/workspace/docs/getting_started/first_agent.md:63-73)",
+                "Step 11: Print information about each step, including step number, turn, reward, termination status, and action taken (/workspace/docs/getting_started/first_agent.md:69-71)",
+                "Step 12: Close the environment and plot the game scores when done (/workspace/random_game.py:46-51)"
+            ],
+            "agent_instructions": "Your task is to create a rule-based agent for the CivRealm environment that prioritizes city building. Follow these steps:\n\n1. Create a RandomAgent class that inherits from the BaseAgent class in the CivRealm framework.\n\n2. Implement a helper method that can find actions by name in a dictionary of valid actions. This method should take a valid action dictionary and a name string as input, then return a randomly selected action whose key contains that name string.\n\n3. Implement the act method that:\n   - Gets the next valid actor (unit) that hasn't acted in the current turn\n   - If a unit can build a city (has a 'build' action available), make it do so with 80% probability\n   - Otherwise, make the unit move randomly (using a 'goto' action)\n   - If there are no valid actors left, return None to end the turn\n\n4. Create a main function that:\n   - Initializes the FreecivBase-v0 environment\n   - Creates an instance of your RandomAgent\n   - Implements a game loop that:\n     * Gets observations from the environment\n     * Calls the agent's act method to get an action\n     * Steps the environment with the chosen action\n     * Prints information about each step (step number, turn, reward, termination status, action taken)\n     * Continues until the game terminates\n   - Closes the environment and plots the game scores when done\n\nThe agent should be able to play through multiple turns in the CivRealm environment, prioritizing city building when possible and otherwise moving units randomly.",
+            "design_complexity": {
+                "constant_variables": {
+                    "environment": "The task always uses the CivRealm environment with the FreecivBase-v0 setup",
+                    "agent_inheritance": "The agent is required to inherit from BaseAgent"
+                },
+                "independent_variables": {
+                    "city_build_probability": [
+                        "80%"
+                    ],
+                    "action_selection": [
+                        "build city (if available)",
+                        "move unit randomly"
+                    ]
+                },
+                "dependent_variables": {
+                    "agent_performance": "Measured by game score, step information (step number, turn, reward), and the successful execution of prioritized actions (city building vs. random movement)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "city_build_probability": "Only one probability value (80%) is specified, but it is not clear if or how alternative probability values might affect performance or be varied in an extended task",
+                    "action_selection": "The determination of which action counts as 'build' (for city creation) versus other actions is based on a helper method (random_action_by_name) whose matching criteria are not fully specified",
+                    "valid_action_dict": "The structure and content of the valid action dictionary remains implicit, leaving ambiguity about how actions are named or prioritized"
+                },
+                "possible_modifications": {
+                    "modification_city_build_probability": [
+                        "Allow the probability value to be parameterized to consider different strategies (e.g., 60%, 70%, 80%, 90%)"
+                    ],
+                    "modification_action_selection": [
+                        "Introduce additional action types or more detailed decision logic (such as a condition for when to move units in specific directions)"
+                    ],
+                    "modification_action_dict_specification": [
+                        "Explicitly define the structure and naming conventions in valid_action_dict to remove ambiguity in the helper method"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "CivRealm environment (FreecivBase-v0)",
+                    "BaseAgent class from the CivRealm framework",
+                    "RandomAgent class implementing the rule-based logic",
+                    "Helper method for action selection (random_action_by_name)",
+                    "Game loop handling observations, actions, and environment stepping",
+                    "Utilities for printing step details and plotting game scores"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries (e.g., random) and the BaseAgent",
+                    "Define the RandomAgent class that inherits from BaseAgent",
+                    "Implement a helper method to search and select actions by name in the valid action dictionary",
+                    "Implement the act method to decide between building a city (80% probability if possible) and moving randomly",
+                    "Create a main function to initialize the FreecivBase-v0 environment",
+                    "Instantiate the RandomAgent within the main function",
+                    "Reset the environment and obtain initial observations",
+                    "Execute a game loop that retrieves observations, calls act, steps the environment, and prints step details",
+                    "Close the environment and plot the game scores after the game terminates"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Documentation and File Dependencies",
+                        "description": "The task references multiple source files (e.g., '/workspace/docs/getting_started/first_agent.md', '/workspace/src/civrealm/agents/base_agent.py', '/workspace/src/civrealm/random_game.py') which adds complexity by requiring users to merge instruction details across different documents."
+                    },
+                    {
+                        "source": "Inter-component Dependencies",
+                        "description": "The proper functioning of the agent depends on the implicit structure of the valid_action_dict and the integration between the agent logic and the Game environment mechanics."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "valid_action_dict structure: The naming conventions and structure are implicit and not explicitly defined.",
+                    "Action identification: The criteria to distinguish between 'build' actions and other actions (like 'goto') are not fully specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Determining what exactly qualifies as a 'build city' action versus other effective actions from the valid action dictionary is unclear.",
+                    "The integration details and interplay between the helper method for action selection and the act method remain ambiguous."
+                ],
+                "possible_modifications": {
+                    "modification_city_build_probability": [
+                        "Allow the probability value to be parameterized (e.g., 60%, 70%, 80%, 90%) to test different strategies."
+                    ],
+                    "modification_action_selection": [
+                        "Introduce additional action types or more detailed decision logic (e.g., conditions for directional movement or prioritizing defensive actions)."
+                    ],
+                    "modification_action_dict_specification": [
+                        "Explicitly define the structure and naming conventions in the valid_action_dict to reduce ambiguity in the helper method."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "setup_configuration": {
+                        "modifications": [
+                            "Parameterize the city build probability instead of hardcoding 80%, for instance by allowing tunable values like 60%, 70%, 80%, or 90%.",
+                            "Tighten the action selection logic by explicitly specifying the structure and naming conventions within the valid_action_dict, thus reducing ambiguity in identifying 'build' versus 'move' actions.",
+                            "Extend the rule-based approach by incorporating additional decision logic (e.g., prioritizing directional movement or defensive actions) to further challenge the agent's performance under a stricter setup."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random aspects in the probabilistic decision and action selection",
+                "description": "The agent\u2019s decision-making uses an 80% probability to prioritize city building when possible and chooses actions randomly otherwise. This inherent randomness in action selection (including choosing from valid actions via a random helper method) introduces variability in outcomes, such as game scores and progression across multiple runs.",
+                "impact": "Variations in the random selection process can lead to inconsistent performance metrics and game outcomes, making it harder to compare results between different runs of the experiment.",
+                "possible_modifications": [
+                    "Inject noise into the probability decision for selecting city building (e.g., vary the 80% probability randomly across runs).",
+                    "Alter the random_action_by_name method to sometimes drop or misselect actions to further simulate random instability.",
+                    "Modify the random seed initialization to test the robustness of the agent under diverse random conditions."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Implicit assumptions in the action naming and valid_action_dict structure",
+                "description": "The experiment assumes a specific structure and naming conventions in the valid_action_dict to distinguish between 'build' and 'goto' actions. A one-time modification or bias (e.g., mislabeling actions or altering the expected structure) can introduce a systematic error that affects every decision the agent makes.",
+                "impact": "Such systematic bias would consistently degrade the agent\u2019s performance by misclassifying or misprioritizing actions, leading to persistently suboptimal behavior (e.g., not building cities when it should) across all turns.",
+                "possible_modifications": [
+                    "Introduce a one-time bias by modifying the valid_action_dict to label reviews or actions incorrectly (for example, misidentifying 'build' actions).",
+                    "Parameterize the city build probability to test different fixed thresholds (e.g., 60%, 70%, 90%) which might reveal consistent performance variation.",
+                    "Alter the helper method's action matching criteria to simulate a systematic misinterpretation of available actions."
+                ]
+            }
+        },
+        {
+            "mode": "B",
+            "question": "How can you create a random LLM agent that interacts with the CivRealm LLM environment?",
+            "method": "Create a RandomLLMAgent class that inherits from BaseAgent and implements the act method to randomly select actions from the available actions provided by the LLM environment.",
+            "expected_outcome": "A working LLM agent that randomly selects actions from the available actions for each actor. The agent should be able to play through multiple turns in the CivRealm LLM environment.",
+            "source": [
+                "/workspace/docs/getting_started/first_agent.md",
+                "/workspace/src/civrealm/agents/base_agent.py",
+                "/workspace/src/civrealm/random_game.py"
+            ],
+            "usage_instructions": "1. Create a RandomLLMAgent class that inherits from BaseAgent.\n2. Initialize the agent with proper seed handling.\n3. Implement the act method to track the current turn and planned actor IDs.\n4. For each control type and actor in the LLM info, check if the actor has already been planned for.\n5. If not, get the available actions for the actor.\n6. If there are available actions, randomly select one and add the actor to the planned list.\n7. Return the selected action as a tuple of (control_type, actor_id, action_name).\n8. Create a main function that initializes the FreecivBase-v0 environment and wraps it with LLMWrapper.\n9. Create an instance of your RandomLLMAgent.\n10. Implement a game loop that gets observations, calls the agent's act method, and steps the environment.\n11. Print information about each step, including step number, turn, reward, termination status, and action taken.\n12. Close the environment and plot the game scores when done.",
+            "requirements": [
+                "Step 1: Import necessary libraries including random, os, BaseAgent, and other required modules (/workspace/docs/getting_started/first_agent.md:102-103)",
+                "Step 2: Create a RandomLLMAgent class that inherits from BaseAgent (/workspace/docs/getting_started/first_agent.md:105)",
+                "Step 3: Initialize the agent with proper seed handling, including setting agent seed based on configuration parameters (/workspace/docs/getting_started/first_agent.md:106-113)",
+                "Step 4: Implement the act method that tracks the current turn and maintains a list of planned actor IDs (/workspace/docs/getting_started/first_agent.md:115-118)",
+                "Step 5: For each control type and actor in the LLM info, check if the actor has already been planned for in the current turn (/workspace/docs/getting_started/first_agent.md:120-123)",
+                "Step 6: For unplanned actors, get their available actions from the info dictionary (/workspace/docs/getting_started/first_agent.md:124)",
+                "Step 7: If there are available actions, randomly select one action from the list (/workspace/docs/getting_started/first_agent.md:125-126)",
+                "Step 8: Add the actor to the planned list and return the selected action as a tuple of (control_type, actor_id, action_name) (/workspace/docs/getting_started/first_agent.md:127-128)",
+                "Step 9: Create a main function that initializes the FreecivBase-v0 environment and wraps it with LLMWrapper (/workspace/docs/getting_started/first_agent.md:150-152)",
+                "Step 10: Create an instance of the RandomLLMAgent (/workspace/docs/getting_started/first_agent.md:153)",
+                "Step 11: Reset the environment and get initial observations and info (/workspace/docs/getting_started/first_agent.md:155)",
+                "Step 12: Implement a game loop that gets observations, calls the agent's act method, and steps the environment (/workspace/docs/getting_started/first_agent.md:157-167)",
+                "Step 13: Print information about each step, including step number, turn, reward, termination status, and action taken (/workspace/docs/getting_started/first_agent.md:163-166)",
+                "Step 14: Close the environment when done (/workspace/docs/getting_started/first_agent.md:171)",
+                "Final Step: Add code to plot game scores when the game is finished (/workspace/src/civrealm/random_game.py:51)"
+            ],
+            "agent_instructions": "Your task is to create a random LLM agent that interacts with the CivRealm LLM environment. The agent should randomly select actions from the available actions provided by the environment.\n\nHere's what you need to implement:\n\n1. Create a RandomLLMAgent class that inherits from BaseAgent.\n\n2. The agent should initialize with proper seed handling. It should check if random seed generation is enabled in the configuration, and if so, use the process ID as the seed. Otherwise, it should use the seed specified in the configuration if available.\n\n3. Implement the act method that:\n   - Tracks the current turn and maintains a list of planned actor IDs\n   - Resets the planned actor list when a new turn begins\n   - Iterates through each control type and actor in the LLM information\n   - Checks if an actor has already been planned for in the current turn\n   - For unplanned actors, gets their available actions\n   - If actions are available, randomly selects one\n   - Adds the actor to the planned list\n   - Returns the selected action as a tuple of (control_type, actor_id, action_name)\n\n4. Create a main function that:\n   - Initializes the FreecivBase-v0 environment\n   - Wraps it with LLMWrapper to provide the LLM interface\n   - Creates an instance of your RandomLLMAgent\n   - Implements a game loop that:\n     * Gets observations from the environment\n     * Calls the agent's act method to get an action\n     * Steps the environment with the selected action\n     * Prints information about each step (step number, turn, reward, termination status, action)\n   - Closes the environment when done\n   - Plots the game scores\n\nThe agent should be able to play through multiple turns in the CivRealm LLM environment by randomly selecting actions for each actor.",
+            "design_complexity": {
+                "constant_variables": {
+                    "mode": [
+                        "B"
+                    ],
+                    "environment": [
+                        "CivRealm LLM environment",
+                        "FreecivBase-v0 with LLMWrapper"
+                    ],
+                    "agent_class": [
+                        "RandomLLMAgent"
+                    ]
+                },
+                "independent_variables": {
+                    "seed_source": [
+                        "process_id if random seed enabled",
+                        "configuration seed if provided"
+                    ],
+                    "action_selection_strategy": [
+                        "random (default)",
+                        "potential alternative strategies (e.g., heuristic)"
+                    ]
+                },
+                "dependent_variables": {
+                    "step_metrics": [
+                        "step number",
+                        "turn",
+                        "reward",
+                        "termination status",
+                        "action taken"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "available_actions": "The exact structure and variety of available actions for each actor are not explicitly described.",
+                    "actor_identification": "Details about actor IDs and control types are provided at runtime but their range or format is left unspecified.",
+                    "seed_handling": "It is not explicitly stated how the decision between process_id and a configuration seed is made or how this affects reproducibility."
+                },
+                "possible_modifications": {
+                    "mask_seed_information": [
+                        "Hide the exact mechanism of seed selection to force the agent to infer handling methods."
+                    ],
+                    "imply_action_selection_variants": [
+                        "Introduce additional action selection strategies beyond random selection, such as heuristic or greedy approaches."
+                    ],
+                    "expand_actor_definition": [
+                        "Require the agent to handle multiple types of actor identification or control types even if not mentioned in the original task."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "CivRealm LLM environment",
+                    "FreecivBase-v0 environment wrapped with LLMWrapper",
+                    "BaseAgent class",
+                    "RandomLLMAgent class (derived from BaseAgent)",
+                    "Game loop for interacting with the environment",
+                    "Random action selection mechanism",
+                    "Seed initialization module (using process ID or configuration seed)"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries and modules as specified in the documentation",
+                    "Create the RandomLLMAgent class that inherits from BaseAgent",
+                    "Initialize the agent with proper seed handling (conditional on configuration)",
+                    "Implement the act method to track the current turn, maintain a planned actor list, iterate through control types and actors, and randomly select an available action",
+                    "Create a main function to initialize the FreecivBase-v0 environment and wrap it with the LLMWrapper",
+                    "Implement a game loop that retrieves observations, calls the agent's act method, steps the environment, and prints details (step number, turn, reward, termination status, and action taken)",
+                    "Close the environment and plot the game scores after completion"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Documentation and Code References",
+                        "description": "Integration of multiple files (first_agent.md, base_agent.py, random_game.py) adds complexity in ensuring consistency of instructions and usage across various components."
+                    },
+                    {
+                        "source": "Conditional Seed Handling",
+                        "description": "Handling different seed sources (process_id vs configuration seed) introduces complexity in reproducibility and initialization logic."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Available actions: The structure and variety of available actions for each actor are not explicitly detailed.",
+                    "Actor identification: The format and range of actor IDs and control types are provided at runtime but remain underspecified.",
+                    "Seed handling: The decision logic between using the process_id or a configuration seed is not clearly defined."
+                ],
+                "ambiguous_setup_steps": [
+                    "Retrieving and processing available actions for each actor lacks explicit instructions on handling different action structures.",
+                    "Defining when an actor has already been planned for in the current turn is mentioned but not detailed."
+                ],
+                "possible_modifications": {
+                    "mask_seed_information": [
+                        "Hide the exact mechanism of seed selection to force the agent to infer the handling methods."
+                    ],
+                    "imply_action_selection_variants": [
+                        "Introduce additional action selection strategies (e.g., heuristic or greedy) beyond the default random selection."
+                    ],
+                    "expand_actor_definition": [
+                        "Require the agent to handle multiple formats of actor identification or control types, even if not explicitly mentioned in the original task."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended tasks, require using a smaller or less resource\u2010intensive model (e.g., GPT-4o-mini) while aiming to achieve comparable behavior, simulating limited computational resources."
+                    ],
+                    "time_constraints": [
+                        "Impose a maximum number of game turns or iterations to force quicker decision-making and limit the overall experiment runtime."
+                    ],
+                    "money_constraints": [
+                        "Restrict the use of high-end computational resources or cloud computing instances, enforcing the experiment to be carried out on lower-cost hardware."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random action selection and seed handling in the RandomLLMAgent",
+                "description": "The agent randomly selects an action from a list of available actions at every turn. Variability from different seed initializations (using process IDs or configuration seeds) and the inherent randomness in the selection process can lead to fluctuation in game performance metrics such as turn outcomes, rewards, and termination status. This randomness may also cause instability during gradient updates if any learning component is indirectly affected by the noise introduced in the selection mechanism.",
+                "impact": "Results in inconsistent behavior across different game runs, making reproducibility and performance comparisons challenging. Fluctuations in outcomes may mask the true effectiveness of the agent's design or the environment dynamics.",
+                "possible_modifications": [
+                    "Introduce artificial noise in the seed initialization, for example by randomly choosing between multiple seed sources or injecting extra randomness into the seed value.",
+                    "Randomly drop or shuffle the list of available actions (similar to randomly dropping tokens) to further emphasize the effect of random uncertainty in the agent's decision-making process.",
+                    "Vary the random action selection strategy (e.g., occasionally opting for a heuristic or greedy approach) to test the robustness of the experimental setup against random fluctuations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias in environment configuration and agent design assumptions",
+                "description": "A one-time modification or persistent bias in the environment, such as a systematic corruption in the information provided about actor IDs or available actions, can introduce consistent errors in the agent\u2019s performance. For instance, if the setup always returns actions in a particular order or biases toward specific control types, the randomized agent might inadvertently learn or be affected by a non-representative action space.",
+                "impact": "Leads to a systematic skew in the experimental outcomes. The agent's performance may consistently overestimate or underestimate its capabilities, preventing researchers from accurately assessing the true efficacy of the random action selection strategy.",
+                "possible_modifications": [
+                    "Introduce a one-time bias in the dataset or action configuration, such as altering the available actions so that certain control types are over-represented.",
+                    "Persistently modify the mapping between actor IDs and their available actions in a non-random fashion to simulate environmental corruption.",
+                    "Mask or alter the seed handling mechanism in a way that always favors a particular initialization, creating a consistent but incorrect baseline for performance evaluation."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you run a basic game in CivRealm with a random agent and visualize the results?",
+            "method": "Use the provided random_game.py script to initialize the CivRealm environment, create a random agent, run the game loop, and visualize the results.",
+            "expected_outcome": "A complete game run with a random agent, printing step information and generating game score plots.",
+            "source": [
+                "/workspace/src/civrealm/random_game.py"
+            ],
+            "usage_instructions": "1. Import the necessary modules from civrealm.\n2. Create a FreecivBase-v0 environment using gymnasium.make().\n3. Create a RandomAgent instance.\n4. Reset the environment to get initial observations and info.\n5. Implement a game loop that continues until the game is done (terminated or truncated).\n6. In each iteration, get an action from the agent using the current observations and info.\n7. Step the environment with the action to get new observations, reward, termination status, and info.\n8. Print information about the current step, including step number, turn, reward, termination status, and action taken.\n9. Increment the step counter and check if the game is done.\n10. Close the environment when the game is done.\n11. Plot the game scores using env.plot_game_scores().\n12. Get and print the game results using env.get_game_results().",
+            "requirements": [
+                "Step 1: Import necessary modules from civrealm and gymnasium (/workspace/src/civrealm/random_game.py:17-22)",
+                "Step 2: Create a FreecivBase-v0 environment using gymnasium.make() (/workspace/src/civrealm/random_game.py:26)",
+                "Step 3: Create a RandomAgent instance (/workspace/src/civrealm/random_game.py:28)",
+                "Step 4: Reset the environment to get initial observations and info (/workspace/src/civrealm/random_game.py:30)",
+                "Step 5: Initialize game state variables (done flag and step counter) (/workspace/src/civrealm/random_game.py:31-32)",
+                "Step 6: Implement a game loop that continues until the game is done (terminated or truncated) (/workspace/src/civrealm/random_game.py:33-45)",
+                "Step 7: Within the game loop, get an action from the agent using current observations and info (/workspace/src/civrealm/random_game.py:35)",
+                "Step 8: Step the environment with the action to get new observations, reward, termination status, and info (/workspace/src/civrealm/random_game.py:36-37)",
+                "Step 9: Print information about the current step (step number, turn, reward, termination status, action) (/workspace/src/civrealm/random_game.py:38-40)",
+                "Step 10: Update step counter and check if the game is done (/workspace/src/civrealm/random_game.py:41-42)",
+                "Step 11: Handle exceptions that may occur during the game loop (/workspace/src/civrealm/random_game.py:43-45)",
+                "Step 12: Close the environment when the game is done (/workspace/src/civrealm/random_game.py:46)",
+                "Step 13: Plot the game scores using env.plot_game_scores() (/workspace/src/civrealm/random_game.py:51)",
+                "Final Step: Get and print the game results using env.get_game_results() (/workspace/src/civrealm/random_game.py:52-53)"
+            ],
+            "agent_instructions": "Create a script that runs a basic game in CivRealm with a random agent and visualizes the results. Your script should:\n\n1. Import the necessary modules from civrealm and gymnasium\n2. Create a CivRealm environment using the 'FreecivBase-v0' environment ID\n3. Initialize a random agent that will make decisions in the game\n4. Reset the environment to get the initial game state\n5. Implement a game loop that:\n   - Gets actions from the random agent based on current observations\n   - Steps the environment with these actions\n   - Tracks and displays information about each step (including turn number, rewards, and actions taken)\n   - Continues until the game terminates or is truncated\n6. Handle any exceptions that might occur during gameplay\n7. Properly close the environment when the game ends\n8. Visualize the game results by plotting game scores\n9. Retrieve and display the final game results\n\nThe script should run as a standalone program and demonstrate how the random agent performs in the CivRealm environment.",
+            "design_complexity": {
+                "constant_variables": {
+                    "environment_id": [
+                        "FreecivBase-v0"
+                    ],
+                    "script_source": [
+                        "/workspace/src/civrealm/random_game.py"
+                    ]
+                },
+                "independent_variables": {
+                    "agent_type": [
+                        "RandomAgent"
+                    ]
+                },
+                "dependent_variables": {
+                    "game_output": "A complete game run characterized by printed step information (turn, reward, actions, termination status), plotted game score graphs, and final game results as returned by env.get_game_results()"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "game_loop_conditions": "It is not explicitly clarified whether termination and truncation are handled equivalently and which condition precisely triggers the end of the game loop.",
+                    "visualization_steps": "The specific details of how scores should be visualized (e.g., plot formatting and required details) are not provided, leaving room for interpretation.",
+                    "exception_handling": "The range of exceptions to be caught and the intended behavior when exceptions occur is not explicitly specified."
+                },
+                "possible_modifications": {
+                    "modify_environment": [
+                        "Allow the environment_id to take alternative CivRealm configurations to test extended game scenarios"
+                    ],
+                    "modify_agent": [
+                        "Introduce additional agent types (e.g., heuristic-based or learning-based agents) to compare against the RandomAgent"
+                    ],
+                    "mask_visualization": [
+                        "Omit the explicit mention of env.plot_game_scores(), requiring the agent to infer suitable visualization methods"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "CivRealm environment (FreecivBase-v0)",
+                    "RandomAgent",
+                    "Gymnasium integration",
+                    "random_game.py script",
+                    "Game loop for environment stepping and action processing",
+                    "Visualization module (plotting game scores)",
+                    "Exception handling mechanism"
+                ],
+                "setup_steps": [
+                    "Import necessary modules from civrealm and gymnasium",
+                    "Create the CivRealm environment using gymnasium.make() with the 'FreecivBase-v0' ID",
+                    "Initialize a RandomAgent instance",
+                    "Reset the environment to obtain initial observations and info",
+                    "Implement a game loop that continues until the game terminates or is truncated",
+                    "In each iteration, get an action from the agent, step the environment, and print step information (turn, reward, termination status, and action)",
+                    "Handle exceptions that might occur during the game loop",
+                    "Close the environment when the game ends",
+                    "Plot the game scores using env.plot_game_scores()",
+                    "Retrieve and display final game results using env.get_game_results()"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Code integration",
+                        "description": "The script requires integrating multiple modules and components (environment creation, agent initialization, game loop, visualization, and exception handling), which increases complexity."
+                    },
+                    {
+                        "source": "Error management",
+                        "description": "Incorporating exception handling within the game loop adds an extra layer of complexity to managing robust execution."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Game loop conditions",
+                    "Visualization implementation",
+                    "Exception handling specifics"
+                ],
+                "ambiguous_setup_steps": [
+                    "The precise conditions for ending the game loop (e.g., whether termination and truncation are treated equivalently) are not clearly defined.",
+                    "Details of how the game scores should be visualized (plot formatting and required details) are open to interpretation.",
+                    "The range and type of exceptions that should be caught during the game loop are not explicitly specified."
+                ],
+                "possible_modifications": {
+                    "modify_environment": [
+                        "Allow the environment_id to be configurable, enabling alternative CivRealm configurations to test extended game scenarios."
+                    ],
+                    "modify_agent": [
+                        "Introduce additional agent types (e.g., heuristic-based or learning-based agents) to compare against the RandomAgent."
+                    ],
+                    "mask_visualization": [
+                        "Omit the explicit mention of env.plot_game_scores(), requiring users to infer and implement suitable visualization methods."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For an extended task, one could restrict computational resources (e.g., reduce available memory or CPU cores) which may force optimizations in environment initialization and game loop management."
+                    ],
+                    "time_constraints": [
+                        "It would be possible to impose a stricter runtime limit on the game loop execution to simulate scenarios with tighter time windows, impacting how long the game can run."
+                    ],
+                    "money_constraints": [
+                        "As a modification, one might restrict or eliminate the use of paid or proprietary visualization tools (forcing reliance on fully open\u2010source alternatives), which could affect the visualization quality or available features."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Randomness in agent actions and environment dynamics",
+                "description": "Since the experiment uses a RandomAgent, the inherent unpredictability in action selection leads to variability in game progress, step outcomes, and game scores. Such variability may cause fluctuations in step reward, termination conditions, and overall game results. These fluctuations act as a source of random uncertainty in the experimental outcome.",
+                "impact": "Results can differ significantly between runs, making it challenging to directly compare game scores and other metrics. The variability may affect the stability of gradient updates (if applicable in extended scenarios) and change the behavior of the environment unexpectedly.",
+                "possible_modifications": [
+                    "Introduce additional randomness in the game by perturbing observations or rewards from the environment.",
+                    "Randomly alter the timing or sequence of game loop iterations to further test robustness against random fluctuations.",
+                    "Simulate random delays or noise in state updates to explore the impact on visualization and overall game performance."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Fixed environment configuration and predefined game loop conditions",
+                "description": "The experiment is built on a predefined CivRealm environment (using 'FreecivBase-v0') and specific game loop logic. A one-time change, such as altering the environment configuration or corrupting the visualization step (e.g., by using an alternative plotting method), can introduce a consistent bias or error that affects all subsequent runs.",
+                "impact": "This kind of systematic modification may lead to biased game outcomes, where all runs are similarly affected. Such a bias can make the experimental results less generalizable, as the results could be skewed by the inherent design of the specific environment or game loop conditions.",
+                "possible_modifications": [
+                    "Modify the environment (for example, changing the environment_id to test different CivRealm configurations) to deliberately introduce a consistent bias.",
+                    "Implement a one-time alteration of key parameters (such as systematically modifying rewards for certain turns) to simulate a systematic error.",
+                    "Change the visualization approach (e.g., masking the explicit use of env.plot_game_scores()) to force alternative methods that could consistently affect how results are interpreted."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you run a mini-game in CivRealm with a controller agent and track minitask information?",
+            "method": "Use the provided random_game_minitask.py script to initialize the CivRealm minitask environment, create a controller agent, run the game loop, and track minitask information.",
+            "expected_outcome": "A complete mini-game run with a controller agent, printing step information including minitask details and generating game score plots.",
+            "source": [
+                "/workspace/src/civrealm/random_game_minitask.py"
+            ],
+            "usage_instructions": "1. Import the necessary modules from civrealm.\n2. Create a FreecivMinitask-v0 environment using gymnasium.make().\n3. Create a ControllerAgent instance.\n4. Reset the environment to get initial observations and info.\n5. Implement a game loop that continues until the game is done (terminated or truncated).\n6. In each iteration, get an action from the agent using the current observations and info.\n7. Step the environment with the action to get new observations, reward, termination status, and info.\n8. Print information about the current step, including step number, turn, reward, termination status, and action taken.\n9. Also print the minitask information from info['minitask'].\n10. Increment the step counter and check if the game is done.\n11. Close the environment when the game is done.\n12. Plot the game scores using env.plot_game_scores().\n13. Get and print the game results using env.get_game_results().",
+            "requirements": [
+                "Step 1: Import necessary modules from civrealm, gymnasium, and other required libraries (/workspace/src/civrealm/random_game_minitask.py:16-22)",
+                "Step 2: Create a FreecivMinitask-v0 environment using gymnasium.make() (/workspace/src/civrealm/random_game_minitask.py:26)",
+                "Step 3: Create a ControllerAgent instance (/workspace/src/civrealm/random_game_minitask.py:27)",
+                "Step 4: Reset the environment to get initial observations and info (/workspace/src/civrealm/random_game_minitask.py:29)",
+                "Step 5: Initialize game state variables (done flag and step counter) (/workspace/src/civrealm/random_game_minitask.py:30-31)",
+                "Step 6: Implement a game loop that continues until the game is done (terminated or truncated) (/workspace/src/civrealm/random_game_minitask.py:32-45)",
+                "Step 7: Within the game loop, get an action from the agent using current observations and info (/workspace/src/civrealm/random_game_minitask.py:34)",
+                "Step 8: Step the environment with the action to get new observations, reward, termination status, and info (/workspace/src/civrealm/random_game_minitask.py:35-36)",
+                "Step 9: Print information about the current step, including step number, turn, reward, termination status, and action taken (/workspace/src/civrealm/random_game_minitask.py:37-38)",
+                "Step 10: Print the minitask information from info['minitask'] (/workspace/src/civrealm/random_game_minitask.py:39)",
+                "Step 11: Increment the step counter and update the done flag (/workspace/src/civrealm/random_game_minitask.py:40-41)",
+                "Step 12: Handle exceptions that may occur during the game loop (/workspace/src/civrealm/random_game_minitask.py:42-45)",
+                "Step 13: Close the environment when the game is done (/workspace/src/civrealm/random_game_minitask.py:46)",
+                "Step 14: Plot the game scores using env.plot_game_scores() (/workspace/src/civrealm/random_game_minitask.py:47)",
+                "Step 15: Get and print the game results using env.get_game_results() (/workspace/src/civrealm/random_game_minitask.py:48-49)"
+            ],
+            "agent_instructions": "Your task is to create a script that runs a mini-game in CivRealm with a controller agent and tracks minitask information. Follow these steps:\n\n1. Import the necessary modules from civrealm, including the ControllerAgent and any required utilities.\n\n2. Create a FreecivMinitask-v0 environment using gymnasium.make().\n\n3. Initialize a ControllerAgent instance that will make decisions in the game.\n\n4. Reset the environment to get the initial observations and info dictionary.\n\n5. Set up a game loop that continues until the game is done (either terminated or truncated).\n\n6. Within each iteration of the game loop:\n   - Get an action from the agent based on current observations and info\n   - Step the environment with the action to get new observations, reward, termination status, and updated info\n   - Print information about the current step, including step number, turn, reward, termination status, and the action taken\n   - Print the minitask-specific information from info['minitask']\n   - Increment your step counter and check if the game is done\n\n7. Implement basic error handling for exceptions that might occur during gameplay.\n\n8. When the game is done, close the environment properly.\n\n9. Generate and display visualizations of the game scores using the environment's plot_game_scores() method.\n\n10. Retrieve and print the final game results using the environment's get_game_results() method.\n\nThe script should provide a complete mini-game run with the controller agent, printing step information including minitask details and generating game score plots.",
+            "design_complexity": {
+                "constant_variables": {
+                    "environment_type": "FreecivMinitask-v0 (as created via gymnasium.make())",
+                    "controller_agent": "ControllerAgent instance",
+                    "script_path": "/workspace/src/civrealm/random_game_minitask.py"
+                },
+                "independent_variables": {
+                    "mode": [
+                        "A"
+                    ],
+                    "logging_options": "The detailed printing of step information (turn, reward, termination, action, and minitask details) is fixed but could be varied in extended tasks"
+                },
+                "dependent_variables": {
+                    "game_progress_outputs": "Step information printed during each iteration (step number, turn, reward, termination status, action taken, and minitask information)",
+                    "final_game_metrics": "Game scores (via plot_game_scores()) and game results (via get_game_results())"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "minitask_information": "The task states that minitask details should be tracked and printed, but it is not explicitly clear what constitutes minitask information or its format.",
+                    "controller_agent_decision_logic": "The exact internal workings and decision criteria of the ControllerAgent are not detailed in the task.",
+                    "termination_conditions": "The criteria for game termination (terminated or truncated) are referenced but not explicitly defined."
+                },
+                "possible_modifications": {
+                    "masking_existing_variables": [
+                        "Hide or modify the exact structure of the minitask information to force the agent to infer what details to track."
+                    ],
+                    "introducing_new_variables": [
+                        "Add a new variable (e.g., 'verbose_mode': [true, false]) to control the level of detail in printed step information.",
+                        "Introduce a variable for agent decision randomness or policy parameters to test variations in the ControllerAgent's behavior."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "FreecivMinitask-v0 environment created via gymnasium.make() from civrealm",
+                    "ControllerAgent instance for decision making",
+                    "random_game_minitask.py script orchestrating the mini-game",
+                    "Game loop logic managing observations, actions, state updates, and logging",
+                    "Error handling routines for exception management",
+                    "Visualization tools for plotting game scores and printing final results"
+                ],
+                "setup_steps": [
+                    "Import necessary modules from civrealm, gymnasium, and other required libraries",
+                    "Create the FreecivMinitask-v0 environment using gymnasium.make()",
+                    "Initialize a ControllerAgent instance",
+                    "Reset the environment to obtain initial observations and info",
+                    "Set up a game loop that runs until the game is terminated or truncated",
+                    "In each iteration, obtain an action from the agent using current observations and info",
+                    "Step the environment with the agent's action to get new observations, rewards, termination status, and updated info",
+                    "Print detailed information for each step (step number, turn, reward, termination status, and action taken)",
+                    "Print the minitask-specific information from info['minitask']",
+                    "Increment the step counter and check the termination condition",
+                    "Implement and execute error handling for possible exceptions during the game loop",
+                    "Close the environment when the game is completed",
+                    "Plot game scores using env.plot_game_scores()",
+                    "Retrieve and print final game results using env.get_game_results()"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "ControllerAgent decision logic",
+                        "description": "The internal workings and decision criteria of the ControllerAgent are not elaborated, adding to the complexity of integration."
+                    },
+                    {
+                        "source": "Minitask information format",
+                        "description": "The structure and specific content of minitask details in info['minitask'] are unspecified, requiring inference or further clarification."
+                    },
+                    {
+                        "source": "Termination conditions",
+                        "description": "The precise criteria for considering the game as 'done' (terminated or truncated) are not clearly defined."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "minitask_information: It is unclear exactly what details should be tracked and printed from info['minitask']",
+                    "controller_agent_decision_logic: The internal decision-making process of the ControllerAgent is not specified",
+                    "termination_conditions: The conditions for game termination (terminated vs truncated) are not explicitly defined"
+                ],
+                "ambiguous_setup_steps": [
+                    "Extracting and printing minitask information: The task mentions printing minitask details but does not define the exact structure or contents",
+                    "Error handling within the game loop: There is a general instruction to handle exceptions without specific guidelines",
+                    "Termination check: The mechanism to determine or differentiate between 'terminated' and 'truncated' states is vague"
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Hide or modify the exact structure of the minitask data, requiring users to infer the relevant details to track."
+                    ],
+                    "introduce_new_variables": [
+                        "Add a 'verbose_mode' flag to control the level of detail in printed step information.",
+                        "Introduce a parameter for agent decision randomness or policy parameters to vary the ControllerAgent's behavior."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended tasks, require the ControllerAgent to run on a lower-resource setup (e.g., a lightweight variant) instead of using a full resource-intensive implementation."
+                    ],
+                    "time_constraints": [
+                        "For extended tasks, impose a strict time limit per game loop iteration to simulate real-time decision constraints."
+                    ],
+                    "money_constraints": [
+                        "For extended tasks, simulate a limited budget by restricting the use of expensive compute resources or cloud services during mini-game runs."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "ControllerAgent decision randomness and minor modifications in the game loop logic (e.g., altering token drops or logging intervals)",
+                "description": "Random uncertainty arises when random perturbations are introduced into the mini-game execution, such as random token drops akin to modifying pre-training token dropping methods. This causes fluctuations in agent decision making, gradient updates, and may lead to inconsistent step information logging and score plots during the mini-game run.",
+                "impact": "The injected randomness can lead to instability in game progress, unpredictable minitask details, and variations in the final game metrics, complicating the evaluation of agent performance because scores, actions, and step rewards may vary unpredictably between runs.",
+                "possible_modifications": [
+                    "Introduce random delays in the game loop or in the ControllerAgent\u2019s decision process.",
+                    "Randomly drop parts of the observation data (e.g., analogous to dropping tokens) to simulate noise and assess the robustness of the agent.",
+                    "Vary the logging frequency or detail level randomly to test the stability of minitask tracking under noisy conditions."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Intentional modification of environment configuration or minitask dataset structure",
+                "description": "Systematic uncertainty is introduced when a one-time or consistent modification biases the environment or the minitask information. For instance, consistently altering the minitask details or the evaluation criteria (e.g., mislabeling minitask data) creates an environment where the observed game outcomes are skewed from the true performance of the ControllerAgent.",
+                "impact": "This leads to a consistent bias in the game score plots and final game results, as the altered environment or minitask data systematically misrepresents the true agent performance. Such bias makes it harder to compare results across experiments as the underlying data is corrupted.",
+                "possible_modifications": [
+                    "Modify the environment configuration in gymnasium.make() so that the minitask information in info['minitask'] is consistently misreported (for example, mislabeling turn or action correctness).",
+                    "Introduce a one-time bias in the logging or evaluation procedure, such as systematically inflating or deflating reward values.",
+                    "Adjust the ControllerAgent\u2019s evaluation parameters to use a skewed subset of features from the minitask information, thereby creating a consistent directional bias."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Integrate hierarchical reinforcement learning (HRL) components to address long-term strategic planning challenges in tasks with delayed rewards.",
+            "experiment_design": "Develop an augmented version of the tensor-based RL model that introduces a hierarchical decision-making layer operating over multiple timescales. Train both the hierarchical model and the original flat model on minitasks with sparse/delayed rewards as well as full game environments. Use identical training durations (e.g., 40,000 steps for minitasks and 2 million steps for full games) and track comparable metrics such as success rate, policy loss, and overall game score. Perform statistical comparisons to determine if the HRL approach offers statistically significant improvements in handling long-term strategic planning.",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING"
+        },
+        {
+            "idea": "Systematically explore different reward shaping configurations to balance immediate rewards with long-term strategic gains.",
+            "experiment_design": "Design a grid search over reward parameters that adjust the relative weight between short-term achievements (like unit production) and long-term goals (such as establishing cities for exponential growth). For each configuration, train the tensor-based RL model on full game tasks for 2 million steps using multiple seeds. Collect detailed performance metrics including the weighted game score, sub-component stats (population, technology, units built/killed), and the evolution of these metrics over time. Analyze which configurations lead to lower policy loss and higher cumulative scores, thereby identifying optimal reward shaping strategies that foster balanced strategic behavior.",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING"
+        },
+        {
+            "idea": "Integrate an explicit defensive module into the hierarchical decision architecture to mitigate the vulnerability to in-game mechanics like pirate invasions.",
+            "experiment_design": "Develop an enhanced variant of Mastaba that combines the current hierarchical framework with a specialized sub-module focused on defensive strategies. Run the same set of experiments (5 full games on 10 maps) and record the same metrics: population, military units, scores, expansion progress, invasion trigger timing, and survival duration. Compare the performance of this enhanced agent against the original Mastaba and BaseLang to evaluate if the added defensive capability can maintain strategic advantages while improving survival outcomes.",
+            "subsection_source": "5.2 L ANGUAGE -BASED AGENTS : BASELANG AND MASTABA"
+        },
+        {
+            "idea": "Study the robustness of hierarchical versus non-hierarchical decision-making under varying game-mechanic conditions.",
+            "experiment_design": "Conduct experiments where the built-in game mechanics\u2014such as the score threshold that triggers pirate invasions\u2014are systematically varied. Maintain the experimental framework (using both Mastaba and BaseLang on multiple maps) while altering the invasion trigger thresholds across different game runs. Analyze how changes in these thresholds affect the agents\u2019 expansion rate, overall score, and survival time. This variation will help assess the sensitivity of each agent to environmental changes and further elucidate the strengths and limitations of a hierarchical decision architecture in dynamic settings.",
+            "subsection_source": "5.2 L ANGUAGE -BASED AGENTS : BASELANG AND MASTABA"
+        }
+    ],
+    "main_takeaways": [
+        "The paper presents a novel approach that integrates zero\u2010shot planning and language-based reasoning with reinforcement learning for embodied agents.",
+        "It demonstrates that combining tensor\u2010based reinforcement learning with language-informed decision making can lead to improvements in key performance metrics such as rewards, scores, and success rates across a variety of simulated environments (including battle and development scenarios).",
+        "The evaluation highlights that metrics such as policy loss, value loss, and step reward are informative signals that closely correspond with the agent\u2019s overall performance and learning stability.",
+        "Comparisons with a baseline language-based agent (referred to as BaseLang) show that the proposed method can achieve faster convergence and better overall outcomes in complex tasks.",
+        "The experiments conducted\u2014spanning scenarios like battle modern era, battle naval, development build city, and others\u2014provide granular evidence that configuration choices and loss function tuning can substantially affect performance."
+    ]
+}

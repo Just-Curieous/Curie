@@ -1,0 +1,1522 @@
+{
+    "questions": [
+        {
+            "method": "Design an experiment where AnomalyCLIP and the competing methods (CLIP, CLIP-AC, WinCLIP, V AND, and CoOp) are evaluated on a set of industrial inspection datasets (such as MVTec AD, VisA, MPDD, BTAD, SDD, TextureDAGM, DTD-Synthetic) and medical imaging datasets (e.g., BrainHeadCT, BrainMRI, Br35H, Chest COVID-19 for classification; ISIC, ColonCVC-ClinicDB, Kvasir, Endo, TN3K for segmentation). For each dataset, compute image-level metrics (AUROC and AP) and pixel-level metrics (AUROC and PRO/AUPRO). Use the same standardized experimental setup (pre-processing details, backbone, frozen CLIP parameters, etc.) as described in the paper. Compare the performance of AnomalyCLIP with that of all five competing methods and analyze the performance superiority in both anomaly detection and segmentation tasks.",
+            "expected_outcome": "AnomalyCLIP is expected to achieve higher AUROC and AP (for image-level) and higher AUROC and PRO/AUPRO (for pixel-level) compared to the competing methods on most datasets. This would confirm its superior performance across diverse industrial and medical domains due to its effective balance of global and local context optimization through object-agnostic prompt learning.",
+            "subsection_source": "4.2 M AIN RESULTS",
+            "source": [
+                "/workspace/test.py",
+                "/workspace/test.sh"
+            ],
+            "usage_instructions": "1. First, ensure all required datasets are downloaded and properly organized as described in the README.md (industrial datasets like MVTec AD, VisA, MPDD, BTAD, SDD, TextureDAGM, DTD-Synthetic and medical datasets like BrainHeadCT, BrainMRI, Br35H, Chest COVID-19, ISIC, ColonCVC-ClinicDB, Kvasir, Endo, TN3K).\n2. For each dataset, run the appropriate script in the generate_dataset_json directory to create the required meta.json file (e.g., 'python generate_dataset_json/mvtec.py' for MVTec AD).\n3. Modify the test.sh script to include all datasets you want to evaluate by adding additional test commands for each dataset. For each dataset, update the '--dataset' parameter to match the dataset name and '--data_path' to point to the dataset location.\n4. Run 'bash test.sh' to evaluate AnomalyCLIP against competing methods (CLIP, CLIP-AC, WinCLIP, V AND, and CoOp) on all datasets. The script will compute both image-level metrics (AUROC and AP) and pixel-level metrics (AUROC and PRO/AUPRO) as specified in the '--metrics' parameter (default is 'image-pixel-level').\n5. Results will be saved in the directory specified by '--save_path' parameter.",
+            "requirements": [
+                "Step 1: Set up the environment by configuring random seeds for reproducibility (/workspace/test.py:18-24)",
+                "Step 2: Parse command line arguments for dataset path, model parameters, and evaluation settings (/workspace/test.py:176-196)",
+                "Step 3: Initialize the logger to record evaluation results (/workspace/test.py:38)",
+                "Step 4: Load the AnomalyCLIP model with specified parameters (prompt length, text embedding depth, etc.) (/workspace/test.py:41-44)",
+                "Step 5: Prepare data transformations and load the test dataset with appropriate preprocessing (/workspace/test.py:46-48)",
+                "Step 6: Initialize data structures to store evaluation results for each object class (/workspace/test.py:52-64)",
+                "Step 7: Load the prompt learner with pre-trained weights from the checkpoint (/workspace/test.py:66-71)",
+                "Step 8: Generate text features for normal and abnormal classes using the prompt learner (/workspace/test.py:73-76)",
+                "Step 9: For each test image, extract image features and patch features using the model (/workspace/test.py:80-90)",
+                "Step 10: Compute similarity between image features and text features to generate anomaly scores (/workspace/test.py:92-95)",
+                "Step 11: Generate anomaly maps by computing similarity between patch features and text features (/workspace/test.py:96-109)",
+                "Step 12: Apply Gaussian filtering to smooth the anomaly maps (/workspace/test.py:111)",
+                "Step 13: Calculate evaluation metrics based on the specified metrics parameter (image-level, pixel-level, or both) (/workspace/test.py:115-152)",
+                "Step 14: Compute mean performance across all object classes (/workspace/test.py:154-172)",
+                "Step 15: Output the evaluation results in a tabular format (/workspace/test.py:173)",
+                "Final Step: Execute the test script with appropriate parameters for each dataset as specified in the shell script (/workspace/test.sh:14-17, 33-36)"
+            ],
+            "agent_instructions": "Your task is to implement a system for evaluating anomaly detection models on various datasets. The system should evaluate AnomalyCLIP against other methods (CLIP, CLIP-AC, WinCLIP, V AND, and CoOp) on industrial and medical datasets.\n\nImplement a Python script that:\n1. Takes command-line arguments for dataset path, model parameters, and evaluation settings\n2. Loads a pre-trained AnomalyCLIP model\n3. Processes test data from the specified dataset\n4. Uses prompt learning to generate text features for normal and abnormal classes\n5. Computes image features and patch features from test images\n6. Calculates similarity between image/patch features and text features to generate anomaly scores and maps\n7. Applies appropriate post-processing (like Gaussian filtering) to the anomaly maps\n8. Calculates evaluation metrics at both image level (AUROC, AP) and pixel level (AUROC, AUPRO)\n9. Outputs results in a tabular format\n\nAlso implement a shell script that:\n1. Sets up parameters like model depth and context length\n2. Runs the evaluation script for different datasets with appropriate parameters\n3. Uses the correct checkpoint paths for each dataset\n\nThe system should work with various industrial datasets (MVTec AD, VisA, MPDD, BTAD, SDD, TextureDAGM, DTD-Synthetic) and medical datasets (BrainHeadCT, BrainMRI, Br35H, Chest COVID-19, ISIC, ColonCVC-ClinicDB, Kvasir, Endo, TN3K).",
+            "masked_source": [
+                "/workspace/test.py",
+                "/workspace/test.sh"
+            ],
+            "question": "Does AnomalyCLIP with object-agnostic prompt learning outperform competing methods in zero-shot anomaly detection across industrial and medical image datasets?",
+            "design_complexity": {
+                "constant_variables": {
+                    "experimental_setup": "Standardized pre\u2010processing, backbone, frozen CLIP parameters, and other settings as described in the paper"
+                },
+                "independent_variables": {
+                    "anomaly_detection_method": [
+                        "AnomalyCLIP",
+                        "CLIP",
+                        "CLIP-AC",
+                        "WinCLIP",
+                        "V AND",
+                        "CoOp"
+                    ],
+                    "dataset": [
+                        "MVTec AD",
+                        "VisA",
+                        "MPDD",
+                        "BTAD",
+                        "SDD",
+                        "TextureDAGM",
+                        "DTD-Synthetic",
+                        "BrainHeadCT",
+                        "BrainMRI",
+                        "Br35H",
+                        "Chest COVID-19",
+                        "ISIC",
+                        "ColonCVC-ClinicDB",
+                        "Kvasir",
+                        "Endo",
+                        "TN3K"
+                    ],
+                    "task_type": [
+                        "classification",
+                        "segmentation"
+                    ]
+                },
+                "dependent_variables": {
+                    "evaluation_metrics": [
+                        "Image-level AUROC",
+                        "AP",
+                        "Pixel-level AUROC",
+                        "PRO/AUPRO"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "CLIP-AC": "The exact implementation details and configuration for CLIP-AC are not explicitly described.",
+                    "V AND": "The naming and configuration details are unclear, making it ambiguous what variations are used.",
+                    "pre_processing_details": "While a standardized setup is mentioned, the specific pre-processing steps are not detailed in the task.",
+                    "checkpoint_paths": "Required checkpoint paths for the models are referenced but not explicitly provided.",
+                    "Gaussian_filtering_parameters": "Parameters for post-processing (such as Gaussian filtering settings) are not specified."
+                },
+                "possible_modifications": {
+                    "modification_new_variables": [
+                        "Introduce additional model variants or ablation settings (e.g., with/without DPAM, textual prompt tuning, integration of multi-scale local features)",
+                        "Add variables for hyperparameter tuning such as Gaussian filter kernel size or variance"
+                    ],
+                    "modification_masking": [
+                        "Mask some internal configuration details (e.g., exact pre-processing routines or checkpoint locations) to evaluate robustness",
+                        "Imply the need for new dependent variables such as runtime performance or memory usage"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Python evaluation script (/workspace/test.py) that implements the anomaly detection pipeline",
+                    "Shell script (/workspace/test.sh) that orchestrates evaluation across multiple datasets",
+                    "Dataset handling modules including meta.json generation scripts (e.g., in generate_dataset_json)",
+                    "Pre-processing pipeline for various industrial and medical datasets",
+                    "Model components such as the frozen CLIP backbone, prompt learner (including object-agnostic prompt learning, DPAM, textual prompt tuning), and multi-scale local visual feature integration",
+                    "Logging system for recording evaluation results",
+                    "Evaluation metric modules computing image-level (AUROC, AP) and pixel-level (AUROC, PRO/AUPRO) metrics"
+                ],
+                "setup_steps": [
+                    "Download and organize all required industrial and medical datasets as specified in the README.md",
+                    "Run the appropriate script to generate meta.json files for each dataset (e.g., 'python generate_dataset_json/mvtec.py' for MVTec AD)",
+                    "Modify the test.sh script to include all desired datasets by updating the '--dataset' and '--data_path' parameters",
+                    "Configure the environment including setting up random seeds for reproducibility and parsing command-line arguments (/workspace/test.py)",
+                    "Initialize the logger to capture all evaluation outputs",
+                    "Load the pre-trained AnomalyCLIP model with frozen CLIP parameters and specified configurations (e.g., prompt length, text embedding depth)",
+                    "Prepare data transformations and load test datasets with correct pre-processing",
+                    "Generate text features for normal and abnormal classes using the prompt learner",
+                    "Extract image and patch features from test images using the model",
+                    "Compute similarity scores between image/patch features and text features to generate anomaly scores and maps",
+                    "Apply Gaussian filtering for smoothing the anomaly maps",
+                    "Calculate evaluation metrics (both image-level and pixel-level) and aggregate results",
+                    "Output results in a tabular format for performance comparison with competing methods"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple dataset types",
+                        "description": "The experimental setup covers both industrial and medical imaging datasets with differing formats and pre-processing needs."
+                    },
+                    {
+                        "source": "Model component variations",
+                        "description": "The evaluation involves various anomaly detection methods (AnomalyCLIP, CLIP, CLIP-AC, WinCLIP, V AND, and CoOp) with different model architectures and configurations such as object-agnostic prompt learning, DPAM, and multi-scale feature integration."
+                    },
+                    {
+                        "source": "Script orchestration",
+                        "description": "Coordination between different scripts (Python evaluation and shell script) and dataset-specific parameter modifications adds to overall complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "CLIP-AC and V AND modules: The exact implementation details and configuration parameters are not explicitly described in the instructions.",
+                    "Pre-processing details: While a standardized setup is referenced, the specific pre-processing transformations and routines are not detailed.",
+                    "Checkpoint paths: The required checkpoint paths for loading pre-trained weights are referenced but not explicitly provided."
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration of the text prompt tuning and object-agnostic prompt learning: Although mentioned as critical, the exact procedure or parameter settings are not clearly specified.",
+                    "Gaussian filtering: The parameters for filtering (kernel size, variance, etc.) are not detailed, leaving ambiguity in post-processing settings."
+                ],
+                "possible_modifications": {
+                    "modification_new_variables": [
+                        "Introduce additional model variants or ablation settings (e.g., with/without DPAM, textual prompt tuning, or multi-scale features) to further explore the performance trade-offs.",
+                        "Include hyperparameter tuning for the Gaussian filter (e.g., kernel size, sigma) as part of the experimental parameters."
+                    ],
+                    "modification_masking": [
+                        "Mask some internal configuration details such as exact pre-processing routines or checkpoint locations to evaluate the robustness of the setup instructions.",
+                        "Omit certain implementation-specific details (e.g., internal log settings) to see if users can infer the necessary setup steps from the high-level guidelines."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended tasks, enforce model size constraints such that AnomalyCLIP and competing methods must achieve similar performance using a smaller backbone or a mini version (e.g., a mini version similar to GPT-4o-mini). This would simulate scenarios with limited computational resources."
+                    ],
+                    "time_constraints": [
+                        "For extended experiments, restrict the total training time or allowed evaluation time per epoch to assess efficiency differences, potentially tightening the per-epoch time budget."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications in prompt token handling and feature extraction",
+                "description": "Introducing randomness by dropping tokens at random instead of based on importance can lead to instabilities during gradient updates. In this experimental setup, any inadvertent random modifications in the textual prompt tuning or feature extraction processes might induce unpredictable noise in the anomaly score computations across industrial and medical datasets.",
+                "impact": "The variability can cause fluctuations in image-level and pixel-level performance metrics (AUROC, AP, PRO/AUPRO) across repeated runs. This noise may mask the true performance differences between AnomalyCLIP and competing methods, making it harder to attribute improvements solely to the model design.",
+                "possible_modifications": [
+                    "Eliminate random token dropping by using a deterministic approach or fixed dropout masks.",
+                    "Control randomness by setting fixed random seeds for token manipulation and feature extraction.",
+                    "Regularize the prompt tuning process to minimize fluctuations introduced by random modifications."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset pre-processing biases and fixed systematic modifications in pipelines",
+                "description": "Systematic uncertainty may be introduced if the standardized experimental setup is compromised by a one-time, biased alteration in data handling. For example, if the pre-processing pipeline is modified to bias the anomaly labels (or if Gaussian filtering parameters are set inappropriately for some datasets), this modification would systematically affect the anomaly scores and segmentation outcomes in a repeatable manner.",
+                "impact": "This can lead to consistent deviations, where certain datasets (industrial or medical) experience a uniform shift in performance metrics, potentially favoring or disadvantaging a method. Such biases would undermine the fairness of the comparative evaluation, making it unclear whether the observed performance gains are due to the model or the biased processing.",
+                "possible_modifications": [
+                    "Introduce a known systematic bias in a controlled setting (e.g., modify pre-processing parameters for one dataset) and then retrieve a clean copy to restore the original settings.",
+                    "Validate that checkpoint paths, Gaussian filtering parameters, and pre-processing routines remain consistent across datasets.",
+                    "Mask or log internal configuration parameters that could lead to systematic biases to ensure all methods are evaluated under truly identical conditions."
+                ]
+            }
+        },
+        {
+            "method": "Construct an auxiliary medical dataset derived from ColonDB that contains both image-level and pixel-level anomaly annotations. Fine-tune the AnomalyCLIP model, and for comparison the V AND method, using this newly created auxiliary medical dataset while keeping all other hyperparameters and training protocols identical to those reported in the paper. The experiment should evaluate the models on a range of medical imaging tasks, including classification tasks on datasets such as BrainHeadCT, BrainMRI, Br35H, and Chest COVID-19, as well as segmentation performance on datasets where pixel-level annotations are available. Performance improvements should be recorded using metrics such as AUROC, average precision (AP), and PRO/AUPRO, with reference to performance gains detailed in Table 3 of the paper and related analysis (e.g., increased AUROC from approximately 91.5 to 96.2 for image-level and improvements in segmentation metrics).",
+            "expected_outcome": "It is expected that the models fine-tuned on the auxiliary medical dataset will exhibit significant improvements in ZSAD performance on medical images. The enhanced performance is anticipated to be observed in both classification and segmentation tasks, particularly for challenges like colon polyp detection and brain tumor detection, thereby confirming that domain-specific auxiliary data enhances the prompt learning's ability to detect anomalies. These improvements will be quantified by increases in AUROC, AP, and PRO/AUPRO values relative to models fine-tuned solely on industrial datasets.",
+            "subsection_source": "4.2 MAIN RESULTS",
+            "source": [
+                "/workspace/generate_dataset_json/colonDB.py",
+                "/workspace/train.py",
+                "/workspace/test.py"
+            ],
+            "usage_instructions": "1. First, generate the dataset JSON for ColonDB by running: `cd /workspace/generate_dataset_json && python colonDB.py` (update the path in colonDB.py line 49 to point to your ColonDB dataset). 2. Fine-tune AnomalyCLIP on the ColonDB dataset by running: `CUDA_VISIBLE_DEVICES=0 python /workspace/train.py --dataset colon --train_data_path /path/to/CVC-ColonDB --save_path ./checkpoints/9_12_4_multiscale_colondb/ --features_list 24 --image_size 518 --batch_size 8 --print_freq 1 --epoch 15 --save_freq 1 --depth 9 --n_ctx 12 --t_n_ctx 4`. 3. Evaluate the fine-tuned model on medical datasets by running: `CUDA_VISIBLE_DEVICES=0 python /workspace/test.py --dataset brainmri --data_path /path/to/BrainMRI --save_path ./results/9_12_4_multiscale_colondb/zero_shot --checkpoint_path ./checkpoints/9_12_4_multiscale_colondb/epoch_15.pth --features_list 24 --image_size 518 --depth 9 --n_ctx 12 --t_n_ctx 4` (repeat this command for other medical datasets like head_ct, br35, and covid by changing the --dataset and --data_path parameters). 4. For comparison with VAND method, follow the same process but use the VAND repository mentioned in the README.md (https://github.com/ByChelsea/VAND-APRIL-GAN/tree/master).",
+            "requirements": [
+                "Step 1: Create a dataset processor that generates a JSON metadata file for the ColonDB dataset by collecting image and mask paths (/workspace/generate_dataset_json/colonDB.py:15-45)",
+                "Step 2: Load the pre-trained AnomalyCLIP model with specified parameters (depth, prompt length, etc.) (/workspace/train.py:32-32)",
+                "Step 3: Create a dataset loader for the medical images with appropriate transformations (/workspace/train.py:35-36)",
+                "Step 4: Initialize the prompt learner for learning text embeddings (/workspace/train.py:39-40)",
+                "Step 5: Apply DPAM (Dynamic Patch Attention Module) to the visual features (/workspace/train.py:42-42)",
+                "Step 6: Set up the optimizer for the prompt learner parameters (/workspace/train.py:44-44)",
+                "Step 7: Initialize focal loss and binary dice loss functions (/workspace/train.py:47-48)",
+                "Step 8: Implement the training loop that processes batches of images and masks (/workspace/train.py:54-106)",
+                "Step 9: Compute image features and patch features using the model's image encoder (/workspace/train.py:73-74)",
+                "Step 10: Generate text embeddings using the prompt learner (/workspace/train.py:77-80)",
+                "Step 11: Calculate similarity maps between image and text features (/workspace/train.py:89-94)",
+                "Step 12: Compute the combined loss (focal loss + dice loss) and update the model (/workspace/train.py:96-105)",
+                "Step 13: Save model checkpoints at specified intervals (/workspace/train.py:112-114)",
+                "Step 14: Load the trained model and prompt learner for evaluation (/workspace/test.py:66-71)",
+                "Step 15: Generate text embeddings for anomaly detection (/workspace/test.py:73-76)",
+                "Step 16: Process test images and compute anomaly maps (/workspace/test.py:80-113)",
+                "Step 17: Calculate evaluation metrics (pixel-level AUROC, AUPRO, image-level AUROC, AP) (/workspace/test.py:115-152)",
+                "Step 18: Output the evaluation results in a tabular format (/workspace/test.py:154-173)"
+            ],
+            "agent_instructions": "Your task is to implement a system for medical anomaly detection using AnomalyCLIP. The system consists of three main components:\n\n1. Dataset Preparation:\n   - Create a script that processes the ColonDB medical dataset\n   - Generate a JSON metadata file containing paths to images and their corresponding mask files\n   - Mark all samples as anomalies\n\n2. Model Training:\n   - Implement a training script for fine-tuning AnomalyCLIP on medical images\n   - Load a pre-trained CLIP model (ViT-L/14@336px) and modify it with custom parameters\n   - Create a prompt learner module that generates learnable text embeddings\n   - Apply Dynamic Patch Attention Module (DPAM) to the visual features\n   - Implement a training loop that:\n     * Computes image features and text embeddings\n     * Calculates similarity maps between image and text features\n     * Uses a combination of focal loss and dice loss for optimization\n     * Saves model checkpoints periodically\n\n3. Model Evaluation:\n   - Implement a testing script that evaluates the fine-tuned model on medical datasets\n   - Load the trained model and prompt learner\n   - Process test images and compute anomaly maps using similarity between image and text features\n   - Calculate and report multiple evaluation metrics:\n     * Pixel-level metrics: AUROC and AUPRO\n     * Image-level metrics: AUROC and Average Precision (AP)\n   - Output results in a tabular format\n\nThe system should support command-line arguments for specifying dataset paths, model parameters, and evaluation settings.",
+            "masked_source": [
+                "/workspace/generate_dataset_json/colonDB.py",
+                "/workspace/train.py",
+                "/workspace/test.py"
+            ],
+            "question": "Does fine-tuning the prompt learning on an auxiliary medical dataset that includes both image-level and pixel-level annotations (constructed based on ColonDB) lead to improved ZSAD performance on medical images compared to fine-tuning solely on industrial datasets (e.g., MVTec AD)?",
+            "design_complexity": {
+                "constant_variables": {
+                    "training_protocol": "All hyperparameters (e.g., batch size, epoch number, image size, learning rate) and training protocols (e.g., optimizer settings, loss functions) remain identical to those reported in the paper.",
+                    "model_architecture": "The pre-trained CLIP (ViT-L/14@336px) backbone with frozen parameters, DPAM module, and prompt learner settings remain unchanged."
+                },
+                "independent_variables": {
+                    "dataset_type": [
+                        "auxiliary medical dataset derived from ColonDB (with both image-level and pixel-level annotations)",
+                        "industrial dataset (e.g., MVTec AD, VisA) used in the original experiments"
+                    ],
+                    "method": [
+                        "AnomalyCLIP",
+                        "V AND"
+                    ],
+                    "annotation_type": [
+                        "image-level anomaly annotation",
+                        "pixel-level anomaly annotation"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "image-level AUROC",
+                        "average precision (AP)",
+                        "pixel-level AUROC",
+                        "PRO/AUPRO"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "auxiliary_medical_dataset_creation": "It is not explicitly detailed how ColonDB is processed to generate the JSON metadata and how anomalies are marked, which may lead to varying interpretations.",
+                    "evaluation_datasets": "The exact selection and preprocessing of medical datasets (BrainHeadCT, BrainMRI, Br35H, Chest COVID-19) are not fully specified, making it ambiguous how they align with the training data.",
+                    "method_comparison": "The integration of the V AND method for comparison lacks detailed instructions on adapting its protocol to exactly mirror the AnomalyCLIP settings, which might introduce ambiguity in the experimental comparison."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional variables such as different augmentation strategies or imaging modalities to further test robustness.",
+                        "Mask the explicit naming of ColonDB and the evaluation datasets to require the system to derive or infer dataset details.",
+                        "Imply the need for varying the prompt learning parameters (e.g., prompt length, DPAM settings) as an additional independent variable."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Dataset processor for ColonDB (script to generate JSON metadata with image and mask paths)",
+                    "Pre-trained CLIP model integration (ViT-L/14@336px backbone)",
+                    "Prompt learner module for learnable text embeddings",
+                    "Dynamic Patch Attention Module (DPAM) for enhancing local visual features",
+                    "Training script implementing the loss computations (focal loss and dice loss) and optimizer setup",
+                    "Evaluation script for computing image-level and pixel-level metrics",
+                    "Dataset loaders for medical images with appropriate transformations",
+                    "Command-line interface for specifying dataset paths and training parameters"
+                ],
+                "setup_steps": [
+                    "Run the dataset generation script (colonDB.py) to create JSON metadata for ColonDB",
+                    "Configure the training script by updating dataset paths and hyperparameters as specified",
+                    "Load the pre-trained CLIP model and integrate the DPAM and prompt learner modules",
+                    "Initialize the dataset loader to process both image-level and pixel-level anomaly annotations",
+                    "Execute the training loop using the provided command-line instructions to fine-tune AnomalyCLIP",
+                    "Save model checkpoints periodically during training",
+                    "Run the evaluation script on various medical datasets (e.g., BrainHeadCT, BrainMRI, Br35H, Chest COVID-19) with the same hyperparameters",
+                    "Repeat the above steps using the VAND method for comparison, ensuring identical training protocols"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Hyperparameter consistency",
+                        "description": "Maintaining identical values for all training parameters (e.g., batch size, epoch number, image size, learning rate, optimizer settings, loss functions) across experiments to ensure valid comparisons."
+                    },
+                    {
+                        "source": "Multi-scale feature integration",
+                        "description": "Integrating multi-layer local visual semantics adds complexity to the model architecture and requires careful handling in the training and evaluation scripts."
+                    },
+                    {
+                        "source": "Command-line parameter management",
+                        "description": "Using command-line arguments to control dataset paths, model parameters, and evaluation settings can introduce complexity if not clearly documented or if the parameters do not map 1:1 across different methods (AnomalyCLIP versus VAND)."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Auxiliary medical dataset creation: The process of extracting and marking anomalies from ColonDB (e.g., generating the JSON metadata and labeling all samples as anomalies) is not fully detailed.",
+                    "Evaluation datasets: The selection, preprocessing, and exact criteria for medical datasets (BrainHeadCT, BrainMRI, Br35H, Chest COVID-19) are not comprehensively specified.",
+                    "Method comparison: Adapting the VAND method to exactly mirror the training protocols of AnomalyCLIP (including loss functions, optimizer settings, and multi-scale feature processing) is ambiguous."
+                ],
+                "ambiguous_setup_steps": [
+                    "JSON metadata generation in colonDB.py: The instructions to 'mark all samples as anomalies' may lead to different implementations.",
+                    "Preprocessing of the evaluation datasets: There is insufficient detail on how to standardize the input images and masks across different medical tasks.",
+                    "Integration of the VAND repository: The README provides a link but lacks explicit guidance on how to adapt its setup to match the AnomalyCLIP training and evaluation procedures."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce explicit guidelines for processing ColonDB to generate the JSON metadata and define anomaly labels.",
+                        "Provide additional documentation on the preprocessing steps required for each medical imaging dataset to ensure consistency with the training regime.",
+                        "Clarify the necessary modifications for adapting the VAND method to use the same hyperparameters, loss functions, and training protocols as AnomalyCLIP.",
+                        "Suggest additional independent variables such as different augmentation strategies or imaging modalities to test the robustness of prompt learning."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification is to enforce performance parity using a smaller model variant (for example, using a 'mini' version of the CLIP backbone) in order to simulate reduced computational resources. This constraint would require retaining the improvements in AUROC, AP, and PRO/AUPRO as detailed in the paper while using a model with fewer parameters."
+                    ],
+                    "time_constraints": [
+                        "Another modification could be to reduce the training time (for example, by decreasing the number of epochs) while still achieving similar performance gains on medical datasets. This would test the efficiency of the fine-tuning procedure under stricter time limitations."
+                    ],
+                    "money_constraints": [
+                        "A cost-related modification might involve limiting access to high-end computational resources and instead using more cost-effective hardware, which would require the system to perform robustly even with a lower budget for training and inference."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic training dynamics and data augmentation randomness",
+                "description": "During fine-tuning on the auxiliary medical dataset, randomness can be introduced by factors such as random initialization in data loaders, stochastic gradient updates, and any random token or patch dropping modifications (e.g., in DPAM). This randomness can result in unstable gradient updates and variability in performance outcomes (AUROC, AP, PRO/AUPRO) across training runs.",
+                "impact": "These stochastic factors may lead to fluctuations in the reported performance metrics and impede reproducibility, making it difficult to isolate the impact of the auxiliary medical dataset versus inherent training variability.",
+                "possible_modifications": [
+                    "Remove or avoid random token/patch dropping in modules such as DPAM.",
+                    "Fix random seeds across data sampling, augmentation, and training procedures.",
+                    "Adopt deterministic data augmentation methods to reduce stochastic noise."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias in auxiliary dataset creation and annotation strategy",
+                "description": "Constructing the auxiliary medical dataset from ColonDB involves generating JSON metadata and marking all samples as anomalies. This one-time modification (e.g., uniform anomaly labeling) may introduce systematic bias into the dataset. Furthermore, differences in preprocessing between the training dataset (ColonDB) and evaluation datasets (BrainHeadCT, BrainMRI, Br35H, Chest COVID-19) can systematically skew performance comparisons.",
+                "impact": "The systematic bias may lead to over- or under-estimation of the model's true performance on medical imaging tasks. For instance, the model might overly adapt to characteristics specific to ColonDB, leading to inflated improvements in metrics like AUROC and AP, while not generalizing well to other medical modalities.",
+                "possible_modifications": [
+                    "Revisit the dataset labeling approach to ensure that anomaly labels are accurate and not overly biased by the one-time metadata construction process.",
+                    "Standardize preprocessing and annotation protocols across ColonDB and other evaluation datasets to minimize systematic discrepancies.",
+                    "Incorporate additional independent sources of anomaly labels or use expert-verified annotations to reduce the risk of systematic bias."
+                ]
+            }
+        },
+        {
+            "method": "Set up a controlled experiment by implementing two variants of the AnomalyCLIP model: one with the standard object-agnostic prompt templates and one with object-aware prompt templates. Use identical training configurations and evaluate both versions on a common set of industrial datasets (e.g., MVTec AD, VisA, MPDD, BTAD) and, if possible, additional datasets (such as medical images from Brain HeadCT and BrainMRI as shown in Table 14). The evaluation should include image-level metrics (AUROC, AP) and pixel-level metrics (AUROC, PRO/AUPRO). In addition to overall performance, perform ablation studies to analyze the impact of individual components: (1) assess object ablation by blocking out object semantics (referencing Fig. 9) to determine the contribution of object-agnostic prompts; (2) analyze the effect of excluding modules such as DPAM, textual prompt tuning (T3), and multi-layer local visual semantics (T4) by comparing the corresponding performance drops (e.g., pixel-level AUROC falling from 91.1% to 84.3% and image-level AUROC from 91.5% to 65.6% in certain cases). Document and compare the similarity between text prompt embeddings and image features as indicated in related figures to reinforce the evaluation.",
+            "expected_outcome": "The object-agnostic prompt learning variant is expected to exhibit consistent and significant performance gains over the object-aware version in both image-level and pixel-level anomaly detection. Specifically, an improvement in AUROC and AP metrics across datasets (e.g., from approximately 84.3% to 91.1% AUROC at the pixel level and from 65.6% to 91.5% AUROC at the image level) would validate that removing object-specific biases enables the model to capture more generic abnormality cues essential for ZSAD. Moreover, ablation studies should confirm that the inclusion of components such as DPAM, learnable textual prompt tuning, and multi-layer local visual semantics contributes to the overall performance boost.",
+            "subsection_source": "4.2 MAIN RESULTS",
+            "source": [
+                "/workspace/train.py",
+                "/workspace/test.py",
+                "/workspace/prompt_ensemble.py"
+            ],
+            "usage_instructions": "To compare object-agnostic prompt learning with object-aware prompt learning in AnomalyCLIP, you need to modify the prompt templates in prompt_ensemble.py and then run the training and testing scripts. First, modify the prompt_ensemble.py file to switch between object-agnostic and object-aware prompts by editing the self.state_normal_list and self.state_anomaly_list variables (around lines 103-109). For object-agnostic prompts, use the default implementation with generic templates like '{}' and 'damaged {}'. For object-aware prompts, modify these to include object-specific templates. Then run train.sh to train both variants with identical configurations, and test.sh to evaluate them on industrial datasets (MVTec AD, VisA, MPDD, BTAD) and medical datasets. The scripts will output image-level metrics (AUROC, AP) and pixel-level metrics (AUROC, PRO/AUPRO) for both variants, allowing direct comparison of their performance.",
+            "requirements": [
+                "Step 1: Define a prompt learner class that manages text prompts for normal and anomalous states of objects (/workspace/prompt_ensemble.py:85-264)",
+                "Step 2: Initialize the prompt learner with configurable parameters for prompt length and embedding depth (/workspace/prompt_ensemble.py:86-102)",
+                "Step 3: Define templates for normal and anomalous states that can be either object-agnostic or object-aware (/workspace/prompt_ensemble.py:103-109)",
+                "Step 4: Process the templates to create tokenized prompts and embeddings (/workspace/prompt_ensemble.py:110-214)",
+                "Step 5: Implement a forward method that combines prefix, context, and suffix to create complete prompts (/workspace/prompt_ensemble.py:218-264)",
+                "Step 6: Load a pre-trained vision-language model (AnomalyCLIP) for anomaly detection (/workspace/train.py:32-33)",
+                "Step 7: Create a dataset loader for training data (/workspace/train.py:35-36)",
+                "Step 8: Initialize the prompt learner with the model (/workspace/train.py:39-42)",
+                "Step 9: Set up optimization with appropriate loss functions (focal loss and dice loss) (/workspace/train.py:44-48)",
+                "Step 10: Implement the training loop that processes batches of images (/workspace/train.py:54-106)",
+                "Step 11: Extract image features using the vision encoder (/workspace/train.py:73-74)",
+                "Step 12: Generate text features using the prompt learner (/workspace/train.py:77-80)",
+                "Step 13: Compute similarity between image and text features (/workspace/train.py:82-84)",
+                "Step 14: Calculate pixel-level similarity maps for anomaly detection (/workspace/train.py:87-94)",
+                "Step 15: Compute combined losses (image-level and pixel-level) (/workspace/train.py:96-102)",
+                "Step 16: Update model parameters and save checkpoints periodically (/workspace/train.py:103-114)",
+                "Step 17: Load the trained model and prompt learner for testing (/workspace/test.py:66-71)",
+                "Step 18: Generate text features from the prompt learner (/workspace/test.py:73-76)",
+                "Step 19: Process test images and extract features (/workspace/test.py:80-91)",
+                "Step 20: Compute anomaly scores and maps using similarity between image and text features (/workspace/test.py:93-112)",
+                "Step 21: Calculate evaluation metrics (image-level AUROC/AP and pixel-level AUROC/AUPRO) (/workspace/test.py:115-173)"
+            ],
+            "agent_instructions": "Your task is to implement a system for comparing object-agnostic and object-aware prompt learning in AnomalyCLIP for industrial anomaly detection. You need to create three Python scripts:\n\n1. A prompt ensemble module that:\n   - Defines a class for managing text prompts for normal and anomalous states\n   - Allows configuring prompt templates that can be either object-agnostic (generic templates like '{}' and 'damaged {}') or object-aware (templates specific to object types)\n   - Processes these templates to create tokenized prompts and embeddings\n   - Combines prefix, context, and suffix to create complete prompts\n\n2. A training script that:\n   - Loads a pre-trained vision-language model (AnomalyCLIP)\n   - Creates a dataset loader for training data\n   - Initializes the prompt learner with the model\n   - Sets up optimization with appropriate loss functions (focal loss and dice loss)\n   - Implements a training loop that processes batches of images\n   - Extracts image features and generates text features\n   - Computes similarity between image and text features\n   - Calculates pixel-level similarity maps for anomaly detection\n   - Computes combined losses (image-level and pixel-level)\n   - Updates model parameters and saves checkpoints periodically\n\n3. A testing script that:\n   - Loads the trained model and prompt learner\n   - Generates text features from the prompt learner\n   - Processes test images and extracts features\n   - Computes anomaly scores and maps using similarity between image and text features\n   - Calculates evaluation metrics (image-level AUROC/AP and pixel-level AUROC/AUPRO)\n\nThe system should be able to switch between object-agnostic prompts (using generic templates) and object-aware prompts (using object-specific templates) by modifying the prompt templates in the prompt ensemble module. This will allow for direct comparison of their performance on industrial datasets (MVTec AD, VisA, MPDD, BTAD) and medical datasets.",
+            "masked_source": [
+                "/workspace/train.py",
+                "/workspace/test.py",
+                "/workspace/prompt_ensemble.py"
+            ],
+            "question": "Does object-agnostic prompt learning lead to better generalization of abnormality and normality detection than object-aware prompt learning?",
+            "design_complexity": {
+                "constant_variables": {
+                    "training_config": "Same hyperparameters, optimization setup, loss functions (focal loss and dice loss), and checkpointing used for both variants",
+                    "datasets": [
+                        "MVTec AD",
+                        "VisA",
+                        "MPDD",
+                        "BTAD",
+                        "additional medical datasets such as Brain HeadCT and BrainMRI"
+                    ],
+                    "evaluation_metrics": [
+                        "Image-level AUROC",
+                        "AP",
+                        "Pixel-level AUROC",
+                        "PRO/AUPRO"
+                    ],
+                    "experiment_scripts": "Same training and testing scripts (train.py, test.py, prompt_ensemble.py) are used for both variants"
+                },
+                "independent_variables": {
+                    "prompt_type": [
+                        "object-agnostic",
+                        "object-aware"
+                    ],
+                    "module_inclusion": [
+                        "DPAM (with vs without)",
+                        "Textual prompt tuning (included vs removed)",
+                        "Integration of multi-layer local visual semantics (included vs removed)"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Measured improvements or drops in AUROC, AP, and PRO/AUPRO on both image- and pixel-level evaluations, as well as similarity between text prompt embeddings and image features"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "object_specificity": "It is not fully detailed what constitutes the object-aware prompt templates beyond including object semantics; the criteria for the change are open to interpretation",
+                    "medical_dataset_details": "The medical datasets (e.g., Brain HeadCT and BrainMRI) are mentioned but not described fully, leaving ambiguity in their characteristics and preprocessing",
+                    "performance_significance_thresholds": "Although performance drops and gains (e.g., from 84.3% to 91.1% AUROC at the pixel level) are indicated, the specific thresholds for significant improvement are not explicitly defined",
+                    "ablation_study_protocol": "The procedure for ablation studies (e.g., how object ablation is implemented by 'blocking out' object semantics) is mentioned with references to figures (Fig. 9) but not described in complete detail"
+                },
+                "possible_modifications": {
+                    "modification_object_template": [
+                        "Mask or modify specific object-centric tokens in prompt templates",
+                        "Introduce additional levels of object specificity in the templates"
+                    ],
+                    "modification_dataset": [
+                        "Provide more detailed preprocessing descriptions for the medical datasets",
+                        "Expand the number of datasets or types of anomalies to explore domain generalization"
+                    ],
+                    "modification_evaluation": [
+                        "Define explicit thresholds for performance improvements",
+                        "Include additional evaluation metrics or qualitative assessments of feature similarity"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Prompt ensemble module for managing text prompts (normal and anomaly states)",
+                    "Training script (train.py) that loads the pre-trained vision-language model, sets up dataset loaders, computes losses (focal and dice loss) and performs model parameter updates",
+                    "Testing script (test.py) that loads the trained model, extracts features, computes similarity maps and evaluation metrics",
+                    "Vision-language model (AnomalyCLIP) and its integration with prompt learning",
+                    "Loss functions and optimization components for both image-level and pixel-level anomaly detection",
+                    "Dataset management (industrial datasets such as MVTec AD, VisA, MPDD, BTAD and additional medical datasets)"
+                ],
+                "setup_steps": [
+                    "Modify the prompt ensemble module (prompt_ensemble.py) to switch between object-agnostic and object-aware prompt templates by editing variables around lines 103-109",
+                    "Configure and initialize the prompt learner with parameters such as prompt length and embedding depth",
+                    "Load a pre-trained vision-language model and set up the training environment in train.py",
+                    "Create dataset loaders for the industrial and medical datasets",
+                    "Implement the training loop: process image batches, extract features, generate tokenized text prompts, compute similarity between image and text features, and update model parameters",
+                    "Periodically save model checkpoints during training",
+                    "Set up the testing pipeline in test.py to load the trained model and compute evaluation metrics (image-level AUROC/AP and pixel-level AUROC/PRO/AUPRO)",
+                    "Run ablation studies by systematically excluding modules (DPAM, textual prompt tuning, multi-layer local visual semantics) and performing object ablation (blocking out object semantics)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple inter-dependent modules",
+                        "description": "The experiment spans several interconnected components (data loading, prompt management, training loop, similarity computation, and evaluation), each requiring fine-tuning to ensure consistent behavior across both prompt variants."
+                    },
+                    {
+                        "source": "Ablation studies",
+                        "description": "The need to isolate the impact of individual components (object-agnostic vs. object-aware prompts, DPAM, textual prompt tuning, and multi-scale local visual semantics) adds layers of complexity in experimental design and interpretation."
+                    },
+                    {
+                        "source": "Diverse datasets",
+                        "description": "Running the experiment on a range of datasets from industrial to medical domains necessitates consistent preprocessing and configuration across different image modalities, which increases setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Object-specificity in prompt templates: The criteria for converting generic object-agnostic prompts to object-aware ones is not fully detailed, creating uncertainty about which object-centric tokens to include.",
+                    "Medical dataset details: The characteristics and preprocessing requirements for the medical datasets (e.g., Brain HeadCT and BrainMRI) are not clearly specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Ablation study procedures: The instructions for 'blocking out object semantics' and how exactly to remove or mask these tokens are vague, referencing figures like Fig. 9 without detailed methods.",
+                    "Performance significance thresholds: While performance improvements (e.g., AUROC increases) are mentioned, there is no clear definition of what constitutes a significant improvement.",
+                    "Configuration line references: The specific lines in prompt_ensemble.py (e.g., lines 103-109) are noted for modifications, yet the exact expected changes remain open to interpretation."
+                ],
+                "possible_modifications": {
+                    "modification_object_template": [
+                        "Provide detailed guidelines or examples on how to construct object-aware prompt templates versus object-agnostic ones.",
+                        "Specify the set of object-centric tokens to be altered or masked during the ablation studies."
+                    ],
+                    "modification_dataset": [
+                        "Include preprocessing instructions and detailed dataset characteristics for the medical datasets to ensure consistency.",
+                        "Expand the dataset documentation to clarify image resolutions, normalization procedures, and anomaly definitions."
+                    ],
+                    "modification_evaluation": [
+                        "Define explicit thresholds or criteria for significant performance improvements in both image-level and pixel-level metrics.",
+                        "Include additional qualitative evaluation criteria or visual comparisons (possibly referencing tables and figures) to support the quantitative results."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification is to restrict the GPU memory usage (e.g., allowing only a single, lower-memory GPU) to test whether similar performance can be maintained under tighter hardware resource constraints."
+                    ],
+                    "time_constraints": [
+                        "A possible modification is to limit the training time by reducing the number of training epochs or constraining the training to a set maximum duration per epoch (e.g., target under 14 minutes per epoch) to assess efficiency under time constraints."
+                    ],
+                    "money_constraints": [
+                        "As an optional modification, one could simulate a limited budget scenario by only using open-source pre-trained models and computing resources available on public cloud instances to evaluate if performance parity is achievable without expensive hardware."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic training dynamics and random prompt token handling",
+                "description": "Random uncertainty arises from stochastic elements in training such as random initialization of prompt embeddings, random selection of training batches, and any potential random token dropping methods. For example, if unimportant tokens are randomly dropped (similar to techniques used to reduce pre-training costs) instead of following the fixed template setup, this could lead to unstable gradient updates and fluctuating performance metrics across runs.",
+                "impact": "Variability in evaluation metrics (e.g., AUROC, AP, PRO/AUPRO) may occur from run-to-run differences. This instability can affect direct comparisons between object-agnostic and object-aware prompt learning, making it harder to assess the true performance boost attributed to removing object-specific biases.",
+                "possible_modifications": [
+                    "Enforce fixed random seeds and a deterministic training pipeline.",
+                    "Avoid introducing random token dropping; use fixed, well-defined prompt templates.",
+                    "Aggregate performance over multiple runs and use statistical tests for significant differences."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias from object-aware prompt templates and dataset-specific discrepancies",
+                "description": "Systematic uncertainty is introduced when the design choice of object-aware prompts embeds inherent object-specific biases that do not generalize well across datasets. In addition, differences in dataset characteristics (industrial datasets vs. medical images) or inconsistent preprocessing can systematically skew performance metrics. For instance, performance drops (e.g., pixel-level AUROC falling from 91.1% to 84.3% and image-level AUROC from 91.5% to 65.6% under certain ablations) may partially reflect a systematic bias rather than a random fluctuation.",
+                "impact": "These biases can lead to a consistent underperformance of the object-aware variant, misrepresenting the benefits of generic anomaly detection. They may also result in overfitting to specific object characteristics in one dataset, compromising the validity of cross-domain evaluations.",
+                "possible_modifications": [
+                    "Implement balanced and standardized preprocessing protocols for all datasets, including medical images.",
+                    "Revise object-aware prompt templates to minimize embedded biases or compare with additional object-agnostic variations.",
+                    "Introduce additional or alternative datasets to ensure that observed performance differences are due to model design rather than dataset-specific systematic biases."
+                ]
+            }
+        },
+        {
+            "method": "Conduct a thorough ablation study using the AnomalyCLIP framework on the MVTec AD and VisA datasets. Start with a base model and then sequentially integrate each module as follows: (1) Add DPAM (T1) to enhance local visual semantics and record pixel-level and image-level AUROC; (2) Incorporate object-agnostic text prompts (T2) and measure the improvements, reflecting its significant impact (e.g., removal of T2 causes pixel-level AUROC to drop from approximately 91.1% to 84.3% and image-level AUROC from 91.5% to 65.6% as reported in Table 7); (3) Add text prompt tuning (T3) and compare the results (noting a modest improvement over the baseline, e.g., a decline from 91.1% to 90.6% pixel-level when removed); (4) Integrate multi-layer visual features (T4) to incorporate multi-scale local details, then measure the corresponding metrics (with its removal lowering pixel-level AUROC from 91.1% to around 90.0%). Keep all other training procedures and evaluation protocols constant to specifically isolate the effect of each module. Refer to the detailed performance numbers and trends in Table 7 for a quantitative comparison of each configuration.",
+            "expected_outcome": "It is expected that each module will contribute to enhanced performance. Specifically, the inclusion of DPAM should improve segmentation via better local visual semantics. Object-agnostic text prompts (T2) are anticipated to produce dramatic performance gains (with significant drops in both pixel-level and image-level AUROC when omitted). Text prompt tuning (T3) is expected to yield modest but consistent improvements by refining the textual feature space, and the integration of multi-layer visual features (T4) should further boost performance by capturing additional local details. These incremental gains should align with the improvements presented in Table 7 and the ablation analysis from the paper.",
+            "subsection_source": "4.3 A BLATION STUDY",
+            "source": [
+                "/workspace/train.py",
+                "/workspace/test.py"
+            ],
+            "usage_instructions": "To conduct the ablation study on AnomalyCLIP, you need to modify the train.py and test.py scripts to disable specific modules one at a time. Here's how to test each module's contribution:\n\n1. For DPAM (T1): Modify the DPAM_layer parameter in train.py and test.py from 20 (default) to 1 to disable DPAM. In train.py line 73 and test.py line 90, change 'DPAM_layer = 20' to 'DPAM_layer = 1'.\n\n2. For object-agnostic text prompts (T2): In prompt_ensemble.py, the object-agnostic prompts are controlled by the n_ctx parameter. Set '--n_ctx 0' when running train.sh and test.sh to disable this module.\n\n3. For text prompt tuning (T3): Set '--t_n_ctx 0' when running train.sh and test.sh to disable the text prompt tuning module.\n\n4. For multi-layer visual features (T4): Change '--features_list 24' to use only the final layer instead of multiple layers [6, 12, 18, 24] in both train.sh and test.sh.\n\nFor each configuration, train the model on MVTec AD or VisA dataset using train.sh (with the modified parameters), then evaluate using test.sh (with the same modified parameters) on both datasets. Compare the pixel-level and image-level AUROC metrics from the results to quantify each module's contribution.",
+            "requirements": [
+                "Step 1: Set up the environment by importing necessary libraries and initializing random seeds for reproducibility (train.py:1-21, test.py:1-24)",
+                "Step 2: Load the AnomalyCLIP model with appropriate parameters including Prompt_length, learnabel_text_embedding_depth, and learnabel_text_embedding_length (train.py:30-32, test.py:41-43)",
+                "Step 3: Configure the DPAM (Dynamic Patch Attention Module) by setting the DPAM_layer parameter which controls how many layers are refined by DPAM (train.py:42, test.py:71)",
+                "Step 4: Initialize the AnomalyCLIP_PromptLearner which handles object-agnostic text prompts and text prompt tuning (train.py:39-40, test.py:66-69)",
+                "Step 5: Load and preprocess training data with appropriate transformations (train.py:35-36)",
+                "Step 6: Extract multi-layer visual features from the input images using the specified features_list (train.py:73, test.py:90)",
+                "Step 7: Generate text embeddings using the prompt learner for normal and anomalous states (train.py:77-80, test.py:73-76)",
+                "Step 8: Compute similarity between image features and text features to detect anomalies (train.py:82-83, test.py:93-95)",
+                "Step 9: Generate similarity maps for each feature layer and compute anomaly maps (train.py:87-94, test.py:96-105)",
+                "Step 10: Calculate losses (focal loss and dice loss) for training or metrics (pixel-level AUROC, AUPRO, image-level AUROC, AP) for evaluation (train.py:96-100, test.py:115-172)",
+                "Step 11: Update model parameters during training or output evaluation results during testing (train.py:102-106, test.py:173)"
+            ],
+            "agent_instructions": "Create a system for anomaly detection using AnomalyCLIP, which combines CLIP with specialized modules for industrial anomaly detection. The system should include two main scripts:\n\n1. A training script that:\n   - Loads a pre-trained CLIP model (ViT-L/14@336px)\n   - Implements a Dynamic Patch Attention Module (DPAM) for refining visual features\n   - Uses object-agnostic text prompts to create normal/anomalous state descriptions\n   - Implements text prompt tuning to adapt to specific domains\n   - Extracts multi-layer visual features from different depths of the vision transformer\n   - Computes similarity between image and text features to detect anomalies\n   - Uses a combination of focal loss and dice loss for training\n   - Saves checkpoints of the trained model\n\n2. A testing script that:\n   - Loads the trained model and applies it to test images\n   - Generates anomaly maps by computing similarity between image patches and text embeddings\n   - Evaluates performance using both pixel-level metrics (AUROC, AUPRO) and image-level metrics (AUROC, AP)\n   - Outputs detailed results for each object category and overall averages\n\nThe system should support ablation studies where individual components can be disabled to measure their contribution:\n- DPAM can be disabled by changing its layer parameter\n- Object-agnostic text prompts can be disabled by setting the prompt length parameter\n- Text prompt tuning can be disabled by setting the tunable text embedding length parameter\n- Multi-layer visual features can be limited to use only the final layer instead of multiple layers\n\nThe scripts should work with industrial anomaly detection datasets like MVTec AD and VisA.",
+            "masked_source": [
+                "/workspace/train.py",
+                "/workspace/test.py"
+            ],
+            "question": "Does each module (DPAM T1, object-agnostic text prompts T2, text prompt tuning T3, and multi-layer visual features T4) contribute significantly to the anomaly detection performance in AnomalyCLIP? In particular, does the inclusion of each module produce a measurable improvement on both pixel-level and image-level AUROC metrics on the MVTec AD and VisA datasets?",
+            "design_complexity": {
+                "constant_variables": {
+                    "training_procedure": "Fixed training protocol including data preprocessing, environment setup, and evaluation metrics across experiments",
+                    "evaluation_protocol": "Metrics such as pixel-level AUROC, image-level AUROC (with additional metrics like AUPRO and AP) remain consistent"
+                },
+                "independent_variables": {
+                    "DPAM (T1)": [
+                        "enabled",
+                        "disabled"
+                    ],
+                    "Object-agnostic text prompts (T2)": [
+                        "enabled",
+                        "disabled"
+                    ],
+                    "Text prompt tuning (T3)": [
+                        "enabled",
+                        "disabled"
+                    ],
+                    "Multi-layer visual features (T4)": [
+                        "multiple layers (integrated)",
+                        "final layer only (disabled)"
+                    ]
+                },
+                "dependent_variables": {
+                    "pixel_level_AUROC": "Measured outcome indicating local anomaly segmentation performance",
+                    "image_level_AUROC": "Measured outcome indicating global anomaly detection performance"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "Object-agnostic text prompts (T2)": "The detailed configuration (such as the prompt length and context parameters) is not fully specified, leading to possible variations in interpretation.",
+                    "Text prompt tuning (T3)": "The number and structure of learnable textual tokens and their tuning process are not explicitly defined.",
+                    "Multi-layer visual features (T4)": "Although described as incorporating features from multiple transformer layers, the exact layer selection and aggregation method is not completely detailed."
+                },
+                "possible_modifications": {
+                    "modification_DPAM": [
+                        "Explore varying the DPAM_layer parameter to test intermediate levels instead of a binary enabled/disabled state."
+                    ],
+                    "modification_prompt_configuration": [
+                        "Vary the number and type of tokens used in both object-agnostic prompts and text prompt tuning to study their impacts."
+                    ],
+                    "modification_feature_extraction": [
+                        "Experiment with different combinations of layers (or weighting schemes) when extracting multi-layer visual features."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "AnomalyCLIP base model integrating CLIP with additional modules",
+                    "Dynamic Patch Attention Module (DPAM, T1)",
+                    "Object-agnostic text prompt module (T2)",
+                    "Text prompt tuning module (T3)",
+                    "Multi-layer visual feature extraction (T4)",
+                    "Training and testing scripts (train.py, test.py, prompt_ensemble.py, train.sh, test.sh)",
+                    "Data preprocessing pipeline for MVTec AD and VisA datasets",
+                    "Loss computation modules (focal loss and dice loss)",
+                    "Evaluation modules computing pixel-level and image-level metrics (AUROC, AUPRO, AP)"
+                ],
+                "setup_steps": [
+                    "Set up the environment by importing necessary libraries, initializing random seeds, and loading required packages",
+                    "Load the pre-trained CLIP model and initialize the AnomalyCLIP framework with proper parameters",
+                    "Configure each module by setting specific parameters in the source code (DPAM_layer, n_ctx, t_n_ctx, features_list)",
+                    "Modify the train.py and test.py scripts (and associated shell scripts) to enable or disable specific modules for ablation",
+                    "Preprocess the MVTec AD and VisA datasets using the standardized transformation pipelines",
+                    "Train the model using the fixed training protocol and validate using the test script",
+                    "Compute similarity maps between image features and text embeddings to derive anomaly maps",
+                    "Evaluate the model performance using pixel-level and image-level AUROC (and additional metrics such as AUPRO and AP)",
+                    "Record and compare performance differences when sequentially disabling each module (referencing performance drops as indicated in Table 7)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Parameter Tuning and Hyperparameter Settings",
+                        "description": "Maintaining constant training procedures while adjusting module-specific hyperparameters (e.g., DPAM_layer, n_ctx, t_n_ctx, multi-layer features) increases complexity."
+                    },
+                    {
+                        "source": "Source Code Modification",
+                        "description": "Disabling/enabling modules requires precise modifications in multiple source files and shell scripts, which adds to the setup complexity."
+                    },
+                    {
+                        "source": "Evaluation Consistency",
+                        "description": "Ensuring that the evaluation protocol (data preprocessing, loss computation, smoothing operations) remains constant across experiments to isolate module effects."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Object-agnostic text prompts (T2): The exact configuration of prompt length and context settings (n_ctx parameter) is not fully specified.",
+                    "Text prompt tuning (T3): The number, structure, and tuning process for learnable textual tokens remain ambiguous.",
+                    "Multi-layer visual features (T4): The criteria for selecting and aggregating features from various transformer layers (e.g., [6, 12, 18, 24] vs. final layer only) is not completely detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Modification details in source files: The provided line numbers and parameter changes (e.g., DPAM_layer in train.py and test.py, n_ctx in prompt_ensemble.py) may not map exactly to every version of the scripts.",
+                    "Preprocessing and evaluation pipeline specifics: While the overall method is described, details such as the exact transformations or smoothing parameters (e.g., Gaussian filter sigma value) could be clearer.",
+                    "Integration of multi-scale features: The process for combining outputs from different layers is mentioned but not elaborated on fully."
+                ],
+                "possible_modifications": {
+                    "modification_DPAM": [
+                        "Explore varying the DPAM_layer parameter beyond a binary enabled/disabled state to test intermediate configurations."
+                    ],
+                    "modification_prompt_configuration": [
+                        "Vary the number and type of tokens used in the object-agnostic text prompts (T2) to study their impact on performance.",
+                        "Specify and experiment with different structures or lengths for the learnable tokens in text prompt tuning (T3)."
+                    ],
+                    "modification_feature_extraction": [
+                        "Experiment with different combinations or weighting schemes for selecting multi-layer visual features (T4) rather than a fixed set of layers."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random variations in module behavior and training procedures",
+                "description": "In the AnomalyCLIP ablation study, sources of random uncertainty can arise when modifications, such as randomly dropping tokens (as done in some transformer pre-training methods), are applied. Such randomness can lead to instability during gradient updates and result in fluctuations in both pixel-level and image-level AUROC metrics. For example, without a careful control of random initialization or token selection, the performance differences measured (like the drop from 91.1% to 84.3% in pixel-level AUROC when removing T2) may reflect random variability rather than systematic module contributions.",
+                "impact": "Random uncertainty can cause the measured performance improvements to vary between runs, making it harder to definitively attribute gains to individual modules (DPAM, object-agnostic prompts, text prompt tuning, and multi-layer visual features) across the MVTec AD and VisA datasets.",
+                "possible_modifications": [
+                    "Introduce controlled experiments with fixed random seeds to reduce variability in token dropping or initialization.",
+                    "Replace the random dropping strategy with an importance-based or deterministic token selection mechanism.",
+                    "Use techniques like gradient clipping and learning rate scheduling to minimize instability during training."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent biases in dataset handling and configuration of feature extraction modules",
+                "description": "Systematic uncertainty in this experiment may be introduced by a one-time modification to the dataset or model configuration. For example, if the multi-layer visual feature extraction (T4) is configured differently (e.g., using only the final layer vs. multiple layers) across runs, or if the object-agnostic text prompt settings (T2) are misconfigured consistently, this can create a systematic shift in the performance metrics. Similarly, systematic labeling bias or corrupted preprocessing steps in the MVTec AD or VisA datasets could lead to consistently lower or skewed AUROC values.",
+                "impact": "Such systematic uncertainty would result in persistent performance degradation or bias, making it appear that the removal of a module causes a drop in performance even if the module is not at fault. This could lead to reproducible but misleading conclusions regarding each module's contribution, with examples like the significant drop in image-level AUROC from 91.5% to 65.6% when T2 is removed.",
+                "possible_modifications": [
+                    "Ensure dataset integrity by periodically obtaining fresh, clean copies of the MVTec AD and VisA datasets.",
+                    "Standardize and verify configuration settings across all modules (for DPAM, T2, T3, T4) to avoid systematic misconfigurations.",
+                    "Employ cross-validation or replicate experiments on multiple datasets to identify and isolate systematic biases."
+                ]
+            }
+        },
+        {
+            "method": "Design an experiment on the MVTec AD and VisA datasets with four configurations: (1) without any context optimization (neither local nor global), (2) with only global context optimization, (3) with only local context optimization, and (4) with both local and global context optimization enabled. For each configuration, run the AnomalyCLIP model and record both the pixel-level and image-level AUROC scores. Follow the protocol outlined in Table 5 to ensure consistent training conditions. In addition to AUROC scores, separately log the contributions of the global and local losses to assess their individual impacts. Analyze the results to evaluate not only the overall improvements in anomaly detection performance but also to determine whether global optimization improves image-level detection and local optimization enhances pixel-level accuracy. Include comparisons to the detailed ablation study results provided in Table 7 and Figure 9, which highlight performance declines when each module is removed.",
+            "expected_outcome": "It is expected that the configuration employing both local and global context optimization will yield the highest anomaly detection performance across both pixel-level and image-level metrics. Specifically, global optimization is anticipated to enhance image-level AUROC by more effectively capturing global anomaly semantics, while local optimization is expected to boost pixel-level AUROC through improved sensitivity to fine-grained, local anomalies. The combined strategy should reflect synergistic benefits, leading to the highest overall accuracy and validating the necessity of integrating both optimization strategies in the object-agnostic prompt learning module.",
+            "subsection_source": "4.3 A BLATION STUDY",
+            "source": [
+                "/workspace/train_ablation.py",
+                "/workspace/test_ablation.py",
+                "/workspace/run_ablation_study.sh"
+            ],
+            "usage_instructions": "1. First, update the data paths in run_ablation_study.sh to point to your MVTec AD and VisA datasets. 2. Make the script executable with 'chmod +x run_ablation_study.sh'. 3. Execute the script with './run_ablation_study.sh'. This will train and evaluate four configurations of the AnomalyCLIP model: (1) without any context optimization, (2) with only global context optimization, (3) with only local context optimization, and (4) with both local and global context optimization. The script will automatically save checkpoints and results for each configuration, and will output both pixel-level and image-level AUROC scores for comparison. The results will show whether combining local and global context optimization yields better performance than using only one context mode.",
+            "requirements": [
+                "Step 1: Set up the environment by creating directories for checkpoints and results (/workspace/run_ablation_study.sh:16-18)",
+                "Step 2: Define datasets (MVTec AD and VisA) and their paths (/workspace/run_ablation_study.sh:20-22)",
+                "Step 3: For each dataset, train the AnomalyCLIP model with four different context optimization configurations: (1) no context optimization, (2) only global context optimization, (3) only local context optimization, and (4) both local and global context optimization (/workspace/run_ablation_study.sh:25-94, /workspace/train_ablation.py:23-151)",
+                "Step 4: During training, implement global context optimization by computing image-level loss between image features and text features (/workspace/train_ablation.py:84-93)",
+                "Step 5: During training, implement local context optimization by computing pixel-level loss using similarity maps between patch features and text features (/workspace/train_ablation.py:96-112)",
+                "Step 6: Save model checkpoints for each configuration with appropriate naming (/workspace/train_ablation.py:137-150)",
+                "Step 7: For each dataset and configuration, evaluate the trained model on test data (/workspace/run_ablation_study.sh:96-117, /workspace/test_ablation.py:31-158)",
+                "Step 8: Calculate both pixel-level metrics (AUROC, AUPRO) and image-level metrics (AUROC, AP) for each configuration (/workspace/test_ablation.py:132-146)",
+                "Step 9: Generate and display a results table comparing the performance of each configuration across all object classes (/workspace/test_ablation.py:151-158)",
+                "Final Step: Compare the results to determine whether combining local and global context optimization yields better performance than using only one context mode or none (/workspace/test_ablation.py:157-158)"
+            ],
+            "agent_instructions": "Create a system to conduct an ablation study on the AnomalyCLIP model for anomaly detection. The study should compare four different configurations of context optimization: (1) no context optimization, (2) only global context optimization, (3) only local context optimization, and (4) both local and global context optimization.\n\nYour implementation should:\n\n1. Create a training script that can train the AnomalyCLIP model with configurable context optimization settings:\n   - Global context optimization should focus on image-level features and classification\n   - Local context optimization should focus on pixel-level features and segmentation\n   - The script should accept command-line arguments to enable/disable each type of optimization\n   - Save checkpoints for each configuration with appropriate naming\n\n2. Create an evaluation script that:\n   - Loads trained models and evaluates them on test data\n   - Calculates both pixel-level metrics (AUROC, AUPRO) and image-level metrics (AUROC, AP)\n   - Outputs a formatted table with results for each object class and the mean across classes\n\n3. Create a shell script that orchestrates the entire study:\n   - Runs training for all four configurations on both MVTec AD and VisA datasets\n   - Evaluates each trained model\n   - Organizes results in a structured directory\n\nThe goal is to determine whether combining local and global context optimization yields better anomaly detection performance than using only one context mode or none at all.",
+            "masked_source": [
+                "/workspace/train_ablation.py",
+                "/workspace/test_ablation.py",
+                "/workspace/run_ablation_study.sh"
+            ],
+            "question": "Does combining local and global context optimization in the object-agnostic prompt learning module yield better anomaly detection performance than using only one of the context modes?",
+            "design_complexity": {
+                "constant_variables": {
+                    "datasets": [
+                        "MVTec AD",
+                        "VisA"
+                    ],
+                    "evaluation_protocol": "As defined in Table 5 with fixed training conditions, checkpoint naming conventions, and logging procedures"
+                },
+                "independent_variables": {
+                    "context_optimization_configurations": [
+                        "no context optimization (neither local nor global)",
+                        "global context optimization only",
+                        "local context optimization only",
+                        "both local and global context optimization"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "pixel-level AUROC",
+                        "image-level AUROC",
+                        "global loss contribution",
+                        "local loss contribution",
+                        "additional metrics such as AUPRO and AP if applicable"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "global_context_optimization": "It is not explicitly detailed what constitutes global context optimization (e.g., which image-level features are emphasized, or how they are integrated with text features).",
+                    "local_context_optimization": "The process of obtaining pixel-level similarity maps and the extraction method for patch features are not fully specified.",
+                    "loss_contributions": "The method to separately log the contributions of global and local losses lacks exact definition (e.g., weightings or normalization factors)."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce variable weighting factors for the global and local losses to investigate proportional impacts.",
+                        "Extend the set of metrics by introducing additional evaluation frontiers (e.g., precision, recall) for both pixel-level and image-level performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Training script for AnomalyCLIP with configurable context optimization settings",
+                    "Evaluation script for computing pixel-level (AUROC, AUPRO) and image-level (AUROC, AP) metrics",
+                    "Shell script for orchestrating experiments across MVTec AD and VisA datasets",
+                    "Checkpoint saving mechanism with configuration-dependent naming",
+                    "Logging system to separately record global and local loss contributions",
+                    "Environment setup including directory creation, data path configuration, and permission settings for scripts"
+                ],
+                "setup_steps": [
+                    "Update dataset paths in the shell script (/workspace/run_ablation_study.sh) to point to MVTec AD and VisA datasets",
+                    "Make the shell script executable by running 'chmod +x run_ablation_study.sh'",
+                    "Run the shell script to train the AnomalyCLIP model under four configurations: (1) no context optimization, (2) global context optimization only, (3) local context optimization only, (4) both local and global context optimization",
+                    "Implement global context optimization during training by computing image-level loss (as referenced in Table 5) using image and text feature comparisons",
+                    "Implement local context optimization by computing pixel-level loss using similarity maps between patch features and text features",
+                    "Save checkpoints for each configuration with clear naming conventions",
+                    "Evaluate each configuration using the test script to obtain pixel-level metrics (AUROC, AUPRO) and image-level metrics (AUROC, AP)",
+                    "Generate a results table comparing performance across configurations and cross-reference with ablation study details from Table 7 and Figure 9"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multi-dataset coordination",
+                        "description": "Coordinating experiments over two datasets (MVTec AD and VisA) requires ensuring consistent training conditions and synchronized logging procedures."
+                    },
+                    {
+                        "source": "Loss contribution logging",
+                        "description": "Separately tracking global and local loss contributions implies additional code complexity in both training and evaluation scripts."
+                    },
+                    {
+                        "source": "Ablation Study Comparison",
+                        "description": "Integrating and comparing outcomes against detailed ablation study results (e.g., Table 7 and Figure 9) increases evaluation complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Global context optimization: The exact mechanism for selecting and integrating image-level features with text features is not explicitly defined.",
+                    "Local context optimization: There is ambiguity regarding the extraction method for patch features and how similarity maps are computed.",
+                    "Loss contributions: The process for weighting, normalizing, and independently logging global and local loss components is not clearly specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "The implementation details for global context optimization (e.g., specific layers or operations used) are vague.",
+                    "Instructions on obtaining pixel-level similarity maps for local optimization lack clarity, leaving uncertainty in execution.",
+                    "Steps for comparing experiment outcomes with the ablation study results (as indicated in Table 7 and Figure 9) are not fully detailed."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce explicit variable weighting factors for the global and local losses to assess their proportional impacts.",
+                        "Extend the evaluation metrics with additional measures (e.g., precision, recall) for both pixel-level and image-level performance.",
+                        "Provide a more detailed description of the features used for global optimization, as well as a clear procedure for patch feature extraction in local optimization."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "Introduce explicit variable weighting factors for the global and local losses to assess their proportional impacts, simulating a scenario where model resources are limited and precision is critical.",
+                            "Extend the evaluation metrics with additional measures (e.g., precision, recall) to further validate the impact of each context optimization method, thereby tightening the evaluation setup.",
+                            "Define a more detailed protocol for the extraction and integration of global and local features to reduce ambiguity, which could be imposed as a constraint in future experiments by requiring clear feature extraction steps and refined loss logging."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications during training such as random token dropping",
+                "description": "In our experiments, randomness can be introduced by modifying methods like dropping tokens at random to reduce pre\u2010training costs. Such random drops can destabilize gradient updates, leading to unpredictable fluctuations in both pixel-level and image-level AUROC scores. This randomness may also affect the logging of local and global loss contributions, thereby obscuring the true impact of the context optimization configurations.",
+                "impact": "The experiment\u2019s outcome might vary run-to-run, making it harder to attribute performance differences solely to the effects of local and/or global context optimization. This could mask the expected improvements from combining both optimizations.",
+                "possible_modifications": [
+                    "Eliminate random token dropping and instead apply a deterministic token selection or dropout mechanism.",
+                    "Use controlled, scheduled randomness (e.g., fixed dropout rates) to minimize unpredictable variations during gradient updates."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Systematic dataset modifications or miscalibrated loss weighting",
+                "description": "Systematic uncertainty can be introduced if there is a one-time modification of the training data or if the weighting between global and local losses is misconfigured. For example, if the MVTec AD or VisA datasets are altered (e.g., biased anomaly labeling) or if the loss contributions for global and local optimization are unbalanced, the anomaly detection performance could be consistently skewed. This is analogous to introducing a systematic bias in a sentiment analysis LLM by mislabeling reviews based on length.",
+                "impact": "Such systematic biases will likely yield uniformly degraded or overly optimistic performance metrics, affecting both pixel-level and image-level evaluations, and may lead to erroneous conclusions about the effectiveness of combining local and global context optimizations.",
+                "possible_modifications": [
+                    "Retrieve and use a clean, unmodified version of the datasets to avoid data-induced biases.",
+                    "Introduce and experiment with explicit variable weighting factors for global and local losses to ensure balanced contributions and mitigate systematic bias."
+                ]
+            }
+        },
+        {
+            "method": "Implement three variants of the DPAM component within AnomalyCLIP: one using V-V self-attention (the default setting), one using Q-Q self-attention, and one using K-K self-attention. For each variant, keep all other model configurations identical. Follow the experimental setup as described in Section 4.3 and illustrated in Figure 6 of the paper. Specifically, use the following experimental protocol:\n\n1. Data and Datasets: Run experiments on the selected datasets, including MVTec AD and VisA.\n\n2. Network and DPAM Integration: Apply the DPAM module starting from the 6th layer of the visual encoder. For each variant, substitute the DPAM self-attention mechanism accordingly (i.e., V-V, Q-Q, or K-K).\n\n3. Training Details: Resize input images to 518 pixels, use a batch size of 8, and optimize using the Adam optimizer with a learning rate of 0.001. Train for 15 epochs using PyTorch-2.0.0 on a single NVIDIA RTX 3090 24GB GPU. During testing, apply a Gaussian filter (\u03c3 = 4) to smooth the anomaly score map.\n\n4. Evaluation Metrics: Measure segmentation performance using pixel-level AUROC and AUPRO, and image-level detection performance using AUROC and AP. Compare the performance of each DPAM variant while keeping other modules (e.g., object-agnostic prompt learning, textual prompt tuning, and integration of multi-scale local visual features) unchanged, as detailed in Table 7 of the paper.\n\n5. Reporting: Document the performance differences with detailed comparisons and include relevant statistics from previous ablation studies and tables where appropriate.",
+            "expected_outcome": "It is expected that the V-V self-attention variant will provide the best-balanced performance across both segmentation and image-level detection tasks, reflecting AUROC values similar to those reported in the paper (e.g., around 91.1% for segmentation and 91.5% for image-level detection). The Q-Q variant should achieve comparable segmentation performance but may underperform in image-level detection, while the K-K variant is anticipated to excel in anomaly classification on the image level but might lag slightly in segmentation performance. These outcomes will confirm that the V-V self-attention strategy is generally the most effective within the DPAM framework.",
+            "subsection_source": "4.3 A BLATION STUDY",
+            "no_answer": "After thoroughly examining the repository, I could not find any existing scripts that specifically implement or compare the different DPAM strategies (V-V, Q-Q, and K-K self-attention) as described in the experiment question. The current implementation in AnomalyCLIP_lib/AnomalyCLIP.py only uses the V-V self-attention variant by default (lines 81-83 of the Attention class). While the repository contains training and testing scripts (train.py, test.py), there are no scripts that automatically run experiments with different DPAM variants. To conduct this experiment, one would need to modify the Attention class implementation in AnomalyCLIP.py to create each variant and then run the training and testing scripts for each variant separately.",
+            "question": "How do different DPAM strategies, specifically V-V self-attention versus Q-Q and K-K self-attention, affect segmentation and image-level detection performance in AnomalyCLIP?",
+            "design_complexity": {
+                "constant_variables": {
+                    "datasets": [
+                        "MVTec AD",
+                        "VisA"
+                    ],
+                    "training_setup": "Input images resized to 518; batch size 8; Adam optimizer with learning rate 0.001; 15 training epochs; execution in PyTorch-2.0.0 on a single NVIDIA RTX 3090 24GB GPU",
+                    "DPAM_integration_and_other_modules": "DPAM module is applied starting from the 6th layer of the visual encoder; object-agnostic prompt learning, textual prompt tuning, and multi-scale local visual features remain unchanged",
+                    "evaluation_protocol": "Use a Gaussian filter (\u03c3 = 4) during testing; measure segmentation via pixel-level AUROC and AUPRO, and image-level detection via AUROC and AP"
+                },
+                "independent_variables": {
+                    "DPAM_strategy": [
+                        "V-V self-attention",
+                        "Q-Q self-attention",
+                        "K-K self-attention"
+                    ]
+                },
+                "dependent_variables": {
+                    "segmentation_performance": [
+                        "pixel-level AUROC",
+                        "AUPRO"
+                    ],
+                    "image_detection_performance": [
+                        "image-level AUROC",
+                        "AP"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "DPAM_strategy": "The detailed implementation differences among V-V, Q-Q, and K-K self-attention in the DPAM are not fully specified in the task, leaving ambiguity in how the modifications affect the attention computation and backpropagation.",
+                    "evaluation_metrics": "While the metrics (AUROC, AUPRO, AP) are specified, the exact statistical treatment, thresholds for anomaly scoring, and potential variability across runs are not detailed.",
+                    "integration_details": "The task mentions keeping other modules constant but does not specify if any hyperparameter tuning or incidental interaction effects should be observed when substituting the self-attention mechanism."
+                },
+                "possible_modifications": {
+                    "modification_DPAM_strategy": [
+                        "Extend the experiment by adding more self-attention variations or hybrid approaches."
+                    ],
+                    "modification_evaluation": [
+                        "Mask some evaluation details (e.g., smoothing parameters) to test model robustness under implicit conditions."
+                    ],
+                    "modification_integration_details": [
+                        "Introduce variations in other modules (e.g., object-agnostic prompt learning) to assess interaction effects with different DPAM strategies."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Datasets (MVTec AD and VisA)",
+                    "Visual encoder with integration of the DPAM module starting from the 6th layer",
+                    "Three variants of DPAM (V-V self-attention, Q-Q self-attention, K-K self-attention)",
+                    "Other fixed modules: object-agnostic prompt learning, textual prompt tuning, and multi-scale local visual features",
+                    "Training pipeline (image resizing to 518 pixels, batch size of 8, Adam optimizer with a learning rate of 0.001, 15 epochs, PyTorch-2.0.0)",
+                    "Testing pipeline with post-processing (Gaussian filter with \u03c3 = 4)",
+                    "Evaluation framework (metrics: pixel-level AUROC and AUPRO, image-level AUROC and AP)"
+                ],
+                "setup_steps": [
+                    "Modify the Attention class in AnomalyCLIP.py to create and integrate the three DPAM variants (V-V, Q-Q, and K-K self-attention)",
+                    "Set up the experimental protocol to run on the MVTec AD and VisA datasets",
+                    "Prepare the data pipeline (resize input images to 518 pixels, ensure batch size is set to 8)",
+                    "Integrate the DPAM module into the visual encoder starting from its 6th layer while keeping other modules constant",
+                    "Configure the training details (use Adam optimizer with a learning rate of 0.001, train for 15 epochs on a single NVIDIA RTX 3090 24GB GPU)",
+                    "Run the training and testing scripts (train.py and test.py) separately for each DPAM variant",
+                    "During testing, apply a Gaussian filter (\u03c3 = 4) to smooth the anomaly score map",
+                    "Collect and compare evaluation metrics (pixel-level AUROC and AUPRO for segmentation, image-level AUROC and AP for detection) against reported statistics (e.g., Table 7 in the paper)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Inter-module interactions",
+                        "description": "While only the DPAM component is modified, interactions with pre-existing modules like textual prompt tuning and object-agnostic prompt learning may add non-trivial complexity, especially if parameter sensitivities exist."
+                    },
+                    {
+                        "source": "Implementation modifications",
+                        "description": "Creating new branches for Q-Q and K-K self-attention variants in the existing codebase requires careful handling of backpropagation and attention computations, which adds to the overall complexity."
+                    },
+                    {
+                        "source": "Hardware and software dependencies",
+                        "description": "The experimental setup mandates a specific GPU (NVIDIA RTX 3090 24GB) and PyTorch-2.0.0, making reproduction sensitive to hardware/software variations."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "DPAM strategy: The exact implementation differences between V-V, Q-Q, and K-K self-attention are not fully specified, leaving open questions about how to modify the attention computation and backpropagation."
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration details: It is unclear if any hyperparameter tuning or additional adjustments are needed when substituting the self-attention mechanism within DPAM.",
+                    "Statistical evaluation: The protocol does not detail how to handle variability across runs or specify thresholds in anomaly scoring, which could affect the robustness of the performance comparisons."
+                ],
+                "possible_modifications": {
+                    "modification_DPAM_strategy": [
+                        "Extend the experiment by adding hybrid or additional self-attention variations beyond the three specified variants."
+                    ],
+                    "modification_evaluation": [
+                        "Mask or vary evaluation parameters (e.g., the Gaussian filter sigma) to test model robustness under implicit conditions."
+                    ],
+                    "modification_integration_details": [
+                        "Introduce slight variations in other modules (e.g., object-agnostic prompt learning) to assess potential interaction effects with different DPAM strategies."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification is to enforce a stricter GPU memory constraint by requiring the experiment to run on a lower-end GPU (e.g., NVIDIA RTX 3060 12GB) while evaluating whether the DPAM variants (V-V, Q-Q, and K-K self-attention) can still achieve performance levels similar to those reported in the paper (e.g., around 91.1% segmentation AUROC for V-V)."
+                    ],
+                    "time_constraints": [
+                        "Another modification could be to shorten the training duration by reducing the number of epochs (e.g., from 15 to 10 epochs) to analyze if the variants maintain competitive performance with a reduced training time."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability introduced by modifying the DPAM self-attention mechanism",
+                "description": "Switching from the default V-V self-attention to Q-Q or K-K variants alters the way local visual features are aggregated. Similar to how randomly dropping tokens introduces unpredictability during gradient updates, these modifications can lead to unstable training dynamics and fluctuations in performance metrics (e.g., segmentation AUROC, AUPRO, image-level AUROC, and AP).",
+                "impact": "This uncertainty may result in variable convergence behavior across runs, with possible inconsistencies in gradient stability and model performance, making it difficult to draw robust conclusions if random effects dominate.",
+                "possible_modifications": [
+                    "Run multiple training experiments with different random seeds to quantify the variance in performance metrics.",
+                    "Introduce controlled dropout or noise in the DPAM module to simulate random perturbations and evaluate stability.",
+                    "Aggregate results over several runs to mitigate random fluctuations and obtain statistically significant performance comparisons."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Potential biases from fixed experimental settings when substituting DPAM strategies",
+                "description": "While the experimental setup holds all other modules (e.g., object-agnostic prompt learning, textual prompt tuning, and multi-scale local visual features) constant, the one-time implementation changes from V-V to Q-Q or K-K may not be optimally aligned with hyperparameters tuned for V-V. This systematic misalignment, similar to introducing a one-time bias in dataset labeling, can consistently favor one variant over the others.",
+                "impact": "Such systematic bias may lead to consistent underperformance of the Q-Q variant in image-level detection or cause the K-K variant to lag in segmentation tasks, as compared in Table 7 of the paper. This could result in outcome differences that reflect structural model issues rather than inherent advantages of one self-attention strategy.",
+                "possible_modifications": [
+                    "Calibrate and individually tune hyperparameters for each DPAM variant to reduce systematic biases.",
+                    "Use cross-validation or a separate clean dataset to check if observed performance gaps are attributable to the DPAM strategy rather than integration errors.",
+                    "Analyze inter-module interactions to ensure that changes in the DPAM module do not inadvertently affect other components of the network."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "Does using AnomalyCLIP, analyze a set of medical and industrial images to detect and visualize anomalies? Compare the anomaly scores across different images and determine which image contains the most significant anomalies?",
+            "method": "The program should use the pre-trained AnomalyCLIP model to detect anomalies in multiple images. It should generate heatmaps highlighting anomalous regions, calculate anomaly scores for each image, and create a comparison visualization showing both the original images and their corresponding anomaly maps.",
+            "expected_outcome": "A comparison visualization showing the original images alongside their anomaly maps, and a bar chart displaying the anomaly scores for each image. The program should also output a ranked list of images sorted by their anomaly scores.",
+            "source": [
+                "/workspace/test_one_example.py",
+                "/workspace/simple_anomaly_detection.py",
+                "/workspace/compare_anomalies.py"
+            ],
+            "usage_instructions": "1. Load the pre-trained AnomalyCLIP model and checkpoint.\n2. Process each input image through the model to generate anomaly maps.\n3. Calculate an anomaly score for each image based on the model's output.\n4. Create visualizations that overlay the anomaly heatmaps on the original images.\n5. Generate a comparison visualization showing all images and their anomaly maps.\n6. Create a bar chart comparing the anomaly scores across all images.\n7. Output a ranked list of images sorted by their anomaly scores.",
+            "requirements": [
+                "Step 1: Import necessary libraries for image processing, visualization, and the AnomalyCLIP model (/workspace/test_one_example.py:1-11)",
+                "Step 2: Set up seed for reproducibility (/workspace/test_one_example.py:13-19)",
+                "Step 3: Define functions to apply and visualize anomaly heatmaps on images (/workspace/test_one_example.py:25-41, /workspace/visualization.py:6-24)",
+                "Step 4: Load the pre-trained AnomalyCLIP model and checkpoint (/workspace/test_one_example.py:53-54, 60-64)",
+                "Step 5: Process input images through the model to extract image features (/workspace/test_one_example.py:71-75, 77-79)",
+                "Step 6: Generate text features using the model's prompt learner (/workspace/test_one_example.py:66-69)",
+                "Step 7: Compute similarity between image and text features to detect anomalies (/workspace/test_one_example.py:81-91)",
+                "Step 8: Generate anomaly maps by combining feature similarities (/workspace/test_one_example.py:93-97)",
+                "Step 9: Apply Gaussian filtering to smooth the anomaly maps (/workspace/test_one_example.py:97)",
+                "Step 10: Calculate anomaly scores for each image based on the anomaly maps (/workspace/test.py:110)",
+                "Step 11: Create visualizations overlaying anomaly heatmaps on original images (/workspace/test_one_example.py:99)",
+                "Step 12: Generate a comparison visualization showing all images with their anomaly maps side by side (/workspace/visualization.py:6-17)",
+                "Step 13: Create a bar chart visualization comparing anomaly scores across all images (not explicitly in source)",
+                "Step 14: Rank images based on their anomaly scores and output the ranked list (not explicitly in source)"
+            ],
+            "agent_instructions": "Create a program that uses the AnomalyCLIP model to detect and visualize anomalies in a set of medical and industrial images. Your program should:\n\n1. Load the pre-trained AnomalyCLIP model and checkpoint.\n2. Process multiple input images through the model to detect anomalies.\n3. For each image:\n   - Generate an anomaly map highlighting regions with potential anomalies\n   - Calculate an overall anomaly score\n   - Create a visualization that overlays the anomaly heatmap on the original image\n4. Create a comparison visualization showing all original images alongside their corresponding anomaly maps.\n5. Generate a bar chart comparing the anomaly scores across all images.\n6. Output a ranked list of images sorted by their anomaly scores (highest to lowest).\n\nThe program should use the following key components:\n- AnomalyCLIP model for anomaly detection\n- Prompt learning for text-image similarity comparison\n- Gaussian filtering to smooth anomaly maps\n- Heatmap visualization using a color map (like COLORMAP_JET)\n- Matplotlib or similar library for creating the bar chart comparison\n\nThe program should accept multiple image paths as input and produce visualizations that clearly show which images contain the most significant anomalies. The anomaly score calculation should be based on the similarity between image features and text features generated by the model.",
+            "design_complexity": {
+                "constant_variables": {
+                    "pretrained_model": "AnomalyCLIP model along with its checkpoint and fixed hyperparameters (e.g., Gaussian filter \u03c3 = 4, seed settings)",
+                    "processing_pipeline": "The fixed steps for image processing, anomaly map generation, and visualization as defined by the program instructions"
+                },
+                "independent_variables": {
+                    "image_category": [
+                        "medical",
+                        "industrial"
+                    ],
+                    "visualization_type": [
+                        "overlay of anomaly heatmap on original image",
+                        "comparison visualization (side\u2010by\u2010side)",
+                        "bar chart visualization of anomaly scores",
+                        "ranked list of images by anomaly score"
+                    ]
+                },
+                "dependent_variables": {
+                    "anomaly_score": "The computed anomaly score for each image based on the similarity between image and text features",
+                    "anomaly_map": "The generated heatmap showing the localized anomalous regions on each image"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "image_selection": "The criteria and number of images to be processed (e.g., how images are chosen from medical vs. industrial domains) are not explicitly specified.",
+                    "anomaly_threshold": "There is no explicit threshold or criterion defined to determine what constitutes a 'significant' anomaly.",
+                    "ranking_measure": "While images are to be ranked by anomaly score, it is ambiguous whether higher scores always indicate greater anomalies or if there is any normalization required."
+                },
+                "possible_modifications": {
+                    "modification_new_image_categories": [
+                        "Introduce additional image categories (e.g., 'satellite', 'aerial') to expand the scope of the analysis."
+                    ],
+                    "modification_threshold_definition": [
+                        "Define explicit thresholds or criteria for what qualifies as a significant anomaly to reduce the ambiguity in ranking."
+                    ],
+                    "modification_variable_masking": [
+                        "Mask or hide the image selection criteria to test the agent's ability to infer which images to choose for comparison."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Pre-trained AnomalyCLIP model and its checkpoint",
+                    "Image processing libraries (e.g., for loading and manipulating images)",
+                    "Visualization libraries (e.g., Matplotlib for heatmaps, bar charts, and side-by-side comparisons)",
+                    "Prompt learning module (for generating text features)",
+                    "Gaussian filtering module (for smoothing anomaly maps)",
+                    "Multiple source files (e.g., /workspace/test_one_example.py, /workspace/simple_anomaly_detection.py, /workspace/compare_anomalies.py, /workspace/visualization.py)"
+                ],
+                "setup_steps": [
+                    "Import the necessary libraries for image processing, visualization, and model handling",
+                    "Set up and initialize seed for reproducibility",
+                    "Define functions to generate and overlay anomaly heatmaps on images",
+                    "Load the pre-trained AnomalyCLIP model and checkpoint",
+                    "Process input images to extract image features using the model",
+                    "Generate text features using the model\u2019s prompt learner",
+                    "Compute similarity between the image and text features to detect anomalies",
+                    "Generate anomaly maps by combining feature similarities and applying Gaussian filtering",
+                    "Calculate an overall anomaly score for each image based on the anomaly maps",
+                    "Create visualizations that overlay anomaly heatmaps on the original images",
+                    "Generate a comparison visualization with side-by-side displays of original images and their anomaly maps",
+                    "Create a bar chart to compare anomaly scores across all images",
+                    "Output a ranked list of images sorted by their anomaly scores"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple image domains",
+                        "description": "The experiment involves both medical and industrial images, which might require domain-specific preprocessing or parameter tuning."
+                    },
+                    {
+                        "source": "Integration across multiple source files",
+                        "description": "There are several interdependent scripts that handle everything from model initialization and image processing to visualization, increasing coordination complexity."
+                    },
+                    {
+                        "source": "Fixed hyperparameters and processing pipeline",
+                        "description": "The use of fixed parameters (such as Gaussian filter sigma, seed settings) and a rigid processing pipeline may add complexity when adapting to different image categories or requirements."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Image selection criteria",
+                    "Anomaly threshold definition",
+                    "Ranking measure for anomaly scores"
+                ],
+                "ambiguous_setup_steps": [
+                    "The criteria for choosing images (e.g., how many medical versus industrial images) is not explicitly specified",
+                    "The process for deciding what constitutes a 'significant' anomaly (e.g., any thresholding or normalization on scores) is unclear",
+                    "The method for ranking anomalies based solely on raw anomaly scores without defined normalization procedures creates uncertainty in interpretation"
+                ],
+                "possible_modifications": {
+                    "modification_new_image_categories": [
+                        "Introduce additional image categories (e.g., satellite or aerial) to broaden the analysis scope."
+                    ],
+                    "modification_threshold_definition": [
+                        "Define explicit thresholds or criteria for what qualifies as a significant anomaly to reduce ambiguity in anomaly detection and ranking."
+                    ],
+                    "modification_variable_masking": [
+                        "Mask or hide the detailed image selection criteria to test the agent's ability to infer which images to process and compare."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce using a smaller variant of the AnomalyCLIP model (e.g., AnomalyCLIP-mini) to test if similar anomaly detection performance (as shown in Table 8 benchmarks) can be maintained with reduced computational resources.",
+                        "Restrict memory usage by lowering the input image resolution or batch size to simulate a constrained resource environment."
+                    ],
+                    "time_constraints": [
+                        "Impose a stricter processing time per image by optimizing the anomaly detection pipeline (e.g., reducing the Gaussian filtering computation), targeting a runtime reduction compared to the reported settings in Table 8.",
+                        "Limit the overall pipeline execution duration to force real-time or near-real-time anomaly detection and visualization."
+                    ],
+                    "money_constraints": [
+                        "Constrain the experiment to only use existing in-house computing hardware, thereby avoiding any investment in additional high-performance infrastructure."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in the anomaly detection pipeline",
+                "description": "The AnomalyCLIP model and its processing pipeline include several stochastic components such as random seed initialization, variability in Gaussian filtering, and potential random token dropping in prompt learning. These factors may cause small fluctuations in the computed anomaly scores, the generated heatmaps, and the overall ranking of images from run to run.",
+                "impact": "Such randomness can lead to instability in gradient updates and minor variations in anomaly map generation, which may affect the comparative visualization and ranking across different images.",
+                "possible_modifications": [
+                    "Introduce controlled random noise in Gaussian filtering to simulate increased stochastic variation.",
+                    "Randomly drop tokens in the prompt module to test the effect of random perturbations on text-image similarity scores.",
+                    "Vary random seed settings across runs to evaluate the consistency of anomaly scoring."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias in image selection and dataset composition",
+                "description": "If there is an inherent bias in the input sets\u2014such as uneven representation of medical versus industrial images or systematic differences in image quality, resolution, or illumination\u2014these biases can systematically skew the anomaly scores. Additionally, one-time modifications in dataset selection criteria or anomaly threshold settings (e.g., labeling reviews with more than 50 characters as negative in sentiment analysis) can introduce a fixed bias in the model's predictions.",
+                "impact": "Systematic biases may consistently lead to over- or underestimation of anomaly scores for certain images or image categories, thereby affecting the reliability of the comparative visualization and skewing the overall ranking of images.",
+                "possible_modifications": [
+                    "Expand the dataset by incorporating additional image categories (e.g., satellite or aerial images) to test robustness against systematic bias.",
+                    "Introduce a one-time systematic alteration in the selection criteria or threshold settings to observe its effect on anomaly score distributions.",
+                    "Apply normalization or recalibration techniques across different image domains to mitigate systematic discrepancies."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "Does implement a zero-shot anomaly detection system using AnomalyCLIP to identify defects in a new, unseen product image without any domain-specific training?",
+            "method": "The program should use the AnomalyCLIP framework to perform zero-shot anomaly detection on a new product image. It should load the pre-trained model, process the image, generate an anomaly map highlighting potential defects, and calculate an anomaly score.",
+            "expected_outcome": "An anomaly map visualization highlighting potential defects in the input image, along with a quantitative anomaly score indicating the likelihood of anomalies being present.",
+            "source": [
+                "/workspace/test_one_example.py",
+                "/workspace/simple_anomaly_detection.py"
+            ],
+            "usage_instructions": "1. Load the pre-trained AnomalyCLIP model with the provided checkpoint.\n2. Load and preprocess the input image according to the model's requirements.\n3. Use the model to generate text features for normal and anomalous conditions.\n4. Extract image features and compute similarity with the text features.\n5. Generate an anomaly map by combining similarities across different feature layers.\n6. Apply Gaussian filtering to smooth the anomaly map.\n7. Calculate an overall anomaly score for the image.\n8. Create a visualization that overlays the anomaly heatmap on the original image.\n9. Save the visualization and return the anomaly score.",
+            "requirements": [
+                "Step 1: Import necessary libraries including AnomalyCLIP_lib, torch, PIL, cv2, numpy, and scipy.ndimage for Gaussian filtering (/workspace/test_one_example.py:1-11,43)",
+                "Step 2: Define utility functions for normalizing anomaly maps and applying color maps to visualize anomalies (/workspace/test_one_example.py:13-41)",
+                "Step 3: Load the pre-trained AnomalyCLIP model with the specified checkpoint (/workspace/test_one_example.py:53-54)",
+                "Step 4: Set up image preprocessing transformations according to model requirements (/workspace/test_one_example.py:56)",
+                "Step 5: Load the prompt learner that generates text prompts for normal and anomalous conditions (/workspace/test_one_example.py:59-64)",
+                "Step 6: Generate text features for normal and anomalous conditions using the prompt learner (/workspace/test_one_example.py:66-69)",
+                "Step 7: Load and preprocess the input image (/workspace/test_one_example.py:71-75)",
+                "Step 8: Extract image features and patch features from multiple layers of the model (/workspace/test_one_example.py:77-79)",
+                "Step 9: Compute similarity between image features and text features (/workspace/test_one_example.py:81-83)",
+                "Step 10: Generate anomaly maps for each feature layer by computing similarity between patch features and text features (/workspace/test_one_example.py:84-91)",
+                "Step 11: Combine anomaly maps from different layers (/workspace/test_one_example.py:93-95)",
+                "Step 12: Apply Gaussian filtering to smooth the anomaly map (/workspace/test_one_example.py:97)",
+                "Step 13: Visualize the anomaly map by overlaying it on the original image and save the result (/workspace/test_one_example.py:99)"
+            ],
+            "agent_instructions": "Implement a zero-shot anomaly detection system using AnomalyCLIP to identify defects in product images without any domain-specific training. Your implementation should follow these steps:\n\n1. Set up the environment by importing necessary libraries (AnomalyCLIP_lib, torch, PIL, cv2, numpy, scipy.ndimage).\n\n2. Create utility functions for:\n   - Normalizing anomaly maps (scaling values between 0 and 1)\n   - Visualizing anomaly maps (applying color maps and overlaying on original images)\n\n3. Implement the main anomaly detection function that:\n   - Loads a pre-trained AnomalyCLIP model\n   - Loads and preprocesses an input image\n   - Generates text features for both normal and anomalous conditions using prompt templates\n   - Extracts multi-scale image features from different layers of the model\n   - Computes similarity between image features and text features\n   - Generates an anomaly map by combining similarities across different feature layers\n   - Applies Gaussian filtering to smooth the anomaly map\n   - Creates a visualization by overlaying the anomaly heatmap on the original image\n   - Saves the visualization and returns an anomaly score\n\n4. The system should work in a zero-shot manner, meaning it should be able to detect anomalies in new, unseen product images without any additional training.\n\n5. The implementation should use a CLIP-based architecture that compares visual features with textual descriptions of normal and anomalous states.\n\nYour code should accept an input image path and produce both a visualization of potential defects and a quantitative anomaly score.",
+            "design_complexity": {
+                "constant_variables": {
+                    "model_framework": "AnomalyCLIP framework with a pre-trained model checkpoint",
+                    "library_dependencies": [
+                        "AnomalyCLIP_lib",
+                        "torch",
+                        "PIL",
+                        "cv2",
+                        "numpy",
+                        "scipy.ndimage"
+                    ],
+                    "runtime_environment": "Fixed Python environment with predetermined image preprocessing and Gaussian filtering steps"
+                },
+                "independent_variables": {
+                    "input_image": "The path/name of the product image to be analyzed (varies per experiment)",
+                    "preprocessing_method": "Image transformations required by the model which may vary with different image types",
+                    "text_prompt_templates": "Templates used to generate text features for normal and anomalous conditions (e.g., object-agnostic prompt templates)",
+                    "feature_extraction_layers": "Choice and combination of multi-layer image features extracted from different layers of the model"
+                },
+                "dependent_variables": {
+                    "anomaly_map": "The generated visualization overlay highlighting potential defects",
+                    "anomaly_score": "The quantitative measure indicating the likelihood of anomalies in the image"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "text_prompt_templates": "It is not entirely clear how the text prompts should be designed or tuned (object-agnostic vs domain-specific), which may affect performance.",
+                    "Gaussian_filter_parameters": "The specific parameters (e.g., sigma value) for Gaussian filtering are not fully specified in the task.",
+                    "layer_selection_strategy": "The exact criteria for selecting which model layers to extract features from is not explicitly defined.",
+                    "anomaly_score_threshold": "There is no clear threshold defined for interpreting the anomaly score, which could impact decision-making on defect detection."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce variables for dynamic adjustment of Gaussian filter parameters (e.g., sigma value) to test sensitivity.",
+                        "Add a variable that specifies an anomaly score threshold for distinguishing defects from normal variations.",
+                        "Allow experimentation with different text prompt templates (object-agnostic, domain-specific, or hybrid) to study their impact on performance.",
+                        "Include a variable for selecting different combinations of feature extraction layers to explore their influence on anomaly detection results."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "AnomalyCLIP framework (with pre-trained model checkpoint)",
+                    "AnomalyCLIP_lib and other library dependencies (torch, PIL, cv2, numpy, scipy.ndimage)",
+                    "Prompt learner for generating text features for normal and anomalous conditions",
+                    "Image preprocessing pipeline (resizing, normalization, and transformation)",
+                    "Multi-scale feature extraction from different layers in the visual encoder",
+                    "Gaussian filtering for smoothing the anomaly map",
+                    "Visualization module for overlaying heatmaps on the original image"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries (AnomalyCLIP_lib, torch, PIL, cv2, numpy, scipy.ndimage)",
+                    "Define utility functions for normalizing anomaly maps and applying color maps for visualization of anomalies",
+                    "Load the pre-trained AnomalyCLIP model using the provided checkpoint",
+                    "Set up image preprocessing transformations as required by the model",
+                    "Load and configure the prompt learner to generate text features for both normal and anomalous conditions",
+                    "Generate text features using the prompt learner based on defined or default text prompt templates",
+                    "Load and preprocess the input product image according to model requirements",
+                    "Extract image features and multi-scale patch features from different layers of the model",
+                    "Compute similarity between extracted image features and text features",
+                    "Generate individual anomaly maps for each feature layer and combine them",
+                    "Apply Gaussian filtering to smooth the combined anomaly map",
+                    "Visualize the final anomaly map by overlaying it on the original image",
+                    "Save the visualization and output a quantitative anomaly score"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Library and environment dependencies",
+                        "description": "The required libraries (including AnomalyCLIP_lib and its dependencies) must be compatible and correctly installed in a fixed Python environment, which can add complexity if versions mismatch."
+                    },
+                    {
+                        "source": "Multi-source documentation (code files and tables)",
+                        "description": "The experiment involves coordination between multiple source files (/workspace/test_one_example.py, /workspace/simple_anomaly_detection.py) and observations from the included tables and figures that inform the model\u2019s configuration and performance metrics."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Text prompt templates: The design and tuning of object-agnostic vs. domain-specific prompt templates are not fully specified.",
+                    "Gaussian filter parameters: The exact sigma value and other filtering parameters are ambiguous beyond the mention of \u03c3 = 4.",
+                    "Layer selection strategy: The criteria for which layers to extract features from and how to combine them is not explicitly defined.",
+                    "Anomaly score threshold: There is no clear threshold provided for what constitutes an anomaly, leaving interpretation open."
+                ],
+                "ambiguous_setup_steps": [
+                    "The generation of text features lacks explicit instructions on how to design or fine-tune the text prompt templates.",
+                    "The step for combining anomaly maps from different layers does not detail the method or weighting strategy for integration.",
+                    "Parameters for Gaussian filtering are mentioned but not fully detailed, which could lead to variability in results."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce variables for dynamic adjustment of Gaussian filter parameters (e.g., sigma value) to test sensitivity.",
+                        "Add a variable that specifies an anomaly score threshold to assist in distinguishing defects from normal variations.",
+                        "Allow experimentation with different text prompt templates (object-agnostic, domain-specific, or hybrid) to assess their impact on performance.",
+                        "Include an option for selecting and weighting different combinations of feature extraction layers to evaluate their influence on anomaly detection results."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended experiments, constrain the computational resources by requiring that a lightweight variant of the AnomalyCLIP model (e.g., AnomalyCLIP-mini) achieve comparable anomaly detection performance. This forces the system to meet performance targets with reduced model capacity."
+                    ],
+                    "time_constraints": [
+                        "Introduce a stricter inference time requirement, such as reducing the detection runtime by a fixed percentage relative to the baseline, to simulate real-time defect detection."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in image preprocessing and prompt generation",
+                "description": "In the anomaly detection pipeline, random variations can be introduced during steps such as image preprocessing, random dropout or perturbation in feature extraction layers, and random modifications in text prompt generation. These random factors may lead to unstable gradient updates, inconsistent anomaly map generation, and variability in the computed anomaly score.",
+                "impact": "Inconsistent anomaly detection results across different runs, leading to fluctuations in the anomaly map visualization and quantitative anomaly score. This affects the repeatability and comparability of experiments.",
+                "possible_modifications": [
+                    "Introduce random dropout or perturbations in specific layers during feature extraction to test robustness.",
+                    "Experiment with different random seeds for preprocessing and observe variability in the anomaly maps.",
+                    "Randomly vary Gaussian filtering parameters (e.g., sigma value) during testing to simulate random uncertainty in smoothing operations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias in text prompt templates and fixed layer selection strategy",
+                "description": "The design of the system relies on pre-defined object-agnostic text prompt templates and a fixed criteria for selecting and combining multi-scale image features. This can introduce a systematic bias, as these choices may not be optimal for all types of unseen product images. Consequently, the anomaly score and defect localization might be skewed consistently in one direction.",
+                "impact": "Leads to a consistent, systematic error in anomaly detection performance, such as missing certain types of defects or wrongly highlighting non-defective regions. This systematic bias undermines the reliability of the zero-shot detection approach across diverse product images.",
+                "possible_modifications": [
+                    "Test alternative text prompt templates (e.g., domain-specific or hybrid prompts) to assess and mitigate systematic bias.",
+                    "Evaluate and adjust the layer selection strategy by introducing a weighted combination of features from different layers.",
+                    "Set up experiments that adjust the anomaly score threshold based on validation data to correct for systematic deviations in anomaly scores."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "Does extend AnomalyCLIP to perform batch processing of multiple images from different domains (industrial and medical) and evaluate which domain the model performs better on based on anomaly detection metrics?",
+            "method": "The program should use AnomalyCLIP to process multiple images from both industrial and medical domains, calculate anomaly scores for each image, and then perform a comparative analysis to determine which domain the model performs better on.",
+            "expected_outcome": "A comprehensive analysis showing anomaly maps for all processed images, domain-specific average anomaly scores, and a conclusion about which domain (industrial or medical) the model performs better on based on the anomaly detection results.",
+            "source": [
+                "/workspace/test_one_example.py",
+                "/workspace/simple_anomaly_detection.py",
+                "/workspace/compare_anomalies.py"
+            ],
+            "usage_instructions": "1. Load the pre-trained AnomalyCLIP model with the provided checkpoint.\n2. Create two lists of images: one for industrial domain (e.g., hazelnut, capsule) and one for medical domain (e.g., brain, skin).\n3. Process each image through the model to generate anomaly maps and scores.\n4. Group the results by domain and calculate average anomaly scores for each domain.\n5. Create visualizations showing the anomaly maps for all images, organized by domain.\n6. Generate comparative visualizations (e.g., box plots or bar charts) showing the distribution of anomaly scores across domains.\n7. Perform a statistical analysis to determine if there's a significant difference in performance between domains.\n8. Output a conclusion about which domain the model performs better on, based on the analysis.",
+            "requirements": [
+                "Step 1: Import necessary libraries for image processing, visualization, and statistical analysis (/workspace/test_one_example.py:1-11, /workspace/visualization.py:1-4)",
+                "Step 2: Load the pre-trained AnomalyCLIP model with the provided checkpoint (/workspace/test_one_example.py:53-54, 59-64)",
+                "Step 3: Define two lists of image paths: one for industrial domain (e.g., hazelnut, capsule) and one for medical domain (e.g., brain, skin) (/workspace/test_one_example.py:71-72)",
+                "Step 4: Create a function to process multiple images in batch that generates anomaly maps and scores for each image (/workspace/test_one_example.py:77-97)",
+                "Step 5: Apply Gaussian filtering to smooth the anomaly maps (/workspace/test_one_example.py:97-97)",
+                "Step 6: Create visualization functions to display anomaly maps for all processed images (/workspace/visualization.py:6-17)",
+                "Step 7: Group results by domain and calculate domain-specific metrics (average anomaly scores) (/workspace/test_one_example.py:81-96)",
+                "Step 8: Implement statistical analysis to compare performance between domains (/workspace/test_one_example.py:81-96)",
+                "Step 9: Generate comparative visualizations (e.g., box plots or bar charts) showing the distribution of anomaly scores across domains (/workspace/visualization.py:6-17)",
+                "Step 10: Output a conclusion about which domain the model performs better on based on the analysis (/workspace/test_one_example.py:81-96)"
+            ],
+            "agent_instructions": "Your task is to extend AnomalyCLIP to perform batch processing of multiple images from different domains (industrial and medical) and evaluate which domain the model performs better on based on anomaly detection metrics.\n\nYou need to create two scripts:\n\n1. A script for batch anomaly detection that:\n   - Loads the pre-trained AnomalyCLIP model with the provided checkpoint\n   - Processes multiple images from both industrial domain (e.g., hazelnut, capsule) and medical domain (e.g., brain, skin)\n   - Generates anomaly maps and scores for each image\n   - Saves the anomaly maps as visualizations\n\n2. A script for comparative analysis that:\n   - Groups the results by domain (industrial vs. medical)\n   - Calculates domain-specific metrics (average anomaly scores)\n   - Creates visualizations showing the anomaly maps for all processed images, organized by domain\n   - Generates comparative visualizations (e.g., box plots or bar charts) showing the distribution of anomaly scores across domains\n   - Performs statistical analysis to determine if there's a significant difference in performance between domains\n   - Outputs a conclusion about which domain the model performs better on\n\nThe existing codebase includes:\n- AnomalyCLIP_lib: A library containing the AnomalyCLIP model implementation\n- utils.py: Utility functions for image transformation and normalization\n- prompt_ensemble.py: Functions for prompt engineering with the model\n- visualization.py: Functions for visualizing anomaly maps\n\nSample images are available in the assets directory for both industrial (hazelnut.png, capsule.png) and medical (brain.png, skin.png) domains.\n\nYour implementation should follow the general approach of the existing test_one_example.py script but extend it to handle multiple images and perform comparative analysis between domains.",
+            "design_complexity": {
+                "constant_variables": {
+                    "pre_trained_model": "The AnomalyCLIP model loaded with the provided checkpoint remains the same across experiments",
+                    "codebase_resources": "The existing library files (e.g., AnomalyCLIP_lib, utils.py, prompt_ensemble.py, visualization.py) used for image processing and visualization"
+                },
+                "independent_variables": {
+                    "domain": [
+                        "industrial",
+                        "medical"
+                    ],
+                    "image_category": "Within each domain, different sample images (e.g., hazelnut, capsule for industrial; brain, skin for medical) serve as independent values"
+                },
+                "dependent_variables": {
+                    "anomaly_detection_metrics": "Measured by metrics such as anomaly scores (e.g., AUROC, AP) and the resulting domain-specific average anomaly scores that determine which domain performs better"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "anomaly_detection_metrics": "It is not explicitly stated which specific metrics (e.g., AUROC, AP, AUPRO) should be primarily used for comparing domain performance, leaving room for interpretation",
+                    "statistical_analysis_method": "The method for performing statistical significance analysis is not detailed, and the criteria for declaring one domain as better is open-ended"
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Explicitly define the anomaly detection metrics to be used (e.g., prioritize AUROC over other metrics)",
+                        "Specify the statistical test (e.g., t-test, Mann-Whitney U) and significance levels to compare performance between domains",
+                        "Extend the independent variable 'domain' to include additional domains beyond industrial and medical if needed"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Pre-trained AnomalyCLIP model (loaded from provided checkpoint)",
+                    "AnomalyCLIP_lib library for model implementation",
+                    "Utility modules (utils.py, prompt_ensemble.py) for image transformations and prompt engineering",
+                    "Visualization module (visualization.py) for displaying anomaly maps and comparative graphs",
+                    "Batch processing script for generating anomaly maps and scores across images",
+                    "Comparative analysis script for grouping results, calculating domain-specific metrics, and performing statistical tests",
+                    "Lists of image datasets from industrial (e.g., hazelnut, capsule) and medical (e.g., brain, skin) domains",
+                    "Third-party libraries for image processing, visualization, and statistical analysis"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries and modules for image processing and visualization (as indicated in test_one_example.py and visualization.py)",
+                    "Load the pre-trained AnomalyCLIP model using the provided checkpoint",
+                    "Define and create two separate lists of image paths: one for industrial images and one for medical images",
+                    "Implement a batch processing function to generate anomaly maps and scores for each image using AnomalyCLIP",
+                    "Apply Gaussian filtering to smooth the anomaly maps",
+                    "Group the processed results by domain and calculate domain-specific metrics (e.g., average anomaly scores)",
+                    "Generate visualizations: display individual anomaly maps and create comparative visualizations (e.g., box plots or bar charts) showing score distributions across domains",
+                    "Perform statistical analysis to assess whether there is a significant difference between the domains",
+                    "Output a final conclusion on which domain (industrial or medical) the model performs better on based on the analysis"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Codebase Integration",
+                        "description": "Integrating multiple existing modules (AnomalyCLIP_lib, utils.py, prompt_ensemble.py, visualization.py) and adapting the test_one_example.py script to support batch processing adds system-wide complexity."
+                    },
+                    {
+                        "source": "Domain-specific Data Characteristics",
+                        "description": "Handling different image types and modalities (industrial vs. medical) may require domain-specific adjustments in preprocessing and interpretation of anomaly scores."
+                    },
+                    {
+                        "source": "Statistical Analysis Component",
+                        "description": "The need to perform a rigorous statistical comparison between domains introduces additional steps in validation and result interpretation."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Anomaly detection metrics: It is unclear whether to prioritize AUROC, AP, AUPRO, or a combination of metrics for comparing performance across domains.",
+                    "Statistical analysis module: The specific statistical test (e.g., t-test, Mann-Whitney U) and significance level to use are not explicitly defined."
+                ],
+                "ambiguous_setup_steps": [
+                    "Selection of anomaly detection metrics: The instructions mention 'anomaly scores' but do not specify which metric should be the primary indicator for performance.",
+                    "Performing statistical analysis: There is ambiguity in how to conduct the statistical comparison and what criteria should be used to draw the final conclusion.",
+                    "Visualization requirements: While the steps require comparative plots, the exact format (e.g., type of bar chart or box plot) is left open to interpretation."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Explicitly define the primary anomaly detection metric to use (e.g., prioritize AUROC over other metrics)",
+                        "Specify the exact statistical test and significance thresholds (e.g., use a t-test with a 0.05 alpha level)",
+                        "Provide more detailed instructions on the formats and types of visualizations required for both the individual anomaly maps and the comparative analysis"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "If computational resources become a bottleneck, consider enforcing performance parity with a lighter-weight variant of AnomalyCLIP (e.g., AnomalyCLIP-mini) to maintain similar AUROC and other anomaly metrics while using less memory and compute.",
+                            "Optionally, impose a time constraint by requiring that batch processing for a fixed number of images completes within a specified deadline (e.g., processing a batch of images in under a given number of seconds) to simulate real-time performance.",
+                            "If budget constraints arise, one could limit the experiment to a reduced dataset or use less expensive hardware while still performing rigorous statistical analysis to compare anomaly detection performance across domains."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability from batch processing and random image selection",
+                "description": "When processing images in batches from different domains, random uncertainty can arise from the inherent variability in image quality, environmental conditions, or random ordering effects. For example, random noise in individual image acquisitions or random variations in pre-processing steps (such as parameters in Gaussian filtering) may skew the computed anomaly scores. This is similar in spirit to randomly dropping tokens in transformer pre-training, where the randomness introduces unstable gradient updates. In our case, such randomness can destabilize the anomaly score distributions across batches.",
+                "impact": "The computed anomaly detection metrics (e.g., AUROC, AP) may vary between runs, making it harder to reliably compare performance across domains. This uncertainty can lead to inconsistent domain-specific average scores and affect the robustness of the comparative statistical analysis.",
+                "possible_modifications": [
+                    "Standardize pre-processing by fixing random seeds and ensuring deterministic image ordering in batch processing.",
+                    "Remove or adjust any random variation in filtering parameters or augmentation procedures to stabilize anomaly score outputs.",
+                    "Introduce controlled experiments where random noise is gradually reduced to test for convergence in anomaly detection performance."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Domain-specific pre-processing bias and dataset characteristics",
+                "description": "Systematic uncertainty emerges when inherent differences between domains, such as industrial versus medical images, lead to consistent biases. For instance, if the pre-trained AnomalyCLIP model or its pre-processing pipeline is originally tuned for industrial imagery, it may produce more reliable anomaly maps for that domain. Similar to modifying a dataset (e.g., labeling reviews with over 50 characters as negative) that introduces systematic bias in sentiment analysis, this can lead to a scenario where one domain consistently outperforms the other due to differences in image characteristics rather than true anomaly detection ability.",
+                "impact": "This systematic bias can result in skewed metrics where one domain (e.g., industrial) appears to have higher anomaly detection performance even if the model is not fundamentally better for that domain. It could mislead the comparative statistical analysis and ultimately the conclusions drawn about model performance.",
+                "possible_modifications": [
+                    "Apply domain-specific normalization techniques to account for systematic differences in image modalities and quality.",
+                    "Re-train or fine-tune the model on a balanced dataset that adequately represents both industrial and medical domains to mitigate domain bias.",
+                    "Critically review and adjust pre-processing pipelines to ensure fair comparisons between domains, or even introduce additional domains to broaden the analysis."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate hybrid prompt strategies that combine both object-agnostic and object-aware components to potentially capture the benefits of both approaches.",
+            "experiment_design": "Develop a new variant of the prompt template that integrates both object-agnostic cues and selective object-aware features. Train this hybrid model using the same experimental setup as the original AnomalyCLIP on industrial datasets (e.g., MVTec AD) and evaluate on both industrial and medical datasets. Compare performance metrics (image-level AUROC and AP, pixel-level AUROC and PRO/AUPRO) with the original object-agnostic model to assess if the hybrid approach further enhances overall anomaly detection and segmentation performance.",
+            "subsection_source": "4.2 M AIN RESULTS"
+        },
+        {
+            "idea": "Examine the robustness of AnomalyCLIP under varying imaging conditions and noise levels to test its applicability in real-world settings.",
+            "experiment_design": "Introduce controlled noise (e.g., Gaussian noise, motion blur, varying illumination) to the test images across several datasets. Train or fine-tune AnomalyCLIP with and without noise augmentation in the training data. Evaluate the performance drop or resilience using standard metrics (AUROC, AP, PRO/AUPRO) and compare the robustness of the baseline model against the noise-augmented version. This analysis will provide insights into the model's real-world application capabilities and its sensitivity to environmental variations.",
+            "subsection_source": "4.2 M AIN RESULTS"
+        },
+        {
+            "idea": "Investigate the robustness of the context optimization strategies under different types and levels of image noise or occlusion.",
+            "experiment_design": "Extend the current ablation study by introducing varying levels of artificial noise or occlusion to the test images in datasets such as MVTec AD and VisA. Evaluate the performance of models using only global, only local, and combined context optimizations under these degraded conditions. This will help to assess how robust the local and global context mechanisms are when detecting anomalies in less-than-ideal imaging environments.",
+            "subsection_source": "4.3 A BLATION STUDY"
+        },
+        {
+            "idea": "Apply the AnomalyCLIP framework and its module ablations to new imaging domains, especially in medical imaging, to examine generalizability.",
+            "experiment_design": "Select one or more medical imaging datasets (e.g., ISIC for skin cancer detection or CVC-ClinicDB for colon polyp detection) and replicate the ablation experiments by selectively disabling T1, T2, T3, and T4 modules. Measure the anomaly detection performance using relevant metrics such as AUROC and AP. Compare these results to those from industrial datasets to determine if the relative contributions of each module remain consistent across different imaging domains.",
+            "subsection_source": "4.3 A BLATION STUDY"
+        }
+    ],
+    "main_takeaways": [
+        "AnomalyCLIP effectively leverages multiple modules\u2014DPAM, object-agnostic prompt learning, textual prompt tuning, and multi-scale local visual features\u2014to boost anomaly detection performance at both pixel-level and image-level.",
+        "Ablation studies reveal that removing specific modules (especially object-agnostic prompt learning) leads to a notable drop in AUROC scores, confirming the importance of each component.",
+        "Textual prompt tuning and incorporation of multi-scale local visual features, while offering smaller performance gains individually, together contribute to a robust adaptation of the textual space for enhanced anomaly detection.",
+        "The study of learnable word embeddings shows that using unshared embeddings yields better performance than shared ones, suggesting finer control over text representations benefits the model.",
+        "Efficiency analysis comparing training time and FPS across methods highlights trade-offs between computational overhead and detection performance, with AnomalyCLIP achieving competitive AUROC metrics against existing methods."
+    ]
+}
