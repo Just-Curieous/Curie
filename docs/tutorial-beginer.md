@@ -122,7 +122,8 @@ You can provide your own environment by providing an environment requirements fi
 If you’d like to monitor progress partway through Curie’s experimentation—or if the experiment wasn’t run end-to-end—you can still generate a report from the available data:
 
 ```python
-curie.generate_report(input_dir_path='/abs/path/logs/research_20250605231023_iter1/')
+curie.generate_report(api_keys=key_dict,
+                    input_dir_path='/abs/path/logs/research_20250605231023_iter1/')
 ```
 
 5. **Customize the agent to your workload.**
