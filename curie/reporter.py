@@ -5,24 +5,11 @@ import multiprocessing as mp
 from multiprocessing import Process, Queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Tuple 
+import string
 
 # write a lab report
  
-def filter_logging(log_data):
-    # filtered_strings = ["=======", "openhands", 'OBSERVATION', 'ACTION',
-    #                     'root root', '- lib/python3.12/site-packages']
-    # filtered_log_data = []
-    # pre_line = ""
-    # for line in log_data:
-    #     if all([string not in line for string in filtered_strings]) and line != "\n":
-    #         if pre_line != line:
-    #             filtered_log_data.append(line)
-    #     pre_line = line
-    
-    # print(f"before filtering: {len(log_data)}")
-    # print(f"after filtering: {len(filtered_log_data)}")
-    # filtered_log = "".join(filtered_log_data)
-
+def filter_logging(log_data): 
     # return filtered_log
     stay_strings = ['- logger -']
     filtered_log_data = []
@@ -50,6 +37,9 @@ def summarize_logging_parallel_threads(log_file):
         chunk = content[i:i + 50500]
         chunks.append((i, chunk))
     
+    if len(chunks) > 10:
+        chunks = chunks[:3] + chunks[-7:]
+    
     def process_chunk(chunk_data: Tuple[int, str]) -> Tuple[int, str]:
         """Process a single chunk and return (index, summary)"""
         i, chunk = chunk_data
@@ -65,7 +55,7 @@ def summarize_logging_parallel_threads(log_file):
     # Process chunks in parallel
     summaries = [None] * len(chunks)  # Pre-allocate list to maintain order
     
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=2) as executor:
         # Submit all tasks
         future_to_index = {executor.submit(process_chunk, chunk_data): idx 
                           for idx, chunk_data in enumerate(chunks)}
@@ -87,66 +77,83 @@ def summarize_logging_parallel_threads(log_file):
     return summarize_content
 
 
+def process_plan(plan_data):
+    """Process a single plan and return the results"""
+    i, plan = plan_data
+    
+    try:
+        print(f"👦 Analyzing plan {i+1}/{len(plan_data)}.")
+        
+        # list out all .txt files in the workspace directory
+        plan_results = ["Here is the experimental plan", f"{plan}\n",
+                "Here are the actual results of the experiments: \n"]
+
+        workspace_dir = plan["workspace_dir"] 
+        # control_group = plan["control_group"]
+        # experimental_group = plan["experimental_group"]
+        banned_keywords = ['Warning:', '\x00']
+        
+        if workspace_dir != '' and os.path.exists(workspace_dir):
+            workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
+            for workspace_dir in workspace_dir_list:
+                log_files = [file for file in os.listdir(workspace_dir) if file.endswith('.txt')]
+                log_files += [file for file in os.listdir(workspace_dir) if file.endswith('.log')]
+            
+            for file in log_files:
+                with open(f"{workspace_dir}/{file}", 'r') as f:
+                    # remove duplicate lines in f.read() 
+                    lines = f.readlines()
+                    for line in lines: 
+                        if 'Epoch ' in line:
+                            if '100%' not in line:
+                                continue
+                            else:
+                                plan_results.append(line)
+                        
+                        if not any(keyword in line for keyword in banned_keywords):
+                            plan_results.append(''.join(c for c in line if c in string.printable))
+        # FIXME: need to retrive all the results more smartly later. remove redundant lines.
+        plan_results_str = "".join(plan_results)
+        messages = [SystemMessage(content="Understand the experiment plan and \
+                                    extract the complete raw results with the experiment setup. \
+                                    No need to analyze the results. \
+                                    Ignore the intermediate steps. NEVER fake the results."),
+                    HumanMessage(content=plan_results_str)]
+        
+        response = model.query_model_safe(messages)
+        return (i, response.content, plan_results_str, None)  # (index, result, raw_result, error)
+        
+    except Exception as e: 
+        return (i, None, None, e)
+    
 def extract_raw_results(log_file, plans):
-    results = []
-    raw_results = []
+
+    results = [None] * len(plans)  # Pre-allocate to maintain order
+    raw_results = [None] * len(plans)
+
     fig_names = []
     caption_list = []
     log_dir = os.path.dirname(log_file)
-    for i, plan in enumerate(plans):
-        try:
-            print(f"👦 Analyzing plan {i+1}/{len(plans)}.")
-            # list out all .txt files in the workspace directory
-            plan_results = ["Here is the experimental plan", f"{plan}\n",
-                    "Here are the actual results of the experiments: \n"]
+    plan_data = [(i, plan) for i, plan in enumerate(plans)]
 
-            workspace_dir = plan["workspace_dir"] 
-            # control_group = plan["control_group"]
-            # experimental_group = plan["experimental_group"]
-            banned_keywords = ['Warning:']
-            if workspace_dir != '' and os.path.exists(workspace_dir):
-                workspace_dir = plan["workspace_dir"]
-                log_files = [file for file in os.listdir(workspace_dir) if file.endswith('.txt')]
-                log_files += [file for file in os.listdir(workspace_dir) if file.endswith('.log')]
-                for file in log_files:
-                    with open(f"{workspace_dir}/{file}", 'r') as f:
-                        # remove duplicate lines in f.read() 
-                        lines = f.readlines()
-                        for line in lines:
-                            if not any(keyword in line for keyword in banned_keywords):
-                                plan_results.append(line)
-                # this is for stock prediction. 
-                # FIXME: need to retrive all the results more smartly later.
-                results_dir = f"{workspace_dir}/results"
-                if os.path.exists(results_dir):
-                    for file in os.listdir(results_dir):
-                        if file.endswith('.json'):
-                            with open(f"{results_dir}/{file}", 'r') as f:
-                                plan_results.append(f"Results from file: {file} \n")
-                                plan_results.append(f.read())
-            plan_results = "\n".join(plan_results)
-            messages = [SystemMessage(content="Understand the experiment plan and \
-                                        extract the complete raw results with the experiment setup. \
-                                        No need to analyze the results. \
-                                        Ignore the intermediate steps. NEVER fake the results."),
-                        HumanMessage(content=plan_results)]
-            response = model.query_model_safe(messages)
-            results.append(response.content)
-            # fig_name = plot_results(response.content, log_dir)
-            # if fig_name is not None:
-            #     fig_names.append(fig_name)
-            #     results.append(f"Here is the figure of the results above: {fig_name}")
-            raw_results.append(plan_results)
-        except Exception as e:
-            print(f"Error in extraction: {e}")
-            continue
-    
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit all tasks
+        future_to_index = {executor.submit(process_plan, data): data[0] for data in plan_data}
+        
+        # Collect results as they complete
+        for future in as_completed(future_to_index):
+            index, result, raw_result, error = future.result()
+            
+            if error is None:
+                results[index] = result
+                raw_results[index] = raw_result
+                 
     # summarize the results
     all_results = "\n".join(results) 
     num_tries = 0
     while num_tries < 3:
         try:
-            # fig_name_list = plot_results(all_results, log_dir, True)
+
             fig_name_list, caption_list = plot_results(all_results, log_dir, True)
             if fig_name_list is not None:
                 fig_names += fig_name_list
@@ -155,8 +162,6 @@ def extract_raw_results(log_file, plans):
             print(f"Error in plotting: {e}")
             num_tries += 1
             continue
-    # if fig_names is not None:
-    #     all_results.append(f"Here is the aggregated figure of the results: {fig_names}")
 
     results_file_name = log_file.replace(".log", "_all_results.txt")
     with open(f'{results_file_name}', 'w') as file:
@@ -203,12 +208,12 @@ def plot_results(summarized_results, directory, is_aggregated=False):
     if is_aggregated:
         prompt = f"""
         {plotting_templates}
-        Write python code to visualize the results in the best format and save the generated figures to {directory}.
+        Write python code (Don't use pandas or seaborn.) to visualize the results in the best format and save the generated figures to {directory}.
         You will be given the results of multiple experiment plans; select useful information to visualize.
         Use the visualization to show the comparison of different experiment plans.
         Use the above templates to style the plots (Times New Roman font, bold axes labels, clear legends, grid, etc.).
         Choose appropriate plot types based on the results.
-        Don't use pandas or seaborn.
+        
 
         The python code must:
         1. Save all figures into {directory},
@@ -219,11 +224,11 @@ def plot_results(summarized_results, directory, is_aggregated=False):
     else:
         prompt = f"""
         {plotting_templates}
-        If the results are worth visualizing, write python code to visualize the results in the best format and save it to {directory}.
+        If the results are worth visualizing, write python code (Don't use pandas or seaborn) to visualize the results in the best format and save it to {directory}.
         If the results are not worth visualizing, set `fig_name_list = None` and `caption_list = None`, and return them.
         Use the above templates to style the plots (Times New Roman font, bold axes labels, clear legends, grid, etc.).
         Choose appropriate plot types based on the results.
-        Don't use pandas or seaborn.
+       
 
         The python code must:
         1. Save the figure(s) into {directory},
@@ -254,56 +259,19 @@ def plot_results(summarized_results, directory, is_aggregated=False):
         return None, None
     return [os.path.basename(fig) for fig in fig_name_list], caption_list
 
+ 
 def generate_report(config, plans): 
     # read questions  
     log_file = '/' + config["log_filename"]
     model.setup_model_logging(log_file) 
     all_logging = [f"Here is the research questions: \n {plans[0]['question']}"]
 
-    # Create queues to get results from parallel processes
-    results_queue = Queue()
-    log_summary_queue = Queue()
-    
-    # Start processes in parallel
-    extract_process = Process(target=parallel_extract_raw_results, 
-                             args=(log_file, plans, results_queue))
-    summary_process = Process(target=parallel_summarize_logging,
-                             args=(log_file, log_summary_queue))
-    
-    extract_process.start()
-    summary_process.start()
-    
-    # Wait for processes to complete and get results
-    # extract_process.join()
-    # summary_process.join()
-    try:
-        extract_process.join(timeout=600)  # 5 minutes timeout
-        summary_process.join(timeout=600)
-        
-        if extract_process.is_alive():
-            print("Extract process timed out, terminating...")
-            extract_process.terminate()
-            extract_process.join(timeout=5)
-            if extract_process.is_alive():
-                extract_process.kill()
-        
-        if summary_process.is_alive():
-            print("Summary process timed out, terminating...")
-            summary_process.terminate()
-            summary_process.join(timeout=5)
-            if summary_process.is_alive():
-                summary_process.kill()
-            
-    except Exception as e:
-        print(f"Error waiting for processes: {e}")
-
-    print(f"Joining processes")
-    # all_results, fig_names, results_file_name = results_queue.get()
-    all_results, fig_names, caption_list, results_file_name = results_queue.get()
-    summarize_log_content = log_summary_queue.get()
+    # Run sequentially instead of in parallel
+    all_results, fig_names, caption_list, results_file_name = extract_raw_results(log_file, plans)
+    summarize_log_content = summarize_logging_parallel_threads(log_file)
 
     all_logging.append(f"Here is the visualization of the aggregated results: {fig_names}") 
-    
+
     # if captions were generated, append them to the logging
     if caption_list is not None and len(caption_list) > 0:
         all_logging.append(f"Here are the captions for the figures: \n{caption_list}")
@@ -323,7 +291,7 @@ def generate_report(config, plans):
         system_prompt = file.read() 
 
     messages = [SystemMessage(content=system_prompt),
-               HumanMessage(content=all_logging)]
+                HumanMessage(content=all_logging)]
 
     response = model.query_model_safe(messages)
     report_name = log_file.replace('.log', '.md') 
@@ -332,17 +300,3 @@ def generate_report(config, plans):
         file.write(response.content)
     # print(f"Report saved to {report_name}")
     return report_name, results_file_name
-
-# Parallel versions of functions to use with multiprocessing
-def parallel_extract_raw_results(log_file, plans, queue):
-    result = extract_raw_results(log_file, plans)
-    queue.put(result)
-    
-def parallel_summarize_logging(log_file, queue):
-    result = summarize_logging_parallel_threads(log_file)
-    queue.put(result)
-
-# Add multiprocessing guard to properly support multiprocessing 
-if __name__ == "__main__":
-    mp.set_start_method('spawn', force=True)
- 
