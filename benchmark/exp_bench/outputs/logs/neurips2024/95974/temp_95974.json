@@ -1,0 +1,63 @@
+{
+    "questions": [
+        {
+            "hypothesis": "BeTopNet\u2019s topological formulations significantly improve interactive planning performance over existing planning systems in both hard and general driving scenarios.",
+            "method": "Replicate the interactive planning experiments on the nuPlan dataset using the provided Test14 benchmarks. Set up experiments to evaluate three scenarios: open-loop (OL), closed-loop non-reactive (CL-NR), and reactive simulations. Use the same test splits (Test14-Hard, Test14-Random, and Test14-Inter) as described. Evaluate key metrics such as average planning score, closed-loop simulation improvements, driving progress, and driving compliance. Compare the performance of BeTopNet with baseline methods (including learning-based, rule-based, and hybrid planners) as reported in Tables 2 and 3. Ensure that the simulation environment and evaluation protocol (e.g., non-reactive versus reactive setups) exactly match those described in the paper. Document percentage improvements (e.g., +7.9% in hard cases for planning scores and specific gains in simulation scenarios) to verify the claim.",
+            "expected_outcome": "Experiments should show that BeTopNet achieves a statistically significant improvement, with around +7.9% gain in hard cases and enhanced closed-loop simulation scores (e.g., +6.2% in non-reactive simulations and notable improvements in reactive scenarios) compared to baseline systems, thereby supporting the paper\u2019s claim of superior planning performance.",
+            "subsection_source": "4.1 Main Result"
+        },
+        {
+            "hypothesis": "BeTopNet provides enhanced marginal and joint motion prediction accuracy on the WOMD dataset compared to existing state-of-the-art methods without relying on model ensembles or extra data.",
+            "method": "Implement the marginal and joint prediction experiments using the WOMD dataset as per the leaderboard protocols. For marginal prediction, measure metrics including minADE, minFDE, Miss Rate, mAP, and Soft mAP as described in Table 4. For joint prediction, evaluate using similar metrics with a focus on mAP and Soft mAP, following Table 5. Compare BeTopNet\u2019s performance with baselines such as TestReCoAt, HDGT, MTR/MTR++, MGTR, and recent game-theoretic approaches. Ensure that experimental settings (e.g., data splits, scenario definitions, and evaluation metrics) adhere to those provided in the paper. Record the percentage improvements (e.g., +2.7% to +3.4% improvement in mAP for marginal prediction and gains of +4.1% in mAP for joint prediction) to assess the effectiveness.",
+            "expected_outcome": "Results are expected to show that BeTopNet outperforms all baseline methods in key metrics like mAP, Soft mAP, and minFDE, confirming that the topological formulations coupled with local attention mechanisms provide a robust improvement in both marginal and joint prediction tasks.",
+            "subsection_source": "4.1 Main Result"
+        },
+        {
+            "hypothesis": "Does integrating BeTop as a synergistic objective with existing state-of-the-art (SOTA) planners and predictors improve planning and prediction performance on nuPlan and WOMD benchmarks?",
+            "method": "a) For planning: Replicate the experiments on the nuPlan dataset using two baseline planners (PDM [69] and PlanTF [73]). Use the same hyperparameters and training configurations as in the original experiments to establish baseline planning scores (OLS, CLS-NR, CLS, and average scores). Then, augment each planner with the BeTop objective as described in the paper. Evaluate both versions using the Test14-Random benchmark and compare the planning scores. \n\nb) For prediction: Using the WOMD dataset, replicate the experiments with two baseline predictors (MTR [22] and EDA [53]). Establish baseline metrics (minADE, minFDE, Miss Rate, and mAP) on the validation split. Then, integrate BeTop into each predictor as described. Evaluate the performance changes by comparing the metrics (targeting improvements such as a reduction in error measures and an increase in mAP). Data splits, evaluation metrics, and protocols should match those in the paper to ensure comparability (e.g., using the same 20% partition of the WOMD train set for prediction experiments).",
+            "expected_outcome": "Based on the reported results (Table 6 and Table 7), it is expected that the addition of BeTop will yield improved planning scores (approximately +2.1% and +2.0% improvements for learning-based and rule-based planners, respectively) and better prediction performance (with improvements around +1.1% to +2.4% in mAP and reduced prediction errors).",
+            "subsection_source": "4.2 Ablation Study"
+        },
+        {
+            "hypothesis": "Will varying the number of interactive agents (K) in the topology-guided local attention module affect the prediction mAP, and is there an optimal K beyond which performance degrades?",
+            "method": "Using the WOMD dataset (with the training partition defined in the paper), run a series of experiments by setting the number of future interactive agents (K) to a range of values (for example, starting from a low number and gradually increasing beyond 32). For each value of K, train and evaluate the model while measuring the prediction mAP. Plot the resulting mAP against K to visualize the convergence behavior. The experiment should follow the same training configuration and evaluation protocol as used in the paper, and the results should be compared with the findings presented in Figure 4.",
+            "expected_outcome": "It is expected that increasing K initially leads to a steady improvement in mAP (with a maximum improvement of around +3.7%), but beyond an optimal point (around K=32), performance will deteriorate (with a drop of approximately \u22121.8% in mAP) due to the model falsely accepting non-interactive agents.",
+            "subsection_source": "4.2 Ablation Study"
+        },
+        {
+            "hypothesis": "Do the individual functionalities within BeTopNet (such as branched planning, cost learning, local attention, and encoder modules) each contribute positively to its overall planning performance?",
+            "method": "Perform an ablation study on the nuPlan dataset using the Test14 benchmarks. Replicate the full BeTopNet model and then create several variants by disabling one or more components: (1) No branched planning, (2) No cost learning, (3) Sole BeTop (imitative learning only), (4) No local attention, and (5) Using encoder modules only. For each model variant, measure the planning performance metrics (OLS, CLS-NR, and CLS). Compare the results of each ablation with the full model performance as reported (e.g., reference values in Table 8). Ensure that all other experimental settings (data splits, simulation parameters, horizon lengths) remain constant across experiments.",
+            "expected_outcome": "The full BeTopNet model should exhibit the best overall performance. Ablations are expected to show degradation in metrics: for example, the removal of cost learning may lead to a drop of around \u22122.9% in CLS, while the absence of contingency branching or local attention would similarly lower performance scores. This will verify that each component positively contributes to the model\u2019s performance.",
+            "subsection_source": "4.2 Ablation Study"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Extend the evaluation of BeTopNet\u2019s planning performance to more diverse and dynamic urban driving datasets.",
+            "experiment_design": "Collect or utilize additional urban driving datasets with varying environmental conditions and scenarios. Replicate the interactive planning experiments under similar testing protocols while introducing variations such as adverse weather or unexpected obstacles. Compare performance metrics against the current results to assess the robustness and generalizability of BeTopNet\u2019s planning capabilities.",
+            "subsection_source": "4.1 Main Result"
+        },
+        {
+            "idea": "Investigate the impact of computational resource variations and hyperparameter tuning on the prediction accuracy and planning robustness of BeTopNet.",
+            "experiment_design": "Perform a controlled study where the model is trained and evaluated under different compute resource configurations (e.g., varying GPU/CPU setups, memory limits) and different hyperparameter settings (e.g., learning rate, optimizer type). Analyze the influence of these factors on the key metrics for both planning and prediction tasks. This follow-up work would verify the sensitivity of BeTopNet to system configurations and guide optimal deployment strategies.",
+            "subsection_source": "4.1 Main Result"
+        },
+        {
+            "idea": "Dynamic Selection of Interactive Agents: Investigate if an adaptive mechanism can dynamically select the optimal number of interactive agents (K) during inference rather than using a fixed value.",
+            "experiment_design": "Develop a framework where the model estimates the appropriate K based on scene complexity or interaction level. Train the model on the WOMD dataset with this dynamic module and evaluate performance against the static K baseline. Compare mAP across a range of scenarios and analyze if the dynamic selection improves overall prediction reliability and efficiency.",
+            "subsection_source": "4.2 Ablation Study"
+        },
+        {
+            "idea": "Extended Ablation Study Across Different Scenarios: Examine whether the contributions of individual BeTopNet components vary across diverse driving scenarios (e.g., dense urban vs. suburban conditions).",
+            "experiment_design": "Partition the nuPlan and WOMD datasets into distinct subsets based on scenario characteristics. Perform ablation studies (similar to the current experiment) within each scenario subset. Evaluate planning and prediction metrics for each configuration and analyze if certain components (e.g., cost learning or local attention) are more effective in complex urban scenarios compared to simpler environments.",
+            "subsection_source": "4.2 Ablation Study"
+        }
+    ],
+    "main_takeaways": [
+        "The paper provides a fully reproducible experimental setup with detailed descriptions of compute resources, training/test splits, and hyperparameter configurations, facilitating easy reproduction of results.",
+        "Experimental results are backed by both empirical validations (through official leaderboards and comprehensive figures/tables) and theoretical proofs, ensuring the robustness of the main claims.",
+        "The authors have taken care to report asymmetric error bars correctly and documented the methodology in extensive appendices, enhancing transparency and reproducibility.",
+        "The paper demonstrates that the proposed method achieves competitive performance compared to existing baselines, as evidenced by quantitative results reported in Section 4.1 and supported by detailed experiments.",
+        "Supplementary materials (Appendices B, C, and D) provide additional technical depth, including full analytical proofs and detailed experiment configurations (e.g., compute resources, hyperparameters, and model architecture details)."
+    ]
+}

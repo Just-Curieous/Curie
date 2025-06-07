@@ -1,0 +1,1663 @@
+{
+    "questions": [
+        {
+            "question": "- **Does integrating spatial transcriptomics data with histopathological images (multimodal fine-tuning) improve the correlation with ground truth biomarker expression compared to using histology alone?**",
+            "method": "Design a controlled experiment comparing a histology-only deep learning model with a multimodal model that integrates spatial transcriptomics data. Two pipelines will be developed: one that uses only H&E image patches to predict biomarker expression (e.g., using a patch encoder and aggregation network similar to hist2RNA) and another pipeline that leverages paired H&E images and spatial transcriptomics profiles. In the multimodal pipeline, a pretrained vision transformer (ViT-Base) is further fine-tuned via contrastive learning (e.g., following the CONCH framework) on paired data from, for example, five Xenium invasive breast cancer cases (four ductal and one lobular). Both pipelines will tessellate tissue sections into 256\u00d7256 patches, compress them into patch embeddings, and then aggregate these to form a slide-level representation. The ground truth biomarker expression is derived from the spatial transcriptomics profiles measured on the same tissue samples.\n Detailed experiment setup: \nDatasets: Use a cohort similar to HEST-1k and Xenium invasive breast cancer cases where both H&E images and spatial transcriptomics (ST) data are available. Models: For the histology-only model, use a pretrained patch encoder (e.g., one trained on ImageNet) followed by an attention-based aggregator to predict biomarker levels. For the multimodal model, start from the same image encoder but add a fine-tuning stage using a multimodal contrastive learning framework (such as CONCH). The contrastive learning setup aligns the morphologic features from the image patches with the corresponding gene expression profiles from ST. The experiment should include training both pipelines under similar configurations (same number of training patches, epochs, and hyperparameters where applicable) while ensuring that integration of ST data is the only difference in the multimodal approach. Evaluation: After training, assess each model by computing correlation coefficients (e.g., Pearson\u2019s R) between the model-predicted biomarker expressions and the ground truth measurements drawn from the spatial transcriptomics data. Figures and tables (e.g., Figure 38 which shows correlations such as R=0.47, p<10e-4 for biomarker FOXA1) can be referenced to compare the performance of both approaches.",
+            "expected_outcome": "- Based on the reported improvement in biomarker exploration and the noted correlation (e.g., R = 0.47, p < 10e-4 in Figure 38), it is expected that multimodal integration will yield a stronger correlation with true biomarker expression levels.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "tissue_processing": "Tissue sections are tessellated into 256\u00d7256 patches for both pipelines",
+                    "training_configuration": "Same number of training patches, epochs, and hyperparameters used across both pipelines",
+                    "pretrained_encoder": "Both pipelines start with the same ImageNet-pretrained patch encoder"
+                },
+                "independent_variables": {
+                    "pipeline_type": [
+                        "histology-only",
+                        "multimodal (integrating spatial transcriptomics data with H&E images)"
+                    ],
+                    "fine_tuning_method": [
+                        "No additional fine-tuning beyond standard training (histology-only)",
+                        "Contrastive learning based fine-tuning (e.g. using the CONCH framework)"
+                    ]
+                },
+                "dependent_variables": {
+                    "biomarker_expression_prediction": "Predicted biomarker expression values obtained from the pipeline",
+                    "correlation_performance": "Measured as Pearson\u2019s correlation (e.g., R values such as R = 0.47 and corresponding p-values) between predicted and ground truth spatial transcriptomics biomarker expression"
+                }
+            },
+            "experiment_design_ambiguity": {
+                "ambiguous_variables": {
+                    "cohort_selection": "The exact criteria for selecting a cohort similar to HEST-1k and the Xenium invasive breast cancer cases (e.g., number and subtype distribution) are not fully detailed",
+                    "biomarker_choice": "While biomarkers like FOXA1 and TPD52 are mentioned, it is ambiguous whether these are the only targets or if a wider range of biomarkers is expected to be evaluated",
+                    "contrastive_learning_settings": "The specifics of the contrastive learning fine-tuning (e.g., choice and tuning of hyperparameters for CONCH) are not explicitly defined"
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Provide a detailed definition of the patient/cohort selection criteria and numbers",
+                        "Clarify which biomarkers will be targeted and whether additional biomarker evaluation is intended",
+                        "Specify hyperparameter choices and training regime details for the contrastive learning framework",
+                        "Consider introducing additional variables such as patch size variations or alternative data augmentation schemes"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Pretrained H&E image patch encoder (e.g., ImageNet-pretrained)",
+                    "Spatial transcriptomics integration module",
+                    "Contrastive learning fine-tuning stage (using the CONCH framework)",
+                    "Attention-based aggregator for slide-level representation",
+                    "Tessellation module for generating 256\u00d7256 image patches",
+                    "Evaluation module to compute Pearson correlation coefficients between predicted and ground truth biomarker expression"
+                ],
+                "setup_steps": [
+                    "Collect and select datasets from cohorts similar to HEST-1k and Xenium invasive breast cancer cases with paired H&E images and spatial transcriptomics data",
+                    "Preprocess tissue sections by tessellating them into 256\u00d7256 patches and aligning each patch with its corresponding spatial transcriptomics profile",
+                    "Initialize both pipelines with the same pretrained patch encoder and configure an attention-based aggregation network for slide-level representation",
+                    "Implement two pipelines: one histology-only model and one multimodal model that incorporates contrastive learning fine-tuning (using CONCH) on paired data",
+                    "Train both pipelines under identical conditions (same number of patches, epochs, and hyperparameters) except for the extra contrastive learning stage in the multimodal model",
+                    "Evaluate performance by training a regression model to predict biomarker expression and computing Pearson correlation coefficients (e.g., as referenced in Figure 38)",
+                    "Compile and save results, comparing correlations from the histology-only model and the multimodal model"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset integration",
+                        "description": "Combining heterogeneous data sources (HEST-1k and Xenium) requires careful alignment and preprocessing to synchronize H&E image patches with spatial transcriptomics data."
+                    },
+                    {
+                        "source": "Contrastive learning tuning",
+                        "description": "Implementing and fine-tuning the contrastive learning stage (using the CONCH framework) adds complexity due to hyperparameter selection and the integration of multimodal data."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Cohort selection criteria: Exact numbers, subtype distributions, and inclusion/exclusion principles for patient selection are not fully specified",
+                    "Biomarker selection: It is unclear whether biomarkers like FOXA1 and TPD52 are the only targets or if a wider range will be evaluated",
+                    "Contrastive learning settings: Specific hyperparameter choices and training regime details for the CONCH framework remain under-specified",
+                    "Data alignment: The exact method to align spatial transcriptomics data with H&E image patches is not clearly detailed"
+                ],
+                "ambiguous_setup_steps": [
+                    "Preprocessing of data: The steps to precisely align spatial transcriptomics profiles with image patches need further clarification",
+                    "Contrastive learning fine-tuning: Detailed instructions on hyperparameter tuning, the training regime, and implementation specifics for the multimodal pipeline are not explicitly defined"
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Provide explicit patient/cohort selection criteria, including numbers and subtype distributions",
+                        "Clarify which biomarkers will be targeted and whether evaluation will include additional biomarkers beyond FOXA1 and TPD52",
+                        "Detail the hyperparameter choices and training regime for the contrastive learning fine-tuning stage (e.g., CONCH settings)",
+                        "Include comprehensive preprocessing instructions to clearly describe how spatial transcriptomics data is aligned with H&E image patches"
+                    ]
+                }
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochastic behavior in contrastive fine-tuning and data augmentation",
+                    "description": "Random uncertainty is introduced during stochastic contrastive learning fine-tuning on the paired H&E and spatial transcriptomics data. This includes random initialization, stochastic gradient updates, and possible random patch dropout or other data augmentation techniques. Such randomness may lead to fluctuation in the learned patch embeddings and thus variability in the predicted biomarker expression values (e.g., variations similar to those observed in Figure 38 with R = 0.47, p < 10e-4).",
+                    "impact": "Random variations in training could result in inconsistent convergence between runs, leading to variability in the correlation performance when predicting biomarker expression. This instability might make it challenging to attribute performance gains purely to multimodal integration rather than random noise in the learning process.",
+                    "possible_modifications": [
+                        "Introduce a controlled random patch dropout during training to simulate increased noise and assess model robustness.",
+                        "Systematically vary the random seed for contrastive learning to evaluate the effects of stochastic variability on performance."
+                    ]
+                },
+                "systematic_uncertainty": {
+                    "source": "Dataset bias and one-time preprocessing/alignment modifications",
+                    "description": "Systematic uncertainty may arise from an unrepresentative cohort selection and from potential one-time errors during spatial transcriptomics alignment with H&E patches. For instance, if the cohort (similar to HEST-1k or the Xenium invasive breast cancer cases) is biased toward certain subtypes or if the alignment procedure between the two modalities introduces a consistent error, the resulting performance metrics could be systematically skewed. This is analogous to introducing a systematic bias like labeling based on a fixed character count in sentiment analysis.",
+                    "impact": "The systematic bias could lead to over-optimistic or pessimistic correlations between the predicted biomarker expression and the ground truth, thus misrepresenting the true benefit of multimodal integration over histology-only pipelines.",
+                    "possible_modifications": [
+                        "Explicitly redefine and expand patient/cohort selection criteria by incorporating additional cases with varied subtype distributions to mitigate dataset bias.",
+                        "Retrieve and reprocess a new copy of clean spatial transcriptomics data to ensure that any one-time alignment errors are corrected and systematic bias is minimized."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Replace the pretrained ViT-Base model with a smaller variant (e.g., ViT-Base-mini or ViT-Tiny) to reduce GPU memory usage and overall compute requirements, while still aiming for similar correlation performance on biomarker prediction."
+                    ],
+                    "time_constraints": [
+                        "Reduce the number of training epochs for the contrastive learning fine-tuning stage, thereby decreasing the total training time and evaluating if the multimodal integration still results in improved correlation with ground truth biomarker expression."
+                    ],
+                    "money_constraints": [
+                        "Restrict the experiments to a single GPU setup to lower computational costs, which may also involve scaling down the dataset size or reducing the number of contrastive learning iterations if necessary."
+                    ]
+                }
+            },
+            "source": [
+                "/workspace/src/hest/bench/benchmark.py",
+                "/workspace/bench_config/bench_config.yaml"
+            ],
+            "usage_instructions": "To compare histology-only models with multimodal models that integrate spatial transcriptomics data, follow these steps:\n\n1. First, ensure HEST is properly installed following the README instructions.\n\n2. Request access to the CONCH model weights from Hugging Face (https://huggingface.co/MahmoodLab/CONCH) and install the CONCH package with `pip install git+https://github.com/Mahmoodlab/CONCH.git`.\n\n3. Edit the bench_config.yaml file to include both histology-only and multimodal models:\n   - For histology-only: uncomment 'resnet50' (already included by default)\n   - For multimodal: uncomment 'conch_v1' (which uses contrastive learning with spatial transcriptomics data)\n\n4. Run the benchmark script with the following command:\n   ```\n   python src/hest/bench/benchmark.py --config bench_config/bench_config.yaml\n   ```\n\n5. The script will automatically download the benchmark data, run both models, and output results showing Pearson correlation coefficients between predicted and ground truth biomarker expression. The results will be saved in the directory specified by 'results_dir' in the config file.\n\n6. Compare the Pearson correlation values between the histology-only model (resnet50) and the multimodal model (conch_v1) to determine if integrating spatial transcriptomics data improves correlation with ground truth biomarker expression.\n\nNote: According to the benchmark results in the README, the multimodal CONCH model achieves a higher average Pearson correlation (R=0.3709) compared to the histology-only ResNet50 model (R=0.326), confirming that multimodal fine-tuning does improve correlation with ground truth biomarker expression.",
+            "requirements": [
+                "Step 1: Set up configuration by loading default parameters and overriding them with values from command line arguments, function parameters, or a YAML config file (/workspace/src/hest/bench/benchmark.py:392-428)",
+                "Step 2: Set random seed for reproducibility (/workspace/src/hest/bench/benchmark.py:429)",
+                "Step 3: Download benchmark data and model weights from Hugging Face (/workspace/src/hest/bench/benchmark.py:431-435)",
+                "Step 4: Determine which datasets to use for benchmarking (/workspace/src/hest/bench/benchmark.py:438-446)",
+                "Step 5: Set up directory structure for saving results (/workspace/src/hest/bench/benchmark.py:448-455)",
+                "Step 6: Prepare list of encoders to benchmark, including any custom encoder (/workspace/src/hest/bench/benchmark.py:457-465)",
+                "Step 7: For each dataset and encoder combination, extract embeddings from histology image tiles (/workspace/src/hest/bench/benchmark.py:254-273)",
+                "Step 8: Load gene expression data for each sample (/workspace/src/hest/bench/benchmark.py:280-304)",
+                "Step 9: Optionally perform dimensionality reduction (PCA) on embeddings (/workspace/src/hest/bench/benchmark.py:310-315)",
+                "Step 10: Train regression models to predict gene expression from embeddings (/workspace/src/hest/bench/benchmark.py:318)",
+                "Step 11: Calculate Pearson correlation between predicted and ground truth gene expression (/workspace/src/hest/bench/benchmark.py:318-328)",
+                "Step 12: Aggregate results across multiple folds if k-fold validation is used (/workspace/src/hest/bench/benchmark.py:331-382)",
+                "Step 13: Compile and save results for all datasets and encoders, including average performance metrics (/workspace/src/hest/bench/benchmark.py:120-174)",
+                "Final Step: Return dataset performance metrics and average performance per encoder (/workspace/src/hest/bench/benchmark.py:467-469)"
+            ],
+            "agent_instructions": "Create a benchmarking system to compare histology-only models with multimodal models that integrate spatial transcriptomics data. The system should evaluate how well different models can predict gene expression from histology images.\n\nYour implementation should:\n\n1. Accept configuration parameters through command line arguments or a YAML config file, including:\n   - Paths for benchmark data, model weights, embeddings, and results\n   - List of encoders (models) to benchmark\n   - List of datasets to use\n   - Batch size and number of workers for inference\n   - Optional dimensionality reduction settings\n\n2. Download benchmark data and model weights from Hugging Face\n\n3. For each dataset and encoder combination:\n   - Extract embeddings from histology image tiles using the encoder\n   - Load corresponding gene expression data (ground truth)\n   - Optionally perform dimensionality reduction on embeddings\n   - Train a regression model (ridge regression by default) to predict gene expression from embeddings\n   - Evaluate performance using Pearson correlation between predicted and ground truth gene expression\n\n4. Support k-fold cross-validation and aggregate results across folds\n\n5. Compile and save comprehensive results, including:\n   - Per-gene Pearson correlations\n   - Average correlation per encoder and dataset\n   - Overall ranking of encoders\n\n6. The system should be able to compare histology-only models (like ResNet50) with multimodal models (like CONCH) that integrate spatial transcriptomics data\n\nThe expected output should show that multimodal models achieve higher Pearson correlation with ground truth gene expression compared to histology-only models.",
+            "masked_source": [
+                "/workspace/src/hest/bench/benchmark.py",
+                "/workspace/bench_config/bench_config.yaml"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "tissue_processing": "Tissue sections are tessellated into 256\u00d7256 patches for both pipelines",
+                    "training_configuration": "Same number of training patches, epochs, and hyperparameters used across both pipelines",
+                    "pretrained_encoder": "Both pipelines start with the same ImageNet-pretrained patch encoder"
+                },
+                "independent_variables": {
+                    "pipeline_type": [
+                        "histology-only",
+                        "multimodal (integrating spatial transcriptomics data with H&E images)"
+                    ],
+                    "fine_tuning_method": [
+                        "No additional fine-tuning beyond standard training (histology-only)",
+                        "Contrastive learning based fine-tuning (using the CONCH framework)"
+                    ]
+                },
+                "dependent_variables": {
+                    "biomarker_expression_prediction": "Predicted biomarker expression values obtained from the pipeline",
+                    "correlation_performance": "Measured as Pearson\u2019s correlation between predicted and ground truth spatial transcriptomics biomarker expression"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "cohort_selection": "The exact criteria for selecting a cohort similar to HEST-1k and Xenium invasive breast cancer cases (e.g., numbers, subtype distributions) are not fully detailed",
+                    "biomarker_choice": "It is ambiguous whether biomarkers like FOXA1 and TPD52 are the only targets or if a broader range of biomarkers is intended to be evaluated",
+                    "contrastive_learning_settings": "The hyperparameter choices and specific training details for the contrastive learning fine-tuning (CONCH) are not explicitly defined",
+                    "data_alignment": "The detailed steps to align spatial transcriptomics data with H&E image patches are not clearly specified"
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Provide explicit patient/cohort selection criteria including numbers and subtype distribution details",
+                        "Clarify which biomarkers will be targeted and if additional biomarkers beyond FOXA1 and TPD52 will be evaluated",
+                        "Detail the hyperparameter choices and training regime for the contrastive learning fine-tuning stage",
+                        "Include comprehensive preprocessing instructions to explicitly describe how spatial transcriptomics data are aligned with image patches"
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic behavior in contrastive fine-tuning and data augmentation",
+                "description": "Random uncertainty is introduced during the stochastic contrastive learning fine-tuning on the paired H&E and spatial transcriptomics data. This includes random initialization, stochastic gradient updates, and stochastic data augmentation techniques (such as random patch dropout). Such randomness may lead to inconsistent convergence across runs and fluctuations in the learned patch embeddings, ultimately affecting the predicted biomarker expression correlation (e.g., variations similar to the reported R = 0.47).",
+                "impact": "Variability in training due to these random processes could result in inconsistent performance metrics, making it challenging to attribute observed improvements solely to the integration of spatial transcriptomics data rather than to inherent training noise.",
+                "possible_modifications": [
+                    "Introduce a controlled random patch dropout during training to simulate increased noise and assess model robustness.",
+                    "Systematically vary the random seed for contrastive learning to evaluate the effects of stochastic variability on performance."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset bias and one-time preprocessing/alignment modifications",
+                "description": "Systematic uncertainty may arise from a biased cohort selection (e.g., using a cohort similar to HEST-1k or specific invasive breast cancer cases) or from one-time errors during the spatial transcriptomics alignment with H&E image patches. For instance, if the cohort is unrepresentative or if the alignment procedure introduces consistent errors, the resulting performance metrics (e.g., Pearson correlation coefficients) could be systematically skewed.",
+                "impact": "This systematic bias could lead to over-optimistic or pessimistic correlations between the predicted and ground truth biomarker expression levels, thereby misrepresenting the true benefit of multimodal integration over histology-only pipelines.",
+                "possible_modifications": [
+                    "Explicitly redefine and expand patient/cohort selection criteria by incorporating additional cases with varied subtype distributions to mitigate dataset bias.",
+                    "Retrieve and reprocess a new copy of clean spatial transcriptomics data to ensure that any one-time alignment errors are corrected and systematic bias is minimized."
+                ]
+            }
+        },
+        {
+            "question": "- **Will fine-tuning hyperparameters (e.g., learning rate, number of epochs) lead to a statistically significant improvement in performance on the HEST-Benchmark?**",
+            "method": "Design an experiment in which one takes one or more foundation models pretrained for histology (such as UNIv1.5 or H\u2010Optimus-0) and trains them on the HEST-Benchmark using a controlled grid search over key hyperparameters (e.g., learning rate, number of epochs) in the fine-tuning phase. Two training protocols should be compared: one using the baseline hyperparameters as reported in the paper and one in which the hyperparameters are fine-tuned. The experiment uses the same HEST-1k data splits and image patches for pretraining and applies downstream prediction of gene expression profiles via regression models (using both PCA+Ridge and XGBoost, with details as given in Tables 1, Appendix Table A13, and Appendix Table A14). Each configuration is evaluated using cross-validation across patients to compute performance metrics (Pearson correlation) and their error bars.\n Detailed experiment setup: \n\u2022 Dataset: HEST-Benchmark based on the HEST-1k dataset (with the CSV metadata provided as part of the supplementary material). Data splits should be kept consistent between experiments. \n\u2022 Models: One or more state-of-the-art foundation models (e.g., UNIv1.5 and H-Optimus-0) that have been pretrained on histology images. \n\u2022 Downstream Task: Predicting the 50 most variable gene expressions using patch embeddings via regression models (PCA+Ridge and XGBoost). The XGBoost configuration uses 100 estimators, a learning rate of 0.1, maximum depth of 3, subsampling of 0.8, and default regularization parameters (gamma 0.0, regression alpha 0.0, regression lambda 1.0). The Ridge regression uses a fixed L2 regularization parameter set to lambda = 100/MC (with M as the embedding dimension and C = 50). \n\u2022 Hyperparameter Tuning: For the fine-tuning phase, experiment with a range of learning rates and numbers of epochs. For example, use a grid search over learning rates (e.g., 1e-4, 1e-3, 1e-2) and epochs (e.g., 10, 20, 30) while keeping all other settings constant. \n\u2022 Evaluation: Use cross-validation across patient-wise splits and record the Pearson correlation along with standard deviation/error bars for each configuration. Statistical significance can be assessed with paired tests across the folds. \n\u2022 Reference to Figures: The scaling laws in Figure 2 illustrate how model size and data amount affect performance, suggesting that even logarithmic gains (as with model scaling) can be significant; a similar improvement might be expected from hyperparameter fine-tuning if the training dynamics are optimized further.",
+            "expected_outcome": "- Given that the paper provides detailed training configurations and shows consistent error bars, it is anticipated that an optimized hyperparameter grid search can further boost performance.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "dataset_and_data_splits": "HEST-1k dataset with fixed splits and identical image patches across experiments",
+                    "pretrained_models": "Foundation models such as UNIv1.5 and H\u2010Optimus-0 (using the same pretrained weights as reported in the paper)",
+                    "downstream_regression_configurations": "PCA+Ridge (with fixed L2 regularization parameter computed as lambda = 100/MC) and XGBoost (with 100 estimators, learning rate 0.1, max depth 3, subsampling 0.8, and default regularization parameters as specified)",
+                    "evaluation_metric": "Pearson correlation along with error bars computed via cross-validation"
+                },
+                "independent_variables": {
+                    "hyperparameters": {
+                        "learning_rate": [
+                            "1e-4",
+                            "1e-3",
+                            "1e-2"
+                        ],
+                        "number_of_epochs": [
+                            "10",
+                            "20",
+                            "30"
+                        ]
+                    },
+                    "training_protocol": [
+                        "baseline hyperparameters as reported in the paper",
+                        "fine-tuned hyperparameters via grid search"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Pearson correlation between predicted and measured gene expression and the associated standard deviation (error bars)"
+                }
+            },
+            "experiment_design_ambiguity": {
+                "ambiguous_variables": {
+                    "baseline_hyperparameters": "The exact values for the baseline hyperparameters are referenced from the paper, but may require further clarification for each foundation model used.",
+                    "model_selection": "While examples like UNIv1.5 and H\u2010Optimus-0 are mentioned, it is ambiguous whether other foundation models could be included or how the selection should be standardized.",
+                    "statistical_significance_threshold": "The criteria or threshold for determining a statistically significant improvement (e.g., p-value threshold) is not explicitly stated"
+                },
+                "possible_modifications": {
+                    "hyperparameter_space_extensions": [
+                        "Introduce additional hyperparameters such as batch size or optimizer type",
+                        "Expand the grid search to include more values or different ranges"
+                    ],
+                    "evaluation_modifications": [
+                        "Mask some of the downstream regression details to test robustness or require inference of additional evaluation metrics",
+                        "Introduce new variables such as different cross-validation strategies or alternative performance metrics"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEST-1k dataset with fixed splits and accompanying CSV metadata",
+                    "Pretrained foundation models (e.g., UNIv1.5 and H\u2010Optimus-0 with reported weights)",
+                    "Downstream regression models: PCA+Ridge (with lambda = 100/MC) and XGBoost (with specified settings)",
+                    "Hyperparameter grid search module over learning rates and number of epochs",
+                    "Two training protocols: baseline hyperparameters (from the paper) and fine-tuned hyperparameters",
+                    "Cross-validation framework across patient-wise splits",
+                    "Evaluation pipeline computing Pearson correlation and its error bars",
+                    "Integration of supplementary materials (Appendix Tables, Figures such as Figure 2 for scaling laws)"
+                ],
+                "setup_steps": [
+                    "Load and preprocess the HEST-1k dataset ensuring identical image patches and fixed data splits",
+                    "Load the pretrained foundation models with specified weights",
+                    "Configure downstream regression pipelines for PCA+Ridge and XGBoost using provided configurations",
+                    "Implement a controlled grid search over hyperparameters (learning rate and number of epochs)",
+                    "Set up two training protocols: one with baseline hyperparameters and one with fine-tuned hyperparameters",
+                    "Run cross-validation across patient splits to predict gene expression profiles",
+                    "Compute performance metrics (Pearson correlation) along with error bars",
+                    "Perform paired statistical tests to assess significance of improvements"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Integration of Multimodal Data",
+                        "description": "Coordinating between histology image processing and spatial transcriptomics data setup adds complexity."
+                    },
+                    {
+                        "source": "Downstream Regression Configurations",
+                        "description": "Managing two different regression models (PCA+Ridge and XGBoost) with distinct hyperparameter configurations increases setup intricacies."
+                    },
+                    {
+                        "source": "Supplementary Material Integration",
+                        "description": "Utilizing experimental configurations and evaluation details spread across tables and figures (e.g., Figure 2, Appendix Tables A13 and A14) introduces additional coordination challenges."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Baseline hyperparameters selection: The exact values referenced from the paper are not explicitly listed for each foundation model.",
+                    "Model selection criteria: It is unclear whether only UNIv1.5 and H\u2010Optimus-0 should be used or if additional models can be included based on unspecified criteria.",
+                    "Statistical significance threshold: The p-value or exact criteria for determining a statistically significant improvement is not provided."
+                ],
+                "ambiguous_setup_steps": [
+                    "Details on maintaining fixed data splits and consistent image patch extraction across experiments are not fully outlined.",
+                    "Implementation specifics for integrating the regression pipelines with the hyperparameter grid search are referenced in supplementary materials but lack step-by-step instructions."
+                ],
+                "possible_modifications": {
+                    "hyperparameter_space_extensions": [
+                        "Introduce additional hyperparameters such as batch size, optimizer type, or regularization strength to the grid search.",
+                        "Extend the range and granularity of learning rates and epoch counts to further probe training dynamics."
+                    ],
+                    "evaluation_modifications": [
+                        "Mask or omit explicit downstream regression configuration details (e.g., from Appendix Tables A13 and A14) to test the robustness of result reproduction.",
+                        "Omit precise instructions for computing Pearson correlation and error bars, requiring users to determine alternative evaluation metrics or strategies."
+                    ]
+                }
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochasticity in Training and Hyperparameter Optimization",
+                    "description": "During fine-tuning, random factors inherent to stochastic gradient descent (e.g., random initialization, mini-batch ordering, and dropout if applicable) introduce uncertainty in training outcomes. Although the experiment keeps data splits and regression configurations constant, the grid search over hyperparameters (learning rate and number of epochs) may yield variable results across cross-validation folds. This is evidenced by the need to report error bars (standard deviation across patients) and reflects inherent training randomness.",
+                    "impact": "These random fluctuations can obscure the true effect of hyperparameter tuning and may lead to inconsistent improvements in Pearson correlation metrics. Variability across folds might mask whether observed gains are due to hyperparameter optimization or just random variations in training dynamics.",
+                    "possible_modifications": [
+                        "To better isolate the effect of hyperparameter tuning, introduce controlled seeding for random number generators.",
+                        "Vary the initialization seeds or introduce artificial noise (e.g., random gradient drops) to quantify sensitivity to stochastic training elements.",
+                        "Simulate additional randomness by intentionally perturbing mini-batch compositions to study the robustness of the hyperparameter effects."
+                    ]
+                },
+                "systematic_uncertainty": {
+                    "source": "Biases in Baseline Protocols and Data Splits",
+                    "description": "Systematic uncertainty in this experiment may emerge from the selection of baseline hyperparameters (as reported in the paper) and from the fixed data splits of the HEST-1k dataset. If the initial baseline settings are suboptimal or biased, then comparing them against the fine-tuned versions may lead to consistently skewed performance metrics. This potential bias is also related to how downstream regression details (e.g., PCA+Ridge and XGBoost configurations as detailed in Table 1 and Appendices) are implemented, potentially leading to a systematic over- or under-estimation of performance gains.",
+                    "impact": "A systematic bias in hyperparameter selection or data split strategy could consistently elevate or depress performance measures (e.g., Pearson correlation), thus misrepresenting the impact of fine-tuning. This would lead to erroneous conclusions about the benefits of optimized hyperparameter configurations.",
+                    "possible_modifications": [
+                        "Reassess and validate the baseline hyperparameter values against an independent (or additional) dataset to detect any inherent biases.",
+                        "Implement alternative data splitting or cross-validation strategies to check whether the systematic bias remains consistent across different experimental setups.",
+                        "Mask or omit certain downstream regression details (e.g., from Tables A13 and A14) temporarily to test if the systematic bias in performance persists when evaluation pipelines are modified."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "If compute resources become a bottleneck, restrict experiments to a single mid-range NVIDIA GPU and consider using a smaller variant of the foundation models (e.g., UNIv1.5-mini) to reduce computational demands."
+                    ],
+                    "time_constraints": [
+                        "If available time is limited, narrow the grid search range by testing fewer learning rates or epochs in order to reduce overall training time."
+                    ],
+                    "money_constraints": [
+                        "If operating under a strict budget, utilize cost-effective compute options such as free on-premise resources or cloud credits, which may require further adjustments to the experimental setup."
+                    ]
+                }
+            },
+            "no_answer": "After thoroughly examining the repository, I couldn't find a specific script or set of scripts that directly answer the experiment question about fine-tuning hyperparameters (learning rate, number of epochs) for the HEST-Benchmark. The repository contains a benchmark framework in `/workspace/src/hest/bench/benchmark.py` and a tutorial notebook `/workspace/tutorials/4-Running-HEST-Benchmark.ipynb`, but these are focused on running the benchmark with fixed hyperparameters rather than performing a grid search over hyperparameters. The regression models (Ridge and XGBoost) are implemented in `/workspace/src/hest/bench/trainer.py`, but there's no functionality for systematically varying the learning rate or number of epochs during fine-tuning. While the repository provides the infrastructure to run the HEST-Benchmark, it would require additional code development to implement the hyperparameter tuning experiment described in the question.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset_and_data_splits": "HEST-1k dataset with fixed splits and identical image patches along with accompanying CSV metadata",
+                    "pretrained_models": "Foundation models such as UNIv1.5 and H\u2010Optimus-0 using the same pretrained weights as reported in the paper",
+                    "downstream_regression_configurations": "PCA+Ridge (with fixed L2 regularization parameter computed as lambda = 100/MC) and XGBoost (with 100 estimators, learning rate 0.1, max depth 3, subsampling 0.8, and default regularization parameters)",
+                    "evaluation_metric": "Pearson correlation along with error bars computed via cross-validation across patients"
+                },
+                "independent_variables": {
+                    "hyperparameters": {
+                        "learning_rate": [
+                            "1e-4",
+                            "1e-3",
+                            "1e-2"
+                        ],
+                        "number_of_epochs": [
+                            "10",
+                            "20",
+                            "30"
+                        ]
+                    },
+                    "training_protocol": [
+                        "baseline hyperparameters as reported in the paper",
+                        "fine-tuned hyperparameters via grid search"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Pearson correlation between predicted and measured gene expression values and the associated standard deviation (error bars)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "baseline_hyperparameters": "The exact baseline hyperparameter values are referenced from the paper but not explicitly listed for each foundation model, which might require clarification",
+                    "model_selection": "It is ambiguous whether only the mentioned models (UNIv1.5 and H\u2010Optimus-0) should be used or if additional foundation models can be included based on selection criteria",
+                    "statistical_significance_threshold": "The specific criterion (e.g., p-value threshold) for determining a statistically significant improvement is not explicitly stated"
+                },
+                "possible_modifications": {
+                    "hyperparameter_space_extensions": [
+                        "Introduce additional hyperparameters such as batch size, optimizer type, or regularization strength to expand the grid search",
+                        "Extend the range of learning rates or number of epochs beyond the current grid values"
+                    ],
+                    "evaluation_modifications": [
+                        "Omit or mask detailed downstream regression configurations (e.g., specifics from Tables A13 and A14) to test if the evaluation can be inferred by the agent",
+                        "Alter the explicit instructions for calculating Pearson correlation and its error bars to require the inference of alternative evaluation metrics or strategies"
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochasticity in Training and Hyperparameter Optimization",
+                "description": "During the fine-tuning phase, random factors inherent to stochastic gradient descent\u2014such as random initialization, mini-batch ordering, and potential dropout (if applicable)\u2014introduce uncertainty. This randomness is evidenced by the error bars (standard deviation across patients) in the Pearson correlation metric, as observed in the HEST-Benchmark results. These fluctuations may obscure the true effect of the hyperparameter grid search, making it difficult to distinguish improvements due solely to optimized hyperparameters from those due to training randomness.",
+                "impact": "Leads to variability in the prediction accuracy and Pearson correlation values across cross-validation folds. Inconsistent fluctuations can mask whether improvements are truly statistically significant or merely artifacts of random variation in training dynamics.",
+                "possible_modifications": [
+                    "Introduce controlled seeding for all random number generators to reduce the effects of randomness.",
+                    "Simulate additional noise by intentionally perturbing mini-batch compositions or random initialization to quantify the sensitivity of hyperparameter tuning outcomes.",
+                    "Conduct repeated experiments with different random seeds to better characterize the variability and robustly estimate error bars."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases in Baseline Protocols and Data Splits",
+                "description": "Systematic uncertainty arises from the use of baseline hyperparameters (as reported in the paper) and fixed data splits from the HEST-1k dataset. If the initial baseline settings or data splits are biased, then comparing them against the fine-tuned configurations may consistently skew performance measures. Moreover, the downstream regression configurations (PCA+Ridge and XGBoost) based on fixed settings can further contribute to a systematic over- or under-estimation of performance improvements.",
+                "impact": "Could lead to persistent bias in performance metrics such as the Pearson correlation, misleading the assessment of whether hyperparameter fine-tuning is statistically beneficial. Consistent systematic errors may result in overestimating or underestimating the true impact of optimized training protocols.",
+                "possible_modifications": [
+                    "Reassess and validate baseline hyperparameters against an independent or additional dataset to detect inherent biases.",
+                    "Implement alternative data splitting or cross-validation strategies to ensure that performance gains are not an artifact of a particular fixed split.",
+                    "Temporarily modify or mask certain downstream regression configurations (e.g., PCA+Ridge or XGBoost settings) to evaluate if the systematic bias in performance persists when evaluation details are altered."
+                ]
+            }
+        },
+        {
+            "question": "- **Does the proposed HEST pipeline outperform existing single-modality solutions in predicting biomarker expression under comparable configurations?**",
+            "method": "Design an experiment that compares the HEST pipeline to a baseline single\u2010modality solution. The experiment involves training regression models to predict biomarker expression from histology patch embeddings. Two types of regression models (XGBoost and Ridge regression) are used for both pipelines. The HEST pipeline integrates multimodal data (H&E imagery with corresponding spatial transcriptomics) into unified HEST objects, while the baseline uses only the histological image features. Both pipelines are run under comparable configurations using the HEST-1k dataset, which aggregates spatial gene expression and histology data from public repositories.\n Detailed experiment setup: \n\u2022 Dataset: Use the publicly available HEST-1k dataset, which collects spatial transcriptomics data and matching H&E images standardized into HEST objects. \n\u2022 Data Preparation: Extract patch embeddings from the H&E images using foundation models (e.g., DINOv2 ViT variants). For the HEST pipeline, these embeddings are linked with the log1p-normalized expression levels of the top 50 most variable genes. \n\u2022 Models: Train two regression models \u2013 (1) XGBoost with 100 estimators, a learning rate of 0.1, maximum depth 3, 0.8 subsampling, and default gamma, alpha, and lambda settings, and (2) a Ridge regression model with an L2 regularization coefficient set to 100/(M\u00b7C) (with M being the embedding dimension and C = 50 targets). \n\u2022 Experimental Procedure: \n   - For both the HEST pipeline (integrated modality) and the baseline single-modality solution (using only H&E features), train the regression models on the same training folds. \n   - Evaluate using cross-validation (e.g., patient or fold splits) and use the Pearson correlation coefficient between predicted and measured biomarker expression (such as TPD52) as the evaluation metric. \n\u2022 Benchmarking: Refer to HEST-Benchmark experiments where similar setups have been used and compare performance across tasks. Additional details on model configurations and comparisons (e.g., Table A12 and Appendix C.3) provide complementary evidence. Figures such as Figure 38 (which shows a significant correlation between morphological metrics and gene expression, R = 0.47, p < 10e-4) further demonstrate the link between tissue morphology and gene expression.",
+            "expected_outcome": "- The paper\u2019s dedicated sections on HEST for biomarker exploration and multimodal fine-tuning suggest that the proposed solution is expected to outperform traditional, single-modality pipelines.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "dataset": "HEST-1k dataset (publicly available and used for both pipelines)",
+                    "data_preparation": "Extraction of patch embeddings from H&E images via foundation models (e.g., DINOv2 ViT variants)",
+                    "evaluation_metric": "Pearson correlation coefficient between predicted and measured biomarker (e.g., TPD52) expression"
+                },
+                "independent_variables": {
+                    "pipeline": [
+                        "HEST pipeline (multimodal integration of H&E imagery with spatial transcriptomics data)",
+                        "Baseline pipeline (single-modality using only H&E features)"
+                    ],
+                    "regression_model": [
+                        "XGBoost (100 estimators, learning rate 0.1, max depth 3, subsampling 0.8, default gamma/alpha/lambda)",
+                        "Ridge Regression (L2 regularization coefficient set as 100/(M*C))"
+                    ]
+                },
+                "dependent_variables": {
+                    "prediction_performance": "Measured as the Pearson correlation between predicted and observed gene expression"
+                }
+            },
+            "experiment_design_ambiguity": {
+                "ambiguous_variables": {
+                    "multimodal_integration_details": "The precise method of combining H&E image features with spatial transcriptomics into unified HEST objects is not fully detailed.",
+                    "hyperparameter_tuning_process": "Although default hyperparameters are provided for XGBoost and Ridge regression, the process for parameter selection and potential tuning is not explicitly described.",
+                    "foundation_model_variants": "The specific DINOv2 ViT variant(s) to be used for patch embedding extraction (e.g., ViT-Large, ViT-giant, etc.) remain ambiguous."
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional regression models (e.g., neural network-based regressors) as alternative independent variable values."
+                    ],
+                    "modification_2": [
+                        "Provide a detailed hyperparameter tuning protocol to clarify selection criteria and reduce ambiguity in model configuration."
+                    ],
+                    "modification_3": [
+                        "Add more evaluation metrics, such as RMSE or MAE, to complement the Pearson correlation and provide a more comprehensive performance analysis."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEST-1k dataset (spatial transcriptomics data paired with H&E images)",
+                    "Patch embedding extraction using foundation models (e.g., DINOv2 ViT variants)",
+                    "Multimodal integration mechanism (combining H&E image features with spatial transcriptomics data into unified HEST objects)",
+                    "Regression models (XGBoost and Ridge Regression) for biomarker prediction",
+                    "Evaluation framework (cross-validation and Pearson correlation coefficient)",
+                    "Benchmarking references (HEST-Benchmark, Table A12, Appendix C.3, Figure 38)"
+                ],
+                "setup_steps": [
+                    "Obtain the publicly available HEST-1k dataset and prepare the data",
+                    "Extract patch embeddings from H&E images using a chosen DINOv2 ViT variant",
+                    "For the HEST pipeline, integrate the extracted embeddings with log1p-normalized expression levels for the top 50 highly variable genes",
+                    "For the baseline pipeline, use only the H&E image features (patch embeddings)",
+                    "Train the regression models (XGBoost with specified hyperparameters and Ridge Regression with L2 regularization coefficient 100/(M\u00b7C)) on the same training folds",
+                    "Perform cross-validation (e.g., patient or fold splits) to evaluate performance",
+                    "Compute the Pearson correlation coefficient between predicted and measured biomarker (e.g., TPD52) expression",
+                    "Compare and benchmark the performance of the multimodal HEST pipeline with the single-modality baseline"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Data Integration",
+                        "description": "Integrating two modalities (H&E imagery and spatial transcriptomics) requires careful alignment and preprocessing, adding complexity to data handling."
+                    },
+                    {
+                        "source": "Hyperparameter Settings",
+                        "description": "Establishing a robust protocol for selecting and tuning hyperparameters for the regression models adds complexity."
+                    },
+                    {
+                        "source": "Cross-Validation Scheme",
+                        "description": "Implementing fair patient- or fold-level splits, particularly with varying sample counts across tissues, increases the complexity of the experimental design."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Multimodal Integration Details: The exact method for combining H&E image features with spatial transcriptomics data into unified HEST objects is not fully detailed",
+                    "Foundation Model Variant Selection: The specific DINOv2 ViT variant to be used for patch embedding extraction remains ambiguous"
+                ],
+                "ambiguous_setup_steps": [
+                    "Hyperparameter Tuning Process: While default parameters are provided, the protocol for tuning and validating model hyperparameters is not explicitly described",
+                    "Data Linking Process: The procedure for matching patch embeddings with the corresponding gene expression data is not detailed"
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional regression models (e.g., neural network-based regressors) as alternative methods for comparison"
+                    ],
+                    "modification_2": [
+                        "Provide a detailed hyperparameter tuning protocol to clarify selection criteria and reduce ambiguity in model configuration"
+                    ],
+                    "modification_3": [
+                        "Add more evaluation metrics, such as RMSE or MAE, to complement the Pearson correlation coefficient for a more comprehensive performance analysis"
+                    ]
+                }
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochasticity in Model Training and Data Splitting",
+                    "description": "Variations introduced by the randomness in cross-validation splits, random seed initialization in regression models (including stochastic processes within XGBoost and Ridge Regression), and any non-deterministic operations in the foundation models cause fluctuations in the Pearson correlation scores across experiments. The reported standard deviations (e.g., \u00b10.0174, \u00b10.0516) in the HEST-Benchmark results exemplify these random effects.",
+                    "impact": "These stochastic factors lead to unpredictable variations in biomarker prediction performance, making it harder to consistently assess the true advantage of the HEST pipeline over the single\u2010modality baseline.",
+                    "possible_modifications": [
+                        "Perform experiments using multiple random seeds to better quantify the variance and average out random fluctuations.",
+                        "Introduce controlled random noise (e.g., similar to randomly dropping tokens or adding dropout layers) to assess robustness and potentially reduce sensitivity to stochastic training behaviors.",
+                        "Increase the number of cross-validation folds to obtain more stable performance estimates."
+                    ]
+                },
+                "systematic_uncertainty": {
+                    "source": "Data Integration and Preprocessing Bias",
+                    "description": "Systematic uncertainty may arise from the inherent biases in integrating multimodal data from the HEST-1k dataset. Ambiguities in the exact method of linking H&E image patch embeddings with spatial transcriptomics data (such as the alignment process and the choice of foundation model variant) can introduce a persistent bias. Additionally, any pre-conditioning of the dataset (e.g., variations in tissue processing across samples) could skew the results consistently in one direction.",
+                    "impact": "This bias may lead to consistent over- or under-estimation of biomarker expression predictions, affecting the comparability between the HEST pipeline and the single-modality approach and potentially misrepresenting the efficacy of multimodal integration.",
+                    "possible_modifications": [
+                        "Retrieve and validate a new, clean copy of the dataset where alignment between modalities is carefully controlled.",
+                        "Establish a detailed and standardized hyperparameter tuning protocol and data linking process to reduce integration-related biases.",
+                        "Augment the study with additional evaluation metrics (e.g., RMSE, MAE) to complement the Pearson correlation, which may help in diagnosing systematic deviations."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict the foundation model to a smaller variant (e.g., a smaller DINOv2 ViT variant) to assess if similar biomarker prediction performance can be maintained under reduced computational resources."
+                    ],
+                    "time_constraints": [
+                        "Reduce the number of cross-validation folds (e.g., from 5-fold to 3-fold) to limit training time and expedite iterative experiments."
+                    ],
+                    "money_constraints": [
+                        "Limit compute expenditure by running the experiments solely on in-house GPU resources rather than on higher-cost cloud infrastructures."
+                    ]
+                }
+            },
+            "source": [
+                "/workspace/src/hest/bench/benchmark.py",
+                "/workspace/src/hest/bench/trainer.py"
+            ],
+            "usage_instructions": "To compare the HEST pipeline (multimodal) with single-modality solutions using XGBoost and Ridge regression:\n\n1. First, modify the bench_config.yaml file to specify:\n   - Set 'method' to either 'ridge' or 'xgboost' to select the regression model\n   - Uncomment the datasets you want to evaluate (e.g., 'IDC', 'PRAD', etc.)\n   - Uncomment the encoders you want to use for feature extraction\n\n2. Run the benchmark script with the modified config:\n   ```\n   python /workspace/src/hest/bench/benchmark.py --config /workspace/bench_config/bench_config.yaml\n   ```\n\n3. To compare multimodal vs. single-modality approaches, run the benchmark twice:\n   - First with the standard HEST pipeline (which integrates H&E imagery with spatial transcriptomics)\n   - Then with only the H&E features (by using only image embeddings without the spatial transcriptomics data)\n\n4. The results will be saved in the directory specified by 'results_dir' in the config file, with Pearson correlation coefficients between predicted and measured biomarker expression as the evaluation metric.",
+            "requirements": [
+                "Step 1: Parse command line arguments and configuration from YAML file, with a priority system where CLI args override kwargs, which override config file values, which override defaults (/workspace/src/hest/bench/benchmark.py:392-427)",
+                "Step 2: Set up the environment by downloading necessary benchmark data and model weights from HuggingFace (/workspace/src/hest/bench/benchmark.py:431-435)",
+                "Step 3: Determine which datasets to use for benchmarking, either from configuration or by listing all available datasets (/workspace/src/hest/bench/benchmark.py:438-446)",
+                "Step 4: Create a directory structure for saving results (/workspace/src/hest/bench/benchmark.py:448-455)",
+                "Step 5: For each dataset and encoder combination, extract embeddings from H&E image tiles using the specified encoder (/workspace/src/hest/bench/benchmark.py:120-147, 245-273)",
+                "Step 6: Load gene expression data from spatial transcriptomics files, matching barcodes with the image embeddings (/workspace/src/hest/bench/benchmark.py:280-304)",
+                "Step 7: Optionally perform dimensionality reduction (PCA) on the embeddings (/workspace/src/hest/bench/benchmark.py:310-315)",
+                "Step 8: Train a regression model (Ridge, XGBoost, or RandomForest) to predict gene expression from image embeddings (/workspace/src/hest/bench/trainer.py:7-57)",
+                "Step 9: Evaluate the model using Pearson correlation between predicted and actual gene expression values (/workspace/src/hest/bench/trainer.py:61-84)",
+                "Step 10: Calculate and aggregate performance metrics across genes and splits (/workspace/src/hest/bench/trainer.py:87-102, /workspace/src/hest/bench/benchmark.py:331-352)",
+                "Step 11: Save results to JSON and CSV files for analysis (/workspace/src/hest/bench/benchmark.py:139-172, 323-327)"
+            ],
+            "agent_instructions": "Create a benchmarking system to compare different regression models (Ridge, XGBoost, RandomForest) for predicting gene expression from histology images. The system should:\n\n1. Accept configuration via command line arguments or a YAML file, with parameters for datasets, encoders, regression method, and other settings.\n\n2. Download necessary benchmark data and model weights automatically.\n\n3. For each dataset and encoder combination:\n   - Extract embeddings from H&E image tiles using the specified encoder\n   - Load gene expression data from spatial transcriptomics files\n   - Match the spatial transcriptomics data with the image embeddings using barcodes\n   - Optionally perform dimensionality reduction (PCA) on the embeddings\n   - Train a regression model to predict gene expression from image embeddings\n   - Evaluate using Pearson correlation between predicted and actual gene expression\n\n4. Support k-fold cross-validation by running predictions on multiple train/test splits.\n\n5. Aggregate results across genes and splits, calculating mean and standard deviation of Pearson correlations.\n\n6. Save comprehensive results to JSON and CSV files for analysis.\n\nThe system should support comparing multimodal approaches (using both H&E imagery and spatial transcriptomics) with single-modality approaches (using only H&E features).",
+            "masked_source": [
+                "/workspace/src/hest/bench/benchmark.py",
+                "/workspace/src/hest/bench/trainer.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "HEST-1k dataset (publicly available and used for both pipelines)",
+                    "data_preparation": "Extraction of patch embeddings from H&E images using foundation models (e.g., DINOv2 ViT variants)",
+                    "evaluation_metric": "Pearson correlation coefficient between predicted and measured biomarker expression"
+                },
+                "independent_variables": {
+                    "pipeline": [
+                        "HEST pipeline (multimodal integration of H&E imagery with spatial transcriptomics data)",
+                        "Baseline pipeline (single-modality using only H&E features)"
+                    ],
+                    "regression_model": [
+                        "XGBoost (100 estimators, learning rate 0.1, maximum depth 3, subsampling 0.8, with default gamma/alpha/lambda)",
+                        "Ridge Regression (with L2 regularization coefficient set as 100/(M\u00b7C))"
+                    ]
+                },
+                "dependent_variables": {
+                    "prediction_performance": "Measured as the Pearson correlation between predicted and observed biomarker expression"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "multimodal_integration_details": "The exact method for combining H&E image features with spatial transcriptomics data into unified HEST objects is not fully detailed",
+                    "hyperparameter_tuning_process": "The process for selecting and tuning hyperparameters for the regression models is not explicitly described",
+                    "foundation_model_variant": "The specific DINOv2 ViT variant to be used for extracting patch embeddings remains ambiguous"
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional regression models (e.g., neural network-based regressors) as alternative independent variable values"
+                    ],
+                    "modification_2": [
+                        "Provide a detailed hyperparameter tuning protocol to clarify selection criteria and reduce ambiguity in model configuration"
+                    ],
+                    "modification_3": [
+                        "Add more evaluation metrics, such as RMSE or MAE, to complement Pearson correlation and offer a more comprehensive performance analysis"
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochasticity in Model Training and Data Splitting",
+                "description": "The experiment involves training regression models (XGBoost and Ridge Regression) where inherent randomness such as random seed initialization, variations in cross-validation splits, and non-deterministic processes in the foundation models (e.g., DINOv2 ViT) introduce fluctuations. The reported standard deviations in the HEST-Benchmark (e.g., \u00b10.0174, \u00b10.0516) are concrete examples of such random effects.",
+                "impact": "These stochastic factors lead to unpredictable variations in the Pearson correlation scores used for evaluating biomarker predictions. This instability may hinder a consistent assessment of the HEST pipeline's true performance compared to the single\u2010modality baseline.",
+                "possible_modifications": [
+                    "Perform experiments using multiple random seeds to better quantify variance and average out fluctuations.",
+                    "Increase the number of cross-validation folds to obtain more robust performance estimates.",
+                    "Introduce controlled random perturbations (e.g., adding dropout layers or controlled noise) to evaluate and potentially reduce the sensitivity to random training behaviors."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Data Integration and Preprocessing Bias",
+                "description": "Systematic uncertainty arises from inherent biases during the integration of multimodal data in the HEST pipeline. Ambiguities in the method of linking H&E image patch embeddings with spatial transcriptomics data (e.g., the choice of alignment process and foundation model variant) as well as any variations in tissue processing across samples may consistently skew the experimental outcomes.",
+                "impact": "This bias can lead to persistent over- or under-estimation of biomarker expression, thereby affecting the performance comparisons between the multimodal HEST pipeline and the single-modality pipeline. It may misrepresent the efficacy of multimodal integration in biomarker prediction.",
+                "possible_modifications": [
+                    "Retrieve and validate a clean copy of the dataset with standardized preprocessing to better control the integration process.",
+                    "Establish a detailed hyperparameter tuning protocol and a clear data linking process to reduce biases in the multimodal integration.",
+                    "Augment the evaluation by incorporating additional metrics such as RMSE or MAE to complement Pearson correlation and diagnose systematic deviations."
+                ]
+            }
+        },
+        {
+            "question": "- **Does the reproducibility evaluation via cross-validation across patients yield stable error bars indicating robust model performance?**",
+            "method": "Perform a patient-stratified k-fold cross-validation experiment using the HEST-Benchmark. In this design, each patient is assigned to a separate fold (or in the ccRCC task, folds are merged into k/2 splits due to a large number of patients) to avoid data leakage. For each fold, extract 112\u00d7112 \u00b5m H&E patches (224\u00d7224 pixels at 20\u00d7) and compute patch embeddings using a specific foundation model. Then, train regression models (such as XGBoost with 100 estimators and Ridge regression with a fixed L2 regularization coefficient) to predict the log1p-normalized expression levels of the top 50 most variable genes.\n Detailed experiment setup: \nThe experiment uses the HEST-Benchmark dataset along with 11 foundation models for pathology. The key components of the experimental setup include: (i) using patient-stratified splits to ensure no train/test leakage, where each patient corresponds to one fold (or using k/2 folds in the ccRCC task), (ii) extracting patch embeddings and mapping these via regression models (with hyperparameters as specified in the paper and detailed in Appendix Table A11), and (iii) evaluating prediction performance using the Pearson correlation between predicted and measured gene expression. Error bars (computed as the standard deviation across all cross-validation folds) are reported to quantify variability of the performance, ensuring that each fold is treated as an independent test of the model. All experiments are executed on a single NVIDIA 3090 GPU, with complete training details provided in the paper.",
+            "expected_outcome": "- Since the paper reports error bars computed from cross-validation across all patients, it is expected that the variation is minimal and the model performance is robust against patient heterogeneity.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "dataset_and_patch_parameters": "HEST-Benchmark dataset; patch extraction fixed at 112\u00d7112 \u00b5m regions (224\u00d7224 pixels at 20\u00d7 magnification)",
+                    "evaluation_parameters": "Use of Pearson correlation and error bars (standard deviation over folds) for performance measurement",
+                    "compute_resources": "Execution on a single NVIDIA 3090 GPU"
+                },
+                "independent_variables": {
+                    "foundation_model": "11 different foundation models for pathology (e.g., ResNet50 pre-trained on ImageNet, CTransPath, Remedis, Phikon, UNI, CONCH, GigaPath, Virchow, Virchow 2, H-Optimus-0, UNIv1.5)",
+                    "regression_model": [
+                        "XGBoost with 100 estimators",
+                        "Ridge regression with fixed L2 regularization coefficient"
+                    ],
+                    "cross_validation_scheme": [
+                        "Patient-stratified k-fold cross-validation",
+                        "Patient-stratified k/2-fold split for ccRCC task"
+                    ]
+                },
+                "dependent_variables": {
+                    "prediction_performance": "Measured as the Pearson correlation between predicted and measured log1p-normalized expression levels of the top 50 most variable genes",
+                    "error_bars": "Standard deviation across all cross-validation folds indicating variability in performance"
+                }
+            },
+            "experiment_design_ambiguity": {
+                "ambiguous_variables": {
+                    "ccRCC_split_method": "The exact criteria for merging patients into k/2 folds in the ccRCC task is not fully detailed, potentially affecting reproducibility.",
+                    "regression_hyperparameters": "While basic settings (e.g., 100 estimators for XGBoost, fixed L2 for Ridge) are mentioned, finer hyperparameter details and selection criteria are referenced to Appendix Table A11, which may not be fully clear.",
+                    "foundation_model_details": "The specific preprocessing and embedding extraction pipeline for each foundation model might vary and is not exhaustively detailed."
+                },
+                "possible_modifications": {
+                    "modification_ccRCC": [
+                        "Mask or vary the criteria for merging cross-validation folds in the ccRCC task to study its effect on error bars."
+                    ],
+                    "modification_regression": [
+                        "Introduce additional regression models or vary hyperparameter tuning strategies to explore sensitivity in predicting gene expression."
+                    ],
+                    "modification_embedding": [
+                        "Experiment with alternative patch extraction sizes or different embedding extraction methods to examine their impact on model performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEST-Benchmark dataset",
+                    "Patch extraction module (112\u00d7112 \u00b5m regions / 224\u00d7224 pixels at 20\u00d7 magnification)",
+                    "Patient-stratified cross-validation framework (k-fold; k/2-fold merge for ccRCC)",
+                    "11 Foundation models for pathology (e.g., ResNet50, CTransPath, Remedis, Phikon, UNI, CONCH, GigaPath, Virchow, Virchow 2, H-Optimus-0, UNIv1.5)",
+                    "Regression models (XGBoost with 100 estimators; Ridge regression with fixed L2 regularization)",
+                    "Performance evaluation module (Pearson correlation computation and error bar reporting)",
+                    "Computing infrastructure (execution on a single NVIDIA 3090 GPU)"
+                ],
+                "setup_steps": [
+                    "Prepare the HEST-Benchmark dataset and ensure data is formatted correctly including metadata for patch specifications",
+                    "Extract 112\u00d7112 \u00b5m H&E patches (corresponding to 224\u00d7224 pixels at 20\u00d7 magnification)",
+                    "Compute patch embeddings using each of the specified foundation models",
+                    "Set up patient-stratified splitting: assign each patient to a fold to prevent train/test leakage (with special merging into k/2 folds for ccRCC)",
+                    "Load corresponding gene expression data and match it to the extracted embeddings",
+                    "Configure and train regression models with hyperparameters as referenced (e.g., details in Appendix Table A11)",
+                    "Evaluate performance using Pearson correlation and compute error bars as the standard deviation across folds",
+                    "Save and aggregate results in specified formats (JSON, CSV) for further analysis"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Data Preparation and Patch Extraction",
+                        "description": "Ensuring correct extraction of patch sizes and matching with spatial transcriptomics data increases processing complexity."
+                    },
+                    {
+                        "source": "Cross-Validation Strategy",
+                        "description": "Implementing patient-stratified splits and merging folds for the ccRCC task (k/2-fold) introduces extra steps and potential pitfalls."
+                    },
+                    {
+                        "source": "Foundation Model Integration",
+                        "description": "Handling differences in preprocessing and embedding extraction pipelines across 11 diverse foundation models may require customized tuning."
+                    },
+                    {
+                        "source": "Hyperparameter Tuning References",
+                        "description": "Reliance on Appendix Table A11 for detailed hyperparameter settings can complicate reproducibility if those details are not fully transparent."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "ccRCC cross-validation merging criteria: The exact method for merging patients into k/2 folds is not fully detailed.",
+                    "Regression hyperparameters: Fine details and selection criteria are only referenced to Appendix Table A11, leaving ambiguity in the exact configuration.",
+                    "Foundation model preprocessing pipelines: Specific steps for embedding extraction from each foundation model are not exhaustively described."
+                ],
+                "ambiguous_setup_steps": [
+                    "Implementation of patient-stratified splits: The procedure, especially when merging folds for the ccRCC task, lacks a step-by-step explanation.",
+                    "Hyperparameter configuration: The process to select or fine-tune the regression model parameters is not clearly outlined."
+                ],
+                "possible_modifications": {
+                    "modification_ccRCC": [
+                        "Mask or vary the criteria for merging cross-validation folds in the ccRCC task to study its effect on error bars and model robustness."
+                    ],
+                    "modification_regression": [
+                        "Introduce additional regression models or experiment with different hyperparameter tuning strategies to explore sensitivity in gene expression prediction."
+                    ],
+                    "modification_embedding": [
+                        "Experiment with alternative patch extraction sizes or adjust the embedding extraction process to assess their impact on downstream performance."
+                    ]
+                }
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability from patient-stratified cross\u2010validation splits and inherent randomness in regression model training (e.g., random initialization in XGBoost and potential instability if uncontrolled random token or patch perturbations occur).",
+                    "description": "Since each patient is assigned to a fold and some tasks (such as random token dropping for reducing pre-training costs) can introduce unplanned noise during gradient updates, there is a possibility of random fluctuations in the computed Pearson correlations across folds. For instance, slight variations in patch extraction or regression model convergence can yield variability in error bars reported as standard deviation across folds. Figures and tables (e.g., the error bar reporting mechanism and detailed setup in Appendix Table A11) highlight this variability.",
+                    "impact": "This randomness may lead to inconsistent estimates of prediction performance, thereby affecting the robustness assessment of gene expression prediction. Variability between folds could mask or inflate the actual performance differences across foundation and regression models.",
+                    "possible_modifications": [
+                        "Fix the random seeds for cross-validation splits and model initialization to limit randomness.",
+                        "Perform additional repetitions of the experiment to average out stochastic effects and obtain tighter error bars.",
+                        "Eliminate or control any intentional random perturbations (e.g., avoid dropping random tokens in pre-processing) to reduce gradient instabilities."
+                    ]
+                },
+                "systematic_uncertainty": {
+                    "source": "Consistent biases introduced by the experimental design and data handling, such as the ambiguous merging criteria for ccRCC folds and variable preprocessing pipelines for different foundation models.",
+                    "description": "There is potential systematic bias in the way patient splits are merged (using k/2-fold for ccRCC tasks) and how hyperparameters are set (as referenced in Appendix Table A11), which could lead to a predictable but undesired shift in performance metrics. Differences in how patch embeddings are extracted from the 11 foundation models might also introduce a systematic error if not uniformly managed. This issue is compounded by any undisclosed variations in the preprocessing steps across models.",
+                    "impact": "Such bias would consistently skew the evaluation outcomes, compromising the reproducibility of the predicted gene expression levels and potentially inflating or deflating the model's robustness as measured by the error bars. This may render cross-validation error bars misleading if the bias is not addressed.",
+                    "possible_modifications": [
+                        "Standardize the preprocessing pipeline for all foundation models to ensure uniform embedding extraction.",
+                        "Refine and document the criteria for merging folds in the ccRCC task, or retrieve a clean, unbiased dataset copy if necessary.",
+                        "Incorporate additional cross-dataset or ablation studies to validate that regression hyperparameters and fold merging do not introduce systematic bias."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Consider evaluating a smaller variant of one of the foundation models (e.g., using a reduced version similar to GPT-4o-mini) to test if comparable accuracy can be achieved with lower computational demands."
+                    ],
+                    "time_constraints": [
+                        "Tighten the cross-validation protocol (e.g., reducing the number of folds) or optimize the patch extraction process to mimic a stricter time allocation, thereby assessing the impact on error bar stability."
+                    ],
+                    "money_constraints": [
+                        "Limit the number of foundation models or regression models evaluated to lower computational expenses, thereby testing if similar performance robustness can be maintained with reduced financial resources."
+                    ]
+                }
+            },
+            "source": [
+                "/workspace/src/hest/bench/benchmark.py",
+                "/workspace/bench_config/bench_config.yaml"
+            ],
+            "usage_instructions": "1. Ensure HEST is properly installed following the instructions in the README.md. 2. Configure the benchmark by editing the bench_config.yaml file to select the foundation models you want to evaluate (uncomment the desired models in the 'encoders' list) and the datasets to use (uncomment the desired datasets in the 'datasets' list). 3. Run the benchmark using the command: `python /workspace/src/hest/bench/benchmark.py --config /workspace/bench_config/bench_config.yaml`. 4. The benchmark will automatically perform patient-stratified k-fold cross-validation (or k/2-fold for ccRCC) and report error bars as standard deviation across folds. 5. Results will be saved in the directory specified by 'results_dir' in the config file, including Pearson correlations and error bars for each gene and model.",
+            "requirements": [
+                "Step 1: Parse command line arguments and load configuration from YAML file, with priority given to CLI args, then kwargs, then config file (/workspace/src/hest/bench/benchmark.py:392-427)",
+                "Step 2: Set random seed for reproducibility (/workspace/src/hest/bench/benchmark.py:429)",
+                "Step 3: Download foundation model weights and benchmark datasets from HuggingFace Hub (/workspace/src/hest/bench/benchmark.py:431-435)",
+                "Step 4: Set up device (CUDA if available, otherwise CPU) (/workspace/src/hest/bench/benchmark.py:441)",
+                "Step 5: Create directory structure for saving results (/workspace/src/hest/bench/benchmark.py:448-455)",
+                "Step 6: For each dataset and encoder combination, extract embeddings from tissue patches (/workspace/src/hest/bench/benchmark.py:467, /workspace/src/hest/bench/benchmark.py:244-273)",
+                "Step 7: Load gene expression data and match with extracted embeddings (/workspace/src/hest/bench/benchmark.py:279-304)",
+                "Step 8: Optionally perform dimensionality reduction (PCA) on embeddings (/workspace/src/hest/bench/benchmark.py:310-315)",
+                "Step 9: Train regression model (Ridge by default) to predict gene expression from embeddings (/workspace/src/hest/bench/trainer.py:7-22)",
+                "Step 10: Evaluate model performance using Pearson correlation between predicted and actual gene expression (/workspace/src/hest/bench/trainer.py:61-84)",
+                "Step 11: Perform k-fold cross-validation by repeating steps 6-10 for each fold (/workspace/src/hest/bench/benchmark.py:355-375)",
+                "Step 12: Aggregate results across folds, calculating mean and standard deviation of Pearson correlations (/workspace/src/hest/bench/benchmark.py:331-352)",
+                "Step 13: Save results to JSON and CSV files (/workspace/src/hest/bench/benchmark.py:164-172)"
+            ],
+            "agent_instructions": "Create a benchmarking system for evaluating foundation models on spatial transcriptomics data. The system should:\n\n1. Accept a configuration file that specifies which foundation models to evaluate and which datasets to use\n\n2. For each model and dataset combination:\n   - Extract embeddings from histology image patches using the specified foundation model\n   - Load corresponding gene expression data\n   - Optionally perform dimensionality reduction on embeddings (PCA)\n   - Train a regression model (Ridge regression by default) to predict gene expression from embeddings\n   - Evaluate performance using Pearson correlation between predicted and actual gene expression\n\n3. Implement patient-stratified k-fold cross-validation:\n   - Split data by patient to ensure no data leakage\n   - Train on k-1 folds and test on the remaining fold\n   - Repeat for all k folds\n   - Calculate mean and standard deviation of performance metrics across folds\n\n4. Save results in a structured format:\n   - Per-gene Pearson correlations\n   - Mean and standard deviation across genes and folds\n   - Organized by dataset and model\n\nThe system should support multiple regression methods (Ridge, Random Forest, XGBoost) and handle downloading of model weights and datasets from HuggingFace Hub.",
+            "masked_source": [
+                "/workspace/src/hest/bench/benchmark.py",
+                "/workspace/bench_config/bench_config.yaml"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset_and_patch_parameters": "HEST-Benchmark dataset; patch extraction fixed at 112\u00d7112 \u00b5m regions (224\u00d7224 pixels at 20\u00d7 magnification)",
+                    "evaluation_parameters": "Use of Pearson correlation and reporting error bars (standard deviation computed across all cross-validation folds) for performance measurement",
+                    "compute_resources": "Execution on a single NVIDIA 3090 GPU"
+                },
+                "independent_variables": {
+                    "foundation_model": "11 different foundation models for pathology (e.g., ResNet50 pre-trained on ImageNet, CTransPath, Remedis, Phikon, UNI, CONCH, GigaPath, Virchow, Virchow 2, H-Optimus-0, UNIv1.5)",
+                    "regression_model": [
+                        "XGBoost with 100 estimators",
+                        "Ridge regression with fixed L2 regularization coefficient"
+                    ],
+                    "cross_validation_scheme": [
+                        "Patient-stratified k-fold cross-validation",
+                        "Patient-stratified k/2-fold split for ccRCC task"
+                    ]
+                },
+                "dependent_variables": {
+                    "prediction_performance": "Measured as the Pearson correlation between predicted and measured log1p-normalized expression levels of the top 50 most variable genes",
+                    "error_bars": "Standard deviation across all cross-validation folds indicating variability in performance"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "ccRCC_split_method": "The exact criteria for merging patients into k/2 folds in the ccRCC task is not fully detailed, which may affect reproducibility.",
+                    "regression_hyperparameters": "While basic settings are provided (e.g., 100 estimators for XGBoost and fixed L2 regularization for Ridge), finer hyperparameter details and selection criteria (referenced in Appendix Table A11) are ambiguous.",
+                    "foundation_model_details": "The specific preprocessing and embedding extraction pipeline for each foundation model is not exhaustively detailed, possibly leading to variability in results."
+                },
+                "possible_modifications": {
+                    "modification_ccRCC": [
+                        "Mask or vary the criteria for merging cross-validation folds in the ccRCC task to study its effect on error bars and model robustness."
+                    ],
+                    "modification_regression": [
+                        "Introduce additional regression models or vary hyperparameter tuning strategies to explore sensitivity in gene expression prediction."
+                    ],
+                    "modification_embedding": [
+                        "Experiment with alternative patch extraction sizes or different embedding extraction methods to assess their impact on downstream performance."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability from patient-stratified cross\u2010validation splits and stochastic elements in regression model training (e.g., random initialization in XGBoost and potential random patch perturbations during embedding extraction).",
+                "description": "Due to the inherent randomness in selecting cross-validation folds (each patient being assigned to a fold), slight fluctuations in the patch extraction process, and random initialization in regression models, there can be unintended variability. Moreover, if any random token or patch dropping is mistakenly applied during preprocessing, it further introduces noise, which can lead to unstable gradient updates and variable Pearson correlations across folds.",
+                "impact": "These random elements can lead to inconsistent estimates of prediction performance and wider error bars, thus compromising the stability and robustness assessment of gene expression predictions across patients.",
+                "possible_modifications": [
+                    "Fix random seeds for cross-validation splits and model initialization to minimize stochastic variability.",
+                    "Remove or control any random perturbations in patch extraction or token dropping to ensure a stable and reproducible training process.",
+                    "Perform additional repetitions of the cross-validation experiment to average out inherent randomness and achieve tighter error bars."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent biases introduced by experimental design choices and data handling methods, such as ambiguous merging criteria for ccRCC folds and non-uniform preprocessing pipelines across foundation models.",
+                "description": "Systematic uncertainty arises from decisions like merging patient folds into k/2 splits for the ccRCC task without clearly specified criteria. Additionally, variations in how patch embeddings are extracted from the 11 foundation models, along with reliance on hyperparameters detailed only in Appendix Table A11, can introduce consistent biases that skew the performance metrics.",
+                "impact": "These biases can inflate or deflate reported Pearson correlations in a predictable manner, leading to error bars that may not fully capture the true variability across patients. This can misrepresent model performance and hinder reproducibility across different runs or datasets.",
+                "possible_modifications": [
+                    "Standardize the preprocessing pipelines for all foundation models to ensure uniformity in embedding extraction.",
+                    "Clarify and refine the criteria for merging cross-validation folds in the ccRCC task, or use an unbiased dataset partitioning strategy.",
+                    "Incorporate cross-dataset validations and ablation studies to assess and mitigate any systematic biases introduced by regression hyperparameter settings."
+                ]
+            }
+        },
+        {
+            "question": "- **Will leveraging the detailed metadata from the HEST-1k (provided as a CSV) to adjust for potential biases in data collection lead to improved model generalization?**",
+            "method": "Design two experimental pipelines to compare the impact of metadata adjustment on model generalization. In the baseline pipeline, standard image-based regression models (as in HEST-Benchmark) are trained using histology patch embeddings to predict gene expression. In the metadata-adjusted pipeline, the CSV metadata from HEST-1k is leveraged to account for potential biases (such as differences in acquisition times, institutions, or collection protocols) via either reweighting samples or by including metadata as additional input features during model training.\n Detailed experiment setup: \nDataset: Use the HEST-1k dataset that includes histology images, corresponding gene expression profiles (the 50 most variable genes per task), and detailed metadata provided in CSV format. Models: Train an XGBoost regression model (configured with 100 estimators, a 0.1 learning rate, max depth of 3, 0.8 subsampling, gamma = 0.0, regression alpha = 0.0, and regression lambda = 1.0) and a Ridge regression model (using an L2 regularization coefficient set to 100/MC, where M is the embedding dimension and C = 50 targets). Experimental Setup: \n1. Baseline: Train the regression models solely on the histology patch embeddings (without any metadata adjustments) using the predefined patient-stratified splits (as provided in the CSV). Cross-validation will be performed to compute performance metrics (e.g., R\u00b2 values, standard deviations as error bars as described in HEST-Benchmark). \n2. Metadata-Adjusted: Incorporate metadata into the training process. This can be done by either (a) reweighting training samples based on potential bias indicators from the metadata (such as differences in collection timeframes or centers), or (b) concatenating metadata features with patch embeddings as input for the regression models. Use the same training and evaluation splits as in the baseline to ensure comparability. Evaluation: Compare prediction accuracies (R\u00b2 scores and standard deviations computed from cross-validation across all patients) between the two pipelines. The effect of bias adjustment will be particularly assessed on unseen patient data to evaluate model generalization.",
+            "expected_outcome": "- The availability of rich metadata might allow for adjustments that account for dataset-specific biases, potentially leading to a modest improvement in generalization performance.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "dataset": "HEST-1k dataset including fixed patient-stratified splits, histology images, gene expression profiles, and metadata CSV",
+                    "evaluation_metrics": "R\u00b2 scores with standard deviations computed from cross-validation remain constant across experiments"
+                },
+                "independent_variables": {
+                    "pipeline_type": [
+                        "baseline",
+                        "metadata_adjusted"
+                    ],
+                    "metadata_incorporation_method": [
+                        "reweighting",
+                        "concatenation"
+                    ],
+                    "regression_model": [
+                        "XGBoost",
+                        "Ridge"
+                    ]
+                },
+                "dependent_variables": {
+                    "generalization_performance": "Measured by prediction accuracy (R\u00b2 scores and associated error bars on unseen patient data)"
+                }
+            },
+            "experiment_design_ambiguity": {
+                "ambiguous_variables": {
+                    "metadata_incorporation_method": "The paper does not explicitly decide whether to use reweighting or concatenating metadata features, leaving room for interpretation.",
+                    "model_comparison": "It is unclear whether the performance of XGBoost and Ridge regression models will be compared individually for each pipeline or aggregated in the final analysis."
+                },
+                "possible_modifications": {
+                    "pipeline_design": [
+                        "Introduce additional strategies for bias adjustment (e.g., adversarial debiasing) beyond reweighting or concatenation.",
+                        "Mask specific metadata features to assess their individual contributions."
+                    ],
+                    "model_hyperparameters": [
+                        "Explore alternative hyperparameter settings or additional regression models to evaluate the robustness of the findings."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEST-1k dataset (histology images, gene expression profiles, metadata CSV, patient-stratified splits)",
+                    "Histology patch embedding extraction module",
+                    "Regression models: XGBoost (with specified hyperparameters) and Ridge regression (with L2 regularization)",
+                    "Metadata integration module (options for reweighting samples or concatenating metadata features with patch embeddings)",
+                    "Cross-validation framework using patient-stratified splits for computing R\u00b2 scores and error bars",
+                    "Two experimental pipelines: baseline (image-based only) and metadata-adjusted"
+                ],
+                "setup_steps": [
+                    "Load the HEST-1k dataset including images, gene expression profiles, and metadata CSV",
+                    "Apply patient-stratified splits as provided in the CSV for cross-validation",
+                    "Extract histology patch embeddings from images",
+                    "Train baseline regression models (XGBoost and Ridge) using only patch embeddings",
+                    "For the metadata-adjusted pipeline, integrate metadata either by reweighting training samples or by concatenating metadata features with the patch embeddings",
+                    "Train the regression models on the adjusted inputs using the same cross-validation splits",
+                    "Evaluate performance using R\u00b2 scores and standard deviations across cross-validation folds",
+                    "Compare the results on unseen patient data to assess improvements in model generalization"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Combined Variable Combinations",
+                        "description": "The experiment considers several independent variables (pipeline type, metadata incorporation method, regression model), leading to up to 8 distinct configurations that must be managed and compared."
+                    },
+                    {
+                        "source": "Hyperparameter Tuning",
+                        "description": "Predefined hyperparameters for each regression model may interact with metadata integration strategies, adding further configuration complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Metadata incorporation method: It is unclear whether to use reweighting, concatenation, or a combination of both.",
+                    "Model comparison strategy: Unclear if performance of XGBoost and Ridge will be evaluated separately for each pipeline or aggregated in the final analysis."
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration of metadata with patch embeddings: Specific procedures for aligning and processing metadata alongside imaging features are not fully detailed.",
+                    "Preprocessing of metadata: The steps for cleaning, transforming, or handling metadata prior to incorporation are not explicitly described."
+                ],
+                "possible_modifications": {
+                    "pipeline_design": [
+                        "Introduce additional strategies for bias adjustment (e.g., adversarial debiasing) beyond reweighting or concatenation.",
+                        "Mask specific metadata features to assess their individual contributions."
+                    ],
+                    "model_hyperparameters": [
+                        "Explore alternative hyperparameter settings or additional regression models to evaluate the robustness of the findings and clarify the model comparison ambiguity."
+                    ]
+                }
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Random initialization and cross-validation sampling variation",
+                    "description": "Random uncertainty in this experiment arises from stochastic elements such as the random initialization of regression models (XGBoost and Ridge) and the inherent randomness introduced by patient-stratified cross-validation splits. Additionally, when incorporating metadata via reweighting, any random selection or variation in the weight assignment could introduce further variability into the training process.",
+                    "impact": "This randomness can lead to fluctuation in measured R\u00b2 scores and error bars across different runs, potentially masking the true benefit (or lack thereof) of metadata adjustment on model generalization. Variability in gradient updates and feature sampling may result in inconsistent prediction accuracies.",
+                    "possible_modifications": [
+                        "Fix random seeds across all aspects of the experiment to reduce stochastic variability.",
+                        "Increase the number of cross-validation folds to average out random fluctuations.",
+                        "Avoid unnecessary randomized modifications in the metadata incorporation process (e.g., refrain from random reweighting if not essential)."
+                    ]
+                },
+                "systematic_uncertainty": {
+                    "source": "Inherent biases in data collection protocols and heterogeneous metadata",
+                    "description": "Systematic uncertainty stems from biases present in the HEST-1k dataset arising from differences in acquisition times, collection protocols, and institutions. Even though detailed metadata is available for adjustment, there is a risk that the metadata itself may reflect these biases or might be incomplete, leading to persistent systematic errors in model predictions.",
+                    "impact": "This systematic error can consistently skew performance metrics, causing the baseline and metadata-adjusted pipelines to either overestimate or underestimate generalization performance on unseen patient data. The bias might not be fully corrected by a one-time metadata adjustment, thus affecting the reliability of observed improvements.",
+                    "possible_modifications": [
+                        "Perform thorough preprocessing and cleaning of the metadata to eliminate or reduce erroneous bias indicators.",
+                        "Introduce additional debiasing techniques (such as adversarial debiasing or outlier detection) to further correct systematic errors.",
+                        "Validate the adjustments by comparing with a secondary clean dataset or by masking specific biased metadata features to gauge their individual contributions."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a stricter GPU memory or model size limit by employing a lighter version of the patch encoder, which would test if the metadata-adjusted pipeline maintains its improved generalization under reduced computational resources."
+                    ],
+                    "time_constraints": [
+                        "Limit the total training time by reducing the number of cross-validation iterations or by capping runtime per fold, to examine if the methods remain effective under tighter time restrictions."
+                    ],
+                    "money_constraints": [
+                        "Simulate a limited budget setting by restricting access to high-end compute environments, thus enforcing the use of a more cost-effective infrastructure or cloud resources."
+                    ]
+                }
+            },
+            "no_answer": "After thoroughly exploring the repository, I couldn't find scripts that directly answer the experiment question about leveraging HEST-1k metadata to adjust for potential biases in data collection for improved model generalization. While the repository contains batch effect correction functionality in 'src/hest/batch_effect.py' and a tutorial '5-Batch-effect-visualization.ipynb' that demonstrates batch effect visualization and correction methods (MNN, Harmony, ComBat), these tools are designed for general batch effect correction rather than specifically incorporating metadata from the HEST-1k CSV to adjust for biases in regression models. The benchmark framework in 'src/hest/bench/benchmark.py' and 'src/hest/bench/trainer.py' provides functionality for training XGBoost and Ridge regression models on histology patch embeddings, but doesn't include options for metadata-adjusted training through reweighting samples or concatenating metadata features as described in the experiment question.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "HEST-1k dataset including fixed patient-stratified splits, histology images, gene expression profiles, and metadata CSV",
+                    "evaluation_metrics": "R\u00b2 scores with standard deviations computed from cross-validation remain constant across experiments"
+                },
+                "independent_variables": {
+                    "pipeline_type": [
+                        "baseline",
+                        "metadata_adjusted"
+                    ],
+                    "metadata_incorporation_method": [
+                        "reweighting",
+                        "concatenation"
+                    ],
+                    "regression_model": [
+                        "XGBoost",
+                        "Ridge"
+                    ]
+                },
+                "dependent_variables": {
+                    "generalization_performance": "Measured by prediction accuracy (R\u00b2 scores and associated error bars on unseen patient data)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "metadata_incorporation_method": "It is unclear whether to primarily use reweighting, concatenation, or a combination of both methods for metadata integration.",
+                    "model_comparison": "It is ambiguous if the performance of XGBoost and Ridge regression models will be compared independently for each pipeline or aggregated in the final analysis."
+                },
+                "possible_modifications": {
+                    "pipeline_design": [
+                        "Introduce additional strategies for bias adjustment (e.g., adversarial debiasing) beyond reweighting or concatenation.",
+                        "Mask specific metadata features to assess their individual contributions."
+                    ],
+                    "model_hyperparameters": [
+                        "Explore alternative hyperparameter settings or additional regression models to evaluate the robustness of the findings."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random initialization and cross-validation sampling variation",
+                "description": "Random uncertainty in this experiment arises from stochastic elements such as the random initialization of regression models (XGBoost and Ridge) and the inherent randomness introduced by patient-stratified cross-validation splits. Additionally, when incorporating metadata via reweighting, any random selection or variation in the weight assignment could introduce further variability into the training process.",
+                "impact": "This randomness can lead to fluctuation in measured R\u00b2 scores and error bars across different runs, potentially masking the true benefit (or lack thereof) of metadata adjustment on model generalization. Variability in gradient updates and feature sampling may result in inconsistent prediction accuracies.",
+                "possible_modifications": [
+                    "Fix random seeds across all aspects of the experiment to reduce stochastic variability.",
+                    "Increase the number of cross-validation folds to average out random fluctuations.",
+                    "Avoid unnecessary randomized modifications in the metadata incorporation process (e.g., refrain from random reweighting if not essential)."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Inherent biases in data collection protocols and heterogeneous metadata",
+                "description": "Systematic uncertainty stems from biases present in the HEST-1k dataset arising from differences in acquisition times, collection protocols, and institutions. Even though detailed metadata is available for adjustment, there is a risk that the metadata itself may reflect these biases or might be incomplete, leading to persistent systematic errors in model predictions.",
+                "impact": "This systematic error can consistently skew performance metrics, causing the baseline and metadata-adjusted pipelines to either overestimate or underestimate generalization performance on unseen patient data. The bias might not be fully corrected by a one-time metadata adjustment, thus affecting the reliability of observed improvements.",
+                "possible_modifications": [
+                    "Perform thorough preprocessing and cleaning of the metadata to eliminate or reduce erroneous bias indicators.",
+                    "Introduce additional debiasing techniques (such as adversarial debiasing or outlier detection) to further correct systematic errors.",
+                    "Validate the adjustments by comparing with a secondary clean dataset or by masking specific biased metadata features to gauge their individual contributions."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you visualize batch effects in spatial transcriptomics data from the HEST-1k dataset?",
+            "method": "Use the HEST-Library to load and filter spatial transcriptomics data from multiple samples, then visualize batch effects using UMAP and calculate silhouette scores.",
+            "expected_outcome": "A UMAP visualization showing the distribution of spots from different samples and a silhouette score indicating the degree of batch effect (values closer to -1 indicate less batch effect, values closer to 1 indicate stronger batch effect).",
+            "source": [
+                "/workspace/tutorials/5-Batch-effect-visualization.ipynb"
+            ],
+            "usage_instructions": "1. Import necessary libraries including pandas and batch effect visualization functions from HEST.\n2. Load the metadata from the HEST dataset and filter for specific samples (e.g., Visium samples with IDC oncotree code from human species).\n3. Use the filter_hest_stromal_housekeeping function to filter spots, keeping only the most stable housekeeping genes and spots under the stroma.\n4. Calculate the silhouette score using get_silhouette_score to quantify the batch effect between samples.\n5. Generate a UMAP visualization using plot_umap to show the distribution of spots from different samples, which helps visualize the batch effect.",
+            "requirements": [
+                "Step 1: Import necessary libraries including pandas and batch effect visualization functions from HEST library (/workspace/tutorials/5-Batch-effect-visualization.ipynb:205-206)",
+                "Step 2: Load the metadata from the HEST dataset CSV file (/workspace/tutorials/5-Batch-effect-visualization.ipynb:208)",
+                "Step 3: Filter the metadata to select specific samples with Visium technology, Cancer disease state, IDC oncotree code, and Homo sapiens species (/workspace/tutorials/5-Batch-effect-visualization.ipynb:210-215)",
+                "Step 4: Use the filter_hest_stromal_housekeeping function to filter spots, keeping only the most stable housekeeping genes and spots under the stroma (/workspace/tutorials/5-Batch-effect-visualization.ipynb:217-220)",
+                "Step 5: Extract sample IDs from the metadata to use as labels (/workspace/tutorials/5-Batch-effect-visualization.ipynb:222)",
+                "Step 6: Calculate the silhouette score using get_silhouette_score to quantify the batch effect between samples (/workspace/tutorials/5-Batch-effect-visualization.ipynb:223-225)",
+                "Step 7: Generate a UMAP visualization using plot_umap to show the distribution of spots from different samples (/workspace/tutorials/5-Batch-effect-visualization.ipynb:228)"
+            ],
+            "agent_instructions": "Your task is to create a script that visualizes batch effects in spatial transcriptomics data from the HEST-1k dataset. Follow these steps:\n\n1. Import the necessary libraries, including pandas and the batch effect visualization functions from the HEST library.\n\n2. Load the metadata from the HEST dataset.\n\n3. Filter the metadata to select only samples that meet specific criteria: Visium technology, Cancer disease state, IDC oncotree code, and Homo sapiens species.\n\n4. Filter the spots to keep only the most stable housekeeping genes and spots under the stroma using the appropriate HEST library function.\n\n5. Extract sample IDs from the metadata to use as labels for visualization.\n\n6. Calculate the silhouette score to quantify the batch effect between samples. The silhouette score ranges from -1 to 1, where values closer to -1 indicate less batch effect (stronger overlap between clusters) and values closer to 1 indicate stronger batch effect (poor overlap between clusters).\n\n7. Generate a UMAP visualization to show the distribution of spots from different samples, which helps visualize the batch effect.\n\nThe final output should include both the silhouette score printed to the console and a UMAP visualization saved as an image file.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "HEST-1k dataset remains unchanged for all experiments",
+                    "library": "HEST-Library functions and metadata remain constant"
+                },
+                "independent_variables": {
+                    "filter_criteria": [
+                        "Visium technology",
+                        "Cancer disease state",
+                        "IDC oncotree code",
+                        "Homo sapiens species"
+                    ],
+                    "analysis_method": [
+                        "UMAP visualization",
+                        "Silhouette score calculation"
+                    ],
+                    "spot_filtering": "Application of filter_hest_stromal_housekeeping to select spots based on housekeeping gene stability and stroma location"
+                },
+                "dependent_variables": {
+                    "batch_effect": [
+                        "UMAP distribution of spots from different samples",
+                        "Silhouette score quantifying batch effect (numerical value ranging from -1 to 1)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "silhouette_score_interpretation": "The description that values closer to -1 indicate less batch effect (stronger overlap) and values closer to 1 indicate stronger batch effect may be counterintuitive and unclear compared to traditional silhouette score interpretations.",
+                    "spot_filtering_criteria": "The exact definition of 'most stable housekeeping genes' and 'spots under the stroma' is not fully detailed, leaving room for interpretation.",
+                    "filter_criteria_specificity": "The specific thresholds or rules for filtering metadata (e.g., what constitutes a valid IDC oncotree code) are not explicitly mentioned."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce alternative dimensionality reduction techniques (e.g., t-SNE) as additional variables.",
+                        "Allow user-defined filtering thresholds to explore different subsets of the data.",
+                        "Mask or generalize the explicit naming of filtering functions to assess the robustness of method application."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEST-Library (batch effect visualization functions, filter_hest_stromal_housekeeping, get_silhouette_score, plot_umap)",
+                    "Pandas",
+                    "Metadata CSV file from HEST-1k dataset",
+                    "UMAP visualization framework",
+                    "Silhouette score calculation module"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries (pandas and HEST-Library batch effect visualization functions)",
+                    "Load metadata from the HEST dataset CSV file",
+                    "Filter metadata to select samples based on specific criteria (Visium technology, Cancer disease state, IDC oncotree code, Homo sapiens species)",
+                    "Filter spots using filter_hest_stromal_housekeeping to retain only the most stable housekeeping genes and spots under the stroma",
+                    "Extract sample IDs from the filtered metadata to use as labels for visualization",
+                    "Calculate the silhouette score using get_silhouette_score to quantify batch effects between samples",
+                    "Generate a UMAP visualization using plot_umap to show the distribution of spots from different samples"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Interdependency of Functions",
+                        "description": "The experiment requires a sequential use of several HEST-Library functions that depend on prior data filtering and correct metadata selection, adding to the overall complexity."
+                    },
+                    {
+                        "source": "Multiple Filtering Criteria",
+                        "description": "The metadata filtering is based on several independent variables (technology, disease state, oncotree code, species) which increases the complexity of setup."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Silhouette score interpretation: The provided description (values closer to -1 indicate less batch effect and values closer to 1 indicate stronger batch effect) may be counterintuitive compared to traditional interpretations.",
+                    "Spot filtering criteria: The exact definitions of 'most stable housekeeping genes' and 'spots under the stroma' are not fully detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Metadata filtering: Specific thresholds or exact rules for selecting samples (e.g., what constitutes a valid IDC oncotree code) are not explicitly mentioned.",
+                    "Integration of visualization and scoring: How the UMAP visualization and silhouette score are jointly interpreted to assess batch effects is not completely clarified."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce alternative dimensionality reduction techniques (e.g., t-SNE) as additional analysis methods.",
+                        "Allow user-defined filtering thresholds to explore different subsets of the data.",
+                        "Mask or generalize explicit naming of filtering functions to assess the robustness of the method application."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "modification_X": {
+                        "modifications": [
+                            "Introduce alternative dimensionality reduction techniques (e.g., t-SNE) as additional visualization methods alongside UMAP.",
+                            "Allow user-defined filtering thresholds for selecting spots and samples to explore how different criteria affect the quantification of batch effects.",
+                            "Generalize or mask the explicit naming of filtering functions to assess the robustness of the analysis pipeline under different labeling conventions."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random variations in data filtering and UMAP initialization",
+                "description": "Random uncertainty may be introduced by the filtering process using filter_hest_stromal_housekeeping. If the function includes any stochastic components (for example, handling ambiguous spots or noise in gene expression), it can lead to random fluctuations in the spots selected. Similarly, the UMAP visualization may have variations due to random initialization, ultimately affecting the silhouette score and the interpretation of batch effects.",
+                "impact": "These random variations can result in inconsistent UMAP visualizations and fluctuations in silhouette score measurements, making it difficult to reproduce the precise degree of batch effect quantification between runs.",
+                "possible_modifications": [
+                    "Introduce a fixed random seed for all stochastic processes involved in filtering and UMAP initialization.",
+                    "Replace or modify the random aspects of the filtering function to ensure a deterministic selection of spots.",
+                    "Run multiple simulations with different seeds and aggregate the silhouette scores to mitigate the impact of any single random instance."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias from predefined metadata and gene filtering criteria",
+                "description": "Systematic uncertainty arises from the fixed filtering criteria applied to the metadata (e.g., specific technology, disease state, oncotree code, and species) and from ambiguities in the definitions of 'most stable housekeeping genes' and 'spots under the stroma'. Incorrect or biased choices in these filtering parameters may consistently skew the results, leading to a systematic bias in both the UMAP plot and the resulting silhouette score.",
+                "impact": "A systematic bias in data selection will lead to a consistent over- or underestimation of batch effects. This could mislead interpretations, as the UMAP visualization and the silhouette score would reflect the impact of the bias rather than true biological or technical variability.",
+                "possible_modifications": [
+                    "Allow user-defined filtering thresholds to explore different data subsets and assess the robustness of the outcome.",
+                    "Incorporate alternative dimensionality reduction methods (e.g., t-SNE) to cross-validate the batch effect visualization.",
+                    "Review and refine the definitions and thresholds used for selecting 'most stable housekeeping genes' and 'spots under the stroma' to ensure that the filtering process accurately represents the intended data characteristics."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you download and interact with specific samples from the HEST-1k dataset based on their metadata attributes?",
+            "method": "Use the HEST-Library to query and download specific samples from the HEST-1k dataset based on metadata attributes like organ type or oncotree code, then interact with the downloaded data.",
+            "expected_outcome": "Successfully downloaded spatial transcriptomics data for specific samples matching the query criteria, and the ability to access and print information about these samples.",
+            "source": [
+                "/workspace/tutorials/1-Downloading-HEST-1k.ipynb",
+                "/workspace/tutorials/2-Interacting-with-HEST-1k.ipynb"
+            ],
+            "usage_instructions": "1. Install and import the datasets library from HuggingFace.\n2. Authenticate with HuggingFace using your token.\n3. Load the HEST metadata CSV file to identify samples with specific attributes.\n4. Filter the metadata dataframe based on desired attributes (e.g., oncotree_code='IDC' and organ='Breast').\n5. Create a list of sample IDs from the filtered metadata.\n6. Generate file patterns for each sample ID to use in the download query.\n7. Download the selected samples using the datasets.load_dataset function with the appropriate patterns.\n8. Use the iter_hest function to iterate through the downloaded samples and interact with them.",
+            "requirements": [
+                "Step 1: Install the required libraries: datasets from HuggingFace and any dependencies (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:67-68)",
+                "Step 2: Import and authenticate with HuggingFace using a token (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:77-79)",
+                "Step 3: Load the HEST metadata CSV file from HuggingFace (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:152)",
+                "Step 4: Filter the metadata dataframe based on specific attributes (e.g., oncotree_code and organ) (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:154-156)",
+                "Step 5: Extract the sample IDs from the filtered metadata (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:158)",
+                "Step 6: Generate file patterns for each sample ID to use in the download query (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:160)",
+                "Step 7: Download the selected samples using datasets.load_dataset with the appropriate patterns (/workspace/tutorials/1-Downloading-HEST-1k.ipynb:161-165)",
+                "Step 8: Import the iter_hest function to iterate through downloaded samples (/workspace/tutorials/2-Interacting-with-HEST-1k.ipynb:32)",
+                "Step 9: Use iter_hest to access and interact with the downloaded samples (/workspace/tutorials/2-Interacting-with-HEST-1k.ipynb:35)",
+                "Step 10: Access and print information about the samples (e.g., adata, WSI, shapes) (/workspace/tutorials/2-Interacting-with-HEST-1k.ipynb:37-60)",
+                "Final Step: Perform additional operations on the samples as needed (e.g., visualize spots, save data, segment tissue) (/workspace/tutorials/2-Interacting-with-HEST-1k.ipynb:116-118)"
+            ],
+            "agent_instructions": "Your task is to create a Python script or notebook that demonstrates how to download and interact with specific samples from the HEST-1k dataset based on their metadata attributes. The HEST-1k dataset is a collection of spatial transcriptomics data hosted on HuggingFace.\n\nFollow these steps:\n\n1. Set up the environment:\n   - Install the necessary libraries (datasets from HuggingFace)\n   - Import the required modules\n   - Authenticate with HuggingFace using a token\n\n2. Download specific samples based on metadata:\n   - Load the HEST metadata CSV file from HuggingFace\n   - Filter the metadata based on specific attributes of interest (e.g., filter by organ type like 'Breast' and oncotree code like 'IDC')\n   - Extract the sample IDs from the filtered metadata\n   - Generate appropriate file patterns for the download query\n   - Download the selected samples using the datasets.load_dataset function\n\n3. Interact with the downloaded samples:\n   - Use the iter_hest function to iterate through the downloaded samples\n   - Access and display information about each sample, such as:\n     * The scanpy AnnData object (adata) containing gene expression data\n     * The Whole Slide Image (WSI)\n     * Shapes and tissue contours\n   - Demonstrate how to visualize the spots over a downscaled version of the WSI\n\nYour solution should be well-commented and include error handling where appropriate. The goal is to create a workflow that allows researchers to efficiently query and download specific samples from the HEST-1k dataset based on metadata attributes, and then interact with the downloaded data.",
+            "design_complexity": {
+                "constant_variables": {
+                    "datasets_library": "HuggingFace's datasets library is a necessary constant dependency, and the authentication token requirement remains fixed",
+                    "HEST_metadata_file": "The HEST metadata CSV file from HuggingFace is always used"
+                },
+                "independent_variables": {
+                    "filter_criteria": [
+                        "organ",
+                        "oncotree_code"
+                    ],
+                    "download_query": "File patterns generated from extracted sample IDs based on filtered metadata"
+                },
+                "dependent_variables": {
+                    "downloaded_data": "The dataset downloads matching the query criteria",
+                    "sample_interaction": "Accessing and displaying attributes (e.g., AnnData, WSI, shapes) from the downloaded samples"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "filter_criteria": "While the task mentions filtering by 'organ' and 'oncotree code', it is ambiguous if more metadata fields could be used or if there is any standardized set of attributes that must be present",
+                    "download_query": "The way file patterns are generated is not fully specified, leaving room for interpretation",
+                    "error_handling": "The extent and type of error handling to be implemented is not explicitly mentioned"
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional metadata attributes (such as age or gender) for more refined queries"
+                    ],
+                    "modification_2": [
+                        "Mask the file pattern generation process to require the agent to infer proper file naming conventions"
+                    ],
+                    "modification_3": [
+                        "Imply the need for structured error handling procedures in the script, beyond basic implementation"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "datasets library from HuggingFace",
+                    "HEST metadata CSV file",
+                    "Authentication with HuggingFace using a token",
+                    "Metadata filtering mechanism (e.g., filtering by organ type and oncotree code)",
+                    "File pattern generation for download queries",
+                    "datasets.load_dataset function for downloading samples",
+                    "iter_hest function for iterating over samples",
+                    "Visualization and data interaction tools (e.g., accessing AnnData, WSI, shapes)"
+                ],
+                "setup_steps": [
+                    "Install necessary libraries (e.g., HuggingFace's datasets library)",
+                    "Import required modules and authenticate with HuggingFace using a token",
+                    "Load the HEST metadata CSV file from HuggingFace",
+                    "Filter the metadata dataframe based on specific attributes (e.g., organ type, oncotree code)",
+                    "Extract sample IDs from the filtered metadata",
+                    "Generate file patterns for each sample ID to be used in the download query",
+                    "Download the selected samples using the datasets.load_dataset function with appropriate file patterns",
+                    "Import and use the iter_hest function to iterate through the downloaded samples",
+                    "Access and print information for each sample (including AnnData, WSI, shapes, and tissue contours)",
+                    "Perform additional operations such as visualization or segmentation on the samples"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "File pattern generation",
+                        "description": "The process of generating the correct file patterns from sample IDs is not fully standardized and may require adapting to different naming conventions."
+                    },
+                    {
+                        "source": "Error handling and authentication",
+                        "description": "Ensuring secure authentication with an external API (HuggingFace) and robust error handling when loading or filtering data can introduce additional complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Filtering criteria: While the instructions specify filtering by 'organ' and 'oncotree code', it is not clear if other metadata attributes are supported or required.",
+                    "File pattern generation: The method for constructing file patterns from sample IDs is not fully detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "The exact process for generating file patterns for download queries is left open to interpretation.",
+                    "The level and specifics of error handling procedures beyond basic implementation are not clearly defined."
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional metadata attributes (for example, age or gender) to refine the query process."
+                    ],
+                    "modification_2": [
+                        "Mask the details of the file pattern generation process, requiring the agent to deduce the appropriate naming conventions."
+                    ],
+                    "modification_3": [
+                        "Imply a requirement for structured and comprehensive error handling procedures within the script, beyond basic try/except blocks."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "general": {
+                        "modifications": [
+                            "Introduce additional metadata attributes (e.g., age or gender) for more refined queries.",
+                            "Tighten the file pattern generation process by masking some details to require the agent to deduce proper naming conventions.",
+                            "Imply a requirement for structured and comprehensive error handling procedures in the script, beyond basic try/except blocks."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "File pattern generation and metadata filtering",
+                "description": "Random uncertainty may be introduced within this experiment when details of the file pattern generation are handled in a non-deterministic manner. For example, if the process for constructing file patterns from sample IDs randomly drops or misinterprets parts of the IDs, it may lead to unpredictable download queries and inconsistent sample retrieval. Additionally, subtle variations in filtering the metadata based on attributes (e.g., due to random token dropping or noise in query processing) can further contribute to variability in the downloaded dataset.",
+                "impact": "This variability can result in instability of the downloaded data, causing differences in the samples retrieved across different runs, potentially impacting the reproducibility of subsequent analyses and visualizations.",
+                "possible_modifications": [
+                    "Introduce random modifications to the file pattern generation process, such as randomly dropping or shuffling parts of the sample IDs.",
+                    "Randomly vary the metadata filter criteria (e.g., include random noise in the organ type or oncotree code values) to simulate unpredictable query outcomes.",
+                    "Implement random delays or variances in the process of interacting with the downloaded samples, exacerbating the uncertainty in sample handling."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "One-time dataset modifications and biased metadata filtering",
+                "description": "Systematic uncertainty can stem from a deliberate one-time modification to the dataset or its filtering process. For instance, if the metadata CSV is modified to consistently mislabel or bias certain attributes (such as misassigning organ types or oncotree codes), the resulting download query will always retrieve a systematically biased subset of data. Similarly, if the rules for generating file patterns are set in a way that systematically misinterprets sample IDs, the error will propagate throughout the experiment.",
+                "impact": "This type of uncertainty leads to consistent, reproducible errors in the downloaded data. The bias in sample selection would skew downstream analyses and visualizations in a predictable manner, potentially misleading the interpretation of results.",
+                "possible_modifications": [
+                    "Intentionally modify the metadata CSV file to embed a systematic bias (for example, mislabel all samples with a specific file size or attribute).",
+                    "Enforce a fixed, incorrect convention in the file pattern generation process so that all queries are consistently misdirected.",
+                    "Replace or alter the clean dataset with a version that has predefined systematic errors to assess the robustness of the sample retrieval and subsequent analysis."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you run the HEST-Benchmark to evaluate a foundation model's ability to predict gene expression from histology images?",
+            "method": "Configure and run the HEST-Benchmark to evaluate a pre-trained foundation model (e.g., ResNet50) on its ability to predict gene expression from histology image patches.",
+            "expected_outcome": "Benchmark results showing the Pearson correlation between predicted and actual gene expression values across different cancer types/organs.",
+            "source": [
+                "/workspace/tutorials/4-Running-HEST-Benchmark.ipynb",
+                "/workspace/bench_config/bench_config.yaml"
+            ],
+            "usage_instructions": "1. Ensure HEST is properly installed according to the installation instructions.\n2. Configure the benchmark by editing the bench_config.yaml file to specify:\n   - The directory for benchmark data (bench_data_root)\n   - Where results will be saved (results_dir)\n   - Where embeddings will be stored (embed_dataroot)\n   - The location of model weights (weights_root)\n   - Batch size and number of workers for inference\n   - Which encoder model to use (e.g., uncomment 'resnet50')\n   - Which datasets/cancer types to evaluate (e.g., uncomment 'IDC')\n3. Run the benchmark using the command line interface by executing the benchmark.py script with the configured YAML file.\n4. Alternatively, use the Python API to run the benchmark with a custom model by providing the model, transforms, and precision.",
+            "requirements": [
+                "Step 1: Install HEST according to installation instructions (/workspace/tutorials/4-Running-HEST-Benchmark.ipynb:44-44)",
+                "Step 2: Configure the benchmark by editing the bench_config.yaml file to specify data directories, model weights location, batch size, and which encoder model to use (/workspace/bench_config/bench_config.yaml:1-47)",
+                "Step 3: Select which datasets/cancer types to evaluate in the configuration file (/workspace/bench_config/bench_config.yaml:36-47)",
+                "Step 4: Download benchmark data and model weights automatically from Hugging Face (/workspace/src/hest/bench/benchmark.py:432-435)",
+                "Step 5: Load the specified encoder model (e.g., ResNet50) (/workspace/src/hest/bench/benchmark.py:245-251)",
+                "Step 6: Extract embeddings from histology image patches using the encoder model (/workspace/src/hest/bench/benchmark.py:253-273)",
+                "Step 7: Load gene expression data for the selected datasets (/workspace/src/hest/bench/benchmark.py:284-304)",
+                "Step 8: Optionally perform dimensionality reduction on the embeddings (/workspace/src/hest/bench/benchmark.py:310-315)",
+                "Step 9: Train regression models (Ridge regression by default) to predict gene expression from image embeddings (/workspace/src/hest/bench/trainer.py:7-23)",
+                "Step 10: Evaluate model performance using Pearson correlation between predicted and actual gene expression values (/workspace/src/hest/bench/trainer.py:61-84)",
+                "Step 11: Calculate and report average performance metrics across genes and datasets (/workspace/src/hest/bench/benchmark.py:149-172)",
+                "Final Step: Generate and save benchmark results to the specified results directory (/workspace/src/hest/bench/benchmark.py:165-172)"
+            ],
+            "agent_instructions": "Your task is to evaluate a foundation model's ability to predict gene expression from histology images using the HEST-Benchmark. This benchmark assesses how well image features extracted from histology patches can predict the expression levels of the 50 most variable genes in spatial transcriptomics data across different cancer types.\n\nFollow these steps to run the benchmark:\n\n1. First, ensure HEST is properly installed according to the installation instructions.\n\n2. Configure the benchmark by creating a configuration file (YAML format) with the following parameters:\n   - Directory for benchmark data (where the datasets will be stored)\n   - Directory for saving results\n   - Directory for storing embeddings\n   - Directory for model weights\n   - Batch size for inference\n   - Number of workers for data loading\n   - Which encoder model to use (e.g., ResNet50)\n   - Which datasets/cancer types to evaluate (e.g., IDC, PRAD, PAAD, etc.)\n\n3. The benchmark will automatically download the necessary data and model weights from Hugging Face.\n\n4. You can run the benchmark in two ways:\n   - Using the command line interface by executing the benchmark script with your configuration file\n   - Using the Python API to run the benchmark with a custom model by providing the model, transforms, and precision\n\n5. The benchmark process involves:\n   - Loading the specified encoder model\n   - Extracting embeddings from histology image patches\n   - Loading gene expression data for the selected datasets\n   - Optionally performing dimensionality reduction on the embeddings\n   - Training regression models (Ridge regression by default) to predict gene expression from image embeddings\n   - Evaluating model performance using Pearson correlation between predicted and actual gene expression values\n\n6. The benchmark will output results showing the Pearson correlation between predicted and actual gene expression values for each gene and dataset, as well as average performance metrics.\n\nThe benchmark includes multiple cancer types/organs that you can evaluate, such as Invasive Ductal Carcinoma (IDC), Prostate Adenocarcinoma (PRAD), Pancreatic Adenocarcinoma (PAAD), and others. Each task involves predicting gene expression from 112\u00d7112 \u03bcm H&E-stained image patches.",
+            "design_complexity": {
+                "constant_variables": {
+                    "installation_and_setup": "The HEST installation instructions, benchmark script, and YAML configuration file structure remain constant.",
+                    "data_preparation": "The steps for downloading benchmark data, model weights, and curation of datasets are fixed."
+                },
+                "independent_variables": {
+                    "encoder_model": [
+                        "ResNet50",
+                        "potentially other pre-trained foundation models"
+                    ],
+                    "datasets": [
+                        "IDC",
+                        "PRAD",
+                        "PAAD",
+                        "and other specified cancer types"
+                    ],
+                    "regression_model": [
+                        "Ridge regression (default)",
+                        "others if extended"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metric": [
+                        "Pearson correlation between predicted and actual gene expression",
+                        "Average performance metrics across genes and datasets"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "foundation_model": "It is not explicitly clear whether 'foundation model' refers solely to ResNet50 or may include other pre-trained models.",
+                    "datasets": "The exact list of cancer types/datasets to evaluate is not exhaustively specified beyond examples like IDC, PRAD, and PAAD.",
+                    "gene_expression": "While the expected outcome mentions the 50 most variable genes, the selection criteria and exact gene set are not further detailed."
+                },
+                "possible_modifications": {
+                    "modify_encoder_options": [
+                        "Include additional encoder models in the configuration to test the flexibility of the benchmark."
+                    ],
+                    "extend_dataset_selection": [
+                        "Introduce more explicit options for cancer types/datasets to evaluate."
+                    ],
+                    "specify_gene_selection": [
+                        "Provide a clear definition or allow customization of the gene set used for evaluation."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HEST installation package",
+                    "Benchmark configuration YAML file (bench_config.yaml)",
+                    "Benchmark data (downloaded automatically from Hugging Face)",
+                    "Model weights (downloaded automatically from Hugging Face)",
+                    "Encoder model (e.g., ResNet50)",
+                    "Python scripts (benchmark.py, trainer.py)",
+                    "Regression model (Ridge regression) for prediction",
+                    "Optional Python API for custom execution"
+                ],
+                "setup_steps": [
+                    "Install HEST according to the provided installation instructions",
+                    "Create and edit the YAML configuration file to specify benchmark data directory, results directory, embeddings directory, model weights directory, batch size, number of workers, encoder model, and selected datasets/cancer types",
+                    "Automatically download benchmark data and model weights",
+                    "Run the benchmark via the command line interface by executing benchmark.py with the configured YAML file",
+                    "Alternatively, run the benchmark using the Python API by providing a custom model, transforms, and precision settings",
+                    "Load the specified encoder model (e.g., ResNet50) to extract embeddings from histology image patches",
+                    "Load gene expression data for the selected datasets",
+                    "Optionally perform dimensionality reduction on the embeddings",
+                    "Train regression models (Ridge regression by default) to predict gene expression from image embeddings",
+                    "Evaluate predictions using Pearson correlation between predicted and actual gene expression values",
+                    "Calculate and report average performance metrics across genes and datasets",
+                    "Generate and save benchmark results to the specified results directory"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple execution modes",
+                        "description": "The benchmark can be run either via a command line interface or using the Python API, introducing different setup paths."
+                    },
+                    {
+                        "source": "External dependencies",
+                        "description": "Automatic downloading of data and pre-trained model weights from external sources (e.g., Hugging Face) adds dependency and potential variability."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Foundation model specification",
+                    "Datasets selection",
+                    "Gene expression gene set"
+                ],
+                "ambiguous_setup_steps": [
+                    "The term 'foundation model' is ambiguous regarding whether only ResNet50 is supported or if other pre-trained models can be used without further instructions.",
+                    "The configuration file provides examples (e.g., IDC, PRAD, PAAD) but does not exhaustively list the available cancer types or explain how to include additional datasets.",
+                    "While the expected outcome mentions evaluating the 50 most variable genes, the criteria for selecting these genes and whether this set is fixed or customizable is not clearly detailed."
+                ],
+                "possible_modifications": {
+                    "modify_encoder_options": [
+                        "Include additional encoder models in the configuration options to test flexibility beyond ResNet50."
+                    ],
+                    "extend_dataset_selection": [
+                        "Clarify and enumerate all available cancer types/datasets, or provide a mechanism to easily extend the selection."
+                    ],
+                    "specify_gene_selection": [
+                        "Provide a clear definition of how the 50 most variable genes are chosen, or allow customization of the gene set used for evaluation."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce model size constraints by evaluating a compact variant (e.g., ResNet50-mini) instead of the full ResNet50, to test if similar gene expression prediction accuracy can be maintained under limited compute resources."
+                    ],
+                    "time_constraints": [
+                        "Limit the benchmark running time by reducing batch sizes or the number of inference iterations, thereby simulating a time-constrained execution environment."
+                    ],
+                    "money_constraints": [
+                        "Simulate cost restrictions by requiring that the benchmark runs on less expensive hardware (e.g., limiting usage to lower-end GPUs or cloud instances with a fixed budget), which might affect overall throughput or speed."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications during benchmark execution",
+                "description": "Randomness can be introduced in the benchmark pipeline through any non-deterministic processes. For example, if random token dropping or random data augmentations are applied during the feature extraction or regression training steps, the gradient updates may become unstable and the resultant Pearson correlation values could vary significantly between runs.",
+                "impact": "Inconsistent predictions and inaccuracies in the reported Pearson correlation metrics across different runs, making it challenging to directly compare model performance.",
+                "possible_modifications": [
+                    "Remove or disable any random token dropping or random augmentations during the embedding extraction phase.",
+                    "Ensure that all operations, including data splitting and regression training, are run with a fixed random seed to maintain determinism.",
+                    "Switch from stochastic operations to deterministic counterparts where randomness is not essential for the evaluation."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Systematic biases in data preparation and configuration",
+                "description": "Systematic uncertainty stems from inherent biases in the way datasets or configurations are selected and applied. For instance, if the gene expression data selection (i.e., the 50 most variable genes) is modified in a one-time manner or if the list of cancer types evaluated is arbitrarily chosen, it may lead to a consistent over- or underestimation of model performance.",
+                "impact": "The benchmark outcomes might consistently favor or disfavor the tested model, leading to skewed and biased Pearson correlation results across different datasets or cancer types.",
+                "possible_modifications": [
+                    "Standardize the gene selection criteria so that the 50 most variable genes are chosen through a validated and reproducible method.",
+                    "Ensure that the dataset choice (e.g., IDC, PRAD, PAAD) is comprehensive and not arbitrarily limited, by validating the selection process against external benchmarks.",
+                    "Review and remove any one-time or manual modifications to the dataset labels that could introduce bias in the training or evaluation process."
+                ]
+            }
+        },
+        {
+            "mode": "B",
+            "question": "How can you convert a Visium spatial transcriptomics sample into a HEST-compatible format?",
+            "method": "Download a Visium sample from a public repository and use the HEST-Library's VisiumReader to convert it into a HEST-compatible format.",
+            "expected_outcome": "A HEST-compatible data object saved to disk, containing the spatial transcriptomics data aligned with the histology image, and a visualization showing the spots overlaid on the tissue image.",
+            "source": [
+                "/workspace/tutorials/3-Assembling-HEST-Data.ipynb",
+                "/workspace/src/hest/readers.py"
+            ],
+            "usage_instructions": "1. Download a Visium sample from a public repository (e.g., NCBI GEO) that includes both the high-resolution image and the filtered feature barcode matrix.\n2. Import the VisiumReader class from the HEST library.\n3. Use the VisiumReader().read() method to create a HESTData object, providing paths to the full-resolution image and the filtered feature barcode matrix.\n4. Enable the save_autoalign parameter to visualize the fiducial autodetection process.\n5. Save the created HESTData object to disk using the save() method.\n6. Generate and save a visualization showing the aligned spots overlaid on the downscaled whole-slide image using the save_spatial_plot() method.",
+            "requirements": [
+                "Step 1: Download a Visium sample from a public repository (e.g., NCBI GEO) that includes both the high-resolution image and the filtered feature barcode matrix (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:25-33)",
+                "Step 2: Import the VisiumReader class from the HEST library (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:59)",
+                "Step 3: Define paths to the full-resolution image and filtered feature barcode matrix (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:61-62)",
+                "Step 4: Create a HESTData object using VisiumReader().read() method, providing paths to the full-resolution image and filtered feature barcode matrix (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:64-68, /workspace/src/hest/readers.py:291-446)",
+                "Step 5: Enable the save_autoalign parameter to visualize the fiducial autodetection process (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:67, /workspace/src/hest/readers.py:302)",
+                "Step 6: Save the created HESTData object to disk using the save() method (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:77, /workspace/src/hest/HESTData.py:137-167)",
+                "Step 7: Generate and save a visualization showing the aligned spots overlaid on the downscaled whole-slide image using the save_spatial_plot() method (/workspace/tutorials/3-Assembling-HEST-Data.ipynb:93, /workspace/src/hest/HESTData.py:119-129)"
+            ],
+            "agent_instructions": "Your task is to convert a Visium spatial transcriptomics sample into a HEST-compatible format. This involves downloading a Visium sample from a public repository, processing it with the HEST library, and saving it in a format that can be used for further analysis.\n\nFollow these steps:\n\n1. Download a Visium sample from a public repository (such as NCBI GEO). You need both:\n   - A high-resolution histology image (typically .png or .tif format)\n   - The filtered feature barcode matrix (.h5 file)\n\n2. Use the HEST library's VisiumReader class to process the data:\n   - Import the VisiumReader class from the hest module\n   - Use the read() method to create a HESTData object by providing:\n     * Path to the full-resolution image\n     * Path to the filtered feature barcode matrix\n     * Set save_autoalign=True to visualize the fiducial autodetection process\n\n3. The VisiumReader will:\n   - Load the image and gene expression data\n   - Automatically detect fiducials for spot alignment\n   - Create a properly aligned HESTData object\n\n4. Save the created HESTData object to disk using its save() method\n\n5. Generate a visualization showing the spots overlaid on the tissue image using the save_spatial_plot() method\n\nThe final output should be a HEST-compatible data object saved to disk, containing the spatial transcriptomics data aligned with the histology image, and a visualization showing the spots overlaid on the tissue image.",
+            "design_complexity": {
+                "constant_variables": {
+                    "code_library": "HEST-Library is always used for the conversion",
+                    "processing_method": "VisiumReader().read() is always the method invoked to create the HESTData object"
+                },
+                "independent_variables": {
+                    "data_source": [
+                        "Public repositories such as NCBI GEO",
+                        "Other public repositories that provide Visium samples"
+                    ],
+                    "file_types": [
+                        "histology image (.png, .tif)",
+                        "filtered feature barcode matrix (.h5)"
+                    ],
+                    "autoalign_flag": [
+                        "True (to visualize fiducial autodetection)",
+                        "Possibility to set to false (for troubleshooting or modified workflows)"
+                    ]
+                },
+                "dependent_variables": {
+                    "output_object": [
+                        "HESTData object saved to disk"
+                    ],
+                    "visualization": [
+                        "Spatial plot showing aligned spots overlaid on the tissue image"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "data_source": "While NCBI GEO is provided as an example, the task does not restrict the source to only one repository, leaving ambiguity on the acceptable sources.",
+                    "file_types": "The task specifies common formats but does not explicitly list all acceptable formats for the histology image, leaving room for variations.",
+                    "autoalign_flag": "It is not strictly clear whether the autoalignment flag must always be enabled or if it can be optionally disabled for specific use cases."
+                },
+                "possible_modifications": {
+                    "data_source": [
+                        "Allow agents to choose or specify different public repositories or even local datasets."
+                    ],
+                    "file_types": [
+                        "Extend acceptable image formats beyond .png and .tif, such as .jpeg."
+                    ],
+                    "autoalign_flag": [
+                        "Permit the modification of the autoalign parameter to false for debugging purposes or alternative visual outputs."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Public data repository (e.g., NCBI GEO) providing the Visium sample",
+                    "HEST-Library, specifically the VisiumReader class",
+                    "Full-resolution histology image file (e.g., .png or .tif)",
+                    "Filtered feature barcode matrix file (e.g., .h5)",
+                    "Autoalignment mechanism (fiducial autodetection process)",
+                    "HESTData object for storing the processed data",
+                    "Visualization module (for generating spatial plots)"
+                ],
+                "setup_steps": [
+                    "Download a Visium sample from a public repository that includes the high-resolution image and filtered feature barcode matrix",
+                    "Import the VisiumReader class from the HEST-Library",
+                    "Define and validate paths to the full-resolution image and the barcode matrix file",
+                    "Create a HESTData object using the VisiumReader().read() method with the provided paths",
+                    "Enable the save_autoalign parameter to visualize the fiducial autodetection process during alignment",
+                    "Save the HESTData object to disk using its save() method",
+                    "Generate and save a spatial visualization showing aligned spots over the tissue image using save_spatial_plot()"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Data Source Variability",
+                        "description": "Different public repositories may offer samples in slightly different formats or with varying metadata, adding handling complexity."
+                    },
+                    {
+                        "source": "Autoalignment Procedure",
+                        "description": "The fiducial autodetection process might require additional troubleshooting or parameter adjustments based on image quality or sample characteristics."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Data source: The example uses NCBI GEO, but it's ambiguous if other repositories are equally acceptable.",
+                    "File formats: Only .png, .tif, and .h5 are mentioned while other formats could also be used.",
+                    "Autoalign flag: It is not clearly specified whether save_autoalign must always be enabled or if it can be optionally disabled."
+                ],
+                "ambiguous_setup_steps": [
+                    "Selecting the public repository: The instructions mention NCBI GEO as an example without strict guidance on repository choice.",
+                    "Configuration of file paths: While paths to the image and matrix are required, there is no detailed description of acceptable directory structures or potential preprocessing needs.",
+                    "Fiducial autodetection: The process is invoked via save_autoalign, but the exact handling and adjustments required for different samples are not fully detailed."
+                ],
+                "possible_modifications": {
+                    "data_source": [
+                        "Allow agents to choose alternative public repositories or even specify local datasets as input."
+                    ],
+                    "file_types": [
+                        "Extend acceptable image formats beyond .png and .tif (e.g., .jpeg) or additional matrix file formats."
+                    ],
+                    "autoalign_flag": [
+                        "Clarify whether the autoalignment flag must always be enabled or can be optionally modified (e.g., set to false) for troubleshooting purposes."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in the fiducial autodetection process during image processing",
+                "description": "The autoalignment phase in the VisiumReader.read() method can be influenced by stochastic factors such as image noise or random initialization in the fiducial detection algorithm. This may lead to small, random variations in how spots are aligned over the histology image, ultimately leading to instability or slight differences in the generated HESTData object and its spatial plot.",
+                "impact": "These random variations could cause inconsistent spatial alignments between runs and affect downstream analysis, making it harder to reproduce exact results.",
+                "possible_modifications": [
+                    "Introduce controlled random noise to the fiducial detection parameters to further test the robustness of the autoalignment.",
+                    "Randomly vary the initialization (or random seed) used in the autodetection process to simulate uncertainty.",
+                    "Temporarily alter the handling of irrelevant image tokens (or features) within the preprocessing step to evaluate its impact on alignment."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias in the selected data source or one-time modifications in the conversion process",
+                "description": "If the Visium sample is obtained from a specific public repository (e.g., NCBI GEO) or a one-time deterministic modification is applied to the input (such as altering the filtered feature barcode matrix or image orientation), the resulting conversion to a HEST-compatible format may introduce a systematic bias. This could manifest as consistently misaligned spots or altered gene expression readouts in all processed samples.",
+                "impact": "Such systematic alterations can uniformly bias the HESTData object, leading to consistent misinterpretation of spatial alignment and downstream spatial analysis, potentially compromising biomarker exploration or multimodal learning.",
+                "possible_modifications": [
+                    "Apply a one-time, fixed alteration to the input data (e.g., rotating the histology image by a specific angle) to simulate a systematic bias.",
+                    "Modify the barcode matrix values in a deterministic way (e.g., scaling or offsetting all counts) to evaluate the impact on spatial registration.",
+                    "Switch data sources or retrieve a different, clean version of the Visium sample to assess if the bias is source-related."
+                ]
+            }
+        }
+    ]
+}

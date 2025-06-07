@@ -1,0 +1,615 @@
+{
+    "questions": [
+        {
+            "question": "- **Does increasing context length lead to a measurable degradation in model performance across retrieval, counting, and reasoning tasks?**\n\n\n- **Does increasing context length lead to a measurable degradation in model performance across retrieval, counting, and reasoning tasks?**",
+            "method": "Collect evaluation data by grouping the multimodal documents into several context length bins (e.g., 1K\u20132K, 2K\u20134K, up to 64K tokens). For each bin, measure model performance (accuracy for retrieval and reasoning; soft accuracy for counting) on the same set of questions. Analyze the trend by comparing performance metrics across the bins for each model and task. Include statistical significance tests to verify whether longer contexts consistently result in worse performance, as suggested by the heatmap trends in Fig. 3.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+            "expected_outcome": "It is expected that performance will steadily degrade as the context length increases, particularly for tasks requiring high-level reasoning and counting. The decline should be observable in all models, with some models exhibiting a collapse (e.g., generating gibberish) when the context is extremely long.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "api_call_timing": "same_time"
+                },
+                "independent_variables": {
+                    "optimization_method": [
+                        "OptoPrime",
+                        "TextGrad"
+                    ],
+                    "optimization_task": [
+                        "Solution Optimization",
+                        "Prompt Optimization"
+                    ],
+                    "llm_model": [
+                        "The optimizer is GPT-4o-2024-08-06",
+                        "The student model is GPT-35-turbo-1106"
+                    ]
+                },
+                "dependent_variables": {
+                    "time_in_minutes": "Measured as the total time taken for optimization"
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Evaluation script (e.g., eval_internvl.py) for processing multimodal documents across varying context lengths",
+                    "Shell script (e.g., shells/eval_internvl.sh) to coordinate distributed evaluation",
+                    "Analysis script (calculate_scores.py) to group results into context length bins and generate heatmaps",
+                    "LLM APIs and associated model files (multimodal LLM supporting both text and image inputs)",
+                    "Dataset of multimodal documents with inserted text and image needles (e.g., mm_niah.json)",
+                    "Preprocessing pipeline for loading and processing images and text",
+                    "Distributed evaluation environment (multi-GPU setup and hardware configuration, e.g., standard PC with 16 GB RAM)"
+                ],
+                "setup_steps": [
+                    "Set up the evaluation environment by configuring necessary parameters (model path, output directories, task types)",
+                    "Configure and initialize the evaluation script to load the specified model and tokenizer",
+                    "Execute the shell script to run distributed evaluation on retrieval, counting, and reasoning tasks with both text and image needles",
+                    "Load and preprocess tasks including image and text data from the dataset",
+                    "Generate model responses for samples across different context length bins (from 1K to 64K tokens)",
+                    "Merge and consolidate distributed evaluation outputs into single result files",
+                    "Run the analysis script to group results by context length and calculate performance metrics (accuracy and soft accuracy)",
+                    "Generate heatmaps to visualize how performance degrades with increasing context length"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multimodal Input Handling",
+                        "description": "Integrating image and text inputs requires careful tokenization and alignment, which adds complexity to preprocessing."
+                    },
+                    {
+                        "source": "Distributed Evaluation Coordination",
+                        "description": "Ensuring consistency in device mapping and timing across multiple GPUs during evaluation introduces additional setup complexities."
+                    },
+                    {
+                        "source": "Context Length Binning",
+                        "description": "Accurately grouping evaluations into strict token count bins (1K, 2K, etc.) demands precise tracking of tokenization across documents."
+                    }
+                ]
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in LLM API response times",
+                    "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+                    "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+                    "possible_modifications": [
+                        "Introduce artificial delays in API response times to test optimizer robustness.",
+                        "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+                        "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+                    ]
+                },
+                "systematic_uncertainty": {}
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict LLM API usage further by enforcing a stricter token budget.",
+                        "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency."
+                    ]
+                }
+            },
+            "source": [
+                "/workspace/shells/eval_internvl.sh",
+                "/workspace/calculate_scores.py"
+            ],
+            "usage_instructions": "1. First, run the evaluation script to test model performance across different context lengths: `sh shells/eval_internvl.sh`. This will evaluate the model on retrieval, counting, and reasoning tasks with both text and image needles, across various context length bins (1K-64K tokens).\n\n2. After the evaluation is complete, run `python calculate_scores.py --outputs-dir ./outputs/` to analyze the results. This will generate heatmaps and scores showing how model performance degrades as context length increases.\n\nThe calculate_scores.py script automatically groups results into context length bins (1K, 2K, 4K, 8K, 12K, 16K, 24K, 32K, 40K, 48K, 64K tokens) and calculates performance metrics for each bin. The resulting heatmaps will clearly show the performance degradation pattern across increasing context lengths for each task type.",
+            "requirements": [
+                "Step 1: Set up the evaluation environment with necessary parameters (model path, tasks, output directories) (/workspace/shells/eval_internvl.sh:3-29)",
+                "Step 2: For each model and task combination, run the evaluation script with appropriate parameters (/workspace/shells/eval_internvl.sh:33-54)",
+                "Step 3: Combine the output files from distributed evaluation into a single result file for each task (/workspace/shells/eval_internvl.sh:55-57)",
+                "Step 4: Load and preprocess images for evaluation, supporting both single and multi-image inputs (/workspace/eval_internvl.py:93-102)",
+                "Step 5: Initialize the model with appropriate device mapping for distributed evaluation (/workspace/eval_internvl.py:105-156)",
+                "Step 6: Process evaluation samples by loading context, images, questions, and answers (/workspace/eval_internvl.py:276-291)",
+                "Step 7: Generate model responses for each sample using the chat function (/workspace/eval_internvl.py:294-306)",
+                "Step 8: Save evaluation results including question, answer, response, context length, and placed depth (/workspace/eval_internvl.py:316-325)",
+                "Step 9: Parse evaluation results and organize them by task and model (/workspace/calculate_scores.py:91-105)",
+                "Step 10: Calculate accuracy scores based on context length and depth placement (/workspace/calculate_scores.py:102-136)",
+                "Step 11: Generate heatmaps showing performance across different context lengths (/workspace/calculate_scores.py:138-160)",
+                "Step 12: Calculate and save average scores for each context length bin (/workspace/calculate_scores.py:162-181)",
+                "Final Step: Output consolidated results showing how model performance degrades with increasing context length (/workspace/calculate_scores.py:69-89)"
+            ],
+            "agent_instructions": "Your task is to implement a system for evaluating a multimodal large language model's performance across different context lengths. The system should test the model on three types of tasks (retrieval, counting, and reasoning) with both text and image inputs.\n\nFirst, create an evaluation script that:\n1. Takes a model path, task type, and output directory as inputs\n2. Loads the specified model and tokenizer\n3. Processes evaluation samples with varying context lengths (from 1K to 64K tokens)\n4. For each sample, generates a response from the model\n5. Saves the results including the question, answer, model response, context length, and the depth at which target information was placed\n\nThen, create a shell script that:\n1. Defines parameters for distributed evaluation (GPUs, partition, etc.)\n2. Runs the evaluation script for each task type (retrieval-text, retrieval-image, counting-text, counting-image, reasoning-text, reasoning-image) on both validation and test sets\n3. Combines the distributed evaluation results into single files\n\nFinally, create an analysis script that:\n1. Processes the evaluation results\n2. Groups results into context length bins (1K, 2K, 4K, 8K, 12K, 16K, 24K, 32K, 40K, 48K, 64K tokens)\n3. Calculates accuracy scores for each bin\n4. Generates heatmaps showing how performance varies with context length\n5. Outputs consolidated results showing performance degradation patterns\n\nThe system should support distributed evaluation across multiple GPUs and handle both text and image inputs appropriately.",
+            "masked_source": [
+                "/workspace/shells/eval_internvl.sh",
+                "/workspace/calculate_scores.py",
+                "/workspace/eval_internvl.py",
+                "/workspace/utils/tools.py",
+                "/workspace/utils/conversation.py",
+                "/workspace/shells/data/mm_niah.json"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_questions": "Same set of questions are used across all context lengths and tasks",
+                    "LLM_API_condition": "LLM responses are gathered under the same API timing conditions"
+                },
+                "independent_variables": {
+                    "context_length": [
+                        "1K tokens",
+                        "2K tokens",
+                        "4K tokens",
+                        "8K tokens",
+                        "12K tokens",
+                        "16K tokens",
+                        "24K tokens",
+                        "32K tokens",
+                        "40K tokens",
+                        "48K tokens",
+                        "64K tokens"
+                    ],
+                    "task_type": [
+                        "retrieval",
+                        "counting",
+                        "reasoning"
+                    ],
+                    "needle_type": [
+                        "text",
+                        "image"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metric": [
+                        "accuracy (for retrieval and reasoning tasks)",
+                        "soft accuracy (for counting tasks)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "needle_type": "The exact definitions of 'text needles' and 'image needles' are not explicitly clarified in the task description.",
+                    "context_length": "It is unspecified whether the context lengths are strict token counts or approximate bins, and how overlaps or edge cases are handled.",
+                    "performance_metric": "The method for computing 'soft accuracy' for counting tasks is not detailed compared to standard accuracy measures."
+                },
+                "possible_modifications": {
+                    "mask_variable_value": [
+                        "Mask the exact token counts by referring to them using relative terms such as 'short', 'medium', and 'long'."
+                    ],
+                    "additional_variable": [
+                        "Introduce a variable for model version or type (e.g., different LLM models) to examine performance differences across models."
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Needle type definitions: The exact characteristics of 'text needles' versus 'image needles' are not fully clarified.",
+                    "Context length specification: It is ambiguous whether context lengths are strict token counts or approximate bin ranges."
+                ],
+                "ambiguous_setup_steps": [
+                    "Preprocessing of images: Instructions for loading and processing images (e.g., handling multiple images) are not detailed.",
+                    "Computation of 'soft accuracy': The method for computing soft accuracy for counting tasks is not explicitly specified.",
+                    "Combining distributed outputs: The process for merging results from multiple evaluation runs may be unclear without further implementation details."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Mask precise token counts by using relative terms (short, medium, long) instead of explicit numbers.",
+                        "Omit detailed preprocessing steps for image handling, requiring the user to devise their own approach."
+                    ],
+                    "imply_need_for_new_setup_steps": [
+                        "Introduce clear definitions and documentation for needle types and context length calculation.",
+                        "Provide explicit guidelines for computing performance metrics, particularly the soft accuracy for counting tasks."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in LLM API response times",
+                "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+                "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+                "possible_modifications": [
+                    "Introduce artificial delays in API response times to test optimizer robustness.",
+                    "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+                    "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+                ]
+            },
+            "systematic_uncertainty": {}
+        },
+        {
+            "question": "- **Are image needles significantly more challenging for current MLLMs than text needles in long multimodal documents?**\n\n\n- **Are image needles significantly more challenging for current MLLMs than text needles in long multimodal documents?**",
+            "method": "Design an experiment using a set of multimodal documents where needles are separately inserted as text and as images. Evaluate each model\u2019s performance on retrieval, counting, and reasoning tasks for both text and image needles. Compare accuracy and soft accuracy metrics between the two types of needles across all models. Qualitatively analyze error cases for image needles and quantify how often predicted outputs for image needles mismatch the actual number of images or details when compared with text needles.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+            "expected_outcome": "The experiment should confirm that models consistently perform worse on image needle tasks relative to text needle tasks, with significantly lower accuracy and soft accuracy scores. Error analyses are likely to show failure cases such as inability to count images correctly or to extract relevant details from images.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "api_call_timing": "same_time"
+                },
+                "independent_variables": {
+                    "optimization_method": [
+                        "OptoPrime",
+                        "TextGrad"
+                    ],
+                    "optimization_task": [
+                        "Solution Optimization",
+                        "Prompt Optimization"
+                    ],
+                    "llm_model": [
+                        "The optimizer is GPT-4o-2024-08-06",
+                        "The student model is GPT-35-turbo-1106"
+                    ]
+                },
+                "dependent_variables": {
+                    "time_in_minutes": "Measured as the total time taken for optimization"
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Trace framework (OptoPrime optimizer)",
+                    "TextGrad framework",
+                    "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+                    "Optimization tasks (Solution Optimization, Prompt Optimization)",
+                    "Evaluation function (automatic comparison of outputs to ground truth)",
+                    "Performance metric (execution time measured in minutes)",
+                    "Hardware setup (standard PC with 16 GB RAM)",
+                    "Evaluation script (handles retrieval, counting, reasoning for text and image needles)",
+                    "Score calculation script (aggregates results and produces heatmaps)",
+                    "Utility functions (for answer correctness, conversation formatting, image loading and processing)"
+                ],
+                "setup_steps": [
+                    "Configure and initialize the evaluation scripts with proper model paths, task names, and output directories",
+                    "Set up output directories and logging for storing evaluation results",
+                    "Integrate both Trace and TextGrad frameworks ensuring LLM API access is available for both",
+                    "Load the dataset containing multimodal documents with needles inserted as text and images",
+                    "Execute evaluation trials for each model and needle task (retrieval, counting, reasoning) under identical conditions",
+                    "Collect and aggregate outputs from distributed evaluations into unified JSONL files",
+                    "Run the score calculation script to compute accuracy scores and generate visualizations (heatmaps)",
+                    "Analyze and compare results between text needle tasks and image needle tasks across models"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Document Length and Multimodality",
+                        "description": "Long multimodal documents with numerous images and varying context lengths increase complexity in processing and maintaining accurate image detail perception."
+                    },
+                    {
+                        "source": "Integration of Optimization with Needle Evaluation",
+                        "description": "The experiment involves both optimization (comparing OptoPrime and TextGrad) and needle evaluation tasks, which are interconnected, adding extra layers of setup and evaluation complexity."
+                    }
+                ]
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in LLM API response times",
+                    "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+                    "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+                    "possible_modifications": [
+                        "Introduce artificial delays in API response times to test optimizer robustness.",
+                        "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+                        "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+                    ]
+                },
+                "systematic_uncertainty": {}
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict LLM API usage further by enforcing a stricter token budget.",
+                        "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency."
+                    ]
+                }
+            },
+            "source": [
+                "/workspace/shells/eval_internvl.sh",
+                "/workspace/calculate_scores.py"
+            ],
+            "usage_instructions": "First, run the evaluation script to evaluate a model on all six tasks (retrieval, counting, and reasoning for both text and image needles): `sh shells/eval_internvl.sh`. This will generate result files in the outputs directory. Then, run the calculation script to compute the scores: `python calculate_scores.py --outputs-dir ./outputs/`. The calculation script will generate heatmaps and scores that directly compare performance between text needle tasks and image needle tasks, showing that models consistently perform worse on image needle tasks relative to text needle tasks. The results will be saved in the outputs/results directory, with separate scores for each task type and an overall comparison between text and image needles.",
+            "requirements": [
+                "Step 1: Create a shell script that defines model paths (e.g., 'OpenGVLab/InternVL-Chat-V1-5') and tasks (retrieval, counting, reasoning for both text and image needles, for both validation and test sets) (/workspace/shells/eval_internvl.sh:12-29)",
+                "Step 2: Set up output directories for results and logs (/workspace/shells/eval_internvl.sh:9-11)",
+                "Step 3: For each model and task combination, execute a Python evaluation script with appropriate parameters (model path, task name, outputs directory) (/workspace/shells/eval_internvl.sh:33-53)",
+                "Step 4: Combine the output files from distributed evaluation into a single JSONL file per model/task (/workspace/shells/eval_internvl.sh:55)",
+                "Step 5: Load and process the evaluation data from JSONL files, extracting context length, placed depth, and correctness information (/workspace/calculate_scores.py:91-134)",
+                "Step 6: Calculate accuracy scores by dividing correct answers by total answers for each context length and depth combination (/workspace/calculate_scores.py:136)",
+                "Step 7: Generate heatmaps visualizing performance across different context lengths and depths (/workspace/calculate_scores.py:139-160)",
+                "Step 8: Calculate average scores for each task and save the results in JSON format (/workspace/calculate_scores.py:162-181)",
+                "Step 9: In the evaluation script, load the model and tokenizer with appropriate configurations (/workspace/eval_internvl.py:105-156)",
+                "Step 10: Process input data by loading images and formatting questions with context (/workspace/eval_internvl.py:276-281)",
+                "Step 11: Generate model responses for each input and calculate correctness (/workspace/eval_internvl.py:294-306)",
+                "Step 12: Save results including question ID, question, answer, response, context length, and placed depth (/workspace/eval_internvl.py:316-324)",
+                "Step 13: Implement utility functions for evaluating correctness of answers, including text normalization and comparison (/workspace/utils/tools.py:246-272)",
+                "Step 14: Implement conversation templates for formatting model inputs (/workspace/utils/conversation.py:62-263)"
+            ],
+            "agent_instructions": "Your task is to implement a system for evaluating multimodal models on their ability to handle text and image needles in various tasks. The system should consist of two main components:\n\n1. An evaluation script that:\n   - Takes a model path, task name, and output directory as input\n   - Evaluates the model on the specified task (retrieval, counting, or reasoning) with either text or image needles\n   - Processes inputs by loading images and formatting questions with context\n   - Generates model responses and saves results in JSONL format\n\n2. A score calculation script that:\n   - Processes the JSONL files from the evaluation\n   - Calculates accuracy scores for different context lengths and depths\n   - Generates visualizations (heatmaps) showing performance patterns\n   - Computes average scores for each task type\n   - Saves results in a structured format\n\nYou'll need to implement utility functions for:\n- Evaluating answer correctness (comparing model responses to ground truth)\n- Formatting conversation inputs for the model\n- Processing and normalizing text\n\nThe system should support both validation and test sets, and should be able to handle multiple models. The goal is to compare performance between text needle tasks and image needle tasks, showing that models consistently perform worse on image needle tasks relative to text needle tasks.",
+            "masked_source": [
+                "/workspace/shells/eval_internvl.sh",
+                "/workspace/calculate_scores.py",
+                "/workspace/eval_internvl.py",
+                "/workspace/utils/tools.py",
+                "/workspace/utils/conversation.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "document_structure": "All multimodal documents follow a fixed structure where needles are inserted; API call timing is kept constant across evaluations"
+                },
+                "independent_variables": {
+                    "needle_type": [
+                        "text",
+                        "image"
+                    ],
+                    "task_type": [
+                        "retrieval",
+                        "counting",
+                        "reasoning"
+                    ],
+                    "model": "Various evaluated MLLMs (the experiment uses multiple models, though they are referenced generally as 'all models')",
+                    "optimization_method": [
+                        "OptoPrime",
+                        "TextGrad"
+                    ],
+                    "optimization_task": [
+                        "Solution Optimization",
+                        "Prompt Optimization"
+                    ],
+                    "llm_model": [
+                        "GPT-4o-2024-08-06",
+                        "GPT-35-turbo-1106"
+                    ]
+                },
+                "dependent_variables": {
+                    "accuracy_metrics": "Accuracy and soft accuracy scores for each task (retrieval, counting, reasoning) with text and image needles",
+                    "error_analysis": "Qualitative error case frequency and mismatches (e.g., inaccurate image counts, inability to capture image details)",
+                    "time_in_minutes": "Measured as the total optimization time (for the optimization experiment component)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "needle_type": "It is not completely explicit how the characteristics (e.g., appearance, complexity) of text needles versus image needles are defined.",
+                    "model": "The exact list of models and their specific configurations are not detailed beyond being 'across all models.'",
+                    "optimization_method": "The connection between the optimization experiment (comparing OptoPrime and TextGrad) and the needle evaluation tasks is not clearly separated, creating potential ambiguity.",
+                    "time_in_minutes": "The precise conditions under which time is measured (hardware specifics, latency variations) are not fully specified."
+                },
+                "possible_modifications": {
+                    "mask_variable_values": [
+                        "Mask the specific needle type (text or image) in the experiment instructions to further test models' implicit identification",
+                        "Conceal some task details (e.g., context lengths or image properties) to test robustness"
+                    ],
+                    "introduce_new_variables": [
+                        "Introduce document context length as an independent variable to assess performance degradation in longer multimodal documents",
+                        "Add image complexity (like resolution or style) as a new variable for the image needle tasks"
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Needle Type Definitions: The specific characteristics that differentiate text needles from image needles (e.g., appearance, complexity) are not fully defined.",
+                    "Model Configuration: The exact list of models and their specific configurations are ambiguously mentioned as 'across all models' without detailed specifications.",
+                    "Connection Between Optimization and Needle Evaluation: It is unclear how the optimization methods (OptoPrime and TextGrad) relate directly to the needle evaluation tasks."
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration of TextGrad into the evaluation framework: The process is outlined but lacks detailed implementation instructions.",
+                    "Data Preprocessing: There is no explicit mention of image preprocessing steps or normalization methods for multimodal documents.",
+                    "Time Measurement Conditions: The precise hardware conditions and latency variations for measuring optimization time (execution time in minutes) are not fully specified."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Omit specific details about LLM API configurations, forcing users to infer optimal settings.",
+                        "Mask detailed preprocessing steps for image and text needle extraction from multimodal documents."
+                    ],
+                    "imply_need_for_new_setup_steps": [
+                        "Introduce explicit documentation requirements on how to handle image complexity (such as image resolution or style variations).",
+                        "Require additional logging or debugging steps to clarify how integration between optimization and needle evaluation is achieved."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in LLM API response times",
+                "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+                "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+                "possible_modifications": [
+                    "Introduce artificial delays in API response times to test optimizer robustness.",
+                    "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+                    "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+                ]
+            },
+            "systematic_uncertainty": {}
+        },
+        {
+            "question": "- **Does incorporating a Retrieval-Augmented Generation (RAG) module improve text needle retrieval performance but not improve image needle retrieval in MLLMs like InternVL-1.5?**\n\n\n- **Does incorporating a Retrieval-Augmented Generation (RAG) module improve text needle retrieval performance but not improve image needle retrieval in MLLMs like InternVL-1.5?**",
+            "method": "Use InternVL-1.5 and its RAG-enhanced variant to run evaluations on both text and image needle tasks. First, evaluate text needle retrieval, counting, and reasoning tasks with and without the RAG method, recording the accuracy metrics. Then, perform similar evaluations for image needle tasks. Compare the metrics to determine if RAG significantly boosts performance in text-based queries while leaving image-based tasks unaffected or degraded. Document qualitative failure cases, particularly noting if extracted content for image needles is incomplete due to document chunking in the RAG module.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+            "expected_outcome": "The expected outcome is that the RAG-enhanced model will show a substantial improvement in performance on text needle tasks (as shown by higher accuracy scores) but will not exhibit similar improvements on image needle tasks. This will support the claim that RAG methods might not be suitable when comprehensive image comprehension is required.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+            "experiment_design_complexity": {
+                "constant_variables": {
+                    "api_call_timing": "same_time"
+                },
+                "independent_variables": {
+                    "optimization_method": [
+                        "OptoPrime",
+                        "TextGrad"
+                    ],
+                    "optimization_task": [
+                        "Solution Optimization",
+                        "Prompt Optimization"
+                    ],
+                    "llm_model": [
+                        "The optimizer is GPT-4o-2024-08-06",
+                        "The student model is GPT-35-turbo-1106"
+                    ]
+                },
+                "dependent_variables": {
+                    "time_in_minutes": "Measured as the total time taken for optimization"
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "InternVL-1.5 model (standard evaluation)",
+                    "InternVL-1.5-RAG model (RAG-enhanced evaluation)",
+                    "RAG data preparation module (using InternVL-14B for retrieval)",
+                    "Evaluation scripts (eval_internvl.sh, prepare_rag.sh, eval_internvl_rag.sh, calculate_scores.py)",
+                    "LLM APIs for model inference",
+                    "Distributed evaluation environment (multiple GPUs, standardized hardware configuration)",
+                    "Datasets for text needle and image needle tasks (retrieval, counting, reasoning)"
+                ],
+                "setup_steps": [
+                    "Set environment variables for distributed evaluation (e.g., PARTITION, GPUS)",
+                    "Define output directories for standard and RAG evaluations",
+                    "Specify and configure the model variants (InternVL-1.5 and InternVL-1.5-RAG)",
+                    "Load evaluation tasks: text retrieval, text counting, text reasoning, image retrieval, image counting, image reasoning",
+                    "Run the standard InternVL-1.5 evaluation using eval_internvl.sh",
+                    "Prepare RAG segments using prepare_rag.sh",
+                    "Execute the RAG-enhanced evaluation using eval_internvl_rag.sh",
+                    "Concatenate and process distributed output files to calculate performance metrics using calculate_scores.py",
+                    "Generate visualizations (heatmaps) showing performance variations with context length and placement depth"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "RAG Module Integration",
+                        "description": "Integrating the RAG-enhanced module introduces complexity in extracting and processing document chunks, which may cause incomplete retrieval of image needles."
+                    },
+                    {
+                        "source": "Multimodal Document Handling",
+                        "description": "Managing long multimodal documents with both text and image needles, ensuring that image details are retained while handling lengthy contexts."
+                    }
+                ]
+            },
+            "experiment_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in LLM API response times",
+                    "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+                    "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+                    "possible_modifications": [
+                        "Introduce artificial delays in API response times to test optimizer robustness.",
+                        "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+                        "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+                    ]
+                },
+                "systematic_uncertainty": {}
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict LLM API usage further by enforcing a stricter token budget.",
+                        "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency."
+                    ]
+                }
+            },
+            "source": [
+                "/workspace/shells/eval_internvl.sh",
+                "/workspace/shells/prepare_rag.sh",
+                "/workspace/shells/eval_internvl_rag.sh",
+                "/workspace/calculate_scores.py"
+            ],
+            "usage_instructions": "1. First, run the standard InternVL-1.5 evaluation to get baseline performance: `sh shells/eval_internvl.sh`\n2. Then, prepare the RAG segments for evaluation: `sh shells/prepare_rag.sh`\n3. Next, run the RAG-enhanced InternVL-1.5 evaluation: `sh shells/eval_internvl_rag.sh`\n4. Finally, calculate and compare the scores between standard and RAG versions: `python calculate_scores.py --outputs-dir ./outputs/`\n\nThe results will show that the RAG-enhanced model (InternVL-1.5-RAG) performs better on text needle tasks (retrieval-text, counting-text, reasoning-text) but does not show similar improvements on image needle tasks (retrieval-image, counting-image, reasoning-image) compared to the standard InternVL-1.5 model.",
+            "requirements": [
+                "Step 1: Set up environment variables for distributed evaluation (PARTITION, GPUS, etc.) (/workspace/shells/eval_internvl.sh:3-7)",
+                "Step 2: Define output directories for results and logs (/workspace/shells/eval_internvl.sh:9-10)",
+                "Step 3: Define the model to evaluate (InternVL-Chat-V1-5) (/workspace/shells/eval_internvl.sh:12-14)",
+                "Step 4: Define the evaluation tasks (retrieval, counting, reasoning for both text and image) (/workspace/shells/eval_internvl.sh:16-29)",
+                "Step 5: For each model and task combination, run the evaluation script with appropriate parameters (/workspace/shells/eval_internvl.sh:33-54)",
+                "Step 6: Concatenate the distributed output files into a single result file (/workspace/shells/eval_internvl.sh:55)",
+                "Step 7: Set up environment variables for RAG preparation (/workspace/shells/prepare_rag.sh:3-7)",
+                "Step 8: Define output directories for RAG preparation (/workspace/shells/prepare_rag.sh:9-10)",
+                "Step 9: Define the model for RAG preparation (InternVL-14B-224px) (/workspace/shells/prepare_rag.sh:12-14)",
+                "Step 10: Define the tasks for RAG preparation (/workspace/shells/prepare_rag.sh:16-29)",
+                "Step 11: For each model and task combination, run the RAG preparation script (/workspace/shells/prepare_rag.sh:33-53)",
+                "Step 12: Set up environment variables for RAG-enhanced evaluation (/workspace/shells/eval_internvl_rag.sh:3-7)",
+                "Step 13: Define output directories for RAG-enhanced evaluation (/workspace/shells/eval_internvl_rag.sh:9-10)",
+                "Step 14: Define the model for RAG-enhanced evaluation (InternVL-Chat-V1-5) (/workspace/shells/eval_internvl_rag.sh:12-14)",
+                "Step 15: Define the RAG-enhanced tasks (/workspace/shells/eval_internvl_rag.sh:16-29)",
+                "Step 16: For each model and RAG-enhanced task combination, run the evaluation script (/workspace/shells/eval_internvl_rag.sh:33-54)",
+                "Step 17: Concatenate the distributed RAG-enhanced output files (/workspace/shells/eval_internvl_rag.sh:55)",
+                "Step 18: Load the evaluation results from the output directory (/workspace/calculate_scores.py:91-96)",
+                "Step 19: Process each result file to calculate accuracy scores (/workspace/calculate_scores.py:97-137)",
+                "Step 20: Generate heatmaps to visualize performance (/workspace/calculate_scores.py:138-160)",
+                "Step 21: Calculate average scores for each task type (/workspace/calculate_scores.py:162-174)",
+                "Step 22: Save the results to JSON files for comparison (/workspace/calculate_scores.py:69-89, 175-181)",
+                "Step 23: Compare standard model performance with RAG-enhanced model performance across different task types (/workspace/calculate_scores.py:72-78)"
+            ],
+            "agent_instructions": "You need to implement a system to evaluate and compare the performance of InternVL-1.5 with and without Retrieval-Augmented Generation (RAG) on multimodal needle-in-a-haystack tasks.\n\nThe evaluation should be performed on six task types:\n1. Text retrieval (finding specific text in a document)\n2. Image retrieval (finding specific images)\n3. Text counting (counting occurrences of text elements)\n4. Image counting (counting occurrences of visual elements)\n5. Text reasoning (answering questions about text content)\n6. Image reasoning (answering questions about visual content)\n\nYour implementation should:\n\n1. First evaluate the standard InternVL-1.5 model on all task types for both validation and test sets\n2. Prepare RAG-enhanced data using InternVL-14B as the retrieval model\n3. Evaluate the RAG-enhanced InternVL-1.5 on the same tasks\n4. Calculate and compare performance metrics between standard and RAG versions\n\nThe system should support distributed evaluation across multiple GPUs and should organize results in a way that allows for easy comparison between the standard and RAG-enhanced approaches.\n\nThe final output should include performance scores for each task type and visualizations (heatmaps) showing how performance varies with context length and placement depth. The analysis should highlight whether RAG enhancement improves performance on text-based tasks more than on image-based tasks.",
+            "masked_source": [
+                "/workspace/shells/eval_internvl.sh",
+                "/workspace/shells/prepare_rag.sh",
+                "/workspace/shells/eval_internvl_rag.sh",
+                "/workspace/calculate_scores.py",
+                "/workspace/eval_internvl.py",
+                "/workspace/prepare_rag.py",
+                "/workspace/utils/tools.py",
+                "/workspace/utils/conversation.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_environment": "Same distributed evaluation setup on multiple GPUs with identical API call timings and hardware conditions"
+                },
+                "independent_variables": {
+                    "model_variant": [
+                        "InternVL-1.5",
+                        "InternVL-1.5-RAG"
+                    ],
+                    "task_type": [
+                        "text retrieval",
+                        "text counting",
+                        "text reasoning",
+                        "image retrieval",
+                        "image counting",
+                        "image reasoning"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Accuracy scores on each task type along with documented qualitative failure cases"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "text needle vs. image needle": "It is not explicitly defined what constitutes a 'needle' in textual versus image contexts and how they are precisely identified.",
+                    "RAG enhancement details": "The method by which RAG extracts document chunks and how it potentially omits images is not fully clarified.",
+                    "qualitative failure cases": "The criteria for labeling a result as a failure or matching failure cases are ambiguous."
+                },
+                "possible_modifications": {
+                    "mask_existing_variables": [
+                        "Conceal the specific labels for the task types (retrieval, counting, reasoning) to assess if the system can infer the correct tasks from context.",
+                        "Mask the explicit identification of the model variants, requiring inference solely based on performance metrics."
+                    ],
+                    "imply_new_variables": [
+                        "Introduce a 'context_length' variable to observe performance degradation with longer documents.",
+                        "Add a 'document complexity' variable to evaluate how document structure impacts retrieval and reasoning in both text and image needles."
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Text needle vs. image needle definition: The exact criteria for identifying and distinguishing needles in text versus images is not clearly specified.",
+                    "RAG enhancement details: The process by which the RAG module chunks documents and its impact on image content retention is ambiguous."
+                ],
+                "ambiguous_setup_steps": [
+                    "Preparation of RAG segments: The instructions do not fully clarify how to ensure that the RAG module does not omit images during document chunking.",
+                    "Definition and labeling of qualitative failure cases: Criteria for what constitutes a failure, particularly in cases of incomplete image retrieval, are not explicitly defined."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Conceal the explicit labels for task types (retrieval, counting, reasoning) to force inference from the evaluation setup.",
+                        "Omit detailed steps showing RAG integration, requiring users to determine the optimal chunking strategy."
+                    ],
+                    "imply_new_setup_steps": [
+                        "Introduce a step for explicitly validating the complete retrieval of visual content in the RAG-enhanced setup.",
+                        "Add documentation requirements for the definitions of text and image needles and the criteria for qualitative failure cases."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in LLM API response times",
+                "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+                "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+                "possible_modifications": [
+                    "Introduce artificial delays in API response times to test optimizer robustness.",
+                    "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+                    "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "RAG module integration and multimodal document chunking",
+                "description": "The RAG module systematically leads to incomplete retrieval of image needles due to document chunking. This can result in omitting important images from the evaluation tasks, creating a persistent bias when compared with text needle tasks.",
+                "impact": "Consistent underperformance on image needle tasks relative to text needle tasks, regardless of other improvements, due to missing visual context.",
+                "possible_modifications": [
+                    "Introduce a validation step to ensure that the number of images extracted using the RAG module matches the original document.",
+                    "Adjust or refine the chunking strategy in the RAG module to prevent omission of images.",
+                    "Compare evaluation results with a baseline that does not use document chunking to systematically assess the impact."
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,1228 @@
+{
+    "questions": [
+        {
+            "method": "Collect and analyze performance results from Table 3, which reports dataset-specific scores and overall AGENT BENCH scores, and Table 4, which details breakdowns of execution outcomes (Completed, Context Limit Exceeded, Invalid Format, Invalid Action, and Task Limit Exceeded). Compare the performance of API-based LLMs with open-sourced LLMs using metrics such as average scores (e.g., API-based LLM average around 2.15 vs. OSS average around 0.51), success rates in specific tasks (e.g., House Holding), and error distributions. Incorporate additional supporting details and visual cues from the figures if available, ensuring consistency with the reported metrics and error categorizations.",
+            "expected_outcome": "It is expected that API-based LLMs will significantly outperform open-sourced LLMs across most evaluated tasks. Models like gpt-4 should demonstrate superior performance with high success rates and lower error occurrences, as evidenced by overall AGENT BENCH scores and detailed execution outcome breakdowns. The results from Table 3 and Table 4 should collectively confirm the robustness and effectiveness of commercial models relative to OSS alternatives.",
+            "subsection_source": "4.2 MAIN RESULTS",
+            "source": [
+                "/workspace/src/analysis.py"
+            ],
+            "usage_instructions": "To analyze whether API-based LLMs consistently outperform open-sourced LLMs across different tasks on the AGENT BENCH benchmark, run the following command:\n\npython -m src.analysis -c configs/assignments/definition.yaml -o outputs -s analysis\n\nThis script will analyze the benchmark results and generate three CSV files in the 'analysis' directory:\n1. summary.csv - Contains the overall scores and task-specific scores for each LLM (similar to Table 3)\n2. agent_validation.csv - Shows the average validation outcomes for each agent (related to Table 4)\n3. task_validation.csv - Shows the average validation outcomes for each task (related to Table 4)\n\nThese files will provide the data needed to compare API-based LLMs with open-sourced LLMs across different tasks and analyze their execution outcomes, directly addressing the experiment question about their relative performance on the AGENT BENCH benchmark.",
+            "requirements": [
+                "Step 1: Load configuration file that defines agents and tasks (/workspace/src/analysis.py:56-71)",
+                "Step 2: Walk through output directory to find benchmark result files (overall.json) (/workspace/src/analysis.py:84-111)",
+                "Step 3: Filter results by timestamp and organize them by agent and task (/workspace/src/analysis.py:96-111)",
+                "Step 4: Map model names to standardized names using a predefined mapping (/workspace/src/analysis.py:102)",
+                "Step 5: Load and parse the benchmark result files (/workspace/src/analysis.py:125-139)",
+                "Step 6: Extract validation statistics from results (/workspace/src/analysis.py:131-139)",
+                "Step 7: Sort tasks by predefined priority order (/workspace/src/analysis.py:305)",
+                "Step 8: Extract main performance metrics for each task using task-specific handlers (/workspace/src/analysis.py:307-316)",
+                "Step 9: Calculate average validation statistics for each agent (/workspace/src/analysis.py:361-379)",
+                "Step 10: Calculate average validation statistics for each task (/workspace/src/analysis.py:361-379)",
+                "Step 11: Generate summary CSV with performance metrics for each agent across tasks (/workspace/src/analysis.py:339-358)",
+                "Step 12: Generate agent validation CSV with average validation outcomes by agent (/workspace/src/analysis.py:381-410)",
+                "Step 13: Generate task validation CSV with average validation outcomes by task (/workspace/src/analysis.py:413-442)",
+                "Final Step: Save all results to specified output directory (/workspace/src/analysis.py:331-444)"
+            ],
+            "agent_instructions": "Create a script that analyzes benchmark results from the AGENT BENCH benchmark to compare API-based LLMs with open-sourced LLMs across different tasks. The script should:\n\n1. Accept command-line arguments for configuration file path, output directory, save directory, and optional time filter.\n\n2. Load a configuration file that defines available agents (LLMs) and tasks.\n\n3. Process benchmark results by:\n   - Walking through the output directory to find result files (overall.json)\n   - Organizing results by agent and task\n   - Mapping model names to standardized display names\n   - Filtering results by timestamp if specified\n\n4. Extract performance metrics using task-specific logic for different benchmark tasks (like operating systems, databases, knowledge graphs, etc.).\n\n5. Calculate validation statistics including completion rates and error types.\n\n6. Generate three CSV output files:\n   - summary.csv: Contains performance metrics for each LLM across different tasks\n   - agent_validation.csv: Shows average validation outcomes for each agent\n   - task_validation.csv: Shows average validation outcomes for each task\n\nThe script should handle various task types with different scoring metrics and provide a comprehensive analysis of how API-based LLMs compare to open-source LLMs on the benchmark.",
+            "masked_source": [
+                "/workspace/src/analysis.py"
+            ],
+            "question": "Do API-based LLMs consistently outperform open-sourced LLMs across different tasks on the AGENT BENCH benchmark? Specifically, does the trend observed in Table 3\u2014where API-based LLMs (e.g., gpt-4, gpt-3.5-turbo) show overall scores above 1.00, and models like gpt-4 achieve high success rates (e.g., 78% in House Holding)\u2014hold across varying execution outcomes as detailed in Table 4?",
+            "design_complexity": {
+                "constant_variables": {
+                    "command_line_arguments": "configuration_file_path, output_directory, save_directory, and optional time filter remain fixed for all runs"
+                },
+                "independent_variables": {
+                    "llm_model": [
+                        "API-based LLMs (e.g., gpt-4, gpt-3.5-turbo)",
+                        "Open-sourced LLMs"
+                    ],
+                    "task_type": [
+                        "Operating System",
+                        "Database",
+                        "Knowledge Graph",
+                        "Digital Card Game",
+                        "Lateral Thinking Puzzle",
+                        "House Holding",
+                        "Web Shopping",
+                        "Web Browsing"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "overall AGENT BENCH scores (from Table 3)",
+                        "task-specific scores",
+                        "error distributions (Completed, Context Limit Exceeded, Invalid Format, Invalid Action, Task Limit Exceeded from Table 4)",
+                        "success rates"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "llm_model": "The task provides examples (gpt-4, gpt-3.5-turbo) for API-based models but does not clearly list all models or criteria for categorizing models as API-based versus open-sourced.",
+                    "task_visual_cues": "The instruction mentions using figures for supporting details, but many figures have no extracted text, making it unclear how to incorporate visual clues.",
+                    "timestamp_filter": "The use and format of the timestamp filter is not explicitly defined in the task instructions."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Explicitly add additional variables such as a detailed timestamp filter with format specifications",
+                        "Mask or generalize some model names to test robustness in variable extraction",
+                        "Include new task types or additional error metrics for more granular analysis",
+                        "Clarify how to incorporate supporting details from figures with no available text"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Configuration file defining agents (LLMs) and tasks",
+                    "Benchmark result files (overall.json) in the specified output directory",
+                    "Predefined mapping for standardizing model names",
+                    "Task-specific performance metric handlers for various tasks (Operating System, Database, Knowledge Graph, Digital Card Game, Lateral Thinking Puzzle, House Holding, Web Shopping, Web Browsing)",
+                    "CSV output generation modules (summary.csv, agent_validation.csv, task_validation.csv)",
+                    "Timestamp filter for selecting relevant results",
+                    "Analysis script (located in /workspace/src/analysis.py)"
+                ],
+                "setup_steps": [
+                    "Step 1: Load the configuration file that defines the available agents and tasks",
+                    "Step 2: Walk through the output directory to locate benchmark result files (overall.json)",
+                    "Step 3: Filter the results by timestamp if specified",
+                    "Step 4: Organize results by agent and task",
+                    "Step 5: Map the model names to standardized display names using a predefined mapping",
+                    "Step 6: Parse the benchmark result files to extract relevant data",
+                    "Step 7: Extract validation statistics including execution outcomes (Completed, Context Limit Exceeded, Invalid Format, Invalid Action, Task Limit Exceeded)",
+                    "Step 8: Sort tasks by a predefined priority order",
+                    "Step 9: Calculate main performance metrics for each task using task-specific logic",
+                    "Step 10: Compute average validation statistics for each agent",
+                    "Step 11: Compute average validation statistics for each task",
+                    "Step 12: Generate three CSV files with the aggregated performance metrics",
+                    "Final Step: Save all generated results to the specified output directory"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Incorporation of multiple error metrics and execution outcomes",
+                        "description": "Analyzing performance requires combining overall AGENT BENCH scores (from Table 3) with detailed breakdowns of execution outcomes (from Table 4), adding an extra layer of complexity."
+                    },
+                    {
+                        "source": "Usage of visual cues from figures",
+                        "description": "Even though many figures have no text extracted, instructions refer to using these visual cues to support the analysis, which may introduce complexity in how the data is interpreted and integrated."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "LLM model categorization: The criteria for distinguishing API-based LLMs from open-sourced LLMs are not fully detailed beyond given examples.",
+                    "Task visual cues: The instruction to incorporate figures (with missing extracted text) is ambiguous regarding what visual details should be used."
+                ],
+                "ambiguous_setup_steps": [
+                    "How to handle and format the optional timestamp filter: The expected format and processing method for the timestamp filter is not clearly specified.",
+                    "Integration of supporting details from figures: Although figures are mentioned for additional supporting details, there is no clear instruction on how to incorporate these cues given the lack of extracted text."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Explicitly specify the criteria for categorizing LLMs as API-based versus open-sourced, including a comprehensive list of models for each category.",
+                        "Add detailed instructions and expected formats for the timestamp filter, including example input values.",
+                        "Clarify how visual cues from figures should be incorporated into the analysis, possibly by providing a descriptive summary alongside each figure."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a tighter model size and resource usage constraint by requiring that a smaller variant (e.g., GPT-4o-mini) achieves the same performance level (such as overall AGENT BENCH scores and success rates in tasks like House Holding) as the larger benchmark model."
+                    ],
+                    "time_constraints": [
+                        "Impose stricter evaluation time limits or reduce the allowed optimization iterations during analysis to further distinguish the efficiency differences between API-based and open-sourced LLMs."
+                    ],
+                    "money_constraints": [
+                        "Simulate budget restrictions by limiting the number of API calls or computational resources available, thereby testing cost-effectiveness while still aiming for high performance."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications in token processing and noise injection during gradient updates.",
+                "description": "Uncertainty is introduced when methods such as dropping unimportant tokens are modified to drop random tokens. This can lead to instability during gradient updates and inconsistent execution outcomes, as reflected in unpredictable variations in error distributions (e.g., Task Limit Exceeded, Invalid Action) observed in the AGENT BENCH results (Table 4). Additionally, random fluctuations in model behavior may affect overall performance metrics from Table 3.",
+                "impact": "Results in variability in recorded performance metrics such as overall AGENT BENCH scores and task-specific success rates. This can lead to inconsistent replication of results, affecting the reliability of performance comparisons between API-based and open-sourced LLMs.",
+                "possible_modifications": [
+                    "Introduce controlled random noise in token dropping strategies to simulate the effects of randomness on gradient updates.",
+                    "Randomize selection of tokens for removal during pre-training to assess the robustness of inference under varied noise conditions.",
+                    "Vary random seeds used in the analysis pipeline to evaluate the sensitivity of the outcome metrics."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases introduced by systematic modifications to datasets and evaluation procedures.",
+                "description": "Systematic uncertainty can occur when a one-time modification is made to the dataset or evaluation pipeline, such as introducing a bias in labeling (e.g., labeling all reviews with 50 or more characters as negative) or applying a fixed, biased error classification method.",
+                "impact": "Leads to a consistent skew in performance metrics, potentially underestimating the effectiveness of certain models (e.g., open-sourced LLMs) in standardized tasks. This bias can affect the overall AGENT BENCH scores and task-specific outcomes, resulting in misleading comparisons between model types.",
+                "possible_modifications": [
+                    "Systematically modify the dataset used for training or evaluation (e.g., biased labeling rules) to test the resilience of the analysis methods.",
+                    "Implement a controlled alteration in the evaluation pipeline to consistently simulate error misclassification and observe its impact on the derived performance metrics.",
+                    "Apply a fixed mapping bias in standardizing model names or error categorizations to assess the influence on comparative outcomes."
+                ]
+            }
+        },
+        {
+            "method": "Extract the parameter sizes and corresponding overall AGENT BENCH scores for OSS LLMs as depicted in Figure 3. Use data points from models such as codellama-34b (OA score of 0.96) among others to construct a scatter plot with model size on the x-axis and overall score on the y-axis. Calculate the correlation coefficient (e.g., Pearson\u2019s r) to quantify this relationship. Additionally, perform regression analyses (including possible polynomial regression) to determine whether the trend is strictly linear or if there are diminishing returns as model size increases. For further context, compare these findings with API-based LLMs (noting that the average API-based score is around 2.15 versus 0.51 for OSS LLMs)",
+            "expected_outcome": "A moderate to strong positive correlation is expected, indicating that larger OSS LLMs tend to achieve better overall scores on AGENT BENCH. However, the analysis may reveal diminishing returns for models with very large parameter counts, and even the top-performing OSS LLMs are likely to show a noticeable performance gap compared to API-based LLMs. This suggests that additional factors beyond model size, such as training methods or fine-tuning strategies, significantly influence overall performance.",
+            "subsection_source": "4.2 MAIN RESULTS",
+            "no_answer": "No answer found after 2 iterations.",
+            "question": "Is there a positive correlation between the size (in billions of parameters) of OSS LLMs and their overall AGENT BENCH score, and does the relationship exhibit diminishing returns or non-linear trends at higher parameter scales?",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_environment": "AGENT BENCH is used consistently, including fixed datasets and evaluation metrics (e.g., OA score, different execution outcomes)"
+                },
+                "independent_variables": {
+                    "llm_model": "The specific OSS LLMs being evaluated (e.g., codellama-34b, llama-2-70b, vicuna-33b, etc.), each associated with a defined parameter size",
+                    "model_size": "The number of parameters (in billions) for each OSS LLM; values include models ranging from 6B up to 70B as depicted in Figure 3",
+                    "analysis_method": [
+                        "Pearson\u2019s r for correlation",
+                        "linear regression",
+                        "polynomial regression"
+                    ]
+                },
+                "dependent_variables": {
+                    "overall_score": "Overall AGENT BENCH score (OA score) obtained by each model",
+                    "correlation_coefficient": "The computed Pearson\u2019s r value quantifying the relationship between model size and OA score",
+                    "regression_results": "Regression parameters and goodness-of-fit, which indicate whether the trend is linear or exhibits diminishing returns at higher parameter scales"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                   "training_method_factors": "The task implies that factors beyond model size (such as training or fine-tuning strategies) may affect performance, but these are not explicitly provided as variables in the task"
+                },
+                "possible_modifications": {
+                    "mask_existing_variables": [
+                        "Omit or anonymize the specific model names (e.g., codellama-34b) to force the agent to focus only on numerical parameter values",
+                        "Hide error type categories in some experiments to evaluate if the tool can infer their impact on performance trends from the context"
+                    ],
+                    "introduce_new_variables": [
+                        "Incorporate additional variables such as 'training_method' or 'fine_tuning_strategy' with values that represent different techniques",
+                        "Add a variable for 'data_source' to compare performance differences when using API-based versus OSS LLMs"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "AGENT BENCH evaluation environment (including fixed environment variables such as OS, Database, Digital Card Game, etc.)",
+                    "Docker Environment including initialization script and start script",
+                    "Checking Pipeline to validate execution outcomes",
+                    "Data extraction component from Figure 3 (to retrieve OSS LLM parameter sizes and AGENT BENCH OA scores)",
+                    "Statistical analysis tools for computing Pearson\u2019s r, and performing linear and polynomial regression analyses",
+                    "Comparison framework for API-based LLM scores versus OSS LLM scores"
+                ],
+                "setup_steps": [
+                    "Extract the parameter sizes and corresponding overall AGENT BENCH scores from Figure 3 (e.g., codellama-34b with OA score of 0.96 and others)",
+                    "Construct a scatter plot with model size (in billions) on the x-axis and OA score on the y-axis",
+                    "Calculate the correlation coefficient (Pearson\u2019s r) between model sizes and OA scores",
+                    "Perform regression analyses (both linear and polynomial) to determine the trend and check for diminishing returns at higher parameter counts",
+                    "Compare OSS LLM performance with API-based LLM benchmarks (noting the average scores: ~0.51 for OSS vs. ~2.15 for API-based)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "External Performance Factors",
+                        "description": "The influence of additional factors such as training methods, fine-tuning strategies, and data source variations introduces further complexity beyond mere model size analysis."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                   "Inclusion and treatment of training/fine-tuning methodologies as variables impacting performance."
+                ],
+                "ambiguous_setup_steps": [
+                     "The specific method for comparing OSS LLM metrics with API-based LLM scores is left somewhat open-ended."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Omit or anonymize specific model names (e.g., codellama-34b) to focus analysis on numerical parameter values.",
+                        "Hide detailed error type categories to force the agent to infer their impact from context."
+                    ],
+                    "imply_need_for_new_setup_steps": [
+                        "Introduce explicit steps to integrate training/fine-tuning strategy as a variable."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification is to tighten the compute resource requirements by imposing a limit on the maximum model size used. For example, instead of evaluating very large models (e.g., codellama-34b or llama-2-70b), one could require a smaller model (e.g., a variant around 13B parameters) to achieve a similar level of performance, thus highlighting the trade-off between resource allocation and AGENT BENCH score.",
+                        "Another option is to restrict available compute features (such as GPU hours) during evaluation to observe if and how performance trends change when evaluating under a stricter resource budget."
+                    ],
+                    "time_constraints": [
+                        "As a modification, one could reduce the allowed processing or evaluation time (e.g., by limiting the number of iterations in the regression analysis or shortening the execution time for model evaluation), thereby examining if the correlation and diminishing returns trend holds under tighter time budgets."
+                ],
+                    "money_constraints": [
+                        "A possible modification is to simulate a financial constraint by limiting access to premium API-based models. This forces the experiment to rely solely on OSS LLMs, thus making the performance gap (as seen with average API-based scores around 2.15 vs. ~0.51 for OSS LLMs) more pronounced under budget restrictions.",
+                        "Another approach is to set a compute cost limit that indirectly pressures the experiment to use models that are less expensive to run, potentially affecting the overall performance trend."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random noise from evaluation and measurement procedures",
+                "description": "Random fluctuations can arise from the stochastic nature of AGENT BENCH evaluations, including variable execution outcomes (such as random occurrences of Task Limit Exceeded and temporary network or computational instabilities) and inherent randomness in performance metrics extraction (e.g., random token drops during evaluation that disrupt gradient updates).",
+                "impact": "This randomness can lead to inconsistent OA scores between trials, affecting the computed Pearson\u2019s r and regression parameters. It introduces trial-to-trial variability in the correlation analysis between model size and overall score.",
+                "possible_modifications": [
+                    "Intentionally drop or add random tokens during evaluation to quantify the impact of noise on AGENT BENCH scores.",
+                    "Perform repeated runs with different random seeds to assess the spread in OA scores and correlation coefficients.",
+                    "Introduce controlled randomized perturbations in the data extraction process to evaluate stability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent biases from evaluation setup and model error outcomes",
+                "description": "Systematic uncertainty may stem from inherent biases in the evaluation protocol such as the methods by which data (parameter sizes and OA scores) are extracted. Additionally, training methods and fine-tuning strategies that differ between OSS LLMs and API-based models can introduce systematic performance gaps.",
+                "impact": "These biases may consistently skew the overall AGENT BENCH scores, leading to an under- or over-estimation of the effect of model size on performance. As a result, regression analyses may reveal diminishing returns or non-linear trends that reflect the impact of these systematic factors rather than pure model scaling.",
+                "possible_modifications": [
+                    "Introduce a one-time modification of the evaluation dataset (such as re-weighting OA scores) to simulate and then correct systematic biases.",
+                    "Replace or recalibrate biased segments of the performance dataset (e.g., correcting for systematic over-penalization in TLE or Invalid Format errors) to compare against API-based LLM benchmarks.",
+                    "Incorporate additional variables (e.g., training_method or fine_tuning_strategy) within the regression model to account for systematic differences across models."
+                ]
+            }
+        },
+        {
+            "method": "Select two groups of models from the paper\u2019s evaluation: one with code tuning (e.g., the CodeLlama series) and one without (e.g., the Llama-2 series). Identify and group AGENT BENCH tasks into two categories: tasks following fixed, static procedures (e.g., Web Shopping) and tasks requiring flexible, general decision-making (e.g., Digital Card Game and Operating System interactions). For each model, execute the full task suite under identical settings (same dataset splits, inference parameters, and prompt templates). Record key metrics such as success rate (SR), invalid action (IA) errors, invalid format (IF) errors, and task limit exceeded (TLE) outcomes. Statistically compare the performances of the two groups across both task categories to determine whether code tuning advantages static procedures while impairing general reasoning capabilities.",
+            "expected_outcome": "It is anticipated that code-tuned models will excel on tasks that require following a static and well-defined procedure, as evidenced by higher success rates and lower incidences of invalid action and format errors . Conversely, these models are expected to underperform on tasks demanding broader reasoning and flexible decision-making (such as Digital Card Game and Operating System interactions), thereby confirming the ambivalent impact of code tuning observed in the evaluation.",
+            "subsection_source": "4.3 ANALYSIS",
+            "source": [
+                "/workspace/src/start_task.py",
+                "/workspace/src/assigner.py",
+                "/workspace/src/analysis.py"
+            ],
+            "usage_instructions": "1. First, create a custom configuration file (e.g., 'configs/assignments/code_tuning_experiment.yaml') that includes both code-tuned models (CodeLlama series) and non-code-tuned models (Llama-2 series) and specifies the tasks to run (Web Shopping, Digital Card Game, and Operating System interactions). 2. Start the task servers using 'python -m src.start_task -a --config configs/start_task.yaml'. 3. Run the experiment with 'python -m src.assigner --config configs/assignments/code_tuning_experiment.yaml'. 4. After completion, analyze the results with 'python -m src.analysis --config configs/assignments/code_tuning_experiment.yaml --output outputs --save analysis_results', which will generate CSV files comparing performance metrics (success rate, invalid action errors, invalid format errors, and task limit exceeded outcomes) across the different model groups and task categories.",
+            "requirements": [
+                "Step 1: Load configuration from a YAML file using a ConfigLoader (/workspace/src/start_task.py:80-80)",
+                "Step 2: Start a task controller if specified in the arguments or configuration (/workspace/src/start_task.py:84-112)",
+                "Step 3: Determine the controller address from arguments or configuration (/workspace/src/start_task.py:116-121)",
+                "Step 4: Start task workers based on configuration or command line arguments (/workspace/src/start_task.py:123-137)",
+                "Step 5: Initialize the Assigner with configuration and set up data structures for tracking tasks and agents (/workspace/src/assigner.py:42-68)",
+                "Step 6: Create output directory and save configuration (/workspace/src/assigner.py:71-75)",
+                "Step 7: Process existing output files to resume interrupted experiments (/workspace/src/assigner.py:77-151)",
+                "Step 8: Create agent instances based on configuration (/workspace/src/assigner.py:155-157)",
+                "Step 9: Implement a worker generator that allocates tasks to agents using a max flow algorithm (/workspace/src/assigner.py:161-236)",
+                "Step 10: Start the experiment by assigning tasks to agents and tracking progress with progress bars (/workspace/src/assigner.py:238-299)",
+                "Step 11: Record task completions and write results to files (/workspace/src/assigner.py:301-327, /workspace/src/assigner.py:329-384)",
+                "Step 12: Load experiment configuration and analyze output files (/workspace/src/analysis.py:56-141)",
+                "Step 13: Process results using task-specific handlers to extract the main metrics (/workspace/src/analysis.py:144-263)",
+                "Step 14: Generate summary statistics and create CSV files comparing model performance (/workspace/src/analysis.py:301-442)"
+            ],
+            "agent_instructions": "You need to implement a system for running and analyzing experiments comparing code-tuned models (CodeLlama series) with non-code-tuned models (Llama-2 series) on three types of tasks: Web Shopping, Digital Card Game, and Operating System interactions. The system should consist of three main components:\n\n1. A task server starter that:\n   - Reads a configuration file specifying which tasks to run\n   - Starts a controller process if needed\n   - Launches task worker processes (either directly or in Docker containers)\n   - Handles communication between components\n\n2. A task assigner that:\n   - Loads experiment configuration from a YAML file\n   - Sets up agents (models) and tasks based on the configuration\n   - Efficiently allocates tasks to agents using a max flow algorithm\n   - Tracks progress with progress bars\n   - Handles concurrency and resource allocation\n   - Records results and writes them to output files\n   - Supports resuming interrupted experiments\n\n3. An analysis tool that:\n   - Processes the output files generated during the experiment\n   - Extracts task-specific metrics for each agent/model\n   - Generates CSV files with performance metrics including:\n     * Success rate\n     * Invalid action errors\n     * Invalid format errors\n     * Task limit exceeded outcomes\n   - Compares performance across different model groups and task categories\n\nThe system should be configurable through YAML files that specify which models to use, which tasks to run, and concurrency settings. The output should include detailed logs and summary statistics that can be used to compare the performance of code-tuned vs. non-code-tuned models.",
+            "masked_source": [
+                "/workspace/src/start_task.py",
+                "/workspace/src/assigner.py",
+                "/workspace/src/analysis.py"
+            ],
+            "question": "Does code tuning in LLMs improve performance on tasks with well-defined, static procedures (e.g., Web Shopping) while potentially undermining performance on tasks that demand more general reasoning (e.g., Digital Card Game and Operating System interactions)?",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset_splits": "All experiments use identical dataset splits",
+                    "inference_parameters": "Same inference parameters for all model executions",
+                    "prompt_templates": "Uniform prompt templates used for every task"
+                },
+                "independent_variables": {
+                    "model_group": [
+                        "code-tuned models (e.g., CodeLlama series)",
+                        "non-code-tuned models (e.g., Llama-2 series)"
+                    ],
+                    "task_category": [
+                        "Static Procedure tasks (e.g., Web Shopping)",
+                        "General Decision-Making tasks (e.g., Digital Card Game and Operating System interactions)"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "Success Rate (SR)",
+                        "Invalid Action (IA) errors",
+                        "Invalid Format (IF) errors",
+                        "Task Limit Exceeded (TLE) outcomes"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_details": "The exact versions and configuration details within the CodeLlama and Llama-2 series are not explicitly defined, leading to interpretation differences.",
+                    "task_definitions": "While task categories are mentioned, the precise criteria for classifying tasks as 'static' versus 'general decision-making' are not exhaustively detailed.",
+                    "metric_computation": "The calculation methods (e.g., thresholds and rounding for success rate or error counts) not explicitly provided in the task instructions."
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Mask or generalize the specific model names to emphasize performance differences without revealing internal model version details."
+                    ],
+                    "modification_2": [
+                        "Introduce additional task sub-categories or more granular definitions to help clarify what distinguishes static from flexible tasks."
+                    ],
+                    "modification_3": [
+                        "Explicitly define the computation methods for key metrics (SR, IA, IF, TLE) or include supplementary variables that capture finer-grained performance indicators."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Task Server Starter: Reads configuration YAML, starts controller, launches task workers",
+                    "Task Assigner: Loads experiment configuration, sets up agents and tasks, assigns tasks using a max flow algorithm, tracks progress, and logs outputs",
+                    "Analysis Tool: Processes and aggregates output files to generate CSVs with key performance metrics",
+                    "YAML Configuration Management: Custom configuration files that specify models, tasks, and concurrency settings",
+                    "Model Groups: Two sets of LLMs (code-tuned models like CodeLlama series and non-code-tuned models like Llama-2 series) used for comparative evaluation",
+                    "Task Categories: Classification and routing of AGENT BENCH tasks into static procedure tasks (e.g., Web Shopping) and flexible decision-making tasks (e.g., Digital Card Game and Operating System interactions)"
+                ],
+                "setup_steps": [
+                    "Step 1: Create a custom YAML configuration file (e.g., 'configs/assignments/code_tuning_experiment.yaml') that specifies the model groups and tasks to run",
+                    "Step 2: Start the task servers using the command 'python -m src.start_task -a --config configs/start_task.yaml', which involves loading configuration, starting a controller if needed, and launching task worker processes",
+                    "Step 3: Run the experiment by executing 'python -m src.assigner --config configs/assignments/code_tuning_experiment.yaml', which initializes the Assigner, sets up agents, allocates tasks using the max flow algorithm, and tracks progress",
+                    "Step 4: After the experiment, analyze the results using 'python -m src.analysis --config configs/assignments/code_tuning_experiment.yaml --output outputs --save analysis_results' to extract metrics (SR, IA, IF, TLE) and generate comparative CSV files",
+                    "Step 5: Resume interrupted experiments if necessary by processing existing output files and reinitializing the experiment state"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Task-specific implementation details",
+                        "description": "The assignment and analysis processes involve multi-step procedures (e.g., reading configurations, using a max flow algorithm, handling concurrency, and generating detailed output logs) that contribute to overall setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model Details: The exact versions and configurations of the CodeLlama and Llama-2 series are not explicitly defined, leading to potential variability in interpretation.",
+                    "Task Definitions: While tasks are grouped into static procedure and general decision-making categories, the specific criteria and boundaries for these classifications are not exhaustively detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Metric Computation: The methods for calculating key performance metrics (e.g., thresholds or rounding in success rate, invalid action/format errors, and task limit exceeded counts) are not explicitly specified in the instructions.",
+                    "Configuration Parameters: Some internal parameters (e.g., concurrency settings, max rounds for task execution, and precise logging details) are not fully elaborated, which could lead to interpretation differences during implementation."
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Mask or generalize specific model version details to highlight performance trends without revealing internal configuration differences."
+                    ],
+                    "modification_2": [
+                        "Introduce more granular task sub-category definitions with explicit criteria for what constitutes a 'static procedure' versus a 'flexible decision-making' task."
+                    ],
+                    "modification_3": [
+                        "Explicitly define the computation methods for key metrics (SR, IA, IF, TLE) or include additional variables that capture finer-grained performance details."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended experiments, tighten the resource requirements by, for example, requiring that a smaller variant of the code-tuned models (e.g., a CodeLlama-mini) achieve performance comparable to the full-sized version on static procedure tasks."
+                    ],
+                    "time_constraints": [],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random token dropping modification",
+                "description": "Modifying the method from dropping pre-determined unimportant tokens to dropping tokens at random introduces uncertainty in the training process. This leads to instability during gradient updates and potential reductions in prediction accuracy, which in turn can cause variability in recorded performance metrics such as success rate and error counts.",
+                "impact": "Results in fluctuations in key metrics (e.g., success rate, invalid action errors) making performance comparisons less reliable. These random influences obscure whether observed differences are due to inherent model capabilities or just random noise introduced during token-dropping.",
+                "possible_modifications": [
+                    "Revert to a deterministic token-dropping strategy based on defined importance criteria.",
+                    "Fix random seeds to control the randomness in token dropping.",
+                    "Increase the number of training samples or iterations to average out random variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset bias via one-time modification",
+                "description": "Intentionally introducing a systematic bias into the dataset (for example, mislabeling reviews with 50 or more characters as negative) creates a persistent error in data quality. This systematic uncertainty skews the evaluation of models, particularly impacting tasks requiring flexible, general reasoning.",
+                "impact": "Leads to consistently biased performance metrics and can undermine the validity of comparative analysis between code-tuned and non-code-tuned models. For instance, success rates and error rates from tasks like Digital Card Game or Operating System interactions may not accurately reflect model capabilities due to the skewed data.",
+                "possible_modifications": [
+                    "Perform a data validation step to identify and remove systematic biases from the dataset.",
+                    "Incorporate a backup or alternative dataset to cross-check results.",
+                    "Introduce explicit bias-correction mechanisms or re-label the dataset to ensure fair comparisons."
+                ]
+            }
+        },
+        {
+            "method": "Directly compare the performance of vicuna-13b and llama-2-13b within the AGENT BENCH framework under identical evaluation conditions, including the same task prompts, inference settings (with temperature set to 0 for reproducibility), and datasets across diverse environments. Specifically, measure overall scores and error-specific metrics (invalid action, invalid format, and Task Limit Exceeded occurrences) as outlined in AGENT BENCH. Additionally, include comparisons against larger models (e.g., codellama-34b) to provide context on performance enhancement due to high-quality alignment. Analyze the differences in planning ability, self-correction, token distribution, and multi-round decision-making as reflected in the execution outcomes reported.",
+            "expected_outcome": "The experiment should demonstrate that vicuna-13b outperforms llama-2-13b by achieving higher overall scores and lower error rates, including fewer invalid action and invalid format errors and reduced Task Limit Exceeded occurrences. In certain cases, the performance of vicuna-13b may approach that of models approximately three times its size. This would support the claim that high-quality alignment data is a key driver for enhanced LLM agent performance, and offer insights into improved planning ability and self-correction mechanisms.",
+            "subsection_source": "4.3 A NALYSIS",
+            "source": [
+                "/workspace/src/assigner.py",
+                "/workspace/src/analysis.py"
+            ],
+            "usage_instructions": "To compare vicuna-13b and llama-2-13b performance within the AGENT BENCH framework, follow these steps:\n\n1. First, ensure both models are properly configured in the fs_agent.yaml file. The vicuna-13b configuration already exists, but you may need to add llama-2-13b configuration.\n\n2. Create a custom assignment configuration file (e.g., 'configs/assignments/model_comparison.yaml') with the following content:\n```yaml\nimport: definition.yaml\n\nconcurrency:\n  task:\n    dbbench-std: 5\n    os-std: 5\n    kg-std: 5\n    ltp-std: 5\n    alfworld-std: 5\n    mind2web-std: 5\n    webshop-std: 5\n    card_game-std: 5\n  agent:\n    vicuna-13b: 5\n    llama-2-13b: 5\n\nassignments:\n  - agent:\n      - vicuna-13b\n      - llama-2-13b\n    task:\n      - dbbench-std\n      - os-std\n      - kg-std\n      - ltp-std\n      - alfworld-std\n      - mind2web-std\n      - webshop-std\n      - card_game-std\n\noutput: \"outputs/model_comparison_{TIMESTAMP}\"\n```\n\n3. Start the task servers for all environments:\n```bash\npython -m src.start_task -a\n```\n\n4. Run the assigner with the custom configuration:\n```bash\npython -m src.assigner --config configs/assignments/model_comparison.yaml\n```\n\n5. After the evaluation is complete, analyze the results using the analysis.py script:\n```bash\npython -m src.analysis --config configs/assignments/model_comparison.yaml --output outputs/model_comparison_* --save analysis_results\n```\n\n6. The analysis results will be saved in the 'analysis_results' directory, including:\n   - summary.csv: Contains the main metrics for each model across all tasks\n   - agent_validation.csv: Contains validation statistics for each model, including error rates\n   - task_validation.csv: Contains validation statistics for each task\n\nThese files will provide comprehensive data on how vicuna-13b and llama-2-13b compare in terms of overall performance, planning ability, self-correction, and error rates (invalid action, invalid format, and Task Limit Exceeded occurrences).",
+            "requirements": [
+                "Step 1: Load the assignment configuration from a YAML file that specifies agent-task pairs and concurrency settings (/workspace/src/assigner.py:41-76)",
+                "Step 2: Check if output directory exists, create it if needed, and save the configuration (/workspace/src/assigner.py:71-75)",
+                "Step 3: Scan existing output directories to identify completed tasks and build a list of remaining tasks (/workspace/src/assigner.py:77-151)",
+                "Step 4: Create agent clients for each agent specified in the configuration (/workspace/src/assigner.py:153-156)",
+                "Step 5: Implement a worker generator that uses a max-flow algorithm to optimally assign tasks to agents based on concurrency constraints (/workspace/src/assigner.py:161-236)",
+                "Step 6: Start worker threads to execute tasks, tracking progress with progress bars (/workspace/src/assigner.py:238-274)",
+                "Step 7: For each completed task, save results to output files and calculate overall metrics (/workspace/src/assigner.py:301-327)",
+                "Step 8: Handle task errors and implement auto-retry functionality (/workspace/src/assigner.py:329-383)",
+                "Step 9: Load analysis configuration and identify available agents and tasks (/workspace/src/analysis.py:56-82)",
+                "Step 10: Walk through output directories to find and load overall.json result files (/workspace/src/analysis.py:84-141)",
+                "Step 11: Define task-specific handlers to extract the main performance metric for each task type (/workspace/src/analysis.py:144-263)",
+                "Step 12: Generate summary statistics across all agents and tasks (/workspace/src/analysis.py:302-317)",
+                "Step 13: Save comprehensive results to JSON and YAML files (/workspace/src/analysis.py:331-338)",
+                "Step 14: Create a summary CSV file with main metrics for each agent-task pair (/workspace/src/analysis.py:339-358)",
+                "Step 15: Calculate validation statistics for agents and tasks (/workspace/src/analysis.py:360-379)",
+                "Step 16: Generate agent validation and task validation CSV files with error rates and other metrics (/workspace/src/analysis.py:380-442)"
+            ],
+            "agent_instructions": "Create two Python scripts for evaluating and comparing language models on a benchmark suite:\n\n1. Task Assignment Script:\n   - Create a script that distributes benchmark tasks to different language models based on a YAML configuration file.\n   - The configuration should specify which models to evaluate, which tasks to run, and concurrency settings.\n   - Implement a system that efficiently assigns tasks to models using a max-flow algorithm to respect concurrency constraints.\n   - Track progress with progress bars and handle task failures with an auto-retry mechanism.\n   - Save results in a structured output directory with JSON files containing task outcomes.\n   - Support resuming interrupted evaluations by detecting already completed tasks.\n\n2. Results Analysis Script:\n   - Create a script that processes the output directories from the task assignment script.\n   - Extract performance metrics from result files for different model-task combinations.\n   - Implement task-specific handlers that know how to extract the main performance metric for each benchmark type (e.g., accuracy for some tasks, success rate for others).\n   - Generate three main output files:\n     a. A summary CSV with the main performance metric for each model-task pair\n     b. An agent validation CSV with error statistics for each model (invalid actions, format errors, etc.)\n     c. A task validation CSV with error statistics for each benchmark task\n   - Support filtering results by timestamp to analyze specific evaluation runs.\n\nThe scripts should work together to provide a complete workflow for evaluating and comparing multiple language models across a diverse set of benchmark tasks.",
+            "masked_source": [
+                "/workspace/src/assigner.py",
+                "/workspace/src/analysis.py"
+            ],
+            "question": "Does training with high-quality alignment data (as used for vicuna-13b) lead to significantly better agent performance compared to models aligned from scratch (e.g., llama-2-13b), particularly in terms of planning, self-correction, and instruction following? We also hypothesize that the performance gains may manifest not only in overall scores but also in reduced error rates such as invalid action and invalid format occurrences, as detailed in AGENT BENCH's breakdown.",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_conditions": "Identical task prompts, inference settings (temperature=0), datasets, and concurrency constraints across all environments"
+                },
+                "independent_variables": {
+                    "llm_model": [
+                        "vicuna-13b",
+                        "llama-2-13b",
+                        "codellama-34b"
+                    ],
+                    "task_environment": "A fixed set of benchmark tasks such as dbbench-std, os-std, kg-std, ltp-std, alfworld-std, mind2web-std, webshop-std, and card_game-std"
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Overall scores, error-specific metrics including invalid action, invalid format, Task Limit Exceeded occurrences, planning ability, self-correction behavior, token distribution, and multi-round decision-making as reported"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "high_quality_alignment": "While the experiment contrasts models trained with high-quality alignment data (as in vicuna-13b) against models aligned from scratch (llama-2-13b), the definition and quantification of 'high-quality alignment' are not explicitly detailed in the provided task.",
+                    "performance_aspects": "The constructs of planning, self-correction, and multi-round decision-making are mentioned but not precisely defined in terms of how they are separately measured, which could be open to interpretation."
+                },
+                "possible_modifications": {
+                    "masking_variables": [
+                        "Mask or partially hide the explicit mention of the temperature setting to test if models can implicitly deduce reproducibility conditions.",
+                        "Mask the explicit listing of benchmark tasks to see if the agent can infer the necessary environments from context."
+                    ],
+                    "introducing_new_variables": [
+                        "Add a new variable for inference hyperparameters (e.g., beam search settings) beyond temperature.",
+                        "Include additional model architectures or training methods to further explore the impact of alignment data quality."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Agent configurations in fs_agent.yaml (including vicuna-13b and additional configuration for llama-2-13b)",
+                    "Custom assignment configuration YAML file (e.g., configs/assignments/model_comparison.yaml) specifying agents, tasks, and concurrency settings",
+                    "Task servers for multiple benchmark environments (dbbench-std, os-std, kg-std, ltp-std, alfworld-std, mind2web-std, webshop-std, card_game-std)",
+                    "Task assignment script (assigner.py) that uses a max-flow algorithm for optimal task allocation",
+                    "Worker generation and threading system with progress bar tracking and auto-retry error handling",
+                    "Results analysis script (analysis.py) that processes JSON outputs to generate summary CSV and validation CSV files",
+                    "Benchmark tasks and associated metrics (overall scores, error-specific metrics such as invalid action, invalid format, Task Limit Exceeded, planning ability, self-correction, token distribution, and multi-round decision-making)"
+                ],
+                "setup_steps": [
+                    "Configure agent details in the fs_agent.yaml file (verifying vicuna-13b and adding llama-2-13b)",
+                    "Create a custom assignment configuration YAML file specifying the agent-task pairs and concurrency settings",
+                    "Start the task servers for all benchmark environments using the provided command",
+                    "Run the assigner to distribute and execute tasks according to the YAML configuration",
+                    "Save results for each task execution in a structured output directory (including JSON files detailing task outcomes)",
+                    "Run the analysis.py script to process outputs, extract metrics, and generate summary CSV as well as agent and task validation CSV files"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Concurrency Management and Max-Flow Algorithm",
+                        "description": "Optimal assignment of tasks under concurrency constraints using a max-flow approach adds algorithmic complexity to the evaluation setup."
+                    },
+                    {
+                        "source": "Error Handling and Auto-Retry Mechanism",
+                        "description": "Implementation of error capture (for invalid actions, invalid format, and Task Limit Exceeded) and automatic retries increases operational complexity."
+                    },
+                    {
+                        "source": "Multi-Round and Multi-Task Evaluation",
+                        "description": "The evaluation covers diverse environments with varied average rounds per task, requiring robust handling of multi-round interactions and aggregated metric extraction."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Definition of high_quality_alignment: The term is used to contrast models (vicuna-13b vs. llama-2-13b) but lacks a precise, quantitative definition.",
+                    "Performance aspects such as planning, self-correction, and multi-round decision-making: Although mentioned as key attributes, their exact measurement criteria and boundaries are not explicitly defined."
+                ],
+                "ambiguous_setup_steps": [
+                    "Measurement of planning ability and self-correction: The methodology to extract and separately evaluate these capabilities from overall execution metrics (e.g., token distribution or round progression) is not fully detailed.",
+                    "Interpretation of error-specific metrics: While error rates (e.g., invalid action, invalid format, Task Limit Exceeded) are recorded, the guidelines on how to aggregate or compare these across diverse task types are not explicit."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Mask the explicit mention of the temperature setting to test if models can implicitly deduce reproducibility conditions.",
+                        "Omit the explicit listing of benchmark tasks to see if agents can infer necessary environments from context."
+                    ],
+                    "introduce_new_variables": [
+                        "Add inference hyperparameters (e.g., beam search settings) beyond the temperature setting to further investigate model performance.",
+                        "Include additional model architectures or training methods to deepen the analysis of alignment impact."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Tighten model size requirements by enforcing that a smaller variant (e.g., a reduced-capacity version of vicuna-13b) must achieve similar overall scores and error metrics, thereby emphasizing the impact of high-quality alignment data on efficiency."
+                    ],
+                    "time_constraints": [
+                        "Restrict the maximum number of allowed interaction rounds per task (e.g., lower the Task Limit Exceeded threshold) to further stress the models' planning and self-correction capabilities."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random token dropping modifications during training",
+                "description": "Instead of intentionally dropping only unimportant tokens to reduce pre-training costs, introducing random token dropping injects noise in the training process. This leads to instability in gradient updates and can reduce prediction accuracy. The randomness can also manifest in varying error occurrences (e.g., invalid action or invalid format) during evaluation.",
+                "impact": "Results in inconsistent training dynamics, which may increase error rates during agent execution on AGENT BENCH tasks, and potentially lead to higher Task Limit Exceeded occurrences. This variability complicates the model\u2019s planning and self-correction capabilities.",
+                "possible_modifications": [
+                    "Introduce random token dropping with varying probabilities during training.",
+                    "Apply random noise to the token distribution during data augmentation.",
+                    "Dynamically modulate which tokens are dropped without following predefined importance criteria."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Systematic dataset bias via one-time modifications",
+                "description": "By performing a fixed alteration on the training dataset\u2014for example, mislabeling all text reviews with 50 characters or more as negative\u2014a systematic bias is introduced. This corruption impacts model performance consistently, skewing the results. Such an alteration affects model evaluation on tasks where planning and self-correction are critical, which can be observed in error metrics breakdown and overall score differences.",
+                "impact": "Leads to a persistent bias in predictions, resulting in consistently higher rates of error metrics and degraded decision-making abilities over multiple rounds. This systematic error hampers the model's ability to generalize and perform accurate sentiment analysis or task planning.",
+                "possible_modifications": [
+                    "Corrupt dataset labels based on a fixed rule such as text length or content-specific features.",
+                    "Apply a systematic transformation to a subset of the training data to simulate a consistent bias.",
+                    "Introduce a fixed alteration in feature extraction that skews data distribution across the dataset."
+                ]
+            }
+        },
+        {
+            "method": "Run a controlled experiment comparing llama-2-70b and llama-2-13b across the complete set of AGENT BENCH task environments. Both models should be evaluated using identical prompt formatting, an inference temperature of 0 (greedy decoding), and identical task splits. In addition to overall scoring, pay close attention to tasks that demand strong reasoning and precise adherence to instructions. Collect and analyze detailed outcome distributions, including error types such as Task Limit Exceeded (TLE), Invalid Format, and Invalid Action errors. Apply the post-processing protocol for non-chat models (e.g., prefixing 'USER:' and 'AGENT:' for text completion models). Ensure repeatability by performing multiple runs to check for consistency and re-run experiments to rule out statistical anomalies.",
+            "expected_outcome": "It is anticipated that both models may show similar performance levels despite the large discrepancy in parameter count. This would suggest that the larger llama-2-70b does not necessarily outperform the smaller llama-2-13b, potentially due to shortcomings in pre-training token volume and less refined instruction-following alignment. Detailed error breakdowns (e.g., the proportions of TLE, Invalid Format, and Invalid Action errors) will provide additional insight into the specific areas where increased size might fail to translate into improved performance.",
+            "subsection_source": "4.3 A NALYSIS",
+            "no_answer": "While the repository contains all the necessary components to run the experiment comparing llama-2-70b and llama-2-13b across AGENT BENCH tasks, there is no single script or small set of scripts specifically designed to answer this exact question. The repository provides a framework (src.assigner and src.analysis) for running and analyzing experiments with different models, but users would need to create a custom configuration file that assigns both models to all tasks with identical prompt formatting and temperature=0. The MODEL_MAP in src/analysis.py does include both models, but there are no pre-configured assignment files specifically for this comparison experiment.",
+            "question": "Does increasing model size (as in comparing llama-2-70b to llama-2-13b) necessarily yield improved performance, or can insufficient pre-training and a lack of refined alignment negate the benefits of a larger parameter count?",
+            "design_complexity": {
+                "constant_variables": {
+                    "prompt_formatting": "Identical formatting is enforced across both models, including the post-processing protocol (e.g., prefixing 'USER:' and 'AGENT:' for text completion models)",
+                    "inference_temperature": [
+                        "0"
+                    ],
+                    "task_splits": "Identical task splits are used for both models as per the evaluation framework",
+                    "evaluation_protocol": "The procedure for collecting detailed outcome distributions (including error types like TLE, Invalid Format, and Invalid Action) is fixed"
+                },
+                "independent_variables": {
+                    "llm_model": [
+                        "llama-2-70b",
+                        "llama-2-13b"
+                    ],
+                    "task_environment": [
+                        "Operating System",
+                        "Data-Base",
+                        "Knowledge Graph",
+                        "Digital Card Game",
+                        "Lateral Thinking Puzzle",
+                        "House Holding",
+                        "Web Shopping",
+                        "Web Browsing"
+                    ]
+                },
+                "dependent_variables": {
+                    "overall_scoring": "Aggregated performance score derived from model outcomes across environments",
+                    "error_breakdown": [
+                        "Task Limit Exceeded (TLE)",
+                        "Invalid Format",
+                        "Invalid Action"
+                    ],
+                    "reasoning_and_instruction_adherence": "Assessed particularly in tasks demanding strong reasoning and precise adherence (analyzed via detailed outcome distributions)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "AGENT_BENCH_task_environments": "It is not explicitly detailed in the agent task prompt whether all eight environments or a subset thereof will be used in the experiment",
+                    "detailed_error_metrics": "While overall error types are mentioned, the exact granularity (raw counts versus percentages or further breakdown) expected in the agent\u2019s output is not explicitly stated",
+                    "repeatability_protocol": "The number of runs, criteria for ruling out statistical anomalies, and how consistency is measured are not clearly defined in the task prompt"
+                },
+                "possible_modifications": {
+                    "masking_variables": [
+                        "Hide explicit mention of error types (TLE, Invalid Format, Invalid Action) in the agent instructions, forcing the agent to deduce performance issues from overall scoring data"
+                    ],
+                    "new_variable_inclusion": [
+                        "Introduce a new independent variable for inference temperature (e.g., comparing 0 with 0.5) to investigate the impact of decoding strategy variations",
+                        "Include additional evaluation metrics such as runtime efficiency or resource utilization for a more holistic performance analysis"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "AGENT BENCH task environments (Operating System, Data-Base, Knowledge Graph, Digital Card Game, Lateral Thinking Puzzle, House Holding, Web Shopping, Web Browsing)",
+                    "Docker images used to encapsulate complex environments",
+                    "Separate worker processes to isolate task environments and avoid conflicts",
+                    "Evaluation framework components such as src.assigner and src.analysis",
+                    "Prompt formatting framework including post-processing protocols (e.g., prefixing 'USER:' and 'AGENT:')",
+                    "Custom configuration file required to assign models identically"
+                ],
+                "setup_steps": [
+                    "Mount the code path and initialize the Docker images for AGENT BENCH tasks",
+                    "Create a custom configuration file to assign both llama-2-70b and llama-2-13b to the selected tasks",
+                    "Set identical prompt formatting and inference temperature (0) across all tasks",
+                    "Subdivide each AGENT BENCH task into separate worker processes to ensure environment isolation",
+                    "Run the evaluation framework to collect overall scoring and detailed outcome distributions",
+                    "Implement the post-processing protocol for non-chat models by prefixing outputs appropriately",
+                    "Repeat experiments multiple times to ensure consistency and rule out statistical anomalies"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Outcome Analysis",
+                        "description": "Collecting, breaking down, and comparing error types (Task Limit Exceeded, Invalid Format, Invalid Action)  adds complexity to the evaluation."
+                    },
+                    {
+                        "source": "Re-run and Consistency Protocols",
+                        "description": "Ensuring repeatability through multiple runs, determining criteria for statistical anomaly, and integrating extra runs into the pipeline further complicates the setup."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "AGENT_BENCH task environments: It is not explicitly detailed whether all eight environments are used or only a subset."
+                ],
+                "ambiguous_setup_steps": [
+                    "Detailed error metrics: The granularity of error reporting (raw counts vs. percentages or additional breakdowns) is not clearly stated.",
+                    "Repeatability protocol: The number of runs and the exact criteria for ruling out statistical anomalies are not clearly defined."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Hide explicit mention of error types (TLE, Invalid Format, Invalid Action) in the agent instructions, requiring the agent to deduce performance issues from overall scoring data."
+                    ],
+                    "introduce_new_variables": [
+                        "Include an additional independent variable by varying the inference temperature (e.g., comparing 0 with 0.5) to study the effect of decoding strategy variations.",
+                        "Add evaluation metrics such as runtime efficiency or resource utilization to provide a more holistic performance analysis."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Introduce a variant of the experiment that requires the smaller model (e.g., llama-2-13b) to match the performance of the larger one under restricted computational resources, such as using a reduced GPU memory budget or a limited number of inference tokens."
+                    ],
+                    "time_constraints": [
+                        "Tighten the setup by imposing a strict maximum wall-clock time per task run, which could surface differences in efficiency and speed between the models."
+                    ],
+                    "money_constraints": [
+                        "Constrain the experiment to free or low-cost compute resources only, thereby forcing the setup to meet performance goals without relying on potentially expensive hardware or cloud credits."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random token perturbation during pre-processing",
+                "description": "Randomly dropping tokens during pre-processing (inspired by the known method for reducing pre-training costs) introduces noise that can destabilize gradient updates and alter inference consistency. Fluctuations in error types such as Task Limit Exceeded, may emerge during multiple runs, affecting models\u2019 ability to follow instructions and reason precisely.",
+                "impact": "This uncertainty leads to increased variability in outcome distributions between experimental runs, confounding comparisons between llama-2-70b and llama-2-13b. It may be particularly disruptive in tasks demanding strong reasoning, where even minor token drops might significantly affect performance.",
+                "possible_modifications": [
+                    "Intentionally introduce random token drops during pre-processing to assess the model\u2019s sensitivity to such disruptions.",
+                    "Vary the temperature parameter slightly in controlled runs (even though the base is 0) to simulate random fluctuation effects and study their impact on error metrics."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent bias in dataset formatting and labeling",
+                "description": "A one-time modification of the input dataset or task environment\u2014such as systematically mislabeling elements (e.g., labeling all reviews or outputs meeting a specific criteria as negative) or altering the predefined output format\u2014can embed a bias that skews the model\u2019s performance uniformly across runs. The recurrence of error types like Invalid Format and Invalid Action errors is indicative of such systematic effects.",
+                "impact": "This kind of uncertainty results in persistent, reproducible performance deviations that are not due to random chance. It may lead to comparable overall scores between models of vastly different sizes, as systematic biases can negate the benefits of a larger parameter count by uniformly corrupting inputs or outputs.",
+                "possible_modifications": [
+                    "Introduce a one-time alteration in the task dataset (e.g., force a specific labeling rule or format change) to simulate a systematic bias and test the models' ability to detect and recover from it.",
+                    "Modify the prompt formatting protocol (for instance, swapping the 'USER:' and 'AGENT:' prefixes in a consistent manner) across all tasks to examine the impact on error types and consistency in model outputs."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you implement an agent that interacts with the OS environment in AgentBench to count the number of files in a directory?",
+            "method": "Create an agent that can interact with the OS environment in AgentBench by following the protocol for OS interaction tasks. The agent should be able to think about what commands to execute, run bash commands, and provide answers.",
+            "expected_outcome": "A successful agent implementation that can correctly count files in a directory and respond with the count in the format 'Act: answer(count)'.",
+            "source": [
+                "/workspace/src/client/agent_test.py",
+                "/workspace/src/server/tasks/os_interaction/task.py"
+            ],
+            "usage_instructions": "1. Understand the AgentBench agent protocol for OS interaction tasks from the example in task.py.\n2. Implement an agent that follows the protocol: first think about what to do, then take one of three actions (bash, finish, or answer).\n3. For bash actions, format the command inside ```bash``` code blocks.\n4. For answer actions, use the format 'Act: answer(your_answer)'.\n5. Handle truncated outputs by using commands that directly count files.\n6. Follow the example interaction pattern shown in the ONE_SHOT constant in task.py.",
+            "requirements": [
+                "Step 1: Parse the user's request to identify the directory path for which files need to be counted (src/server/tasks/os_interaction/task.py:163-164)",
+                "Step 2: Formulate a thought process about how to count files in the specified directory (src/server/tasks/os_interaction/task.py:166)",
+                "Step 3: Execute a bash command to list files in the directory (src/server/tasks/os_interaction/task.py:168-172)",
+                "Step 4: Handle truncated output by recognizing when the output is too long (src/server/tasks/os_interaction/task.py:177-181)",
+                "Step 5: Execute a more direct bash command that counts files without listing them all (src/server/tasks/os_interaction/task.py:183-187)",
+                "Step 6: Extract the count from the command output (src/server/tasks/os_interaction/task.py:189-192)",
+                "Step 7: Return the answer in the correct format using 'Act: answer(count)' (src/server/tasks/os_interaction/task.py:194)"
+            ],
+            "agent_instructions": "Implement an agent that can interact with the OS environment in AgentBench to count files in a directory. The agent should follow this protocol:\n\n1. For each interaction, the agent must first think about what to do (prefixed with 'Think:') and then take exactly one of three actions (prefixed with 'Act:'):\n   - bash: Execute a bash command (enclosed in ```bash ... ```)\n   - finish: Indicate task completion\n   - answer: Provide an answer to a question in the format answer(value)\n\n2. When asked to count files in a directory:\n   - First attempt to list the files using a command like 'ls'\n   - If the output is truncated (too long), use a command that directly counts files without listing them all, such as 'ls -1 | wc -l'\n   - Extract the count from the command output\n   - Return the answer using the format 'Act: answer(count)'\n\n3. Handle potential issues:\n   - Be aware that outputs may be truncated if they are too long\n   - Use efficient commands that provide direct answers rather than verbose output\n   - Ensure the answer is provided in the exact format required\n\nThe agent should be able to understand the user's request, execute appropriate bash commands, process the output, and return the count in the specified format.",
+            "design_complexity": {
+                "constant_variables": {
+                    "action_protocol": "The agent must always follow the fixed interaction protocol: first output a 'Think:' statement and then exactly one 'Act:' statement using one of three actions (bash, finish, or answer) in a well-defined format."
+                },
+                "independent_variables": {
+                    "question": [
+                        "How can you implement an agent that interacts with the OS environment in AgentBench to count the number of files in a directory?"
+                    ],
+                    "method": [
+                        "Create an agent that interacts with the OS environment following the specific protocol, including thinking through commands, executing bash commands, and providing a formatted answer."
+                    ],
+                    "agent_instructions": [
+                        "Detailed instructions: The agent must think first, then choose one of the three actions (with bash commands enclosed in ```bash``` blocks, and answers formatted as 'Act: answer(count)'). It should also handle potential issues like output truncation."
+                    ]
+                },
+                "dependent_variables": {
+                    "expected_outcome": [
+                        "A successful agent implementation that correctly counts the number of files and returns the result in the exact format 'Act: answer(count)'."
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mode": "This variable (set to 'A') is provided internally but not visible to the agent, making its influence on the task implicit.",
+                    "expected_outcome": "Although the success criteria is stated, the detailed internal evaluation of what constitutes 'correctly counting' is not explicitly shared with the agent.",
+                    "source": "The internal file paths indicate the underlying code structure, but these details are hidden from the agent and can affect interpretation.",
+                    "usage_instructions": "Comprehensive internal usage guidelines are provided, but the agent only sees a summary in its instructions, leaving some procedural details ambiguous.",
+                    "requirements": "Step-by-step internal requirements are listed for evaluation purposes, yet they are not seen by the agent, leading to potential ambiguity in expected operations."
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Expose the 'mode' variable to the agent to allow testing of how different modes affect the agent's behavior."
+                    ],
+                    "modification_2": [
+                        "Add a new variable for the target directory, so the agent can be tested on different directory contexts."
+                    ],
+                    "modification_3": [
+                        "Mask internal variables like 'source', 'usage_instructions', and 'requirements' from the agent to focus evaluation solely on 'question', 'method', and 'agent_instructions'."
+                    ],
+                    "modification_4": [
+                        "Imply additional actions or variations (e.g., handling file type filters or recursive directory counting) in the 'question' to extend the experimental design."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "AgentBench OS environment",
+                    "LLM agent following the Think-then-Act protocol",
+                    "Bash command interpreter within the agent",
+                    "Internal protocol enforcer for action formats (bash, finish, answer)",
+                    "Parsing and output extraction modules"
+                ],
+                "setup_steps": [
+                    "Parse the user query to determine the target directory",
+                    "Formulate a thought process about counting files",
+                    "Execute a bash command to list files in the directory",
+                    "Detect if the output is truncated due to verbosity",
+                    "Execute a more direct bash command to count files (using 'ls -1 | wc -l')",
+                    "Extract and parse the count from the command output",
+                    "Return the answer using the required format 'Act: answer(count)'"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Internal Code References",
+                        "description": "The use of multiple internal file paths (e.g., src/client/agent_test.py, src/server/tasks/os_interaction/task.py) adds hidden complexity that guides expected behavior."
+                    },
+                    {
+                        "source": "Protocol Enforcement",
+                        "description": "The strict requirement for a 'Think:' statement followed by exactly one 'Act:' statement (using one of three actions) increases the structural complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "mode variable",
+                    "Expected outcome criteria (internal evaluation details)"
+                ],
+                "ambiguous_setup_steps": [
+                    "Handling of truncated output: The precise threshold and response for truncation are not fully detailed in the agent-visible instructions",
+                    "Internal usage instructions and evaluation requirements are not fully disclosed to the agent, leading to ambiguity in how some steps should be implemented"
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Expose the 'mode' variable to the agent to clarify its influence on behavior."
+                    ],
+                    "modification_2": [
+                        "Introduce a variable for the target directory to allow testing on different directory contexts."
+                    ],
+                    "modification_3": [
+                        "Mask internal variables such as 'source', 'usage_instructions', and 'requirements' from the agent to focus on the 'question', 'method', and 'agent_instructions' only."
+                    ],
+                    "modification_4": [
+                        "Imply additional actions or variations (e.g., handling file type filters or performing recursive directory counts) in the 'question' to extend the experimental design."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Require the agent to achieve performance parity when implemented on a smaller model variant (e.g., using GPT-4o-mini instead of GPT-4o)."
+                    ],
+                    "time_constraints": [
+                        "Impose a stricter execution time limit for each agent command to simulate real-time OS interaction constraints."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications in token output and truncation handling",
+                "description": "Random uncertainty is introduced when methods such as dropping unimportant tokens are modified to drop random tokens. In this experiment, random noise can be added to the bash command outputs (for example, through random token dropping or varying thresholds for output truncation) that the agent uses to count files. This may lead the agent to sometimes misread the file list or misinterpret when the output is truncated, therefore causing instability in processing and variability in the recorded file count.",
+                "impact": "The inconsistencies in reading the output may lead to unpredictable file count results, making the agent's performance vary between runs. This affects the reliability of the experiment by injecting randomness into the decision-making process of extracting and processing the bash output.",
+                "possible_modifications": [
+                    "Introduce a mechanism to randomly drop tokens from the bash command output, simulating unpredictable output formats.",
+                    "Randomly vary the threshold at which output is considered truncated to test the agent\u2019s robustness in handling incomplete information.",
+                    "Inject random noise into the command output processing to simulate unstable environmental responses."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "One-time modifications in the OS environment or data inputs",
+                "description": "Systematic uncertainty arises from consistent, one-off changes that bias the setup. For instance, modifying the file system environment such that directories are altered (e.g., consistently including hidden or dummy files) or corrupting the OS command (like using a flawed alias for 'ls' that returns an incorrect file list) introduces a systematic error. This is analogous to corrupting a dataset in sentiment analysis, where reviews are mislabeled, leading to a consistent bias in the output.",
+                "impact": "This consistent bias affects all runs of the experiment, leading the agent to systematically overcount or undercount the number of files. The predictable nature of the bias can undermine the external validity of the experiment, as all agents might end up providing similarly skewed counts.",
+                "possible_modifications": [
+                    "Introduce a one-time transformation in the target directory (for example, by adding or hiding files) that biases the file count in every run.",
+                    "Replace the standard file counting command with one that systematically misinterprets the content (e.g., adding extra counts due to a misconfigured option).",
+                    "Apply a fixed offset to the file count output, simulating a persistent error in the environment."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you implement an agent that interacts with a MySQL database in AgentBench to solve SQL query tasks?",
+            "method": "Create an agent that can interact with the DBBench environment in AgentBench by following the protocol for database interaction tasks. The agent should be able to explain its reasoning, execute SQL queries, and provide final answers.",
+            "expected_outcome": "A successful agent implementation that can correctly analyze database problems, execute appropriate SQL queries, and provide answers in the format 'Action: Answer\\nFinal Answer: [\"answer\"]'.",
+            "source": [
+                "/workspace/src/client/agent_test.py",
+                "/workspace/src/server/tasks/dbbench/__init__.py"
+            ],
+            "usage_instructions": "1. Understand the AgentBench agent protocol for database interaction tasks from the big_prompt in dbbench/__init__.py.\n2. Implement an agent that follows the protocol: explain the problem and solution, then choose to operate or answer.\n3. For operation actions, format SQL queries as 'Action: Operation\\n```sql\\nYOUR_SQL_QUERY;\\n```'.\n4. For answer actions, use the format 'Action: Answer\\nFinal Answer: [\"your_answer\"]'.\n5. Handle raw MySQL responses appropriately.\n6. Ensure SQL queries are in one line and in markdown format without additional comments.",
+            "requirements": [
+                "Step 1: Parse and understand the database problem presented in the user's query (/workspace/src/server/tasks/dbbench/__init__.py:93-96)",
+                "Step 2: Analyze the database structure and requirements to formulate a solution strategy (/workspace/src/server/tasks/dbbench/__init__.py:9-28)",
+                "Step 3: Explain the problem and solution approach with clear reasoning (/workspace/src/server/tasks/dbbench/__init__.py:10-12)",
+                "Step 4: Formulate SQL queries in the correct format: 'Action: Operation\\n```sql\\nYOUR_SQL_QUERY;\\n```' (/workspace/src/server/tasks/dbbench/__init__.py:13-18)",
+                "Step 5: Process and interpret the raw MySQL responses returned from executed queries (/workspace/src/server/tasks/dbbench/__init__.py:27, 110-112)",
+                "Step 6: Determine when sufficient information has been gathered to provide a final answer (/workspace/src/server/tasks/dbbench/__init__.py:20-24)",
+                "Step 7: Format the final answer correctly as 'Action: Answer\\nFinal Answer: [\"answer1\", \"answer2\", ...]' (/workspace/src/server/tasks/dbbench/__init__.py:20-22)",
+                "Final Step: Ensure all SQL queries are in one line, in markdown format, without additional comments (/workspace/src/server/tasks/dbbench/__init__.py:18-19)"
+            ],
+            "agent_instructions": "Your task is to implement an agent that can interact with a MySQL database to solve SQL query tasks in the AgentBench environment. The agent should follow this protocol:\n\n1. When presented with a database problem, first analyze and explain the problem and your solution approach with clear reasoning.\n\n2. For each interaction round, you can choose to either:\n   - Execute a SQL query using the format:\n     ```\n     Action: Operation\n     ```sql\n     YOUR_SQL_QUERY;\n     ```\n     \n   - Provide your final answer using the format:\n     ```\n     Action: Answer\n     Final Answer: [\"answer1\", \"answer2\", ...]\n     ```\n\n3. Important requirements for SQL queries:\n   - SQL must be in markdown format\n   - SQL should be in one line\n   - Only one SQL statement can be executed at a time\n   - Do not include any comments in the SQL code block\n\n4. The system will execute your SQL query and return the raw MySQL response, which you must interpret.\n\n5. Continue the operation-interpretation cycle until you have gathered enough information to answer the question.\n\n6. When you're confident in your answer, provide it in the exact format specified above. For questions about modifying the database (INSERT, UPDATE, DELETE), any answer text is acceptable after completing the operations.\n\n7. Your answer must be accurate and match the expected answer format exactly.\n\nThe agent will be evaluated on its ability to correctly analyze database problems, execute appropriate SQL queries, interpret the results, and provide accurate final answers.",
+            "design_complexity": {
+                "constant_variables": {
+                    "mode": [
+                        "A"
+                    ]
+                },
+                "independent_variables": {
+                    "question": [
+                        "How can you implement an agent that interacts with a MySQL database in AgentBench to solve SQL query tasks?"
+                    ],
+                    "method": [
+                        "Create an agent that can interact with the DBBench environment in AgentBench by following the protocol for database interaction tasks. The agent should explain its reasoning, execute SQL queries, and provide answers in the specified format."
+                    ],
+                    "agent_instructions": [
+                        "Follow the multi-step protocol: (i) analyze the database problem, (ii) execute a single-line SQL query in markdown format when needed, and (iii) provide the final answer in the required format."
+                    ]
+                },
+                "dependent_variables": {
+                    "expected_outcome": [
+                        "A successful agent implementation that can correctly analyze database problems, execute appropriate SQL queries, and provide final answers in the precise format 'Action: Answer\\nFinal Answer: [\"answer1\", \"answer2\", ...]'"
+                    ],
+                    "system_response": "Determined through the interaction loop where SQL queries are executed and raw MySQL responses are interpreted."
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "usage_instructions": "Not provided to the agent; although they guide internal execution, their influence on the agent\u2019s task is imprecise.",
+                    "source": "These file paths are for internal evaluation and are not exposed to the agent, leading to ambiguity on their role in task execution.",
+                    "requirements": "A detailed list of steps is provided for internal evaluation but is not explicitly included in the agent's prompt, creating uncertainty on how much detail should be inferred by the agent."
+                },
+                "possible_modifications": {
+                    "mask_internal_variables": [
+                        "Omit or partially hide 'usage_instructions', 'source', and 'requirements' from the prompt to assess the agent's ability to infer missing information."
+                    ],
+                    "imply_new_variables": [
+                        "Introduce an additional variable such as 'database_schema_detail' (e.g., number of tables, column types) explicitly in the question to test the agent's ability to handle schema complexity."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "AgentBench DBBench environment",
+                    "MySQL database",
+                    "Agent reasoning and explanation module",
+                    "SQL query formatting module (enforcing one-line markdown SQL)",
+                    "Raw MySQL response interpretation module",
+                    "Action/Answer protocol validator"
+                ],
+                "setup_steps": [
+                    "Understand the AgentBench protocol from the big_prompt in dbbench/__init__.py",
+                    "Parse and analyze the database problem from the user's SQL query task",
+                    "Plan a solution strategy based on the database structure and task requirements",
+                    "Format and execute the SQL query following the specified 'Action: Operation' markdown format",
+                    "Interpret the raw MySQL responses returned from executed queries",
+                    "Decide when enough information has been gathered to produce the final answer",
+                    "Format the final answer exactly as 'Action: Answer' with the correct answer format"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Usage Instructions & Internal Evaluation Files",
+                        "description": "The usage instructions, source file paths, and detailed internal requirements add complexity not directly exposed to the agent."
+                    },
+                    {
+                        "source": "Interaction Loop Dynamics",
+                        "description": "The cycle of formulating SQL queries, executing them, and interpreting raw MySQL responses introduces dynamic complexity in the experimental setup."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Internal evaluation file paths (source) and detailed requirements are hidden from the agent, causing uncertainty about their role in completing the task.",
+                    "Usage instructions provided for internal purposes create ambiguity on how much detail should be inferred by the agent."
+                ],
+                "ambiguous_setup_steps": [
+                    "The boundary between necessary explanation and SQL query execution is not explicitly defined.",
+                    "It is unclear how much detail from the internal requirements (e.g., specific line references in the source) the agent should infer for its reasoning."
+                ],
+                "possible_modifications": {
+                    "mask_internal_variables": [
+                        "Omit or partially hide 'usage_instructions', 'source', and 'requirements' from the prompt to assess the agent's ability to infer missing details."
+                    ],
+                    "imply_new_variables": [
+                        "Introduce an explicit 'database_schema_detail' variable (e.g., number of tables, column types) to further challenge the agent's handling of schema complexity."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Impose a model size constraint by requiring the agent to achieve similar database query task performance using a smaller language model variant (e.g., GPT-4o-mini instead of GPT-4o)."
+                    ],
+                    "time_constraints": [
+                        "Limit the number of allowed interaction rounds or reduce the maximum time per round, thus constraining the available time for query formulation and result interpretation."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in how the agent formulates and executes SQL queries under the protocol",
+                "description": "Since the agent must generate one-line SQL queries in markdown format without additional comments, even small variances such as randomly dropped tokens or slight formatting changes can lead to unpredictable parsing of the query. This randomness can destabilize the execution, impacting how raw MySQL responses are interpreted during the feedback loop.",
+                "impact": "Introduces instability in the reasoning and execution loop; may result in incorrectly formatted queries and lead to Task Limit Exceeded errors, or increased Invalid Format outcomes.",
+                "possible_modifications": [
+                    "Randomly drop or shuffle a small number of unimportant tokens during query formulation to simulate noise in the SQL generation process.",
+                    "Vary the query formatting slightly (e.g., inserting or removing minimal whitespace) to test robustness in SQL parsing.",
+                    "Inject random delays or minor perturbations in the agent\u2019s response turnaround to assess system sensitivity."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "One-time modifications to the training or evaluation dataset and the environment setup",
+                "description": "If the underlying database or the evaluation protocol is modified in a consistent manner\u2014such as enforcing a biased naming convention or corrupting a subset of the schema\u2014the agent may develop a systematic error. For example, if a one-time modification corrupts the dataset (e.g., systematically labeling specific review lengths or altering table schema) the agent may be biased in its query formation and reasoning.",
+                "impact": "This type of uncertainty can lead the agent to overfit to a particular schema pattern or misinterpret the database structure, thereby consistently misfiring SQL queries or providing suboptimal final answers. Such systematic biases would reduce overall generalization and accuracy across diverse database problems.",
+                "possible_modifications": [
+                    "Introduce a one-time bias in the database schema representation (e.g., change all table or column names in a consistent yet systematically misleading way).",
+                    "Modify the dataset by applying a fixed, systematic error, such as labeling all entries meeting a threshold length incorrectly.",
+                    "Force a change in the protocol instructions by masking internal details (like usage instructions or source references) to simulate an incomplete or biased system view."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you create a custom HTTP-based agent in AgentBench that can be used with different LLM APIs?",
+            "method": "Implement a custom HTTP-based agent in AgentBench that can connect to different LLM APIs by configuring the appropriate URL, headers, and request format. The agent should be able to process conversation history and handle API responses.",
+            "expected_outcome": "A functional HTTP-based agent implementation that can be configured to work with different LLM APIs (like OpenAI, Claude, etc.) and properly handle conversation history and API responses.",
+            "source": [
+                "/workspace/src/client/agents/http_agent.py",
+                "/workspace/configs/agents/openai-chat.yaml",
+                "/workspace/configs/agents/api_agents.yaml"
+            ],
+            "usage_instructions": "1. Create a configuration file for your agent similar to openai-chat.yaml with appropriate URL, headers, and body parameters.\n2. Implement the agent using the HTTPAgent class from http_agent.py.\n3. Configure the prompter to format conversation history according to the API's requirements.\n4. Set up proper error handling for API responses.\n5. Configure the return_format to extract the model's response from the API response.\n6. Register your agent in a configuration file similar to api_agents.yaml.\n7. Test your agent using the agent_test.py script.",
+            "requirements": [
+                "Step 1: Create a custom HTTP agent class that inherits from the AgentClient base class (/workspace/src/client/agents/http_agent.py:164-184)",
+                "Step 2: Initialize the agent with necessary parameters including URL, headers, body, return format, and prompter (/workspace/src/client/agents/http_agent.py:165-183)",
+                "Step 3: Implement a method to handle conversation history using the prompter (/workspace/src/client/agents/http_agent.py:185-186)",
+                "Step 4: Implement the inference method that sends requests to the LLM API with proper error handling and retries (/workspace/src/client/agents/http_agent.py:188-215)",
+                "Step 5: Create a prompter class or use existing prompters to format conversation history according to the API's requirements (/workspace/src/client/agents/http_agent.py:46-136)",
+                "Step 6: Implement context limit detection to handle API limitations (/workspace/src/client/agents/http_agent.py:138-161)",
+                "Step 7: Create a configuration file for the agent with URL, headers, body parameters, prompter settings, and return format (/workspace/configs/agents/openai-chat.yaml:1-13)",
+                "Step 8: Register the agent in a configuration file with specific model parameters (/workspace/configs/agents/api_agents.yaml:1-23)",
+                "Final Step: Test the agent using the agent_test.py script to verify it can process conversation history and generate responses (/workspace/src/client/agent_test.py:15-32)"
+            ],
+            "agent_instructions": "Your task is to implement a custom HTTP-based agent in AgentBench that can connect to different LLM APIs. This agent should be able to process conversation history and handle API responses appropriately. Follow these steps:\n\n1. Create an HTTP agent class that inherits from the AgentClient base class. This class should:\n   - Accept parameters for API configuration (URL, headers, body parameters)\n   - Handle formatting of conversation history\n   - Process API responses\n   - Implement error handling and retries\n\n2. Implement a prompter system that can format conversation history according to different API requirements. The prompter should:\n   - Convert conversation history into the format expected by the API\n   - Support different message formats (role-content dictionaries, prompt strings, etc.)\n   - Be configurable for different LLM APIs\n\n3. Create a configuration system for the agent that includes:\n   - API endpoint URL\n   - Authentication headers\n   - Request body parameters\n   - Response parsing format\n   - Prompter configuration\n\n4. Implement error handling for common API issues:\n   - Context length limitations\n   - Network errors\n   - API-specific error responses\n   - Implement a retry mechanism for transient errors\n\n5. Create a registration system for different LLM API configurations that allows:\n   - Defining model-specific parameters\n   - Inheriting from base configurations\n   - Overriding specific parameters\n\n6. Test your implementation with different LLM APIs to ensure it can properly:\n   - Format conversation history according to each API's requirements\n   - Send requests with proper authentication\n   - Parse responses correctly\n   - Handle errors gracefully\n\nYour implementation should be flexible enough to work with various LLM APIs (like OpenAI, Claude, etc.) by simply changing the configuration without modifying the core code.",
+            "design_complexity": {
+                "constant_variables": {
+                    "base_agent_class": "HTTPAgent class and AgentClient inheritance are fixed parts of the implementation",
+                    "registration_mechanism": "The procedure for registering agents in the configuration (e.g., via api_agents.yaml) remains constant"
+                },
+                "independent_variables": {
+                    "api_endpoint": [
+                        "OpenAI API URL",
+                        "Claude API URL",
+                        "Other LLM API URLs"
+                    ],
+                    "auth_headers": [
+                        "Bearer token header",
+                        "Custom authentication header"
+                    ],
+                    "request_body_params": [
+                        "Parameters formatted as per OpenAI",
+                        "Parameters for Claude",
+                        "Other API-specific body formats"
+                    ],
+                    "prompter_format": [
+                        "Role-content dictionary",
+                        "Prompt string",
+                        "Other conversation history formats"
+                    ],
+                    "retry_policy": [
+                        "Immediate retry",
+                        "Exponential backoff",
+                        "Custom retry strategy"
+                    ]
+                },
+                "dependent_variables": {
+                    "agent_functionality": [
+                        "Successful conversation history processing",
+                        "Proper response parsing",
+                        "Effective error handling"
+                    ],
+                    "execution_outcome": [
+                        "Successful API call confirmations",
+                        "Errors detected and retried appropriately"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "llm_api": "While the question states 'different LLM APIs', it does not explicitly define what API configurations should be considered or their complete range of possible values.",
+                    "prompter_configurations": "The formats for conversation history are mentioned broadly without concrete examples, leaving ambiguity in what variations are expected.",
+                    "error_handling": "The types and specifics of error handling (e.g., network vs. API-specific errors) are described generally, leading to multiple interpretations."
+                },
+                "possible_modifications": {
+                    "mask_api_details": [
+                        "Hide specific API endpoints or authentication schemes to force the agent to generalize the configuration mechanism",
+                        "Require the agent to infer API-specific parameters from a masked or abstracted description"
+                    ],
+                    "extend_conversation_formats": [
+                        "Introduce additional conversation history formats or require a dynamic format selection mechanism"
+                    ],
+                    "specify_retry_strategies": [
+                        "Introduce new retry mechanism variables, such as timeout duration or maximum retry count"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "HTTPAgent class (and its inheritance from the AgentClient base class)",
+                    "Configuration files (openai-chat.yaml, api_agents.yaml)",
+                    "Prompter system for formatting conversation history",
+                    "Error handling and retry mechanism for API responses",
+                    "Context limit detection functionality",
+                    "Agent test suite (agent_test.py) for validation"
+                ],
+                "setup_steps": [
+                    "Create a custom HTTP agent class that inherits from AgentClient and defines the necessary API configuration parameters (URL, headers, body parameters)",
+                    "Implement methods for handling and formatting conversation history via a dedicated prompter system",
+                    "Develop the inference method that sends HTTP requests to different LLM APIs and incorporates error handling, including retries",
+                    "Set up the context limit detection feature to manage API constraints",
+                    "Create or update configuration files (e.g., openai-chat.yaml and api_agents.yaml) to include API endpoints, authentication, and response parsing formats",
+                    "Register the newly created agent in the appropriate configuration file",
+                    "Test the complete setup using agent_test.py to verify conversation handling and proper API response processing"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multi-API Support",
+                        "description": "The agent must be designed to be configurable for different LLM APIs (OpenAI, Claude, etc.), which introduces complexity in managing multiple API configurations and dynamic parameter adjustments."
+                    },
+                    {
+                        "source": "Flexible Prompter Configuration",
+                        "description": "The requirement to support various conversation history formats (e.g., role-content dictionaries vs. prompt strings) adds another layer of design complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "LLM API configurations: The task description mentions 'different LLM APIs' but does not define the complete range of supported APIs or their specific configuration details.",
+                    "Prompter configurations: The expected formats for conversation history are mentioned generally without concrete examples, leaving it unclear which variations should be supported.",
+                    "Error handling specifics: It is not explicit how to differentiate between network errors and API-specific error responses, nor are precise retry parameters defined."
+                ],
+                "ambiguous_setup_steps": [
+                    "Implementation of error handling: The instructions call for handling API errors and introducing retries, but the exact strategy (e.g., timeout durations, maximum attempts) is not specified.",
+                    "Configuration registration: While registration in a configuration file is mentioned, the process is not described in granular detail, which may lead to multiple interpretations."
+                ],
+                "possible_modifications": {
+                    "mask_api_details": [
+                        "Hide specific API endpoints or authentication schemes, requiring the agent to generalize the configuration mechanism rather than relying on explicitly provided details."
+                    ],
+                    "extend_conversation_formats": [
+                        "Introduce additional conversation history formats or require the selection of output style based on dynamic conditions, further testing the prompter's adaptability."
+                    ],
+                    "specify_retry_strategies": [
+                        "Define variables for timeout durations or maximum retry counts to force the agent to implement a more robust and customizable retry mechanism."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Restrict the computational resources by requiring the agent to perform with a smaller model (e.g., using GPT-4o-mini instead of a full-scale GPT-4o) while maintaining a comparable accuracy in processing conversation history and API responses.",
+                        "Limit the token budget or API throughput to simulate a constrained resource environment, which forces more efficient use of the LLM API."
+                    ],
+                    "time_constraints": [
+                        "Enforce a maximum response time for API calls and agent processing (e.g., a strict timeout threshold) to simulate scenarios with reduced processing time.",
+                        "Reduce the allowed execution window for conversation history handling and error recovery to examine the agent\u2019s performance under tighter time constraints."
+                    ],
+                    "money_constraints": [
+                        "Impose a cap on the total API call budget or limit the usage of paid LLM API calls, thereby encouraging the development of a more cost-efficient error handling and retry mechanism."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variations introduced by configurable API parameters and dynamic error handling within the HTTP-based agent implementation.",
+                "description": "Random uncertainty stems from design choices that introduce non-deterministic behavior in processing conversation history and API responses. For example, varying retry strategies (such as immediate retry vs. exponential backoff), randomly dropping parts of the conversation history in the prompter system, or modifying HTTP request parameters (e.g., random reordering of header fields) can induce random variations. These factors lead to instability similar to randomly dropping tokens during gradient updates in transformer training.",
+                "impact": "The variability can result in inconsistent performance across executions, affecting the reproducibility of conversation handling, correct API response parsing, and general error recovery metrics in AgentBench evaluations.",
+                "possible_modifications": [
+                    "Randomly change timeout durations or retry counts in the error handling logic.",
+                    "Inject random modifications in the conversation formatting process (e.g., randomly drop or shuffle parts of the conversation history).",
+                    "Vary the ordering or presence of HTTP headers or body parameters to simulate network-related response variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Design choices in configuration setup and prompter implementation that consistently bias the agent\u2019s behavior.",
+                "description": "Systematic uncertainty arises when a one-time or static modification in the system introduces a consistent bias. For instance, if the configuration file is modified to always include a specific header value that misguides authentication, or if the prompter always formats conversation history in a way that omits crucial context, then the agent\u2019s responses and error handling will be consistently skewed. This mirrors the systematic bias introduced in dataset modifications (e.g., labeling movie reviews based on fixed character count).",
+                "impact": "The bias affects every execution uniformly, leading to predictable but systematically incorrect behavior across all API interactions. This can cause the agent to fail on specific tasks, misinterpret API replies, or consistently trigger context limit errors.",
+                "possible_modifications": [
+                    "Mask specific API endpoint details or authentication schemes in the configuration files to force reliance on generalized processing.",
+                    "Introduce a one-time modification in the prompter\u2019s formatting rules such that all conversation histories lose key context elements.",
+                    "Apply a systematic misconfiguration in the error handling or context limit detection logic to consistently underperform in managing API responses."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate whether advanced fine-tuning or alignment techniques can bridge the performance gap between OSS and API-based LLMs.",
+            "experiment_design": "Fine-tune a set of OSS LLMs using techniques inspired by commercial model pipelines. Evaluate the fine-tuned models on AGENT BENCH using the same datasets and metrics applied in the current study. Compare overall scores and error breakdowns with both their pre-fine-tuned performance and API-based models to assess improvement.",
+            "subsection_source": "4.2 M AINRESULTS"
+        },
+        {
+            "idea": "Expand the AGENT BENCH evaluation to incorporate additional task environments and more granular interaction metrics.",
+            "experiment_design": "Develop new challenging tasks or extend current ones to cover aspects not deeply explored in the current benchmark (e.g., more complex dialogue management or multi-step reasoning tasks). Then, perform a systematic evaluation of both API-based and OSS LLMs on these tasks. Analyze metrics such as task completion, invalid outcomes, and multi-round interaction dynamics to determine if the observed performance trends persist or if new patterns emerge.",
+            "subsection_source": "4.2 M AINRESULTS"
+        },
+        {
+            "idea": "Examine the impact of extended pre-training on larger models to test scaling law predictions in the context of LLM-as-Agent performance.",
+            "experiment_design": "Augment the pre-training dataset for a larger model (e.g., llama-2-70b) with additional tokens, consistent with scaling law recommendations. Rerun the AGENT BENCH evaluation and compare performance metrics (overall scores, error rates, and reasoning abilities) against both the original llama-2-70b and smaller models. This experiment would help determine if extended pre-training can overcome the issues observed with larger models in the current analysis.",
+            "subsection_source": "4.3 A NALYSIS"
+        },
+        {
+            "idea": "Investigate targeted alignment fine-tuning strategies to improve instruction following and self-correction capabilities across various task types.",
+            "experiment_design": "Develop and apply specialized alignment fine-tuning methods on models like llama-2-13b and llama-2-70b. Use diverse AGENT BENCH tasks to assess improvements in following instructions, reasoning through task challenges, and reducing specific error types (e.g., Task Limit Exceeded and Invalid Actions). Compare the fine-tuned models against their baseline versions to quantify the benefits of enhanced alignment training.",
+            "subsection_source": "4.3 A NALYSIS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces a novel evaluation framework that complements traditional evaluation methods by incorporating a max-flow algorithm and categorizing model outputs into key error types.",
+        "It demonstrates empirical differences between Commercial API-based and Open-Sourced models, with open-sourced models showing higher rates of invalid formats and actions.",
+        "The framework emphasizes the importance of instruction following, consistency in agent planning, and avoiding repetition (i.e., task limit exceeded issues) for successful task completion.",
+        "Data augmentation and bias studies further contribute to understanding model robustness and evaluation accuracy.",
+        "The paper provides detailed tables and figures to support findings related to error distributions and operational performance."
+    ]
+}

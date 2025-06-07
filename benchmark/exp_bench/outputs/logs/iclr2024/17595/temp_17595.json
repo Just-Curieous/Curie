@@ -1,0 +1,97 @@
+{
+    "questions": [
+        {
+            "question": "Does the throughput for methods 1F1B, 1F1B-I, and ZB-1p improve as the number of microbatches increases, while ZB-2p maintains high throughput even with fewer microbatches?",
+            "method": "Run controlled experiments on a 1.5B parameter model using 8 GPUs. Configure the system to use three different microbatch settings: 24, 32, and 64 microbatches. Implement four scheduling methods \u2013 1F1B, 1F1B-I, ZB-1p, and ZB-2p. For each configuration, measure the throughput in samples per second per GPU after a fixed warm-up period. Record the throughput values for each method across the microbatch settings. Compare the trend: check if the throughput for 1F1B, 1F1B-I, and ZB-1p scales noticeably with an increase in microbatches, and verify if ZB-2p remains nearly constant and close to its estimated upper bound, even with fewer microbatches.",
+            "expected_outcome": "Based on the reported results, 1F1B, 1F1B-I, and ZB-1p should show a strong positive correlation between the number of microbatches and throughput, while ZB-2p is expected to deliver consistently high throughput (close to the upper bound) irrespective of the microbatch count.",
+            "subsection_source": "5.2 M AIN RESULTS"
+        },
+        {
+            "question": "Under identical memory consumption constraints, does ZB-2p achieve a higher throughput than 1F1B, even when using fewer microbatches?",
+            "method": "Set up experiments for a chosen model configuration (for example, using a 6.2B model on 8 GPUs with microbatch settings that are typical for both methods). Adjust the configuration so that both ZB-2p and 1F1B operate within the same peak memory budget, using the fact that ZB-2p can achieve near-zero bubble rate with fewer microbatches. Measure the samples per second per GPU for both methods under these identical memory constraints. Ensure all other settings (random seed, warm-up iterations, and hardware conditions) are kept constant.",
+            "expected_outcome": "The expected outcome is that ZB-2p will show a higher throughput compared to 1F1B even when using a lower microbatch count, due to its efficient scheduling that nearly eliminates pipeline bubbles, as evidenced by throughput values such as 4.32\u20134.39 samples per second for ZB-2p versus lower values for 1F1B.",
+            "subsection_source": "5.2 M AIN RESULTS"
+        },
+        {
+            "question": "Does reducing the number of pipeline stages improve throughput across different scheduling methods (1F1B, 1F1B-I, ZB-1p, and ZB-2p) in a multi-node setup, specifically for a 14.6B model on 16 GPUs?",
+            "method": "Design an experiment using a 14.6B parameter model deployed on 16 GPUs. Vary the number of pipeline stages while keeping the microbatch configuration constant (e.g., using 48, 64, and 128 microbatches as per experimental settings). For each pipeline stage configuration, execute training using the four different scheduling methods and measure the throughput in samples per second per GPU. Control for confounding factors by using the same random seed and warm-up procedures across experiments.",
+            "expected_outcome": "It is expected that a lower number of pipeline stages will result in higher throughput for all methods. ZB-based methods, particularly ZB-2p, should maintain a performance advantage due to their effective handling of pipeline bubbles, and this advantage should be reflected in increased throughput close to the upper bound.",
+            "subsection_source": "5.2 M AIN RESULTS"
+        },
+        {
+            "question": "For larger model scales (28.3B model on 32 GPUs), does the trend of ZB-2p nearing upper-bound throughput and outperforming conventional scheduling methods (1F1B, 1F1B-I, and ZB-1p) hold even as the microbatch count varies?",
+            "method": "Configure experiments with a 28.3B parameter model on 32 GPUs using different microbatch counts (e.g., 96, 128, and 256 microbatches). Implement the four scheduling methods: 1F1B, 1F1B-I, ZB-1p, and ZB-2p. Record the throughput (samples per second per GPU) and memory usage in each experiment. Analyze how throughput changes with the number of microbatches for each method and compare them against the estimated upper bound defined as the throughput of 1F1B multiplied by (1 - bubble rate).",
+            "expected_outcome": "The experimental results should show that even at larger scales, the throughput of ZB-2p remains close to the upper bound and outperforms other methods. While 1F1B and its variants are expected to increase throughput with microbatch count, ZB-2p should maintain a consistent high level of throughput across varying microbatch sizes.",
+            "subsection_source": "5.2 M AIN RESULTS"
+        },
+        {
+            "question": "Does the automatic scheduling algorithm (specifically ZB-2p) produce significantly lower bubble rates compared to both traditional methods (1F1B, 1F1B-I) and handcrafted schedules (ZB-H1, ZB-H2) across different model scales and microbatch counts?",
+            "method": "For each model configuration (1.5B, 6.2B, 14.6B, and 28.3B parameters), use the theoretical scheduling setup as described. For each setting, calculate the bubble rate using the formula: bubble rate = (cost \u2212 m*(TF+TB+TW)) / cost. The values for TF, TB, TW, and Tcomm are those obtained from prior profiling. Run the calculation for different configurations: e.g., for a 1.5B model at p = 8 and microbatch counts of 24, 32, and 64; similarly for other model sizes with the corresponding number of stages and microbatch options. Compare the resulting bubble rates for methods 1F1B, 1F1B-I, ZB-H1, ZB-H2, ZB-1p, and ZB-2p. Document if ZB-2p consistently achieves a bubble rate below 1% whereas the other methods show higher values. Use these detailed theoretical computations (e.g., for 1.5B at m=64: ZB-2p bubble rate is 0.0026, and for 28.3B at m=256: ZB-2p bubble rate is 0.0018) to support the hypothesis.",
+            "expected_outcome": "Based on the reported numbers, the automatic scheduling algorithm should yield bubble rates substantially lower than 1% for ZB-2p, while methods like 1F1B and 1F1B-I will have considerably higher bubble rates. Also, handcrafted schedules ZB-H1 and ZB-H2 are expected to perform worse than the automatically found schedule, particularly ZB-H2, demonstrating the advantage of the automatic scheduling approach.",
+            "subsection_source": "5.3 E FFICIENCY OF AUTOMATIC SCHEDULING"
+        },
+        {
+            "question": "Does memory limitation impact the scheduling efficiency such that ZB-1p and its handcrafted counterpart ZB-H1 show similar bubble rates?",
+            "method": "For selected model sizes (e.g., 1.5B and 6.2B models with p = 8) and for each microbatch configuration (24, 32, and 64 microbatches), calculate the bubble rates for both ZB-1p and the handcrafted schedule ZB-H1 using the same theoretical framework: bubble rate = (cost \u2212 m*(TF+TB+TW)) / cost. Emphasize gathering data where the activation memory limit is the same for both methods. Compare the computed bubble rates to assess if the performance gain from the automatic scheduling disappears due to the dominant influence of the memory restriction.",
+            "expected_outcome": "The computed results are expected to show that the bubble rates for ZB-1p and ZB-H1 are very close or similar, supporting the claim that memory limit factors constrain any further improvement from automatic scheduling in this case.",
+            "subsection_source": "5.3 E FFICIENCY OF AUTOMATIC SCHEDULING"
+        },
+        {
+            "question": "Does the automatic scheduling algorithm\u2019s output (ZB-2p) truly achieve a near-zero bubble rate in practice when profiled on multiple GPUs?",
+            "method": "Set up a profiling experiment on a multi-GPU configuration (e.g., using 16 GPUs) with a selected model (for example, the 14.6B model with settings: p=16 and microbatch count of 64, which is within the provided configurations). First, run a theoretical calculation of the bubble rate for ZB-2p using the profiling data (TF, TB, TW, Tcomm) from preliminary iterations. Then, run an actual execution of the ZB-2p schedule on the 16 GPUs and profile the stage execution timeline. Overlay the computed schedule with the real execution data to compare the presence of bubbles (idle time) in each stage. Evaluate if the real execution profile is nearly bubble-free, in line with the theoretical expectation.",
+            "expected_outcome": "The expectation is that the automatically generated ZB-2p schedule will display minimal bubbles in its execution profile. Although the practical profile might show slightly more bubbles than the theoretical ideal due to minor overheads, it should still be close enough to validate the claim of a near-zero bubble schedule.",
+            "subsection_source": "5.3 E FFICIENCY OF AUTOMATIC SCHEDULING"
+        },
+        {
+            "question": "Does increasing the memory limit (Mlimit) result in a linear decrease in the bubble rate until a plateau is reached near the theoretical threshold?",
+            "method": "Set up a controlled experiment where the heuristic scheduling algorithm is run with a series of Mlimit values spanning from very low values up to values well beyond the theoretical inflection point. Use fixed parameter settings for TF, TB, and Tcomm such that TF \u2248 TB and Tcomm is relatively small. For each chosen Mlimit value, record the corresponding bubble rate over multiple iterations to ensure statistical reliability. Plot the bubble rate as a function of Mlimit and compare the observed trend with the theoretical expectation of a linear decrease that plateaus around the value predicted by (p\u22121)(TB+2Tcomm)+pTF/(TFMB).",
+            "expected_outcome": "It is expected that the bubble rate will decrease nearly linearly with increasing Mlimit until reaching a plateau. The plateau should be observed around a memory limit of approximately 2pMB, validating the empirical claim that 2pMB is an effective threshold for achieving a near-zero bubble rate under these parameter conditions.",
+            "subsection_source": "5.4 M EMORY LIMIT"
+        },
+        {
+            "question": "Is setting the memory limit to approximately 2pMB sufficient to achieve a near-zero bubble rate, and do further increments in Mlimit yield diminishing improvements?",
+            "method": "Design an experiment where the memory limit Mlimit is set to three distinct configurations: below the threshold (e.g., 1.5pMB), at the threshold (2pMB), and above the threshold (e.g., 2.5pMB or 3pMB). For each configuration, run the pipeline scheduling algorithm under identical system conditions and fixed parameters (with TF, TB, and Tcomm chosen to meet the condition TF \u2248 TB and Tcomm being small). Measure the bubble rate for each setting over multiple runs to account for variabilities. Analyze whether the bubble rate at 2pMB is nearly zero compared to the other settings, and whether increasing Mlimit further provides any significant improvement.",
+            "expected_outcome": "The expectation is that at around 2pMB the bubble rate will drop to near zero, and further increases in Mlimit will not lead to substantial additional reductions in the bubble rate. This would confirm that while a sufficiently large memory limit can theoretically achieve a zero bubble rate, the practical gains beyond the 2pMB threshold are minimal compared to the extra resource cost.",
+            "subsection_source": "5.4 M EMORY LIMIT"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of varying communication bandwidth in multi-node setups on the relative advantages of ZB-1p versus interleaved 1F1B (1F1B-I).",
+            "experiment_design": "Design experiments on a multi-node cluster where the network interconnect speeds can be altered or emulated. Use models such as the 6.2B or 14.6B parameter setups on 8 or 16 GPUs. Compare the performance of ZB-1p and 1F1B-I under different network latency and bandwidth scenarios, measuring throughput and bubble rates. This experiment can help identify if ZB-1p\u2019s effective bubble reduction provides additional benefits in bandwidth-constrained environments.",
+            "subsection_source": "5.2 M AIN RESULTS"
+        },
+        {
+            "idea": "Optimize the memory efficiency of ZB-2p to reduce its higher memory consumption while preserving its throughput benefits.",
+            "experiment_design": "Modify the implementation of ZB-2p to explore alternative memory management strategies or microbatch scheduling algorithms. Run comparative experiments on a 6.2B model with 8 GPUs, measuring throughput and peak memory usage. The goal is to determine whether adjustments in microbatch size or activation checkpointing can lower the memory footprint without compromising the near-zero bubble rate performance. Compare these results against the baseline ZB-2p performance.",
+            "subsection_source": "5.2 M AIN RESULTS"
+        },
+        {
+            "idea": "Extend the automatic scheduling evaluation to heterogeneous hardware setups.",
+            "experiment_design": "Modify the experimental setup to include GPUs with varying performance characteristics and memory sizes. Profile TF, TB, TW, and Tcomm for each hardware type and apply the automatic scheduling algorithm. Then, evaluate if the algorithm still maintains low bubble rates across diverse hardware configurations. Compare performance metrics such as throughput and bubble rate between homogeneous and heterogeneous setups.",
+            "subsection_source": "5.3 E FFICIENCY OF AUTOMATIC SCHEDULING"
+        },
+        {
+            "idea": "Assess the sensitivity of the automatic scheduling algorithm to variations in communication overhead.",
+            "experiment_design": "Conduct experiments where the network communication latency and bandwidth are artificially varied (e.g., by using network simulators or by running on clusters with different interconnects). Profile the values of Tcomm under these altered network conditions and run the scheduling algorithm to observe adjustments in the schedule. Evaluate if the automatically generated schedule maintains its efficiency (low bubble rate) and determine the range of network conditions where the algorithm is most effective.",
+            "subsection_source": "5.3 E FFICIENCY OF AUTOMATIC SCHEDULING"
+        },
+        {
+            "idea": "Investigate the interplay between memory limit settings and overall throughput performance in pipeline parallelism.",
+            "experiment_design": "Extend the current experimental framework to not only measure bubble rate but also record throughput (samples processed per second) for each Mlimit setting. Run the same series of experiments with varying Mlimit (from below to above the 2pMB threshold) while keeping other parameters constant. Compare both the bubble rate and throughput to determine if the plateau in bubble rate correlates with any throughput benefits or if there are other diminishing returns.",
+            "subsection_source": "5.4 M EMORY LIMIT"
+        },
+        {
+            "idea": "Explore the effects of varying TF, TB, and Tcomm in conjunction with memory limit adjustments on the bubble rate.",
+            "experiment_design": "Design a factorial experiment where, in addition to varying the memory limit Mlimit, several values for TF, TB, and Tcomm are systematically varied. For each combination, measure the bubble rate and identify any interaction effects between the memory limit and these timing parameters. This could help in understanding the generalizability of the 2pMB threshold under different operational conditions.",
+            "subsection_source": "5.4 M EMORY LIMIT"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces and evaluates advanced pipeline parallelism methods (ZB-1p and ZB-2p) and compares them with existing schedules (1F1B and 1F1B-I) on various model sizes.",
+        "Experiments conducted on up to 32 NVIDIA A100 SXM 80G GPUs demonstrate that ZB methods can achieve higher throughput in samples per second under different microbatch configurations.",
+        "Using an optimizer post-validation strategy leads to approximately an 8% throughput improvement over standard all-reduce synchronization.",
+        "Under the same memory consumption, increasing the microbatch size in methods like 1F1B and ZB-1p shows different performance trade-offs, with ZB-2p generally providing the highest throughput.",
+        "The reproducibility of training loss (bit-to-bit identical results across iterations) validates the correctness and consistency of the proposed pipeline methods."
+    ]
+}

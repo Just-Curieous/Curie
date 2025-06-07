@@ -1,0 +1,80 @@
+{
+    "questions": [
+        {
+            "hypothesis": "BaDExpert serves as an effective post-development defense on CIFAR10 by significantly reducing the attack success rate (ASR) and causing minimal clean accuracy (CA) drop.",
+            "method": "\u2022 Use the CIFAR10 dataset and train a ResNet18 model under various backdoor attack scenarios (e.g., BadNet, Blend, Trojan, CL, SIG, etc.) as described in the paper. \n\u2022 Apply the BaDExpert defense on the trained backdoored models. \n\u2022 Measure the CA and ASR for each attack type by computing CA = P(x, y) where the prediction M(x) equals the true label y (and the backdoor input detection returns 0), and ASR = P(x, y) where backdoored inputs T(x) are misclassified. \n\u2022 Average the metrics over three experimental runs according to the paper\u2019s protocol. \n\u2022 Compare the resulting ASR (targeting around 5.1%) and the CA drop (approximately 0.9%) with the baseline (no-defense) scenario.",
+            "expected_outcome": "BaDExpert is expected to reduce the ASR to around 5% on average while dropping the CA only by approximately 0.9%, thereby outperforming other baseline defenses.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "hypothesis": "BaDExpert outperforms existing backdoor input detectors (e.g., STRIP, Frequency, and SCALE-UP) by achieving a consistently higher AUROC across a diverse set of attacks on CIFAR10.",
+            "method": "\u2022 Reproduce the experiments on CIFAR10 and evaluate BaDExpert as a backdoor input detector across 12 different backdoor attacks. \n\u2022 For each attack, calculate the area under the receiver operating characteristic (AUROC) on a noisy, augmented validation set to prevent overfitting. \n\u2022 Repeat the evaluation for baseline detectors such as STRIP, Frequency, and SCALE-UP under the same conditions. \n\u2022 Ensure that all experiments adhere to the same data splits, model configurations, and averaging over three runs as described. \n\u2022 Tabulate and compare the AUROC values (expect BaDExpert to have average AUROC around 99% versus <85% for baselines).",
+            "expected_outcome": "The experimental results should confirm that BaDExpert achieves an average AUROC of approximately 99%, significantly outperforming the compared baseline detectors.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "hypothesis": "The size of the reserved clean set (Dc) has only a marginal impact on the detection performance of BaDExpert, with marked deterioration only when the sample size is extremely limited.",
+            "method": "\u2022 Focus on the Blend attack on CIFAR10 as a test case. \n\u2022 Vary the reserved clean set size (|Dc|) over a range (e.g., 200, 400, 1000, and 1800 samples, with the default being 2000 samples corresponding to 5% of the training dataset). \n\u2022 Evaluate BaDExpert\u2019s performance at each level by measuring the AUROC. \n\u2022 Plot the AUROC against the reserved clean set size to visualize performance degradation. \n\u2022 Compare scenarios where only one of the models (B or M\u2032) is used versus when both are ensembled.",
+            "expected_outcome": "The AUROC is expected to remain above 98% for most values of |Dc|, with a slight drop (to around 95% or 90%) when the number of clean samples is extremely limited (400 or 200 samples), thereby showing that BaDExpert is robust to moderate reductions in the clean set size.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "hypothesis": "Ensembling the backdoor expert (B) with the auxiliary model (M\u2032) leads to superior detection performance compared to using either model in isolation.",
+            "method": "\u2022 Use the CIFAR10 dataset and conduct experiments under one or more backdoor attack conditions (e.g., Blend or Trojan). \n\u2022 Evaluate three scenarios: (a) using only the backdoor expert B for detection, (b) using only the auxiliary model M\u2032, and (c) an ensemble of both B and M\u2032 as per the BaDExpert pipeline. \n\u2022 Measure the AUROC for each approach and compare them across different sizes of the reserved clean set (as indicated by Fig 5 in the paper). \n\u2022 Record the degradation in AUROC when neglecting one component compared to the ensemble.",
+            "expected_outcome": "It is anticipated that while both B and M\u2032 individually yield high AUROC scores (approximately 95% when sufficiently supported by clean data), the ensemble approach will consistently achieve the highest AUROC (in most cases above 98%), underscoring the necessity of coupling both experts.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "hypothesis": "BaDExpert generalizes and scales well to large-scale datasets like ImageNet while maintaining nearly perfect backdoor detection performance.",
+            "method": "\u2022 Utilize the ImageNet-1000 dataset and evaluate models subjected to various backdoor attack configurations, including poisoning attacks (BadNet, Blend), a subnet-replacement attack (SRA on a pretrained ResNet101), and finetuning attacks (FT-BadNet and FT-Blend on a pretrained ViT-B/16). \n\u2022 For each scenario, reserve approximately 6,000 clean samples (about 0.5% of the training set) for BaDExpert. \n\u2022 Compute performance metrics: AUROC, ASR, and CA, ensuring all experiments follow the same methodological steps as in the CIFAR10 experiments. \n\u2022 Compare the results with baseline measurements to evaluate CA drop and overall detection accuracy.",
+            "expected_outcome": "BaDExpert is expected to achieve nearly 100% AUROC, ASR below 5%, and a negligible drop in CA (around 0.1%), confirming its scalability and effectiveness on large-scale datasets such as ImageNet.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "hypothesis": "Does BaDExpert's detection capability degrade when adaptive adversaries create dependencies between backdoor and normal functionalities?",
+            "method": "Set up a controlled experiment using the CIFAR10 dataset and the same network architecture as in the paper. Implement adaptive backdoor attacks such as TaCT, Adap-Blend, Adap-Patch, and an All-to-All attack where each sample from class i is re-mapped to class (i-1 mod C). Additionally, include the Natural backdoor attack scenario. For each attack configuration, deploy BaDExpert and record the AUROC values post-defense, comparing these metrics to the non-adaptive attack scenarios as reported. Analyze if the degraded AUROC (e.g., a drop to 87.0% in the case of the tailored BaDExpert-Adap-BadNet attack) is a significant reduction relative to the ~99% AUROC in standard settings.",
+            "expected_outcome": "Based on the paper's results, it is expected that introducing dependencies between backdoor and normal functionalities will degrade BaDExpert's effectiveness, evidenced by a notable drop in AUROC. However, despite the degradation, the defense should still provide nontrivial detection performance.",
+            "subsection_source": "4.4 T HERESISTANCE TO ADAPTIVE ATTACKS"
+        },
+        {
+            "hypothesis": "Will the use of inference-time weakened triggers (e.g., lower opacity triggers) and a tailored adaptive attack (BaDExpert-Adap-BadNet) further challenge the defense, compared to standard adaptive attacks?",
+            "method": "Replicate the experimental setup using CIFAR10 and the designated model architecture. First, introduce weakened triggers by blending triggers at low opacity during inference (labelled as the 'Low-Opacity' attack) and measure the corresponding ASR (attack success rate before defense) and AUROC results. Next, implement the tailored adaptive attack\u2014BaDExpert-Adap-BadNet\u2014where the adversary optimizes an asymmetric trigger to minimize activation of the backdoor expert model. For each case, compute and record the key metrics (ASR and AUROC) and compare them against those obtained from other adaptive attack strategies such as TaCT, Adap-Blend, and Adap-Patch.",
+            "expected_outcome": "It is anticipated that attacks employing weakened triggers and the tailored adaptive strategy will exhibit a further decline in AUROC, potentially reaching values as low as 87.0%, thereby demonstrating that such adaptive modifications can more effectively challenge BaDExpert than standard adaptive attacks. Nonetheless, the defense should still retain a significant degree of robustness.",
+            "subsection_source": "4.4 T HERESISTANCE TO ADAPTIVE ATTACKS"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the resilience of BaDExpert under adaptive attack scenarios with varying levels of adversarial sophistication.",
+            "experiment_design": "Extend the evaluation to include a comprehensive set of adaptive attacks (both existing adaptive strategies and the novel tailored adaptive attack mentioned in the paper). Use the CIFAR10 and ImageNet datasets to replicate the experimental environment. Measure the AUROC, ASR, and CA under these new settings to understand potential vulnerabilities and adapt the defense strategy accordingly.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "idea": "Apply BaDExpert to new domains beyond image classification to validate its general applicability for backdoor detection.",
+            "experiment_design": "Select datasets from other domains (e.g., natural language processing with sentiment analysis datasets or audio classification tasks). Adapt the BaDExpert defense pipeline to the chosen model architectures (such as Transformers for text or audio models) and conduct experiments analogous to those performed on CIFAR10 and ImageNet. Evaluate the performance using metrics appropriate for the domain to assess the robustness and versatility of the method.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "idea": "Explore the integration of different model-repairing defenses as alternatives to finetuning for generating the auxiliary model M\u2032.",
+            "experiment_design": "Choose a set of model-repairing defenses (e.g., NAD, FP, or other state-of-the-art approaches) to generate the auxiliary model M\u2032. Incorporate these models into the BaDExpert framework and perform side-by-side experiments on CIFAR10. Compare the resulting AUROC, ASR, and CA across different auxiliary model configurations to determine if certain repair strategies offer an advantage in the detection of backdoor inputs.",
+            "subsection_source": "4.1 S ETUP"
+        },
+        {
+            "idea": "Investigate the impact of combining multiple adaptive strategies on the overall robustness of BaDExpert.",
+            "experiment_design": "Design experiments that incorporate combinations of adaptive attack methods (e.g., simultaneous use of low-opacity triggers and dependency attacks) on both CIFAR10 and GTSRB. Use the same model architectures from the original paper. Measure cumulative effects on ASR and AUROC to assess whether the defense can handle compounded adaptive attacks, and compare these outcomes with individual adaptive attack scenarios.",
+            "subsection_source": "4.4 T HERESISTANCE TO ADAPTIVE ATTACKS"
+        },
+        {
+            "idea": "Extend the evaluation of BaDExpert to larger and more complex datasets like ImageNet under adaptive attack conditions.",
+            "experiment_design": "Utilize ImageNet with appropriate model architectures as outlined in Sec 4.3 of the paper. Implement a range of adaptive attacks including TaCT, Adap-Blend, and the tailored BaDExpert-Adap-BadNet. Assess scalability by recording performance metrics such as AUROC and clean accuracy. Analyze whether the performance degradation observed on smaller datasets persists or is amplified in larger-scale settings.",
+            "subsection_source": "4.4 T HERESISTANCE TO ADAPTIVE ATTACKS"
+        }
+    ],
+    "main_takeaways": [
+        "BaDExpert introduces a novel backdoor defense that extracts backdoor functionality by leveraging class clustering (using silhouette scores), input scaling, and frequency-based methods.",
+        "The method demonstrates robust performance, achieving high AUROC values (e.g., up to 87.0% in some scenarios and 57.6% under certain adaptive attack settings) while maintaining low attack success rates (ASR) and high clean accuracy (CA).",
+        "Comparative evaluations show that BaDExpert consistently outperforms a broad range of existing defenses\u2014including post-development detectors like STRIP, Frequency, and SCALE-UP, as well as additional baselines such as ANP, I-BAU, ABL, AWM, RNP, and CD.",
+        "The paper carefully tunes hyperparameters and evaluates the defense under multiple adaptive attacks, which reinforces its empirical robustness despite lacking certified guarantees.",
+        "Ethical considerations are addressed by emphasizing that while the defense method significantly improves backdoor input detection, its effectiveness is based on empirical evaluations in controlled environments, highlighting a long-term cat-and-mouse dynamic in backdoor defense research."
+    ]
+}

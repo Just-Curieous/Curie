@@ -1,0 +1,30 @@
+{
+    "questions": [
+        {
+            "question": "Does the apparent one-step prediction advantage of CNextU-net persist over longer prediction horizons compared to other architectures?",
+            "method": "Use the turbulent_radiative_layer_2D simulation dataset available from The Well to perform both one-step and long-horizon autoregressive predictions. For one-step evaluation, use a sliding window sampled directly from the ground truth and compute the VRMSE for each model (including CNextU-net, original U-net, and other baseline architectures). Then, initiate longer rollouts from the beginning of the simulation and evaluate the prediction performance over multiple time windows. Ensure that hyperparameters (using default settings in your experimental configuration), data splits, and evaluation metrics (such as per-field VRMSE) remain consistent across experiments to compare performance discrepancies between the one-step setting and the multi-step horizon across the models.",
+            "expected_outcome": "It is expected that while CNextU-net shows a sizable advantage in one-step predictions, this benefit quickly dissipates over longer horizons, resulting in performance levels that are largely interchangeable among most models, with the original U-net showing a distinct behavior.",
+            "subsection_source": "4.1 Evaluation Metrics"
+        },
+        {
+            "question": "Is the loss in the turbulent_radiative_layer_2D simulation predominantly concentrated in the pressure (P) field compared to other physical fields?",
+            "method": "Conduct a detailed per-field analysis on the turbulent_radiative_layer_2D dataset by computing field-specific errors (using VRMSE or similar metrics) for each physical field included in the simulation. Configure the evaluation to log the error values for fields such as pressure, density, and temperature individually over the course of the prediction task. Ensure that the same experimental settings (e.g., model configuration, temporal downsampling settings if applicable) are used across all evaluations to ascertain that variations in loss are due to intrinsic field differences rather than experimental conditions.",
+            "expected_outcome": "The experimental results should show that the loss is significantly higher for the pressure field compared to other fields, indicating that errors are predominantly concentrated in the pressure (P) field as observed in the metric analysis.",
+            "subsection_source": "4.1 Evaluation Metrics"
+        },
+        {
+            "question": "Do all models effectively predict low frequency modes in long-term predictions while exhibiting increased error divergence for high frequency modes?",
+            "method": "Implement an evaluation procedure that bins the prediction error of each model (including CNextU-net, original U-net, and other baselines) according to frequency components derived from the simulated turbulent_radiative_layer_2D data. For each model, compute error metrics separately for low frequency and high frequency bins over long prediction horizons. Use a consistent frequency binning strategy based on the Fourier decomposition of the predicted state fields. Compare error trends across the frequency bins and across models to assess the stability of low frequency predictions versus high frequency predictions.",
+            "expected_outcome": "The expected observation is that while all models maintain robust prediction performance for low frequency modes over longer time horizons, the prediction error for high frequency modes increases more rapidly, reflecting a divergence in performance when predicting finer details.",
+            "subsection_source": "4.1 Evaluation Metrics"
+        }
+    ],
+    "follow_up_work_ideas": [],
+    "main_takeaways": [
+        "The paper presents a systematic approach for simulating and processing datasets, where simulation results are temporally downsampled by domain experts to balance smooth state evolution with non-trivial prediction tasks.",
+        "It emphasizes reproducibility by providing complete training details, code, and standardized file formats for different datasets.",
+        "The work carefully details its preprocessing pipeline\u2014including the handling of missing values and standardized file formats\u2014to facilitate effective simulation and prediction.",
+        "Ethical considerations have been addressed, ensuring that all data are self-contained, non-confidential, and contributed ethically, with appropriate citations and licensing.",
+        "Despite robust experimental configurations, the evaluation does not include error bars due to compute budget limitations, which is acknowledged as a limitation in the study."
+    ]
+}

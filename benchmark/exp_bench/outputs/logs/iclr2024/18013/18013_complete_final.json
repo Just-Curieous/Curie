@@ -1,0 +1,1292 @@
+{
+    "questions": [
+        {
+            "question": "For reasoning evaluations, will FuseLLM outperform Llama-2 on standard benchmarks BBH (total 27 tasks)?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FuseLLM outperforms Llama-2 on the standard benchmarks BBH, which consists of 27 tasks.\n\n    - **Objective:** \n    Compare overall performance and task-specific improvements between FuseLLM and Llama-2 7B models on the BBH benchmark.\n\n2. **Evaluation Metrics:**\n    -  Overall accuracy on BBH over 27 tasks\n\n3. **Comparative Evaluation:**\n    - Model:\n        - FuseLLM\n        - Baseline: Llama-2 7B\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n        - set combination weight \u03bb to 0.9",
+            "expected_outcome": "On average, FUSELLM demonstrates an average relative performance gain of 5.16% over the original Llama-2 across all 27 tasks. In specific tasks, the enhancements achieved by FUSELLM are substantial (e.g., from 54.40 to 65.20 in the Hyperbaton task).",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "training_setup": "Training framework details remain fixed: Huggingface Transformers with FlashAttention acceleration, AdamW optimizer with \u03b21=0.9, \u03b22=0.95, weight decay of 0.1, gradient clipping of 1.0, cosine learning rate schedule (max lr=1e-5, warmup ratio=0.008), and token packing. Moreover, the training is conducted for a single epoch (approximately 33 hours) on MiniPile.",
+                        "benchmark": "Big-Bench Hard (BBH) is used consistently, consisting of 23 multiple-choice tasks and 4 free-form generation tasks covering categories like algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks."
+                    },
+                    "independent_variables": {
+                        "llm_model": [
+                            "FUSE LLM",
+                            "Llama-2 7B"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metrics": "Overall accuracy on BBH tasks (aggregated performance across the 27 tasks)"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "training_epoch": "While a single epoch is specified, it is ambiguous whether training stability or effects over multiple epochs should be evaluated in extended experiments.",
+                        "hyperparameter_tuning": "The paper provides detailed hyperparameters, but it is unclear if these values are optimal or if slight variations might yield different results, leaving room for ambiguities in replication."
+                    },
+                    "possible_modifications": {
+                        "modification_epoch": [
+                            "Extend the experiment to multiple epochs to understand learning dynamics and robustness."
+                        ],
+                        "modification_hyperparameters": [
+                            "Explore different combinations of hyperparameters (e.g., adjusting the learning rate, weight decay, or warmup ratio) to gauge sensitivity."
+                        ],
+                        "modification_benchmarks": [
+                            "Add other benchmarks or domains to further assess the generalization of FUSE LLM\u2019s improvements."
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Huggingface Transformers framework",
+                        "FlashAttention acceleration",
+                        "AdamW optimizer (with \u03b21=0.9, \u03b22=0.95, weight decay=0.1, gradient clipping=1.0)",
+                        "Cosine learning rate scheduler (max lr=1e-5, warmup ratio=0.008)",
+                        "Token packing technique as per Raffel et al. (2020)",
+                        "MiniPile training dataset",
+                        "Big-Bench Hard (BBH) benchmark (23 multiple-choice tasks and 4 free-form generation tasks)",
+                        "FUSE LLM and Llama-2 7B model setups",
+                        "Hyperparameter combination weight \u03bb (set to 0.9)"
+                    ],
+                    "setup_steps": [
+                        "Set up the training environment using Huggingface Transformers and integrate FlashAttention for acceleration",
+                        "Configure the optimizer (AdamW) with specified hyperparameters (\u03b21, \u03b22, weight decay, gradient clipping)",
+                        "Implement and initialize the cosine learning rate schedule with its max learning rate and warmup ratio",
+                        "Incorporate token packing to group training instances as per Raffel et al. (2020)",
+                        "Load and preprocess the MiniPile dataset for training",
+                        "Retrain FUSE LLM for a single epoch (approximately 33 hours) using the detailed training configuration",
+                        "Benchmark FUSE LLM against Llama-2 7B on BBH tasks and collect performance metrics",
+                        "Run experiments"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Integration of Multiple LLM Knowledge",
+                            "description": "The fusion of knowledge from different LLMs (as implemented in FUSE LLM) adds complexity in how information is combined and managed, including the set-up of the fusion function and control of the combination weight \u03bb."
+                        },
+                        {
+                            "source": "Extended Evaluation Metrics",
+                            "description": "Evaluating on a diverse set of 27 tasks (including both multiple-choice and free-form generation) requires careful metric aggregation and task-specific analysis."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_components": [
+                        "Training Epoch: It is specified as a single epoch, yet there is ambiguity regarding whether effects over multiple epochs should be evaluated for training stability and performance robustness.",
+                        "Hyperparameter Tuning: The detailed hyperparameters are provided; however, it is unclear if these are optimal or if variations might lead to different outcomes."
+                    ],
+                    "ambiguous_setup_steps": [
+                        "Dataset Preprocessing: While the MiniPile dataset is used, the exact preprocessing steps (such as cleaning or formatting) are not specified.",
+                        "Integration Details for Fusion Function: The procedure for combining source LLMs\u2019 knowledge (via the fusion function and weight \u03bb) is summarized but lacks granular implementation details.",
+                        "Evaluation Metric Computation: The method to compute and aggregate metrics across varied tasks (multiple-choice and free-form generation) is not fully detailed, leading to ambiguity in replicating the evaluation."
+                    ],
+                    "possible_modifications": {
+                        "modification_epoch": [
+                            "Extend experiments to multiple epochs to analyze learning dynamics and robustness over time."
+                        ],
+                        "modification_hyperparameters": [
+                            "Conduct a grid search over hyperparameters (e.g., learning rate, weight decay, warmup ratio) to evaluate sensitivities and optimize performance."
+                        ],
+                        "modification_benchmarks": [
+                            "Augment the experimental design by integrating additional benchmarks (e.g., code generation, reading comprehension) to further assess the generalizability of FUSE LLM\u2019s improvements."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "For extended experiments, one could enforce constraints on GPU memory or processing power by requiring performance parity with a smaller variant of the models (e.g., using a mini version of Llama-2 instead of the full Llama-2 7B) to assess the impact of limited computational resources."
+                        ],
+                        "time_constraints": [
+                            "As a modification, the training duration could be limited to less than the current 33-hour single-epoch setup to evaluate whether similar performance gains can be achieved under stricter time constraints."
+                        ],
+                        "money_constraints": []
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in training dynamics due to random factors",
+                    "description": "The experiment relies on a single epoch of training using random seed initializations, token packing, and stochastic gradient updates. Variations such as random dropping of tokens or noise during gradient updates (as noted in previous work, e.g., dropping tokens to reduce pre-training costs) can lead to inconsistent model behavior from run to run, impacting the performance measured on standard benchmarks like BBH.",
+                    "impact": "This randomness may lead to instability during training and cause variations in the aggregated performance metrics across the 27 BBH tasks. It can obscure the true comparative effect between FUSE LLM and Llama-2 due to fluctuations caused by random initialization and sampling.",
+                    "possible_modifications": [
+                        "Run experiments with multiple seeds and aggregate the results to reduce the impact of randomness.",
+                        "Introduce controlled perturbations, such as intermittently dropping random tokens during training, to explicitly quantify the effect of random uncertainty.",
+                        "Extend the training to multiple epochs to smooth out random fluctuations and better assess the model's robustness."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Bias introduced through fixed training configurations and dataset preprocessing",
+                    "description": "Systematic uncertainty can arise from the one-time setting of hyperparameters (e.g., a fixed combination weight \u03bb=0.9, specific learning rate schedule, and token packing approach) and the inherent characteristics or biases in the MiniPile dataset used for training. Additionally, preprocessing choices for MiniPile and the fusion mechanism for combining knowledge from multiple LLMs might introduce a systematic bias favoring FUSE LLM over Llama-2.",
+                    "impact": "Such systematic biases are likely to consistently skew the experimental outcomes, potentially overstating the performance gains of FUSE LLM on BBH tasks. This is reflected in the reported significant improvements and the consistency across multiple tasks as observed in the provided tables.",
+                    "possible_modifications": [
+                        "Experiment with alternative hyperparameter settings, including different \u03bb values or learning rate schedules, to test the stability of the observed performance gains.",
+                        "Incorporate additional benchmarks and datasets beyond BBH to assess whether the systematic bias from the training setup is affecting generalization.",
+                        "Retrieve and preprocess an independently sourced, clean dataset to mitigate any dataset-specific biases from MiniPile."
+                    ]
+                }
+            },
+            "no_answer": "After a thorough search of the repository, I couldn't find any specific scripts that directly evaluate FuseLLM against Llama-2 on BBH benchmarks. The FuseLLM README mentions that they used external repositories for evaluation, specifically pointing to https://github.com/allenai/open-instruct/tree/main/eval for BBH evaluation, but there are no local scripts in the repository that implement this evaluation. The repository contains training scripts for FuseLLM but relies on external evaluation frameworks for benchmarking."
+        },
+        {
+            "question": "For commonsense evaluations, will FuseLLM outperform Llama-2 on standard benchmarks CommenSense(CS) (zero-shot)?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FuseLLM outperforms Llama-2 in zero-shot scenarios on the Common Sense (CS) benchmark.\n\n    - **Objective:** \n    Compare the relative performance of FuseLLM and Llama-2 across a set of predefined CS tasks to assess generalization and reasoning capabilities.\n\n2. **Evaluation Metrics:**\n    -  Overall accuracy on CS tasks (zero-shot performance)\n\n3. **Comparative Evaluation:**\n    - Model:\n        - FuseLLM\n        - Baseline: Llama-2 7B\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Common Sense (CS), consisting of five tasks: ARC easy, ARC challenge, BoolQ, HellaSwag, OpenBookQA\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n        - set combination weight \u03bb to 0.9",
+            "expected_outcome": "The results demonstrate that FUSELLM consistently surpasses the baselines across all five tasks, achieving a relative performance improvement of 1.25% over Llama-2. Notably, substantial improvements from Llama-2 to FUSELLM are observed in the challenging ARC-challenge (2.40%) and OpenBookQA (2.71%) tasks, highlighting the effectiveness of FUSELLM in leveraging collective knowledge to address intricate problems.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "evaluation_protocol": "Zero-shot evaluation on the Common Sense (CS) benchmark",
+                        "benchmark_tasks": "Fixed set of five CS tasks"
+                    },
+                    "independent_variables": {
+                        "llm_model": [
+                            "FuseLLM",
+                            "Llama-2"
+                        ],
+                        "benchmark": [
+                            "Common Sense (CS)"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metrics": "Overall accuracy on CS benchmark ( Avg.5 Tasks)"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "training_epoch": "While a single epoch is specified, it is ambiguous whether training stability or effects over multiple epochs should be evaluated in extended experiments.",
+                        "hyperparameter_tuning": "The paper provides detailed hyperparameters, but it is unclear if these values are optimal or if slight variations might yield different results, leaving room for ambiguities in replication."
+                    },
+                    "possible_modifications": {
+                        "modification_epoch": [
+                            "Extend the experiment to multiple epochs to understand learning dynamics and robustness."
+                        ],
+                        "modification_hyperparameters": [
+                            "Explore different combinations of hyperparameters (e.g., adjusting the learning rate, weight decay, or warmup ratio) to gauge sensitivity."
+                        ],
+                        "modification_benchmarks": [
+                            "Add other benchmarks or domains to further assess the generalization of FUSE LLM\u2019s improvements."
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "LLM models (FuseLLM and Llama-2)",
+                        "Benchmark: Common Sense (CS) evaluation protocol",
+                        "Fixed set of five CS tasks (ARC easy, ARC challenge, BoolQ, HellaSwag, OpenBookQA)",
+                        "Evaluation metrics (Avg. 5 tasks scores on CS benchmark)",
+                        "Zero-shot evaluation setup"
+                    ],
+                    "setup_steps": [
+                        "Prepare and load the fixed CS benchmark tasks",
+                        "Configure the evaluation protocol for zero-shot evaluation",
+                        "Set up the two independent variables (FuseLLM and Llama-2) for evaluation",
+                        "Run inference with both models on the CS tasks",
+                        "Collect and compute the relative performance improvement based on CS benchmark scores",
+                        "Analyze results comparing FuseLLM's performance improvement over Llama-2"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Hyperparameter and training details",
+                            "description": "Reference to multiple training details (e.g., AdamW parameters, cosine learning rate schedule, packing, gradient clipping) which may indirectly influence evaluation reproducibility even though not all details are used in the evaluation"
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_setup_steps": [
+                        "Evaluation protocol details: While it is stated that a zero-shot evaluation is used on the CS benchmark, details on how it is applied is not provided",
+                        "Data preprocessing and benchmark curation: No explicit instructions are given on how the CS tasks are prepared or if any specific data cleaning or processing steps are required"
+                    ],
+                    "possible_modifications": {
+                        "modification_1": [
+                            "Mask or vary the evaluation prompt details to explore the impact of prompt engineering on performance."
+                        ],
+                        "modification_2": [
+                            "Provide clearer documentation for the evaluation method, including scoring details and inference procedures, to remove ambiguity in the experimental setup."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "For extended experiments, enforce a resource constraint by requiring the evaluation to be performed with a reduced token budget. For example, instead of using the full model configurations, experiment with a smaller variant (e.g., substituting Llama-2 with Llama-2-mini) while aiming to maintain the observed performance improvement."
+                        ],
+                        "time_constraints": [
+                            "Alternatively, impose a strict evaluation time limit per task to assess if similar improvements can be achieved under faster inference conditions."
+                        ],
+                        "money_constraints": []
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in training dynamics due to random factors",
+                    "description": "The experiment relies on a single epoch of training using random seed initializations, token packing, and stochastic gradient updates. Variations such as random dropping of tokens or noise during gradient updates (as noted in previous work, e.g., dropping tokens to reduce pre-training costs) can lead to inconsistent model behavior from run to run, impacting the performance measured on standard benchmarks like CS.",
+                    "impact": "This randomness may lead to instability during training and cause variations in the aggregated performance metrics across the 5 CS tasks. It can obscure the true comparative effect between FUSE LLM and Llama-2 due to fluctuations caused by random initialization and sampling.",
+                    "possible_modifications": [
+                        "Run experiments with multiple seeds and aggregate the results to reduce the impact of randomness.",
+                        "Introduce controlled perturbations, such as intermittently dropping random tokens during training, to explicitly quantify the effect of random uncertainty.",
+                        "Extend the training to multiple epochs to smooth out random fluctuations and better assess the model's robustness."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Bias introduced through fixed training configurations and dataset preprocessing",
+                    "description": "Systematic uncertainty can arise from the one-time setting of hyperparameters (e.g., a fixed combination weight \u03bb=0.9, specific learning rate schedule, and token packing approach) and the inherent characteristics or biases in the MiniPile dataset used for training. Additionally, preprocessing choices for MiniPile and the fusion mechanism for combining knowledge from multiple LLMs might introduce a systematic bias favoring FUSE LLM over Llama-2.",
+                    "impact": "Such systematic biases are likely to consistently skew the experimental outcomes, potentially overstating the performance gains of FUSE LLM on CS tasks. This is reflected in the reported significant improvements and the consistency across multiple tasks as observed in the provided tables.",
+                    "possible_modifications": [
+                        "Experiment with alternative hyperparameter settings, including different \u03bb values or learning rate schedules, to test the stability of the observed performance gains.",
+                        "Incorporate additional benchmarks and datasets beyond CS to assess whether the systematic bias from the training setup is affecting generalization.",
+                        "Retrieve and preprocess an independently sourced, clean dataset to mitigate any dataset-specific biases from MiniPile."
+                    ]
+                }
+            },
+            "no_answer": "After thoroughly searching the repository, I couldn't find specific scripts that directly answer the experiment question about comparing FuseLLM with Llama-2 on commonsense evaluations in zero-shot settings. The repository contains code for training FuseLLM and various evaluation frameworks, but according to the FuseLLM README.md, the commonsense evaluations (ARC-easy, ARC-challenge, BoolQ, HellaSwag, OpenBookQA) were performed using the external lm-evaluation-harness tool (version 0.3.0), which is referenced but not included in the repository. There are no scripts in the repository that specifically set up and run this comparison between FuseLLM and Llama-2 on the CommonSense benchmark in a zero-shot setting."
+        },
+        {
+            "question": "For code generation evaluation, will FuseLLM outperform Llama-2 on standard benchmarks MultiPL-E(ME) (zero-shot)?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FuseLLM outperforms Llama-2 in zero-shot settings on the MultiPL-E benchmark.\n    - **Objective:** \n    Compare FUSELLM to Llama-2 to determine their effectiveness across various programming languages using the zero-shot pass@1 score metric.\n\n2. **Evaluation Metrics:**\n    -  Average Pass@1 score for 10 programming language task on ME benchmark(zero-shot performance)\n    - Set of 10 languages included in the MultiPL-E benchmark (C++, Go,Java, JavaScript, PHP, Python, R, Ruby, Rust, TypeScript)\n3. **Comparative Evaluation:**\n    - Model:\n        - FuseLLM\n        - Baseline: Llama-2 7B\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - MultiPL-E benchmark consisting of 10 tasks (C++, Go,Java, JavaScript, PHP, Python, R, Ruby, Rust, TypeScript)\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n        - set combination weight \u03bb to 0.9",
+            "expected_outcome": "We observe that FUSELLM outperforms Llama-2 in 9 out of the 10 tasks, with a notable enhancement in the pass@1 score for specific programming languages such as R, increasing from 4.97 to 5.84.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "evaluation_setting": [
+                            "MultiPL-E benchmark",
+                            "zero-shot evaluation",
+                            "pass@1 score as the evaluation metric"
+                        ]
+                    },
+                    "independent_variables": {
+                        "llm_model": [
+                            "FUSELLM",
+                            "Llama-2"
+                        ],
+                        "programming_language": "The set of 10 programming languages used in the MultiPL-E benchmark (with R being one notable example)"
+                    },
+                    "dependent_variables": {
+                        "performance_metric": [
+                            "average pass@1 score on total 10 task/language"
+                        ]
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "training_epoch": "While a single epoch is specified, it is ambiguous whether training stability or effects over multiple epochs should be evaluated in extended experiments.",
+                        "hyperparameter_tuning": "The paper provides detailed hyperparameters, but it is unclear if these values are optimal or if slight variations might yield different results, leaving room for ambiguities in replication."
+                    },
+                    "possible_modifications": {
+                        "modification_epoch": [
+                            "Extend the experiment to multiple epochs to understand learning dynamics and robustness."
+                        ],
+                        "modification_hyperparameters": [
+                            "Explore different combinations of hyperparameters (e.g., adjusting the learning rate, weight decay, or warmup ratio) to gauge sensitivity."
+                        ],
+                        "modification_benchmarks": [
+                            "Add other benchmarks or domains to further assess the generalization of FUSE LLM\u2019s improvements."
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Benchmark: MultiPL-E",
+                        "Evaluation setting: zero-shot evaluation with pass@1 score",
+                        "LLM Models: FuseLLM and Llama-2",
+                        "Programming language set: 10 programming languages (including R)",
+                        "Performance metrics: average pass@1 scores on total 10 task/language"
+                    ],
+                    "setup_steps": [
+                        "Configure the evaluation environment based on the MultiPL-E benchmark",
+                        "Set up the zero-shot evaluation procedure with the pass@1 metric",
+                        "Prepare and run experiments for both FuseLLM and Llama-2 across the set of programming languages",
+                        "Collect performance data (pass@1 scores) for each programming language and average them"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Hyperparameter settings and training framework",
+                            "description": "Details such as the combination weight \u03bb, optimizer settings, and training duration add complexity to reproducing the experiment."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_setup_steps": [
+                        "How the prompts are designed and applied across tasks is unclear."
+                    ],
+                    "possible_modifications": {
+                        "modification_add_variable": [
+                            "Introduce a new variable to compare results using different prompting strategies (e.g., zero-shot vs. few-shot evaluations)."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "Enforce stricter compute or memory limits by, for example, substituting some LLMs with smaller variants (e.g., a mini version) to simulate resource scarcity."
+                        ],
+                        "time_constraints": [
+                            "Reduce the number of evaluation iterations (e.g., by limiting the set of programming languages or the number of tasks) to achieve faster overall experiment turnaround."
+                        ],
+                        "money_constraints": [
+                            "Opt for free or open-source models and infrastructure to control expenses, or limit the use of cost-incurring API calls during evaluation."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in prompt design and evaluation procedures",
+                    "description": "The experimental method does not detail the prompt construction, which may result in random fluctuations in performance measurements (e.g., pass@1 scores). Such variability might arise from random selection or dropping of tokens in the input, influencing the final observed performance of the models.",
+                    "impact": "Random fluctuations due to these ambiguities can lead to unstable gradient updates during model evaluation and inconsistent performance measures across repeated experiments, making it harder to compare FuseLLM and Llama-2 reliably.",
+                    "possible_modifications": [
+                        "Introduce controlled random token dropping during prompt formulation to assess the impact of random noise on performance.",
+                        "Vary the random seed settings for prompt generation and evaluation to quantify the inherent randomness in the observed metrics.",
+                        "Randomly shuffle the order of tasks or evaluation instances to simulate and study variations across multiple runs."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Bias introduced through fixed training configurations and dataset preprocessing",
+                    "description": "Systematic uncertainty can arise from the one-time setting of hyperparameters (e.g., a fixed combination weight \u03bb=0.9, specific learning rate schedule, and token packing approach) and the inherent characteristics or biases in the MiniPile dataset used for training. Additionally, preprocessing choices for MiniPile and the fusion mechanism for combining knowledge from multiple LLMs might introduce a systematic bias favoring FUSE LLM over Llama-2.",
+                    "impact": "Such systematic biases are likely to consistently skew the experimental outcomes, potentially overstating the performance gains of FUSE LLM on ME tasks. This is reflected in the reported significant improvements and the consistency across multiple tasks as observed in the provided tables.",
+                    "possible_modifications": [
+                        "Experiment with alternative hyperparameter settings, including different \u03bb values or learning rate schedules, to test the stability of the observed performance gains.",
+                        "Incorporate additional benchmarks and datasets beyond ME to assess whether the systematic bias from the training setup is affecting generalization.",
+                        "Retrieve and preprocess an independently sourced, clean dataset to mitigate any dataset-specific biases from MiniPile."
+                    ]
+                }
+            },
+            "no_answer": "After thoroughly exploring the repository, I couldn't find a specific script that directly answers the experiment question about FuseLLM outperforming Llama-2 on MultiPL-E benchmarks in zero-shot settings. The FuseLLM README.md mentions that they used the external 'bigcode-evaluation-harness' repository for MultiPL-E evaluation (https://github.com/bigcode-project/bigcode-evaluation-harness), but this tool is not included in the repository itself. While there are code evaluation scripts in the FuseO1-Preview/code_evaluation directory, these are for LiveCodeBench, not specifically for MultiPL-E. To reproduce the experiment comparing FuseLLM with Llama-2 on MultiPL-E benchmarks, users would need to use the external evaluation tools mentioned in the README rather than scripts provided in this repository."
+        },
+        {
+            "question": "Does using more source LLMs improve the target model performance on benchmark BBH? (Compare Llama-2, Llama-2 + MPT and FuseLLm(which is Llama-2 + MPT + OpenLLaMA))",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Examine whether using more source LLMs enhances performance on the BBH benchmark by comparing distinct configurations of Llama-2, Llama-2 + MPT, and FUSELLM (Llama-2 + MPT + OpenLLaMA).\n    - **Objective:** \n    Identify performance gains as the number of integrated source models increases from one to three within the target Llama-2 model.\n\n2. **Evaluation Metrics:**\n    - Overall accuracy on BBH over 27 tasks\n3. **Comparative Evaluation:**\n    - Model:\n        - Llama-2 only (1 source model)\n        - Llama-2 + MPT (2 source models)\n        - FUSELLM: Llama-2 + MPT + OpenLLaMA (3 source models)\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n            - set combination weight \u03bb to 0.9",
+            "expected_outcome": "The performance of FUSELLM demonstrates apparent improvement as the number of models increases from 1 to 3. A consistent performance improvement is observed in BBH.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "target_model": "Llama-2 is consistently used as the target model throughout the experiment",
+                        "evaluation_benchmark": "BBH is used as the evaluation benchmark for all experiments",
+                        "training_conditions": "The continual training hyperparameters (e.g., static \u03bb and training duration) remain fixed across experiments"
+                    },
+                    "independent_variables": {
+                        "source_llm_configuration": [
+                            "Llama-2 only (1 source model)",
+                            "Llama-2 + MPT (2 source models)",
+                            "FUSELLM: Llama-2 + MPT + OpenLLaMA (3 source models)"
+                        ],
+                        "number_of_source_llms": "This is directly controlled by the configuration of source models (with values 1, 2, and 3)"
+                    },
+                    "dependent_variables": {
+                        "performance_on_BBH": "Measured performance scores on the BBH benchmark",
+                        "relative_performance_improvement": "Percentage improvement over the baseline Llama-2 performance across BBH tasks"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {}
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Target model: Llama-2 consistently used as the target across all configurations",
+                        "Source models: Llama-2 only, Llama-2 + MPT, and FUSELLM (Llama-2 + MPT + OpenLLaMA)",
+                        "Training framework based on Huggingface Transformers",
+                        "Acceleration tool: FlashAttention",
+                        "Continual training setup with fixed hyperparameters (e.g., static \u03bb, AdamW optimizer settings, cosine learning rate schedule)",
+                        "Evaluation benchmark: average score over 10 Big-Bench Hard (BBH) tasks for reasoning performance"
+                    ],
+                    "setup_steps": [
+                        "Ensure the training framework from Huggingface Transformers and FlashAttention are correctly installed and configured",
+                        "Prepare the continual training environment with fixed hyperparameters (e.g., static \u03bb set to 0.9, single epoch training)",
+                        "Configure the experiment to use the target model (Llama-2) and set constant variables (e.g., training conditions, evaluation benchmark BBH)",
+                        "Vary the independent variable by setting up the source LLM configurations (1: Llama-2 only, 2: Llama-2 + MPT, 3: FUSELLM with Llama-2 + MPT + OpenLLaMA)",
+                        "Execute the training process for each configuration",
+                        "Measure performance on BBH using performance scores and compute relative performance improvements"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Data Handling and Preprocessing",
+                            "description": "Packing multiple training instances into a single sequence requires careful handling of end-of-sequence tokens, which adds an extra layer of complexity."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {}
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "Impose a restriction on available computation by requiring the use of a smaller target model (e.g., Llama-2-mini instead of Llama-2) to meet similar performance metrics, thereby simulating a limited GPU/memory budget."
+                        ],
+                        "time_constraints": [
+                            "Reduce the training duration by limiting the single epoch to a shorter time to test if the fusion approach can still yield improvements within a compressed time budget."
+                        ],
+                        "money_constraints": [
+                            "Restrict financial expenditure on compute by simulating a setting where only lower-cost computational resources are available, thus enforcing a cap on allowed resource spending."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Random token handling and fusion parameter variations",
+                    "description": "In the experiment, if a random process (such as randomly dropping tokens or using dynamic, non-deterministic token alignment criteria) is mistakenly integrated into the fusion process, it could lead to instability during gradient updates and inconsistent performance scores on BBH. This mirrors the uncertainty introduced by modifying token dropping methods as seen in prior work (e.g., Gao et al. 2020 and the provided example).",
+                    "impact": "The random modifications would likely result in fluctuating scores and inconsistent relative performance improvements across runs, making it harder to reliably measure whether increased numbers of source LLMs consistently enhance performance.",
+                    "possible_modifications": [
+                        "Remove any random token dropping techniques and use a fixed token alignment method.",
+                        "Standardize the fusion function parameters (e.g., use a static \u03bb as described) so that randomness in the token combination process is minimized.",
+                        "Ensure reproducibility by seeding all random operations during training and evaluation."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {}
+            },
+            "no_answer": "After thoroughly exploring the repository, I could not find specific scripts that directly answer the experiment question about comparing Llama-2, Llama-2 + MPT, and FuseLLM (Llama-2 + MPT + OpenLLaMA) on the BBH benchmark. The FuseLLM README mentions using external evaluation tools from open-instruct (https://github.com/allenai/open-instruct/tree/main/eval) for BBH evaluation, but there are no scripts in the repository that implement this specific comparison. The repository contains training scripts for FuseLLM and points to external evaluation tools rather than containing the evaluation scripts directly."
+        },
+        {
+            "question": "For Alignment Criteria, does the proposed MinED method outperforms EM method, on benchmark BBH?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether the proposed MinED (Minimum Edit Distance) method for alignment criteria outperforms the EM (Exact Matching) method on the BBH benchmark.\n    - **Objective:** \n    Compare the effectiveness of MinED and EM alignment criteria by measuring performance on BBH tasks.\n\n2. **Evaluation Metrics:**\n    - Overall accuracy on BBH over 27 tasks\n3. **Comparative Evaluation:**\n    - Model: FUSELLM\n        - Alignment Criteria:\n            - EM (Exact Matching)\n            - MinED (Minimum Edit Distance)\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n            - set combination weight \u03bb to 0.9",
+            "expected_outcome": "It is evident that the proposed MinEDmethod, which is based on minimum edit distance,consistently outperforms the EM method introduced by Fu et al.(2023), which relies on exact matching.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "benchmark": "BBH"
+                    },
+                    "independent_variables": {
+                        "alignment_criteria": [
+                            "EM",
+                            "MinED"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metric": "Average Score measured on benchmark BBH of total 27 tasks"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {}
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Benchmark (BBH) loaded from Big-Bench",
+                        "Alignment methods: EM method and MinED method based on minimum edit distance",
+                        "Tokenization process: ensuring token alignment across multiple models using different tokenizers",
+                        "Performance metric: Average Score measured on benchmark BBH of total 27 tasks"
+                    ],
+                    "setup_steps": [
+                        "Load and preprocess the BBH benchmark dataset",
+                        "Configure the two independent alignment criteria (EM and MinED) for token alignment",
+                        "Integrate the alignment methods into the evaluation pipeline",
+                        "Execute the experiments to measure the score for both EM and MinED on BBH",
+                        "Collect and compare the performance outcomes as per the reported metrics"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Token alignment details",
+                            "description": "Handling different tokenizers requires managing slight discrepancies in token sequences, as well as applying minimum edit distance computation which adds algorithmic complexity."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_setup_steps": [
+                        "Details of the token alignment process: How the minimum edit distance is computed and how edge cases (e.g., slight token discrepancies) are handled is not fully described."
+                    ],
+                    "possible_modifications": {}
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "experimental_procedure": {
+                            "modifications": [
+                                "Specify the detailed experimental method and procedure for measuring performance on the BBH benchmark, including data preprocessing and token alignment (with the specific handling of minimum edit distance (MinED) computation)."
+                            ]
+                        }
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Variability in token alignment execution",
+                    "description": "If random modifications (for example, random token drops) are introduced instead of a deterministic token alignment using MinED, the process can introduce instability during gradient updates. This randomness can lead to variations in the performance scores when comparing the EM and MinED methods on the BBH benchmark.",
+                    "impact": "Fluctuations in the measured performance metrics may occur, potentially causing inconsistent evaluation outcomes and obscuring the true benefits of the MinED approach over the EM method.",
+                    "possible_modifications": [
+                        "Remove or avoid random token dropping modifications; ensure the token alignment process follows a deterministic approach.",
+                        "Set fixed random seeds throughout the experimental pipeline to ensure that the token alignment (and any inherently random components) remains consistent across runs."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {}
+            },
+            "no_answer": "After a thorough search of the repository, I could not find specific scripts that directly answer the experiment question about comparing MinED (Minimum Edit Distance) and EM (Exact Matching) methods on the BBH benchmark. While the repository contains code for token alignment using editdistance in the FuseLLM project (specifically in /workspace/FuseLLM/src/utils/others.py and /workspace/FuseLLM/src/utils/vocab_mapping.py), there are no evaluation scripts that specifically compare these two alignment criteria on the BBH benchmark. The repository contains various evaluation scripts for other benchmarks, but none that directly address this specific experiment question."
+        },
+        {
+            "question": "For Fusion Function, does FUSELLM with MinCE outperfomrs AvgCE on benchmark BBH?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FUSELLM using MinCE outperforms AvgCE in terms of performance on the BBH benchmark.\n    - **Objective:** \n    Compare the effectiveness of two fusion functions, MinCE and AvgCE, within the FUSELLM framework to see which yields better results on BBH tasks.\n\n2. **Evaluation Metrics:**\n    - Overall accuracy on BBH over 27 tasks\n3. **Comparative Evaluation:**\n    - Model: FUSELLM\n        - Fusion Functions:\n            - MinCE\n            - AvgCE\n        - (1) MinCE: This function outputs the distribution matrix with the minimum cross-entropy score\n        - (2) AvgCE: This function produces a weighted average of the distribution matrices based on cross-entropy scores.\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n            - set combination weight \u03bb to 0.9",
+            "expected_outcome": "The findings demonstrate that FUSELLM with MinCE consistently outperforms AvgCE. This can be attributed to the distortions introduced by the straightforward weighted summation used in AvgCE, which may diminish the distinct advantages of individual LLMs.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "model_architecture": "FUSELLM as implemented in the paper with fixed hyperparameters (e.g., single training epoch, and \u03bb set to 0.9)"
+                    },
+                    "independent_variables": {
+                        "fusion_function": [
+                            "MinCE",
+                            "AvgCE"
+                        ],
+                        "benchmark": [
+                            "BBH"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metric": "Average Accuracy on benchmark BBH on total 27 tasks"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {}
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "FUSELLM training framework based on Huggingface Transformers",
+                        "FlashAttention acceleration",
+                        "AdamW optimizer with specific hyperparameters (\u03b21 = 0.9, \u03b22 = 0.95, weight decay 0.1, gradient clipping 1.0)",
+                        "Cosine learning rate schedule with warmup ratio (0.008) and maximum learning rate (1e-5)",
+                        "Training data handling using the packing strategy",
+                        "Fusion functions module for integrating knowledge from multiple LLMs (MinCE and AvgCE)",
+                        "Benchmark datasets (BBH for evaluation on general reasoning and others for additional evaluations)",
+                        "Predefined constant variables (fixed hyperparameters such as \u03bb = 0.9, single training epoch)",
+                        "Source LLMs integration (information from models like Llama-2, OpenLLaMA, and MPT)"
+                    ],
+                    "setup_steps": [
+                        "Set up the training framework with Huggingface Transformers and FlashAttention",
+                        "Configure the AdamW optimizer with the specified hyperparameters",
+                        "Apply the cosine learning rate schedule with the designated warmup ratio",
+                        "Implement data packing to group multiple training instances per sequence",
+                        "Initialize the model with constant settings (FUSELLM architecture, fixed \u03bb, single epoch, etc.)",
+                        "Integrate and align tokens from multiple source LLMs",
+                        "Implement fusion functions (MinCE and AvgCE) for combining probabilistic outputs from source LLMs",
+                        "Train FUSELLM on MiniPile",
+                        "Evaluate on BBH benchmarks to assess performance improvements"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Fusion Function Implementation Details",
+                            "description": "The paper references two fusion functions (MinCE and AvgCE) but does not fully specify the computation details; this integration of multiple LLMs\u2019 outputs increases complexity in implementation."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_setup_steps": [
+                        "Implementation of Packing: While the packing mechanism is mentioned, the specific instructions on how to implement this method for grouping training instances are not fully detailed."
+                    ],
+                    "possible_modifications": {}
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "Optionally, limit the granularity of the fusion-function implementation by abstracting the MinCE and AvgCE computations so that the experimenter must define these functions, thereby reducing reliance on detailed source code and potentially limiting resource usage for debugging."
+                        ],
+                        "time_constraints": [
+                            "Optionally, tighten the training schedule by reducing the allowed training duration to simulate a scenario with limited computational time."
+                        ],
+                        "money_constraints": [
+                            "Optionally, simulate a restricted budget scenario by mandating the use of less expensive compute resources, which may affect the choice of acceleration libraries or hardware, and could require efficiency adjustments in training."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochastic optimization and random token handling",
+                    "description": "Due to the inherent randomness in training (e.g., stochastic gradient descent with AdamW, random initialization, and potential random dropping of tokens if such modifications are applied), the performance of fusion functions may vary across runs. This randomness can introduce instability in gradient updates and fluctuations in BBH performance metrics.",
+                    "impact": "Results in variability of the measured performance (e.g., accuracy or BPB improvement on BBH), potentially making it difficult to ascertain whether MinCE truly outperforms AvgCE if some of the observed advantage is due to random noise.",
+                    "possible_modifications": [
+                        "Set deterministic seeds for initialization and training runs to minimize stochastic variability.",
+                        "Avoid introducing random token dropping during preprocessing that is not part of the intended design.",
+                        "Perform multiple independent training runs and average the results to mitigate random effects."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {}
+            },
+            "no_answer": "After thoroughly examining the repository, I couldn't find a specific script or set of scripts that directly answer the question about comparing FUSELLM with MinCE vs AvgCE on the BBH benchmark. While the repository contains implementations of fusion functions (distill_greater_as_gt for MinCE and distill_weighted_as_gt for AvgCE) in the FuseLLM/src/utils/trainer.py file, and mentions BBH evaluation in the README, there isn't a dedicated script that performs this specific comparison. The repository references external evaluation tools for BBH (https://github.com/allenai/open-instruct/tree/main/eval) rather than containing the evaluation code directly."
+        },
+        {
+            "mode": "A",
+            "question": "How can you use the FuseLLM-7B model to generate text completions?",
+            "method": "Load the FuseLLM-7B model using the Hugging Face Transformers library and generate text completions for a given input.",
+            "expected_outcome": "The model should successfully load and generate a coherent text completion for the provided input.",
+            "source": [
+                "/workspace/FuseLLM/README.md"
+            ],
+            "usage_instructions": "1. Import the necessary libraries from transformers (AutoTokenizer, AutoModelForCausalLM).\n2. Load the tokenizer for 'Wanfq/FuseLLM-7B' with use_fast=False.\n3. Load the model with torch_dtype='auto'.\n4. Move the model to CUDA.\n5. Tokenize the input text and move it to the model's device.\n6. Generate tokens with the specified parameters (max_new_tokens=512, temperature=0.6, top_p=0.9, do_sample=True).\n7. Decode the generated tokens and print the result.",
+            "requirements": [
+                "Step 1: Import the necessary libraries from transformers (AutoTokenizer, AutoModelForCausalLM) (/workspace/FuseLLM/README.md:135-135)",
+                "Step 2: Load the tokenizer for 'Wanfq/FuseLLM-7B' with use_fast=False (/workspace/FuseLLM/README.md:136-136)",
+                "Step 3: Load the model with torch_dtype='auto' (/workspace/FuseLLM/README.md:137-137)",
+                "Step 4: Move the model to CUDA device (/workspace/FuseLLM/README.md:138-138)",
+                "Step 5: Tokenize the input text and move it to the model's device (/workspace/FuseLLM/README.md:139-139)",
+                "Step 6: Generate tokens with the specified parameters (max_new_tokens=512, temperature=0.6, top_p=0.9, do_sample=True) (/workspace/FuseLLM/README.md:140-146)",
+                "Step 7: Decode the generated tokens and print the result (/workspace/FuseLLM/README.md:147-147)"
+            ],
+            "agent_instructions": "Your task is to create a script that demonstrates how to use the FuseLLM-7B model to generate text completions. FuseLLM-7B is a language model that combines the capabilities of three different foundation models (Llama-2-7B, OpenLLaMA-7B, and MPT-7B).\n\nFollow these steps to implement the text generation functionality:\n\n1. Import the required libraries from the Hugging Face Transformers package\n2. Load the FuseLLM-7B tokenizer with the appropriate settings\n3. Load the FuseLLM-7B model with the appropriate data type settings\n4. Move the model to the GPU for faster inference\n5. Create a function that takes an input text, tokenizes it, and generates a completion\n6. Set appropriate generation parameters (such as temperature, top_p, and maximum new tokens)\n7. Decode and return the generated text\n8. Include a simple example that demonstrates how to use the function with a sample input\n\nThe script should be able to run on a system with CUDA support and the Transformers library installed.",
+            "design_complexity": {
+                "constant_variables": {
+                    "llm_model": [
+                        "FuseLLM-7B"
+                    ],
+                    "library": [
+                        "Hugging Face Transformers"
+                    ],
+                    "device": [
+                        "CUDA"
+                    ]
+                },
+                "independent_variables": {
+                    "generation_parameters": [
+                        "max_new_tokens=512",
+                        "temperature=0.6",
+                        "top_p=0.9",
+                        "do_sample=True"
+                    ],
+                    "input_text": "any provided prompt; can be modified for extended tests"
+                },
+                "dependent_variables": {
+                    "generated_text": "the coherent text completion output",
+                    "loading_status": "successful model and tokenizer initialization"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mode": "The provided mode 'A' is not explained further; its effect or alternatives are unclear.",
+                    "expected_outcome": "The term 'coherent text completion' is subjective and not quantitatively defined."
+                },
+                "possible_modifications": {
+                    "modification_input_variation": [
+                        "Introduce multiple diverse input texts to examine performance variability."
+                    ],
+                    "modification_generation_parameters": [
+                        "Allow adjusting generation parameters (e.g., temperature, top_p) to study their impact on output quality."
+                    ],
+                    "modification_evaluation_criteria": [
+                        "Define quantitative metrics (such as perplexity or human evaluation scores) for assessing text coherence."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "FuseLLM-7B model (combining Llama-2-7B, OpenLLaMA-7B, and MPT-7B)",
+                    "Hugging Face Transformers library",
+                    "CUDA-enabled GPU environment",
+                    "Tokenization and text generation components"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries (AutoTokenizer, AutoModelForCausalLM) from the Hugging Face Transformers package",
+                    "Load the tokenizer for 'Wanfq/FuseLLM-7B' with use_fast set to False",
+                    "Load the FuseLLM-7B model with torch_dtype set to 'auto'",
+                    "Move the model to the CUDA device",
+                    "Tokenize the input text and transfer it to the device",
+                    "Generate tokens using parameters such as max_new_tokens=512, temperature=0.6, top_p=0.9, and do_sample=True",
+                    "Decode the generated tokens to obtain the text completion and print the result"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Fusion of multiple foundation models",
+                        "description": "Integrating multiple models (Llama-2, OpenLLaMA, and MPT) into FuseLLM-7B adds complexity in ensuring seamless fusion and coherent overall behavior."
+                    },
+                    {
+                        "source": "Tuning generation parameters",
+                        "description": "The impact of parameters such as temperature, top_p, and max_new_tokens on text quality introduces additional complexity in obtaining the desired outcome."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "mode parameter: The provided mode 'A' lacks further explanation on its role or alternatives.",
+                    "expected outcome: 'Coherent text completion' is a subjective description without a quantitative definition."
+                ],
+                "ambiguous_setup_steps": [
+                    "The exact versions and setup details for the Transformers library and CUDA environment are not specified.",
+                    "The instructions do not clarify how to handle variations in input text or adjust generation parameters dynamically."
+                ],
+                "possible_modifications": {
+                    "modification_input_variation": [
+                        "Introduce multiple diverse input texts to evaluate performance variations."
+                    ],
+                    "modification_generation_parameters": [
+                        "Allow adjustable generation parameters (e.g., temperature, top_p) to study their impact on output quality."
+                    ],
+                    "modification_evaluation_criteria": [
+                        "Define quantitative metrics (such as perplexity or human evaluation scores) to assess the coherence and quality of the generated text."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Tighten resource usage by restricting GPU memory or reducing the token budget, forcing the model to generate quality outputs under more constrained settings."
+                    ],
+                    "time_constraints": [
+                        "Impose a strict maximum inference time during text generation (e.g., shorter generation window) to evaluate performance under time-critical conditions."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Sampling-based generation and potential random token modifications",
+                "description": "The FuseLLM-7B text generation employs a do_sample=True strategy using parameters such as temperature, top_p, and a maximum token limit. This introduces inherent randomness in each generation, which can lead to variable outputs even for the same input. Moreover, if one were to modify the process by, for example, randomly dropping tokens during tokenization or generation (similar to techniques that drop unimportant tokens for cost savings), it would further inject random instability into gradient updates and output coherence.",
+                "impact": "Variability in generated text continuity and coherence, leading to inconsistencies in output quality and making performance comparisons more challenging across repeated runs.",
+                "possible_modifications": [
+                    "Vary the random seed in text generation to test consistency across runs.",
+                    "Introduce random token dropout during the generation process to simulate additional noise.",
+                    "Dynamically adjust generation parameters (e.g., temperature, top_p) to evaluate the impact of increased sampling randomness on output quality."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguities in experiment definitions and fusion of multiple source models",
+                "description": "FuseLLM-7B is built by fusing outputs from three foundation models (Llama-2-7B, OpenLLaMA-7B, and MPT-7B), which may each have their own systematic biases. Additionally, ambiguities in the experimental design\u2014such as the undefined role of the 'mode' parameter and the subjective nature of what constitutes a 'coherent text completion'\u2014can introduce systematic uncertainty. This may cause consistent deviations in performance if, for example, one source model's bias dominates the fused output.",
+                "impact": "A consistent bias or degradation in performance across different test cases, making it difficult to accurately evaluate the model's overall performance. Such systematic bias could skew the evaluation metrics and lead to misinterpretation of the model\u2019s abilities.",
+                "possible_modifications": [
+                    "Implement clear, quantitative metrics (e.g., perplexity or human evaluation scores) to define and measure 'coherent text completions'.",
+                    "Retrain or re-balance the fusion mechanism to mitigate the dominant influence of any one source model.",
+                    "Introduce systematic variations in the input dataset (e.g., diverse text sources) to identify and correct for any entrenched biases due to the fusion process."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you use the FuseChat-7B-v2.0 model for single-turn and multi-turn conversations?",
+            "method": "Load the FuseChat-7B-v2.0 model using the Transformers library and demonstrate how to format inputs for both single-turn and multi-turn conversations.",
+            "expected_outcome": "The model should correctly tokenize both single-turn and multi-turn conversation formats, producing the expected token IDs.",
+            "source": [
+                "/workspace/FuseChat/README.md"
+            ],
+            "usage_instructions": "1. Import the transformers library.\n2. Load the tokenizer for 'FuseAI/FuseChat-7B-v2.0'.\n3. Demonstrate single-turn conversation by tokenizing a string with the format 'GPT4 Correct User: Hello<|end_of_turn|>GPT4 Correct Assistant:'.\n4. Verify the token IDs match the expected output.\n5. Demonstrate multi-turn conversation by tokenizing a string with multiple turns.\n6. Verify the token IDs match the expected output.\n7. Show how to use the chat_template feature by creating a messages list with user and assistant roles.\n8. Apply the chat template with add_generation_prompt=True and verify the tokens match the expected output.",
+            "requirements": [
+                "Step 1: Import the transformers library (/workspace/FuseChat/README.md:99-99)",
+                "Step 2: Load the tokenizer for 'FuseAI/FuseChat-7B-v2.0' model (/workspace/FuseChat/README.md:100-100)",
+                "Step 3: Format and tokenize a single-turn conversation using the GPT4 template format (/workspace/FuseChat/README.md:101-103)",
+                "Step 4: Verify the token IDs match the expected output for single-turn conversation (/workspace/FuseChat/README.md:103-103)",
+                "Step 5: Format and tokenize a multi-turn conversation using the GPT4 template format (/workspace/FuseChat/README.md:104-106)",
+                "Step 6: Verify the token IDs match the expected output for multi-turn conversation (/workspace/FuseChat/README.md:106-106)",
+                "Step 7: Create a messages list with user and assistant roles for structured conversation formatting (/workspace/FuseChat/README.md:112-116)",
+                "Step 8: Apply the chat template with add_generation_prompt=True to format the conversation (/workspace/FuseChat/README.md:117-117)",
+                "Final Step: Verify the tokens match the expected output for the chat template approach (/workspace/FuseChat/README.md:118-118)"
+            ],
+            "agent_instructions": "Your task is to demonstrate how to use the FuseChat-7B-v2.0 model for both single-turn and multi-turn conversations. This model is a fusion of six prominent chat LLMs with diverse architectures and scales.\n\nFollow these steps:\n\n1. Import the necessary libraries from the transformers package.\n\n2. Load the tokenizer for the 'FuseAI/FuseChat-7B-v2.0' model from Hugging Face.\n\n3. Demonstrate how to format a single-turn conversation using the model's expected format. The format follows this pattern: 'GPT4 Correct User: [user_message]<|end_of_turn|>GPT4 Correct Assistant:'\n\n4. Show how to tokenize this single-turn conversation and print the resulting token IDs.\n\n5. Demonstrate how to format a multi-turn conversation where there are multiple exchanges between the user and assistant. Each turn should follow the same pattern with the <|end_of_turn|> separator.\n\n6. Show how to tokenize this multi-turn conversation and print the resulting token IDs.\n\n7. Demonstrate an alternative approach using the built-in chat_template feature:\n   - Create a structured messages list with alternating 'user' and 'assistant' roles\n   - Apply the chat template with add_generation_prompt=True\n   - Show the resulting tokens\n\n8. Verify that both approaches (manual formatting and using chat_template) produce the same token IDs for equivalent conversations.\n\nYour code should be well-commented to explain each step of the process.",
+            "design_complexity": {
+                "constant_variables": {
+                    "library": "transformers library required for loading and tokenizing the model",
+                    "model": "FuseChat-7B-v2.0 loaded from Hugging Face, including the necessary tokenizer",
+                    "template_format": "The fixed conversation template format, e.g., 'GPT4 Correct User: ...<|end_of_turn|>GPT4 Correct Assistant:'"
+                },
+                "independent_variables": {
+                    "conversation_format": [
+                        "single-turn",
+                        "multi-turn"
+                    ],
+                    "formatting_method": [
+                        "manual formatting (directly crafting the conversation string)",
+                        "chat_template approach (using structured messages list with add_generation_prompt=True)"
+                    ]
+                },
+                "dependent_variables": {
+                    "tokenization_output": "The token IDs produced from the tokenizer that should match the expected output"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mode": "The 'mode' set to 'A' is mentioned but its role in the experiment setup is not clearly defined.",
+                    "expected_outcome": "The expected token IDs are referenced but not explicitly detailed, leading to ambiguity about correctness criteria."
+                },
+                "possible_modifications": {
+                    "mask_expected_output": [
+                        "Hide the explicit expected token IDs to require the agent to verify tokenization consistency rather than matching a predefined list."
+                    ],
+                    "introduce_new_variables": [
+                        "Add a variable for conversation context length or complexity to extend the experiment design.",
+                        "Include additional formatting options (e.g., alternative separator tokens) as new variable values for extended tasks."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Transformers library for loading and tokenizing the model",
+                    "FuseChat-7B-v2.0 model (and associated tokenizer) from Hugging Face",
+                    "Manual conversation formatting component using a fixed GPT4 conversation template",
+                    "Chat template feature for structured conversations with roles and the add_generation_prompt option",
+                    "Token verification component to check the produced token IDs against expected outputs"
+                ],
+                "setup_steps": [
+                    "Import the transformers library",
+                    "Load the tokenizer for 'FuseAI/FuseChat-7B-v2.0'",
+                    "Format a single-turn conversation string using the defined pattern 'GPT4 Correct User: ...<|end_of_turn|>GPT4 Correct Assistant:'",
+                    "Tokenize the single-turn conversation and print/verify token IDs",
+                    "Format a multi-turn conversation string with multiple exchanges using the same template format",
+                    "Tokenize the multi-turn conversation and print/verify token IDs",
+                    "Create a structured messages list with alternating 'user' and 'assistant' roles",
+                    "Apply the chat_template feature with add_generation_prompt=True",
+                    "Verify that the token IDs from the chat template approach match those from manual formatting"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Usage Instructions and README Mapping",
+                        "description": "The detailed steps referenced in /workspace/FuseChat/README.md introduce complexity by coupling code examples with expected output checks without providing the explicit expected token IDs."
+                    },
+                    {
+                        "source": "Design Variables",
+                        "description": "The experiment design includes constant (e.g., model and library), independent (conversation format and formatting method), and dependent variables (tokenization output), adding layers of complexity in analyzing different conversation modalities."
+                    },
+                    {
+                        "source": "Fusion of Multiple LLMs",
+                        "description": "FuseChat-7B-v2.0 being a fusion of six prominent chat LLMs introduces an underlying complexity in model behavior and tokenization consistency."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "The 'mode' variable set to 'A' is mentioned but its specific role in the experiment setup is not clearly defined.",
+                    "The 'expected_outcome' field refers to token IDs matching expected output without explicitly detailing what these expected token IDs are."
+                ],
+                "ambiguous_setup_steps": [
+                    "The verification steps for token IDs (both for single-turn and multi-turn conversations) lack explicit expected values, making it unclear how correctness should be determined.",
+                    "The instructions for using the chat_template feature and comparing outputs assume consistency between methods without detailed guidance on handling discrepancies."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Remove explicit expected token IDs, requiring the agent to validate tokenization consistency rather than matching a predefined list."
+                    ],
+                    "introduce_new_variables": [
+                        "Add a variable for conversation context complexity or length to further test tokenization handling.",
+                        "Include alternative formatting options (such as different separator tokens) to extend the range of conversation formats."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "One possible modification for extended tasks is to tighten resource usage by requiring a demonstration using a smaller variant of the model (e.g., FuseChat-7B-v2.0-mini) while still matching the tokenization consistency of the original setup."
+                    ],
+                    "time_constraints": [
+                        "Alternatively, the experiment could be modified to enforce a stricter time limit for the tokenization demonstration, ensuring that both single-turn and multi-turn conversation processing complete within a reduced time window."
+                    ],
+                    "money_constraints": [
+                        "Another modification might involve simulating a cost constraint scenario, such as reducing batch sizes or limiting compute API calls, to reflect a reduced monetary budget while maintaining correct tokenization output."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic behavior in tokenization and pre-processing",
+                "description": "Random uncertainty may arise from any inadvertent introduction of randomness in the tokenization process. For instance, if the code accidentally drops tokens or shuffles parts of the input string before tokenization (similar to random token dropping in other pre-training setups), the token IDs for the same input might vary across runs. This can affect the consistency of outcomes for both single-turn and multi-turn conversation formatting.",
+                "impact": "Such variability could lead to instability in gradient updates during training (if involved) and inconsistent prediction outputs, making it difficult to verify that the manual formatting and chat_template approaches produce the same token IDs.",
+                "possible_modifications": [
+                    "Remove any random token dropping or shuffling mechanisms to ensure deterministic behavior in tokenization.",
+                    "Set fixed seeds in the tokenization process to mitigate any stochastic variations.",
+                    "Implement a strict pre-processing pipeline where the input text is standardized before tokenization."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent bias in conversation formatting",
+                "description": "Systematic uncertainty can occur if there is a one-time, non-random modification or error in the conversation formatting template. For example, if the fixed template 'GPT4 Correct User: ...<|end_of_turn|>GPT4 Correct Assistant:' is altered (such as by misplacing the separator or adding extra spaces) in either the manual formatting or the chat_template approach, then all tokenization outputs will be consistently biased. This is similar to introducing a systematic bias in the dataset used for training a model, leading to reproducible yet incorrect outputs.",
+                "impact": "The bias would lead to a consistent mismatch between the produced token IDs and the expected output, undermining the purpose of verifying consistency between different formatting methods.",
+                "possible_modifications": [
+                    "Review and validate the formatting template to ensure there are no inadvertent alterations in the input string.",
+                    "Retrieve a clean and verified version of the conversation template (or dataset) to avoid consistent formatting errors.",
+                    "Introduce periodic comparisons between the manual formatting and chat_template outputs to catch systematic discrepancies early."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you use the FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model to solve a mathematical reasoning problem?",
+            "method": "Load the FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model using VLLM and generate a step-by-step solution for a mathematical problem.",
+            "expected_outcome": "The model should provide a detailed step-by-step solution to the quadratic polynomial problem, with the final answer enclosed in \\boxed{}.",
+            "source": [
+                "/workspace/FuseO1-Preview/README.md"
+            ],
+            "usage_instructions": "1. Import the necessary libraries from vllm (LLM, SamplingParams).\n2. Initialize the LLM with the model 'FuseAI/FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview' and tensor_parallel_size=8.\n3. Set up sampling parameters with max_tokens=32768, temperature=0.7, and appropriate stop tokens.\n4. Create a conversation list with a system message instructing to reason step by step and put the final answer in \\boxed{}.\n5. Add a user message containing the quadratic polynomial problem.\n6. Call the chat method on the LLM with the conversation and sampling parameters.\n7. Print the model's response.",
+            "requirements": [
+                "Step 1: Import the necessary libraries from vllm (LLM and SamplingParams) (/workspace/FuseO1-Preview/README.md:82-82)",
+                "Step 2: Initialize the LLM with the FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model and set tensor_parallel_size=8 (/workspace/FuseO1-Preview/README.md:84-84)",
+                "Step 3: Configure sampling parameters with max_tokens=32768, temperature=0.7, and appropriate stop tokens (/workspace/FuseO1-Preview/README.md:85-85)",
+                "Step 4: Create a conversation list with a system message instructing the model to reason step by step and put the final answer in \\boxed{} (/workspace/FuseO1-Preview/README.md:87-91)",
+                "Step 5: Add a user message containing the quadratic polynomial problem (/workspace/FuseO1-Preview/README.md:90-90)",
+                "Step 6: Call the chat method on the LLM with the conversation and sampling parameters (/workspace/FuseO1-Preview/README.md:94-94)",
+                "Step 7: Process and print the model's response (/workspace/FuseO1-Preview/README.md:96-97)"
+            ],
+            "agent_instructions": "Create a Python script that uses the FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model to solve a mathematical reasoning problem. The script should:\n\n1. Use the vllm library to load and interact with the model\n2. Initialize the model with appropriate parallel processing settings\n3. Configure the model to generate detailed responses with sufficient token length\n4. Set up a conversation that includes:\n   - A system message instructing the model to provide step-by-step reasoning and present the final answer in a boxed format\n   - A user message containing a challenging quadratic polynomial problem\n5. Generate and display the model's response\n\nThe goal is to demonstrate the model's mathematical reasoning capabilities by having it solve a complex problem with detailed step-by-step explanations, ultimately providing a boxed final answer.",
+            "design_complexity": {
+                "constant_variables": {
+                    "model": "FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview (this exact model is always used)",
+                    "library": "vllm (the experiment always uses vllm to load and interact with the model)",
+                    "tensor_parallel_size": [
+                        "8 (as specified, always set to 8)"
+                    ],
+                    "usage_instructions": "A fixed sequence of steps (import libraries, initialize model, configure sampling, build conversation, call chat, and print response)"
+                },
+                "independent_variables": {
+                    "sampling_parameters": [
+                        "max_tokens=32768",
+                        "temperature=0.7",
+                        "stop tokens (unspecified details)"
+                    ],
+                    "conversation_content": [
+                        "A system message instructing step-by-step reasoning with final answer enclosed in \\boxed{}",
+                        "A user message containing a quadratic polynomial problem"
+                    ],
+                    "problem_type": [
+                        "Quadratic polynomial problem (currently fixed, but this variable could be expanded to other mathematical reasoning problems)"
+                    ],
+                    "mode": [
+                        "A (as provided, though its exact interpretation is open for extension)"
+                    ]
+                },
+                "dependent_variables": {
+                    "model_output": [
+                        "The detailed step-by-step solution generated by the model, including the final answer presented inside \\boxed{}"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mode": "It is not clear what the different modes (beyond 'A') might represent, or how they should affect the experiment.",
+                    "stop tokens": "The term 'appropriate stop tokens' is used without a clear, explicit definition.",
+                    "sampling_parameters": "While specific parameters are provided, there is ambiguity regarding whether these are the only parameters to consider in every context or if additional settings might need to be tuned for different tasks."
+                },
+                "possible_modifications": {
+                    "modification_stop_tokens": [
+                        "Explicitly define the stop tokens instead of using the phrase 'appropriate stop tokens'."
+                    ],
+                    "modification_problem_type": [
+                        "Include additional mathematical problem types (e.g., systems of equations, calculus problems) to test the model's flexibility in reasoning."
+                    ],
+                    "modification_mode": [
+                        "Clarify or extend the 'mode' variable to support varied experimental setups beyond the given value 'A'."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "vllm library (for model loading and interaction)",
+                    "FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model",
+                    "Tensor parallel configuration (tensor_parallel_size = 8)",
+                    "Sampling parameters configuration (max_tokens=32768, temperature=0.7, stop tokens)",
+                    "Conversation construction (system message for step-by-step reasoning and user message with the quadratic problem)",
+                    "Chat method invocation (for generating model response)"
+                ],
+                "setup_steps": [
+                    "Step 1: Import the necessary libraries from vllm (LLM and SamplingParams)",
+                    "Step 2: Initialize the LLM with the FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model and set tensor_parallel_size=8",
+                    "Step 3: Configure sampling parameters with max_tokens=32768, temperature=0.7, and appropriate stop tokens",
+                    "Step 4: Create a conversation list with a system message that instructs the model to provide step-by-step reasoning and enclose the final answer in \\boxed{} and a user message with the quadratic polynomial problem",
+                    "Step 5: Call the chat method on the LLM with the conversation and sampling parameters",
+                    "Step 6: Process and print the model's response"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Model configuration",
+                        "description": "The experiment requires using a specific model with fixed parameters and tensor parallel settings, which introduces a dependency on specific hardware and software configurations."
+                    },
+                    {
+                        "source": "Sampling parameters",
+                        "description": "The configuration of sampling parameters such as max_tokens, temperature, and especially the vague definition of 'appropriate stop tokens' add complexity to ensuring consistent behavior across different runs."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Mode ('A')",
+                    "Stop tokens (the term 'appropriate stop tokens' is not explicitly defined)"
+                ],
+                "ambiguous_setup_steps": [
+                    "The instruction for configuring stop tokens is ambiguous since it does not specify an exact set of tokens to use.",
+                    "The role and impact of the 'mode' variable is unclear, particularly if different modes might alter the experiment setup beyond the provided descriptor 'A'."
+                ],
+                "possible_modifications": {
+                    "modification_stop_tokens": [
+                        "Explicitly define the stop tokens to eliminate ambiguity in how the conversation should be terminated."
+                    ],
+                    "modification_mode": [
+                        "Clarify or extend the description of the 'mode' variable to support variations in experimental configurations."
+                    ],
+                    "modification_sampling_parameters": [
+                        "Detail whether any additional sampling parameters should be tuned for different types of mathematical reasoning tasks."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "If hardware or memory availability becomes limited, one possible modification is to reduce the tensor_parallel_size (e.g., using a value smaller than 8) or switch to a scaled\u2010down variant of the FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model while ensuring comparable performance."
+                    ],
+                    "time_constraints": [
+                        "Should there be a need to shorten response generation time, one could enforce a stricter token budget (e.g., reducing max_tokens from 32768) to simulate tighter time constraints on the system\u2019s ability to provide detailed step-by-step solutions."
+                    ],
+                    "money_constraints": [
+                        "In scenarios where licensing or computational costs are a concern, a modification could be to substitute the current model with a more cost-effective, open\u2010source alternative, or to optimize resource usage further by adjusting sampling parameters, all while trying to maintain performance."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in token sampling and generation process",
+                "description": "The use of a temperature of 0.7 and the ambiguous definition of 'appropriate stop tokens' can introduce randomness in the model's token generation. This variability may lead to differences in step-by-step reasoning and potential instability in the final output formatting. Additionally, any unintentional random drops (e.g., dropping tokens) can further increase unpredictability.",
+                "impact": "Random fluctuations may result in inconsistent problem-solving trajectories, varied levels of detail in step-by-step explanations, and even premature termination or mis-formatting of the boxed final answer across runs.",
+                "possible_modifications": [
+                    "Explicitly define the stop tokens to reduce random termination points.",
+                    "Control and possibly lower the temperature parameter in controlled experiments to reduce sampling variability.",
+                    "Perform multiple runs and average or select the most consistent output to mitigate randomness in token generation."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguity in experimental setup parameters and fixed model configuration",
+                "description": "Systematic uncertainties arise from the fixed design choices such as always using tensor_parallel_size=8 and the specific FuseO1-DeepSeekR1-QwQ-SkyT1-32B-Preview model. Moreover, the ambiguous term 'appropriate stop tokens' and the unclear role of 'mode' throughout the experimental instructions may introduce a consistent bias in the model's performance. Such biases can affect the overall quality and correctness of the generated reasoning and final answer.",
+                "impact": "The systematic biases might lead the model to consistently produce similar types of reasoning errors or formatting deviations (e.g., not placing the final answer inside \\boxed{}), thereby affecting the validity of performance comparisons when extending the task to other mathematical problems.",
+                "possible_modifications": [
+                    "Clarify and explicitly define the stop tokens and the operational meaning of the 'mode' variable.",
+                    "Test different configurations (e.g., varying tensor_parallel_size or alternative models) to assess and mitigate systematic bias.",
+                    "Expand the range of mathematical problem types to evaluate if the systematic uncertainty persists across diverse scenarios."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you evaluate a language model on the MT-Bench benchmark using VLLM?",
+            "method": "Use the MT-Bench evaluation script to generate answers from a language model using VLLM and evaluate its performance.",
+            "expected_outcome": "The script should successfully generate model answers for the MT-Bench questions and save them to a JSON file for later evaluation.",
+            "source": [
+                "/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py",
+                "/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/generate_vllm.sh"
+            ],
+            "usage_instructions": "1. Set the VLLM_WORKER_MULTIPROC_METHOD environment variable to 'spawn'.\n2. Specify the model directory, model name, total number of GPUs, and GPUs per model.\n3. Run the gen_model_answer_vllm.py script with the appropriate parameters.\n4. The script will load the questions from the question file.\n5. For each question, it will generate responses using the specified model.\n6. The script handles both single-turn and multi-turn conversations by applying the appropriate chat template.\n7. The generated answers are saved to a JSON file in the specified output directory.\n8. The answers are organized by question ID for later evaluation.",
+            "requirements": [
+                "Step 1: Set up the environment by configuring the VLLM worker multiprocessing method to 'spawn' (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/generate_vllm.sh:1)",
+                "Step 2: Parse command line arguments including model path, number of GPUs, and output file path (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:153-215)",
+                "Step 3: Initialize Ray for distributed processing if using multiple GPUs (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:218-221)",
+                "Step 4: Load benchmark questions from the question file (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:33)",
+                "Step 5: Initialize the VLLM model with appropriate tensor parallelism based on available GPUs (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:72-77)",
+                "Step 6: Get the model's tokenizer and determine if special token handling is needed (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:78-87)",
+                "Step 7: For each question, determine the appropriate temperature based on the question category (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:92-100)",
+                "Step 8: Set up sampling parameters for text generation (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:102-105)",
+                "Step 9: Generate responses for each turn in the conversation using the model's chat template (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:110-122)",
+                "Step 10: Save the generated answers to a JSON file with appropriate metadata (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:127-136)",
+                "Step 11: Reorganize the answer file to sort by question ID and remove duplicates (/workspace/FuseChat-3.0/FuseEval/IF-Eval/MT-Bench/gen_model_answer_vllm.py:139-150)"
+            ],
+            "agent_instructions": "Your task is to create a script that evaluates a language model on the MT-Bench benchmark using VLLM. The script should do the following:\n\n1. Create a Python script that uses VLLM to generate answers for MT-Bench benchmark questions.\n\n2. The script should:\n   - Accept command line arguments for model path, output file path, and GPU configuration\n   - Load questions from a JSONL file containing benchmark questions\n   - Initialize a VLLM model with appropriate GPU parallelism settings\n   - Generate responses for each question using the model\n   - Handle both single-turn and multi-turn conversations by applying the appropriate chat template\n   - Apply different temperature settings based on question categories (e.g., lower temperature for math/reasoning, higher for creative tasks)\n   - Save the generated answers to a JSONL file with appropriate metadata including question ID, model ID, and timestamp\n   - Organize the answers by question ID for later evaluation\n\n3. Create a shell script wrapper that:\n   - Sets the VLLM worker multiprocessing method to 'spawn'\n   - Takes model directory, model name, total number of GPUs, and GPUs per model as arguments\n   - Calls the Python script with the appropriate parameters\n\nThe MT-Bench questions are stored in a JSONL file where each question has an ID, category, and one or more conversation turns. The script should generate responses for all turns and save them in a format suitable for later evaluation.",
+            "design_complexity": {
+                "constant_variables": {
+                    "benchmark": [
+                        "MT-Bench"
+                    ],
+                    "VLLM_WORKER_MULTIPROC_METHOD": [
+                        "spawn"
+                    ],
+                    "evaluation_script_structure": "The overall evaluation process that loads questions, initializes the model with VLLM, generates responses, and saves them in JSON format"
+                },
+                "independent_variables": {
+                    "model_configuration": [
+                        "model directory",
+                        "model name",
+                        "model path",
+                        "total number of GPUs",
+                        "GPUs per model"
+                    ],
+                    "input_file": [
+                        "Path to the JSONL file with MT-Bench questions"
+                    ],
+                    "temperature_setting": [
+                        "Temperature values adjusted based on question category (e.g., lower for math/reasoning, higher for creative tasks)"
+                    ]
+                },
+                "dependent_variables": {
+                    "generated_output": [
+                        "The JSON file containing the generated answers organized by question ID",
+                        "Metadata such as question ID, model ID, and timestamp used for later evaluation"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "mode": "The task includes a field 'mode': 'A' but does not explain its significance or how it affects the evaluation process",
+                    "temperature_setting": "The mapping of question categories to temperature values is mentioned but not explicitly detailed or fixed",
+                    "GPU_configuration": "While GPU-related parameters are provided, the acceptable ranges or constraints for total GPUs and GPUs per model are not explicitly defined"
+                },
+                "possible_modifications": {
+                    "mask_mode_variable": [
+                        "Hide or modify the 'mode' from the task description to see if the agent recognizes implicit evaluation settings"
+                    ],
+                    "expand_temperature_options": [
+                        "Introduce additional temperature values or more granular mappings for different question categories"
+                    ],
+                    "refine_GPU_parameters": [
+                        "Explicitly list possible GPU configurations (e.g., [1, 2, 4, 8]) to remove ambiguity regarding acceptable values"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Python evaluation script (gen_model_answer_vllm.py)",
+                    "Shell script wrapper (generate_vllm.sh)",
+                    "VLLM framework for model inference",
+                    "Ray for distributed processing",
+                    "Environment variable configuration (VLLM_WORKER_MULTIPROC_METHOD)",
+                    "JSONL file containing MT-Bench questions",
+                    "Model configuration parameters (model directory, model name, GPU parameters)"
+                ],
+                "setup_steps": [
+                    "Set the VLLM_WORKER_MULTIPROC_METHOD environment variable to 'spawn' in the shell script",
+                    "Pass command line arguments including the model directory, model name, total number of GPUs, and GPUs per model",
+                    "Parse and validate command line arguments in the Python script",
+                    "Initialize Ray for managing distributed processing if multiple GPUs are used",
+                    "Load the benchmark questions from the JSONL file",
+                    "Initialize the VLLM model with tensor parallelism based on available GPUs",
+                    "Obtain and configure the model's tokenizer, including any special token handling",
+                    "Determine the temperature settings based on the question category for each MT-Bench question",
+                    "Set up text generation sampling parameters",
+                    "Generate responses for each question using the appropriate chat template (both single-turn and multi-turn)",
+                    "Save the generated answers with metadata (including question ID, model ID, timestamp) into a JSON file",
+                    "Reorganize the output file by sorting answers by question ID and removing duplicates"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "GPU Configuration and Parallelism",
+                        "description": "The integration of multiple GPUs and setting up proper tensor parallelism, as well as initiating distributed processing with Ray, adds additional complexity."
+                    },
+                    {
+                        "source": "Handling Different Conversation Types",
+                        "description": "Supporting both single-turn and multi-turn conversations in the evaluation script, with different chat templates, increases the complexity."
+                    },
+                    {
+                        "source": "Dynamic Temperature Settings",
+                        "description": "Adjusting temperature values based on the question category introduces further complexity in determining optimal generation parameters."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Mode variable ('mode': 'A'): The significance of the mode and its impact on the evaluation process is not clearly explained.",
+                    "Temperature setting mapping: Although different temperature settings are mentioned for various question categories, the exact mapping or range values are not explicitly defined.",
+                    "GPU configuration: The acceptable values or constraints for 'total number of GPUs' and 'GPUs per model' are not clearly specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Initialization of Ray for distributed processing: The instructions indicate that Ray should be used if multiple GPUs are available, but the conditions or configurations for its initialization are not detailed.",
+                    "Handling special tokenization: The step to determine if special token handling is required is mentioned without sufficient details on how to adjust for different models.",
+                    "Reorganization of the answer file: The process of sorting by question ID and removing duplicates is described, but the criteria for de-duplication are not explicitly provided."
+                ],
+                "possible_modifications": {
+                    "mask_mode_variable": [
+                        "Hide or remove the 'mode' variable from the task description to see if the agent can infer implicit evaluation settings."
+                    ],
+                    "expand_temperature_options": [
+                        "Provide explicit temperature mapping values for each question category to reduce ambiguity in generating responses."
+                    ],
+                    "refine_GPU_parameters": [
+                        "List acceptable GPU configurations (e.g., available counts such as 1, 2, 4, 8) to clearly define the constraints and accepted ranges."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Refine the GPU configuration by explicitly listing accepted configurations (e.g., 1, 2, 4, or 8 GPUs) to reduce ambiguity and simulate limited hardware availability."
+                    ],
+                    "time_constraints": [
+                        "Tighten the allowed setup and execution time by imposing a strict initialization window for distributed processing (e.g., with Ray) to highlight efficiency differences."
+                    ],
+                    "money_constraints": [
+                        "Impose cost-related limits by requiring the evaluation to be performed on a smaller-scale instance (e.g., using a single GPU setup) to mimic budget constraints for hardware usage."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic sampling and distributed processing variability",
+                "description": "Random uncertainty arises from the stochastic nature of text generation in VLLM. The use of temperature-based sampling for adjusting responses based on question categories, along with asynchronous behaviors in distributed processing using Ray and the 'spawn' multiprocessing method, can lead to variations in generated answers between different runs. Inconsistencies such as slight fluctuations in model outputs or timing differences in handling multi-turn conversations contribute further to this variability.",
+                "impact": "These random fluctuations can cause inconsistent evaluation results, making it challenging to precisely replicate performance outcomes and compare models under identical conditions.",
+                "possible_modifications": [
+                    "Set fixed random seeds in the VLLM model and sampling functions to reduce variability in output.",
+                    "Standardize temperature settings across evaluation runs or remove random temperature adjustments for more deterministic outputs.",
+                    "Implement synchronization mechanisms in distributed processing (e.g., coordinated initialization with Ray) to minimize timing and asynchronous processing variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguities in experimental parameter settings and configuration choices",
+                "description": "Systematic uncertainty may be introduced by ambiguities in the experiment setup such as the unclear significance of the 'mode' variable, the non-explicit mapping of question categories to temperature values, and undefined constraints in GPU configuration parameters. Such factors can bias the evaluation process in a consistent manner, leading to reproducible deviations in performance measurements.",
+                "impact": "These ambiguities can cause systematic biases in the generated outputs and the evaluation results, potentially skewing the performance metrics and undermining the reliability of the comparison between models.",
+                "possible_modifications": [
+                    "Clarify the role and impact of the 'mode' variable or remove it if not needed to ensure implicit evaluation settings are correctly interpreted.",
+                    "Define a clear and explicit mapping of temperature settings for each question category to maintain consistency across evaluations.",
+                    "Specify and standardize acceptable GPU configurations (e.g., total number of GPUs and GPUs per model) to remove configuration-induced biases."
+                ]
+            }
+        }
+    ]
+}
