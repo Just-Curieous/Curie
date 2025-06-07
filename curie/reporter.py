@@ -94,9 +94,10 @@ def process_plan(plan_data):
         banned_keywords = ['Warning:', '\x00']
         
         if workspace_dir != '' and os.path.exists(workspace_dir):
-            workspace_dir = plan["workspace_dir"]
-            log_files = [file for file in os.listdir(workspace_dir) if file.endswith('.txt')]
-            log_files += [file for file in os.listdir(workspace_dir) if file.endswith('.log')]
+            workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
+            for workspace_dir in workspace_dir_list:
+                log_files = [file for file in os.listdir(workspace_dir) if file.endswith('.txt')]
+                log_files += [file for file in os.listdir(workspace_dir) if file.endswith('.log')]
             
             for file in log_files:
                 with open(f"{workspace_dir}/{file}", 'r') as f:
