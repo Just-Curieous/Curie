@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="curie-ai",  
-    version="0.1.5",
+    version="0.1.6",
     packages=find_packages(),
     install_requires=[
         # List your dependencies here
@@ -14,7 +14,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'curie=curie.experiment:experiment',  
+            'curie=curie.experiment:experiment',
+            'curie-report=curie.generate_report:main',  # New entry point for report generation
         ],
     },
     author="Jiachen Liu",

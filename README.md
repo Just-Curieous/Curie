@@ -54,8 +54,9 @@ pip install curie-ai
 
 
 ## ⚡ Quick Start
-*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
+- *It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
 
+- *Do not use Jupyter Notebook.*
 
 ### (Simple) Example 1: You Have a Single Question that Needs to be Verified.
 
