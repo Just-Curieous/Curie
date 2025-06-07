@@ -1,0 +1,769 @@
+{
+  "questions": [
+    {
+      "question": "- **Will BAdam reduce the wall-clock running time for the backward pass compared to baseline methods (LOMO and LoRA) when finetuning the Llama 3-8B model?**\n\n\n- **Will BAdam reduce the wall-clock running time for the backward pass compared to baseline methods (LOMO and LoRA) when finetuning the Llama 3-8B model?**",
+      "method": "Using the Alpaca-GPT4 dataset, finetune the Llama 3-8B model on a single RTX3090-24GB GPU. Configure the experiment to run for 3 epochs with a batch size of 2 as described in the subsection. Record the wall-clock time separately for the forward pass, backward pass (which includes re-forward passes due to gradient checkpointing), and update phases. Compare the averaged backward times as shown in Table 3 for BAdam, LOMO, and LoRA. This experiment should be repeated to capture variability and confirm the consistent observation that BAdam\u2019s backward pass is nearly half as long as that of LOMO and LoRA.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "Based on the reported results, BAdam is expected to show a significantly reduced backward pass time (approximately 1.74 hours per epoch) compared to LOMO (3.70 hours) and LoRA (3.20 hours), confirming the efficiency improvements discussed in Section 2.2.2.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does the backward computation scheme (computing gradients for all modules versus only selected modules) affect the backward pass time in a predictable manner?**\n\n\n- **Does the backward computation scheme (computing gradients for all modules versus only selected modules) affect the backward pass time in a predictable manner?**",
+      "method": "Design a controlled experiment using the finetuning setup on the Llama 3-8B model with batch size 2 on a single RTX3090. Implement three backward schemes: (a) compute gradients for all modules (D unit-backward-pass), (b) compute gradients only for the input module, and (c) compute gradients only for the output module. For each scheme, perform 100 backward passes and measure the average time taken per backward pass as done in Table 4. Compare the measured times to determine the computational overhead of each scheme.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "The measurements should show that the 'Output module only' scheme is almost time free, the 'Input module only' scheme is faster than computing for all modules, and the 'All modules' scheme takes significantly longer due to the additional gradient calculations. This will verify the trade-off between computational cost and the gradient information captured.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does BAdam achieve a competitive memory consumption profile compared to Adam and baseline methods (LOMO and LoRA) when finetuning the Llama 3-8B model?**\n\n\n- **Does BAdam achieve a competitive memory consumption profile compared to Adam and baseline methods (LOMO and LoRA) when finetuning the Llama 3-8B model?**",
+      "method": "Set up the finetuning experiment for the Llama 3-8B model on the Alpaca-GPT4 dataset with a single RTX3090-24GB GPU. Measure the actual memory consumption during training for each method (Adam, LOMO, LoRA, BAdam) with the same model parameter storage, gradient storage, and optimizer states configurations as outlined in Table 2. Pay particular attention to the memory used for gradients and optimizer states. Compare the measurements to analyze how BAdam's memory consumption compares with both high-memory methods (like Adam) and optimized approaches (LOMO and LoRA with low-rank adapters).\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "It is expected that BAdam will consume significantly less memory for gradient and optimizer states compared to Adam, similar to LOMO and LoRA, thereby confirming that it can efficiently finetune the Llama 3-8B model on a single GPU despite the extra buffers and allocation overhead.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Will BAdam exhibit lower training loss and faster convergence compared to LoRA when using an initial learning rate of 1e-5 during finetuning of the Llama 3-8B model on the Alpaca-GPT4 dataset?**\n\n\n- **Will BAdam exhibit lower training loss and faster convergence compared to LoRA when using an initial learning rate of 1e-5 during finetuning of the Llama 3-8B model on the Alpaca-GPT4 dataset?**",
+      "method": "Replicate the finetuning experimental setup as specified in the paper (same as the lower block of Table 5) using the Llama 3-8B model and the Alpaca-GPT4 dataset. Set up two conditions: one using BAdam with an initial learning rate of 1e-5 and the other using LoRA with the same learning rate. Run both experiments concurrently on the same hardware (e.g., a single RTX3090-24GB GPU) ensuring all other hyperparameters (batch size, iterations, etc.) remain constant. Record the online training loss over a predefined number of iterations (e.g., up to 10,000 iterations as depicted in Figure 2). Plot the loss curves for both methods and statistically compare their convergence behavior and final training loss values across multiple runs to account for variability.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "Based on the results shown in the left panel of Figure 2, BAdam should demonstrate superior convergence with a lower training loss compared to LoRA when using an initial learning rate of 1e-5.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does BAdam produce a learning perturbation with a heavy-tailed singular value distribution and an effective rank comparable to that of Adam across various transformer modules during finetuning?**\n\n\n- **Does BAdam produce a learning perturbation with a heavy-tailed singular value distribution and an effective rank comparable to that of Adam across various transformer modules during finetuning?**",
+      "method": "Using the same finetuning experiment on the Llama 3-8B model with the Alpaca-GPT4 dataset, extract the learned perturbation matrices (i.e., the difference between the finetuned weight matrix and the pretrained base weights) for each module, especially the 25th layer\u2019s up-projection matrix. Compute the cumulative explained variance (cvar) of the singular values for the up-projection matrix to assess the singular value distribution. In parallel, evaluate the effective rank (defined as the minimum number of singular values required to capture 90% of the variance) of the perturbations across different modules (q_proj, k_proj, v_proj, gate_proj, down_proj, up_proj) for both BAdam and baseline Adam. Compare the effective rank profiles and the tail behavior of the singular values between the two optimizers over multiple runs to verify statistical consistency.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "The analysis is expected to confirm that BAdam\u2019s learned perturbation has a heavy-tailed singular value distribution and achieves an effective rank similar to that of Adam, thereby supporting its robust optimization capability as reported in the right panels of Figure 2.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Will the proposed BAdam method consistently produce higher MT-bench scores than other baseline methods such as LoRA, Galore, and Adam when finetuning Llama 2-7B and Llama 3-8B models under different learning rate settings?**\n\n\n- **Will the proposed BAdam method consistently produce higher MT-bench scores than other baseline methods such as LoRA, Galore, and Adam when finetuning Llama 2-7B and Llama 3-8B models under different learning rate settings?**",
+      "method": "Using the instruction-tuning setup described in Section 3.3, finetune the Llama 2-7B and Llama 3-8B models on the Alpaca-GPT4 dataset for 3 epochs. Use two initial learning rates (1e-5 and 1e-6) with a cosine scheduler for all methods. Evaluate the finetuned models by computing the MT-bench scores at each epoch. Compare the average scores of BAdam against those obtained from Adam, LOMO, LoRA, and Galore. Ensure that the same dataset splits, model architectures, and hyperparameter configurations (as provided in Appendix B.2) are used across all experiments to isolate the effect of the optimization method.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "Based on the reported results, it is expected that BAdam will outperform LoRA and Galore, and be competitive with Adam, especially showing an improvement of approximately 0.42 points over LoRA for Llama 2-7B with a 1e-5 learning rate and around 0.38 points for Llama 3-8B with a 1e-6 learning rate.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does the use of block coordinate descent (BCD) in the BCD variants (BAdam and BSGD) preserve the general knowledge of the pretrained models better than their full counterparts (Adam and SGD), as measured by downstream MT-bench performance?**\n\n\n- **Does the use of block coordinate descent (BCD) in the BCD variants (BAdam and BSGD) preserve the general knowledge of the pretrained models better than their full counterparts (Adam and SGD), as measured by downstream MT-bench performance?**",
+      "method": "Perform an ablation study using the finetuning setup on the Alpaca-GPT4 dataset for the Llama 3-8B model. Implement both BCD variants (BAdam and BSGD) and their full-update counterparts (Adam and SGD). Record the training loss curves over data passes (iterations) and training time. After training, compute the MT-bench scores for each method. Ensure that each method uses identical training data batches and that only the parameter update strategy is varied. Analyze whether updating only one block per data batch improves the retention of the pretrained model\u2019s general knowledge by comparing downstream performance metrics.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "It is expected that BCD variants (especially BSGD and BAdam) will show similar convergence behavior in terms of training loss but will achieve higher MT-bench scores than their full counterparts, with BSGD significantly outperforming SGD. This suggests that the block-wise updates better preserve general knowledge during finetuning.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Will BAdam achieve better performance on zero-shot math benchmarks compared to LoRA when finetuning the Llama 3-70B model on the MathInstruct dataset?**\n\n\n- **Will BAdam achieve better performance on zero-shot math benchmarks compared to LoRA when finetuning the Llama 3-70B model on the MathInstruct dataset?**",
+      "method": "Using the MathInstruct dataset, finetune the Llama 3-70B model using both BAdam and LoRA for 3 epochs following the experimental protocol in Section 3.3. Evaluate the finetuned models on multiple math benchmarks (GSM8K, Aqua, MMLU-Math, SAT-Math, MATH, and NumGLUE). Collect scores for each task and calculate the average performance. Make sure that the dataset splits, hyperparameters, and hardware settings (e.g., using 4\u00d7A100-80GB GPUs for the large model finetuning) remain identical across experiments.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "The paper\u2019s reported outcomes indicate that BAdam should outperform LoRA on 5 out of the 6 math tasks and offer a higher average score, suggesting that BAdam effectively handles the challenges of zero-shot math reasoning while also being more memory efficient than methods like Adam.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    },
+    {
+      "question": "- **Does the ordering scheme used in partitioning (random reshuffling, ascending, or descending order) in BAdam have a significant impact on its convergence behavior during LLM fine-tuning?**\n\n\n- **Does the ordering scheme used in partitioning (random reshuffling, ascending, or descending order) in BAdam have a significant impact on its convergence behavior during LLM fine-tuning?**",
+      "method": "Using the experimental setup from Appendix C.1, perform a controlled ablation study where the only variable changed is the ordering scheme for partition \u03c0 in BAdam. Select a representative LLM (e.g., Llama 2-7B or Llama 3-8B) and fine-tune it under identical conditions for each ordering variant. For each configuration, run multiple trials (at least three runs) to collect convergence data (loss values over epochs) and record the convergence speed as well as final performance. Use statistical analysis (e.g., error bars, confidence intervals) to compare the convergence curves and evaluate if differences are statistically significant.\n  \n1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "The paper\u2019s results indicate that the three ordering schemes produce competitive convergence behavior, so it is expected that there will be no significant difference in convergence performance among the three variants.\n  \n- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    }
+  ]
+}

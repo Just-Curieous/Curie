@@ -1,0 +1,63 @@
+{
+    "questions": [
+        {
+            "hypothesis": "Do API-based LLMs consistently outperform open-sourced LLMs across different tasks on the AGENT BENCH benchmark?",
+            "method": "Collect and analyze the performance results reported in Table 3 and other metrics (such as success rates in specific tasks like House Holding and overall AGENT BENCH scores). Specifically, compare the datasets where API-based LLMs have scores above 1.00 against OSS LLMs which have considerably lower scores (e.g., an average of 2.15 for API-based vs. 0.51 for OSS LLMs). Additionally, evaluate the breakdown in execution outcomes (Completed, Context Limit Exceeded, Invalid Format, Invalid Action, Task Limit Exceeded) across tasks from Table 4 to understand if the trend holds across error categories.",
+            "expected_outcome": "API-based LLMs are expected to significantly outperform OSS LLMs across most, if not all, evaluated tasks. In particular, models like gpt-4 are anticipated to show superior performance with high success rates (e.g., 78% in House Holding) and lower error rates, confirming the robustness of commercial models compared to OSS alternatives.",
+            "subsection_source": "4.2 M AINRESULTS"
+        },
+        {
+            "hypothesis": "Is there a positive correlation between the size (in billions of parameters) of OSS LLMs and their overall AGENT BENCH score?",
+            "method": "Extract the parameter sizes and corresponding overall AGENT BENCH scores for OSS LLMs as depicted in Figure 3. Construct a scatter plot with model size on the x-axis and overall score on the y-axis. Calculate the correlation coefficient (e.g., Pearson\u2019s r) to quantify the relation. Additionally, analyze if the trend is linear or if there are diminishing returns with increasing parameters. Compare the best performing OSS model (e.g., codellama-34b with an OA score of 0.96) to other OSS models to identify any noticeable pattern.",
+            "expected_outcome": "A moderate to strong positive correlation is expected, meaning that larger OSS LLMs tend to have better overall scores. However, even the most capable OSS LLMs are likely to exhibit a performance gap when compared with API-based LLMs, suggesting that factors beyond sheer size (such as training methods or fine-tuning strategies) also play a significant role.",
+            "subsection_source": "4.2 M AINRESULTS"
+        },
+        {
+            "hypothesis": "Does code tuning in LLMs improve performance on tasks with well-defined, static procedures (e.g., Web Shopping) while potentially undermining performance on tasks that demand more general reasoning (e.g., Digital Card Game and Operating System interactions)?",
+            "method": "Select two groups of models from the paper\u2019s evaluation: one with code tuning (e.g., the codellama series) and one without (e.g., the llama-2 series). Identify and group AGENT BENCH tasks into those that follow a fixed, static procedure (such as Web Shopping) and those that require flexible, general decision-making (such as Digital Card Game and Operating System tasks). For each model, run the full task suite under identical conditions (i.e., the same dataset splits, inference settings, and task prompts). Record key metrics such as success rate, invalid action errors, and invalid format errors for each task. Statistically compare the performances of the two groups across the two types of tasks to determine whether code tuning provides an edge in static tasks while impairing general reasoning tasks.",
+            "expected_outcome": "It is expected that code-tuned models will perform better on tasks requiring a static procedure (demonstrating fewer errors and higher success rates) but will lag behind in tasks that demand broader reasoning capabilities, thus confirming the noted ambivalent impact of code training.",
+            "subsection_source": "4.3 A NALYSIS"
+        },
+        {
+            "hypothesis": "Does training with high-quality alignment data (as used for vicuna-13b) lead to significantly better agent performance compared to models aligned from scratch (e.g., llama-2-13b)?",
+            "method": "Directly compare the performance of vicuna-13b and llama-2-13b using the AGENT BENCH framework. Use identical evaluation conditions (i.e., same task prompts, inference settings, and datasets across environments). Focus on overall scores and error-specific metrics such as invalid action and invalid format occurrences. Additionally, draw comparisons to larger models (e.g., codellama-34b) to contextualize the level of performance enhancement provided by high-quality alignment training. Analyze differences in planning ability, self-correction, and instruction following as reflected in task outcomes.",
+            "expected_outcome": "The experiment should show that vicuna-13b outperforms llama-2-13b by producing higher overall scores and lower error rates, and in some cases, its performance may approach that of models three times larger. This would support the claim that high-quality alignment data is a key driver for better LLM agent performance.",
+            "subsection_source": "4.3 A NALYSIS"
+        },
+        {
+            "hypothesis": "Does increasing model size (as in comparing llama-2-70b to llama-2-13b) necessarily yield improved performance, or can insufficient pre-training and a lack of refined alignment negate the benefits of a larger parameter count?",
+            "method": "Run a controlled experiment comparing llama-2-70b and llama-2-13b across the complete set of AGENT BENCH task environments. Both models should be evaluated using the same prompt formatting, inference temperature (set to 0 for greedy decoding), and task splits. Focus on overall scoring as well as performance in tasks that require strong reasoning and adherence to instructions. Perform repeated runs to ensure the consistency of the findings, and re-run experiments if needed to rule out statistical anomalies. Compare outcome distributions (including error types such as Task Limit Exceeded and Invalid Action errors) between the two models.",
+            "expected_outcome": "It is anticipated that both models will exhibit similar performance levels, despite the large difference in size. Such an outcome would imply that the larger llama-2-70b does not inherently benefit from its increased parameter count due to potential shortcomings in its pre-training token volume and instruction-following alignment.",
+            "subsection_source": "4.3 A NALYSIS"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate whether advanced fine-tuning or alignment techniques can bridge the performance gap between OSS and API-based LLMs.",
+            "experiment_design": "Fine-tune a set of OSS LLMs using techniques inspired by commercial model pipelines. Evaluate the fine-tuned models on AGENT BENCH using the same datasets and metrics applied in the current study. Compare overall scores and error breakdowns with both their pre-fine-tuned performance and API-based models to assess improvement.",
+            "subsection_source": "4.2 M AINRESULTS"
+        },
+        {
+            "idea": "Expand the AGENT BENCH evaluation to incorporate additional task environments and more granular interaction metrics.",
+            "experiment_design": "Develop new challenging tasks or extend current ones to cover aspects not deeply explored in the current benchmark (e.g., more complex dialogue management or multi-step reasoning tasks). Then, perform a systematic evaluation of both API-based and OSS LLMs on these tasks. Analyze metrics such as task completion, invalid outcomes, and multi-round interaction dynamics to determine if the observed performance trends persist or if new patterns emerge.",
+            "subsection_source": "4.2 M AINRESULTS"
+        },
+        {
+            "idea": "Examine the impact of extended pre-training on larger models to test scaling law predictions in the context of LLM-as-Agent performance.",
+            "experiment_design": "Augment the pre-training dataset for a larger model (e.g., llama-2-70b) with additional tokens, consistent with scaling law recommendations. Rerun the AGENT BENCH evaluation and compare performance metrics (overall scores, error rates, and reasoning abilities) against both the original llama-2-70b and smaller models. This experiment would help determine if extended pre-training can overcome the issues observed with larger models in the current analysis.",
+            "subsection_source": "4.3 A NALYSIS"
+        },
+        {
+            "idea": "Investigate targeted alignment fine-tuning strategies to improve instruction following and self-correction capabilities across various task types.",
+            "experiment_design": "Develop and apply specialized alignment fine-tuning methods on models like llama-2-13b and llama-2-70b. Use diverse AGENT BENCH tasks to assess improvements in following instructions, reasoning through task challenges, and reducing specific error types (e.g., Task Limit Exceeded and Invalid Actions). Compare the fine-tuned models against their baseline versions to quantify the benefits of enhanced alignment training.",
+            "subsection_source": "4.3 A NALYSIS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces a novel evaluation framework that complements traditional evaluation methods by incorporating a max-flow algorithm and categorizing model outputs into key error types.",
+        "It demonstrates empirical differences between Commercial API-based and Open-Sourced models, with open-sourced models showing higher rates of invalid formats and actions.",
+        "The framework emphasizes the importance of instruction following, consistency in agent planning, and avoiding repetition (i.e., task limit exceeded issues) for successful task completion.",
+        "Data augmentation and bias studies further contribute to understanding model robustness and evaluation accuracy.",
+        "The paper provides detailed tables and figures (e.g., Table 6 and Figure 6) to support findings related to error distributions and operational performance."
+    ]
+}

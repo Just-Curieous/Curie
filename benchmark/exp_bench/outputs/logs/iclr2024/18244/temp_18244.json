@@ -1,0 +1,85 @@
+{
+    "questions": [
+        {
+            "hypothesis": "PDF(720) outperforms Transformer-based models on long-term forecasting tasks in terms of both MSE and MAE.",
+            "method": "Collect the forecasting results from the evaluation Table 1 for both PDF(720) and transformer-based models (e.g., FEDformer with a 96 look-back window). For each dataset and prediction length T in {96, 192, 336, 720}, compare the MSE and MAE values. Quantitatively assess the percentage improvement of PDF(720) over transformer-based models, which is reported as an overall 14.59% reduction in MSE and 10.77% reduction in MAE. Perform statistical tests if raw predictions are available to confirm the significance of the improvements.",
+            "expected_outcome": "The experimental results should confirm that PDF(720) consistently leads to lower MSE and MAE values than the transformer-based counterparts, validating the hypothesis that its design better captures long-term dependencies.",
+            "subsection_source": "4.1 M AINRESULTS"
+        },
+        {
+            "hypothesis": "PDF(720) outperforms CNN-based models on forecasting tasks across different prediction horizons.",
+            "method": "Using the forecasting results provided in Table 1, compare PDF(720) with CNN-based models such as TimesNet and MICN (both configured with a 96 look-back window) across the prediction lengths T \u2208 {96, 192, 336, 720}. Specifically, assess the mean squared error (MSE) and mean absolute error (MAE) values and calculate the overall percentage reduction, which is claimed to be approximately 24.61% in MSE and 19.91% in MAE. The comparison can be extended by checking performance on multiple datasets if available.",
+            "expected_outcome": "The outcomes should show that PDF(720) consistently exhibits lower error metrics compared to the CNN-based models, supporting the effectiveness of the periodicity decoupling framework in improving forecast accuracy.",
+            "subsection_source": "4.1 M AINRESULTS"
+        },
+        {
+            "hypothesis": "A longer look-back window (t = 720) yields better forecasting performance compared to a shorter look-back window (t = 336) in the PDF framework.",
+            "method": "Utilize the experimental setup where two configurations of the PDF model (PDF(720) and PDF(336)) are evaluated. For each prediction horizon T \u2208 {96, 192, 336, 720} on the same datasets, collect and compare the corresponding MSE and MAE values. Identify the performance difference between the two look-back window settings, and analyze whether the improvements are statistically and practically significant as claimed in the paper.",
+            "expected_outcome": "The results are expected to show that PDF(720) (with a longer look-back window) generally achieves lower MSE and MAE values than PDF(336), thereby confirming that incorporating more historical data enhances the model's ability to forecast effectively.",
+            "subsection_source": "4.1 M AINRESULTS"
+        },
+        {
+            "hypothesis": "Does incorporating long-term information into patches via the period patching approach (PDF(336)) lead to superior forecasting accuracy compared to approaches that focus solely on enhancing semantic content within the patches (PatchTST(336) and PatchTST(336)*)?",
+            "method": "Run controlled forecasting experiments on multiple datasets (ETTh1, Electricity, and Traffic) using prediction lengths T = {96, 192, 336, 720}. Implement three experimental configurations: (a) PatchTST(336) with patch length p = 16 and stride s = 8 (resulting in 42 patches); (b) PatchTST(336)* with p = 64 and s = 14 (yielding 24 patches with longer, richer semantic content); and (c) PDF(336) with a single-period patching strategy using period length p1 = 24, setting both p and s to 1 so that f1 = 336/24 = 14, resulting in 24 patches rich in long-term information. Evaluate each configuration using Mean Square Error (MSE) and Mean Absolute Error (MAE) metrics as detailed in Table 2, and compare performances across all datasets and prediction horizons.",
+            "expected_outcome": "PDF(336) is expected to consistently yield lower MSE and MAE scores compared to both PatchTST(336) and PatchTST(336)*, indicating that capturing long-term dependencies in patches is more beneficial for forecasting accuracy than simply increasing the patch length for enhanced semantic content.",
+            "subsection_source": "4.2 E FFECTIVENESS OF PERIOD PATCHING"
+        },
+        {
+            "hypothesis": "Does the period patching method (PDF) significantly reduce computational complexity, as measured by Multiply-Accumulate Operations (MACs), compared to other patch-based Transformer methods (PatchTST and Crossformer) across varying look-back window sizes and prediction horizons?",
+            "method": "Analyze and compare the MAC metrics as reported in Table 3 across three models: PDF, PatchTST, and Crossformer. Use multiple configurations by varying the look-back window sizes t \u2208 {336, 512, 720, 960} and prediction lengths T \u2208 {96, 192, 336, 720}. Record the MACs in each case and compute the percentage reduction in MACs for PDF relative to PatchTST and Crossformer. Special emphasis should be placed on extreme cases (e.g., ETTh1 with t = 960 and T = 720) to evaluate lightweight performance gains.",
+            "expected_outcome": "PDF is expected to demonstrate a substantial reduction in MACs (e.g., approximately 34.64% lower MACs compared to PatchTST and 74.38% lower than Crossformer on average), along with even greater reductions in extreme configurations, thereby validating its computational efficiency advantage.",
+            "subsection_source": "4.2 E FFECTIVENESS OF PERIOD PATCHING"
+        },
+        {
+            "hypothesis": "Will incorporating a parallel convolution module in the PDF model yield superior forecasting performance compared to using sequential convolution or omitting the convolution module entirely?",
+            "method": "Design an experiment using the four datasets mentioned (ETTh2, Weather, Electricity, Traffic). For each dataset, set the prediction horizons T to {96, 192, 336, 720}. Configure the PDF model in three ways: one with parallel convolution (Par Conv), one with sequential convolution (Seq Conv), and one without any convolution (w/o Conv). Ensure all other parameters (e.g., normalization, look-back windows) are kept consistent with the settings used in the paper. Compute forecasting performance using Mean Square Error (MSE) and Mean Absolute Error (MAE) metrics. Compare the results across the three configurations by tabulating the performance metrics similar to Table 4 in the paper. Analyze if parallel convolution consistently yields lower errors, especially noting any differences on datasets with varying levels of periodicity (e.g., stronger periodicity in Traffic vs. weaker in others).",
+            "expected_outcome": "Based on the paper's results, the version with parallel convolution is expected to outperform the sequential convolution version and the version without convolution, demonstrating lower MSE and MAE values in most cases. However, for datasets with strong periodicity like Traffic, performance might degrade, emphasizing the need to balance short-term and long-term variation modeling.",
+            "subsection_source": "4.3 A BLATION STUDIES"
+        },
+        {
+            "hypothesis": "Does using the concatenation aggregation method to combine DVMB outputs achieve better forecasting accuracy (i.e., lower MSE and MAE) compared to using the mean aggregation method?",
+            "method": "Create an experimental setup using the datasets provided for this ablation study (ETTh2, ETTm2, Weather, Electricity). Implement two variants of the variations aggregation block within the PDF model: one that concatenates (Concat) the outputs of all DVMBs and then maps the result through a linear projection, and another that computes the mean (Mean) of the outputs from each DVMB. Use identical configurations for both approaches, including the same look-back window sizes and prediction horizons T = {96, 192, 336, 720}. Evaluate each method using both MSE and MAE metrics and compare the performance as reported in Table 5.",
+            "expected_outcome": "It is anticipated that the Concat aggregation method will exhibit marginally better performance than the Mean method, as evidenced by lower error metrics in most cases, supporting the claim that concatenation better preserves variations needed for improved forecasting.",
+            "subsection_source": "4.3 A BLATION STUDIES"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of static covariate information on forecasting performance, particularly on datasets like Traffic where TiDE outperforms PDF(720) due to such information.",
+            "experiment_design": "Design an experiment where the PDF framework is augmented with static covariates similar to the TiDE model. Use the Traffic dataset and compare forecasting metrics (MSE and MAE) between the standard PDF(720) and the augmented version across all prediction horizons T \u2208 {96, 192, 336, 720}. Analyze whether the inclusion of static covariate data closes the performance gap or even surpasses the current best-performing method on this dataset.",
+            "subsection_source": "4.1 M AINRESULTS"
+        },
+        {
+            "idea": "Extend the evaluation of the PDF framework by testing its robustness on additional real-world datasets from different domains.",
+            "experiment_design": "Collect several new datasets with diverse temporal characteristics outside the originally evaluated domains. Keep the experimental protocol (e.g., normalization, look-back window settings, and prediction horizons) consistent with the paper's setup. Compare PDF(720) against a set of baseline models including transformer-, CNN-, and linear-based models. This will assess the generalizability and robustness of the periodicity decoupling approach on varied time series scenarios.",
+            "subsection_source": "4.1 M AINRESULTS"
+        },
+        {
+            "idea": "Apply period patching methods to new domains or datasets with different temporal dynamics, such as financial time series or healthcare monitoring data.",
+            "experiment_design": "Select one or two new datasets from the finance or healthcare domain. Configure the PDF model with appropriate look-back windows and prediction lengths based on the dataset characteristics. Compare forecasting accuracy (MSE and MAE) and computational efficiency (MAC counts) of PDF with existing baselines (e.g., Transformer-based, CNN-based, and linear models) to evaluate if the benefits of capturing long-term information extend beyond the originally tested datasets.",
+            "subsection_source": "4.2 E FFECTIVENESS OF PERIOD PATCHING"
+        },
+        {
+            "idea": "Investigate multi-period patching strategies that combine the strengths of both short-term and long-term information capturing.",
+            "experiment_design": "Develop an enhanced version of the PDF method that incorporates dual patching strategies: one component to capture high-frequency short-term details and another that focuses on long-term periodic trends. Experiment with different configurations by varying the patch sizes, strides, and period lengths. Test the modified model on standard datasets (ETTh1, Electricity, Traffic) using prediction horizons T = {96, 192, 336, 720} and compare its performance (MSE, MAE, MAC counts) to the original PDF and other baseline methods. This work will help determine whether a hybrid approach can further improve forecasting accuracy while maintaining computational efficiency.",
+            "subsection_source": "4.2 E FFECTIVENESS OF PERIOD PATCHING"
+        },
+        {
+            "idea": "Investigate alternative aggregation strategies for DVMB outputs, such as a learned weighted average, to see if dynamic aggregation could further improve forecasting accuracy.",
+            "experiment_design": "Extend the ablation study by implementing a new variations aggregation method where each DVMB output is assigned a learnable weight prior to aggregation. Train the model on the same set of datasets (ETTh2, ETTm2, Weather, Electricity) using the same prediction horizons (T = {96, 192, 336, 720}) and compare its performance (MSE and MAE) against both the Concat and Mean methods. Analyze the learned weights and evaluate whether they adapt according to the inherent periodicity of each dataset.",
+            "subsection_source": "4.3 A BLATION STUDIES"
+        },
+        {
+            "idea": "Examine the impact of introducing adaptive convolutional depth in the parallel convolution module to balance the trade-offs between network depth and performance, especially for datasets with strong periodicity.",
+            "experiment_design": "Design several variants of the PDF model where the depth of the convolution layers in the parallel convolution module is varied. Use datasets such as Traffic that exhibit strong periodicity and others with weaker periodicity. Keep all other settings identical (look-back window, prediction horizons, etc.), and analyze the effect of different convolutional depths on training stability and forecasting performance (using MSE and MAE). This will help in understanding whether a variable network depth can mitigate training challenges while still benefiting from a parallel convolution approach.",
+            "subsection_source": "4.3 A BLATION STUDIES"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces a novel Periodicity Decoupling Framework (PDF) that decouples time series into simpler short- and long-term components using multi-periodic decoupling and dual variations modeling blocks.",
+        "PDF is designed to capture 2D temporal variations, preserving high-frequency information for short-term changes while exploiting long-term dependencies.",
+        "Experimental results demonstrate that PDF outperforms various state-of-the-art baselines, including Transformer-based (e.g., FEDformer), CNN-based (e.g., TimesNet and MICN), and Linear-based (e.g., TiDE and DLinear) models across multiple prediction lengths (T \u2208 {96, 192, 336, 720}).",
+        "Quantitatively, the paper reports that compared with Transformer-based models, PDF(720) achieves a 14.59% reduction in MSE and a 10.77% reduction in MAE, and compared with CNN-based models, reductions of 24.61% in MSE and 19.91% in MAE.",
+        "An ablation study (Table 4) confirms that the convolution module configuration (parallel convolution) plays an important role, with parallel convolution sometimes outperforming sequential convolution and the setting without convolution, reinforcing the design choices made in the framework."
+    ]
+}

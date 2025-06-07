@@ -1,0 +1,1529 @@
+{
+    "questions": [
+        {
+            "question": "How does the MoE Jetpack performance compare with Dense (21k) and Soft MoE on the CIFAR-10 dataset, using ViT-T architectures?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate the performance of MoE Jetpack versus Dense (21k initialization) and Soft MoE models on the CIFAR-10 dataset using ViT-T-based architectures.\n    - **Objective:** \n    Analyze whether the MoE Jetpack, with pre-trained knowledge from dense checkpoints, consistently outperforms the competing models.\n\n2. **Testing Dataset:** \n    - CIFAR-10\n    - The dataset remains fixed across all experiments, ensuring consistent data splits for training, validation, and testing.\n3. **Comparative Evaluation:**  \n    - Models:\n        - MoEJetpack: Shows the performance of Sphero MoE models, initialized using checkpoint recycling with pre-trained dense checkpoints from ImageNet-21K, followed by fine-tuning on downstream datasets.\n        - Dense (21K): Represents dense models initialized with ImageNet-21K pre-trained weights, followed by fine-tuning on the target datasets.\n        - SoftMoE: Reports the results of SoftMoE models trained from scratch on each dataset.\n\n    - We validate our approach using the Vision Transformer (ViT) models. Specifically, we initialize the weight of V-JetMoE-T by transforming the dense checkpoints of ViT-S through checkpoint recycling. \n\n4. **Evaluation Metrics:**\n    - Accuracy on CIFAR-10\n\n5. **Training Detail:**\n- MoE Jetpack and Soft MoE utilize the same training strategies as the dense models to ensure comparison fairness. \n- All implementations were executed using the MMPretrain framework on RTX4090\n- Successor model: V-JetMoE-T\n    - Predecessors: ViT-S/16\n        - FLOPS:1.1\n        - Initialization: ImageNet-21k\n    - FLOPS:1.1\n    - Initialization: Checkpoint Recycling\n    - MoE layers: 7:12\n    - Core Expert Number: 98\n    - Universal Expert Number: 196\n\n6. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n    \n    - For C-100 dataset, we specify:\n        - Batch size = 512\n        - Warmup Epochs = 50\n        - Training Epochs = 300\n        - Drop Path Rate = 0.1",
+            "expected_outcome": "The MoE Jetpack, benefiting from the pre-trained knowledge embedded in dense checkpoints, consistently surpasses the performance of both Soft MoE models trained from scratch and dense models with ImageNet-21K initialization.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "dataset": "CIFAR-10 (remains fixed throughout the experiment)",
+                        "architecture_base": "ViT-T-based architecture (used for all compared models)",
+                        "training_settings": "Standard training configuration as described (e.g., epochs, learning rate, initialization via Checkpoint Recycling, etc.)"
+                    },
+                    "independent_variables": {
+                        "model_type": [
+                            "MoE Jetpack",
+                            "Dense with ImageNet-21K initialization",
+                            "Soft MoE"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metric": [
+                            "Accuracy on CIFAR-10"
+                        ]
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {}
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Dataset: CIFAR-10 (fixed throughout the experiment)",
+                        "Architecture base: ViT-T-based model",
+                        "Model types: MoE Jetpack, Dense with ImageNet-21K initialization, Soft MoE",
+                        "Training settings: Standard configuration including epochs, learning rate, optimizer type, and Checkpoint Recycling initialization",
+                        "Model configuration elements: SpheroMoE integration for MoE Jetpack and dense configuration for the Dense baseline"
+                    ],
+                    "setup_steps": [
+                        "Prepare the CIFAR-10 dataset and ensure consistent data splits",
+                        "Initialize the ViT-T architecture for all models using the standard training configuration",
+                        "Apply Checkpoint Recycling to obtain pre-trained weights where applicable",
+                        "Integrate the MoE layers (SpheroMoE in layers 7-12 for the MoE Jetpack) and set up the corresponding dense and Soft MoE models",
+                        "Train each model under the fixed experimental protocol",
+                        "Evaluate performance primarily using accuracy (with potential additional metrics like resource cost)"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Distributed experimental details",
+                            "description": "Some experimental details (e.g., hyperparameters, optimizer specifics) are spread across the main paper and its appendices, requiring users to refer to multiple sections."
+                        },
+                        {
+                            "source": "Pre-trained initialization process",
+                            "description": "The use of a Checkpoint Recycling algorithm for initializing weights adds complexity in terms of reproducing the exact pre-training and initialization steps."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_components": [
+                        "Model configuration: While the location of MoE layers (layers 7-12) is mentioned, the precise integration details compared to the dense baseline are not fully specified."
+                    ],
+                    "ambiguous_setup_steps": [
+                        "Training details: Specific hyperparameters (number of epochs, learning rate values, etc.) and optimizer settings remain unspecified in the hypothesis."
+                    ],
+                    "possible_modifications": {
+                        "modification_1": [
+                            "Include explicit training hyperparameters (e.g., number of epochs, learning rate, optimizer type) in the experimental design documentation."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "Tighten the FLOPs budget by reducing the number or range of MoE layers (e.g., using fewer SpheroMoE layers) to test if performance can be maintained with lower resource usage."
+                        ],
+                        "time_constraints": [
+                            "Reduce the training duration (e.g., by decreasing the number of epochs) to evaluate model performance under stricter time restrictions."
+                        ],
+                        "money_constraints": [
+                            "Lower the computational cost by using less expensive hardware or by scaling down the experimental setup, such as training with a smaller model variant while aiming to achieve comparable accuracy."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Stochastic training variations",
+                    "description": "Even with a fixed training/test split and constant random seed for many components, there are still underlying stochastic factors in the training process. These include mini-batch ordering, inherent noise in gradient descent updates, and potential effects of dropout or other regularization techniques. Such factors can introduce minor variability in the final performance.",
+                    "impact": "This uncertainty can lead to minor fluctuations in reported accuracy and other metrics, potentially obscuring the true performance differences between MoE Jetpack, Dense with ImageNet-21K initialization, and Soft MoE. Although the reported variability might be minimal (<0.1%), relying on a single random seed does not capture the full spectrum of possible outcomes.",
+                    "possible_modifications": [
+                        "Run experiments with multiple random seeds and report averaged results with appropriate error bars (e.g., standard deviation or standard error).",
+                        "Intentionally introduce randomized elements (such as random token dropping during training) to stress-test the stability of the optimization process."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Initialization and data biases",
+                    "description": "Systematic uncertainty may arise from the use of different pre-training and initialization procedures. For instance, the MoE Jetpack benefits from a Checkpoint Recycling algorithm applied to pre-trained dense checkpoints, whereas Soft MoE is trained from scratch. Additionally, if the CIFAR-10 dataset is preprocessed or split in a way that induces bias, these factors could systematically affect the performance outcomes.",
+                    "impact": "This can lead to an inherent advantage or disadvantage for a particular model type, thereby skewing the comparison between MoE Jetpack, Dense, and Soft MoE. The performance gains observed might partially reflect the systematic bias from pre-training differences rather than purely the model architecture or learning method.",
+                    "possible_modifications": [
+                        "Conduct parallel experiments using multiple initialization strategies across all model types to ensure uniform pre-training conditions.",
+                        "Evaluate performance on an additional, clean dataset to test the robustness of the findings against dataset-induced bias.",
+                        "Explicitly report and analyze ancillary metrics (e.g., FLOPs, inference times, resource consumption) to contextualize the accuracy gains and mitigate the impact of systematic biases."
+                    ]
+                }
+            },
+            "no_answer": "After thoroughly exploring the repository, I could not find a specific script or set of scripts that directly answer the experiment question about comparing MoE Jetpack with Dense (21k) and Soft MoE on CIFAR-10 using ViT-T architectures. While the repository contains the necessary components (MoE Jetpack implementation, Soft MoE models, CIFAR-10 dataset configurations, and ViT models), there is no ready-made script that performs this specific comparison. The repository has configurations for training MoE Jetpack models on ImageNet (vit_tiny_dual_moe_timm_21k_ft.py and vit_tiny_dual_moe_timm_scratch.py) and CIFAR-10 dataset configurations (cifar10_bs16.py), but no script that combines these specifically for the three-way comparison on CIFAR-10. A user would need to create custom configurations and scripts to run this specific experiment."
+        },
+        {
+            "question": "How does the MoE Jetpack performance compare with Dense(21k) and Soft MoE on the ImageNet-1K dataset using ConvNeXt-F architectures?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Assess the effectiveness of the MoE Jetpack against Dense models initialized with ImageNet-21K checkpoints and Soft MoE models trained from scratch.\n    - **Objective:** \n    Determine whether the pre-trained knowledge embedded in dense checkpoints allows the MoE Jetpack to consistently outperform its counterparts in ImageNet-1K classification accuracy.\n\n2. **Testing Dataset:** \n    - ImageNet-1K\n    - The dataset remains fixed across all experiments, ensuring consistent data splits for training, validation, and testing.\n3. **Comparative Evaluation:**  \n    - Models:\n        - MoEJetpack: Shows the performance of Sphero MoE models, initialized using checkpoint recycling with pre-trained dense checkpoints from ImageNet-21K, followed by fine-tuning on downstream datasets.\n        - Dense (21K): Represents dense models initialized with ImageNet-21K pre-trained weights, followed by fine-tuning on the target datasets.\n        - SoftMoE: Reports the results of SoftMoE models trained from scratch on each dataset.\n\n    - We validate our approach using the ConvNeXt models. Specifically, we initialize the weight of C-JetMoE-F by transforming the dense checkpoints of ConvNeXt-T (pre-trained on ImageNet-21K and sourced from timm) through checkpoint recycling. \n\n4. **Evaluation Metrics:**\n    - Accuracy on ImageNet-1K\n\n5. **Training Detail:**\n- MoE Jetpack and Soft MoE utilize the same training strategies as the dense models to ensure comparison fairness. \n- All implementations were executed using the MMPretrain framework on RTX4090\n\n\n6. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6",
+            "expected_outcome": "The MoE Jetpack, benefiting from the pre-trained knowledg eembedded in dense checkpoints, consistently surpasses the performance of both Soft MoE models trained from scratch and dense models with ImageNet-21K initialization.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "dataset": "ImageNet-1K",
+                        "training_configuration": "Standard training settings are applied across experiments as described in setup"
+                    },
+                    "independent_variables": {
+                        "model_variant": [
+                            "MoE Jetpack (SpheroMoE layers with checkpoint recycling)",
+                            "Dense(21k) (dense models initialized from ImageNet-21K checkpoints)",
+                            "Soft MoE (models trained from scratch with the Soft MoE setup)"
+                        ],
+                        "architecture": "ConvNeXt-based architecture (specifically C-JetMoE-F for the MoE Jetpack, with comparisons to a dense ConvNeXt baseline and Soft MoE variant)"
+                    },
+                    "dependent_variables": {
+                        "performance": "ImageNet-1K classification accuracy, which is used to benchmark the effectiveness of each model variant"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {}
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "ImageNet-1K dataset used for fine-tuning",
+                        "Pre-trained ImageNet-21K checkpoints used for dense and MoE initializations",
+                        "MoE models incorporating SpheroMoE layers with checkpoint recycling",
+                        "Dense model variants (Dense(21k))",
+                        "Soft MoE models trained from scratch",
+                        "ConvNeXt-based architecture variants (C-JetMoE-F and Dense counterparts)",
+                        "Standard training configurations as detailed in setup (e.g., hyperparameters, optimizer type)"
+                    ],
+                    "setup_steps": [
+                        "Initialize models using ImageNet-21K pre-trained checkpoints",
+                        "Apply checkpoint recycling for MoE Jetpack variants",
+                        "Fine-tune models on the ImageNet-1K dataset using standard training settings",
+                        "Compare performance benchmarks (classification accuracy) across three model variants",
+                        "Ensure consistent training configurations across experiments"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Model Configuration",
+                            "description": "The detailed specification of expert numbers, MoE layers, and the use of SpheroMoE layers adds a layer of complexity to configuring the models correctly."
+                        },
+                        {
+                            "source": "Data and Training Consistency",
+                            "description": "Maintaining constant training settings (e.g., dataset splits, hyperparameters) across different model variants while using both pre-trained and scratch-trained components increases overall system complexity."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_components": [
+                        "Method Details: The specific details about the placement of SpheroMoE layers and handling of expert ratios are not explicitly defined."
+                    ],
+                    "ambiguous_setup_steps": [
+                        "Conversion Process: The approach for converting dense models to MoE models via checkpoint recycling is not fully elaborated."
+                    ],
+                    "possible_modifications": {
+                        "method_detail": [
+                            "Explicitly describe the modifications made to the baseline architectures when converting to MoE Jetpack, including specific placement of SpheroMoE layers and adjustments in expert ratios."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "Consider enforcing performance parity on a smaller MoE Jetpack variant (e.g., using a reduced number of experts or a smaller base model) to tighten resource requirements."
+                        ],
+                        "time_constraints": [
+                            "Limit the number of fine-tuning iterations on ImageNet-1K to simulate a reduced training time scenario."
+                        ],
+                        "money_constraints": [
+                            "Reduce computational expenditure by, for example, using fewer or lower\u2010cost compute workers, to mimic a constrained budget setting."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Random variations in training procedures and stochastic model components",
+                    "description": "Although the experiments nominally use a fixed random seed and standard training settings, potential random alterations\u2014such as introducing random token dropping or varying the placement of SpheroMoE layers\u2014could inject additional variability into the training dynamics. Such modifications would create random uncertainty by destabilizing gradient updates and affecting convergence behavior.",
+                    "impact": "Any injection of randomness could lead to unpredictable performance shifts across runs, making it harder to accurately attribute differences in ImageNet-1K classification accuracy solely to the model variants. This uncertainty could inadvertently favor or disfavor the MoE Jetpack compared to Dense(21k) and Soft MoE baselines.",
+                    "possible_modifications": [
+                        "Introduce random token dropping during fine-tuning to simulate noise and assess robustness.",
+                        "Randomly vary the initialization or placement of SpheroMoE layers in the MoE Jetpack models to gauge sensitivity.",
+                        "Alter the expert ratios in a random manner across model runs to test the effect on performance stability."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {}
+            },
+            "no_answer": "After thoroughly exploring the repository, I couldn't find a specific script or set of scripts that directly answer the experiment question about comparing MoE Jetpack performance with Dense(21k) and Soft MoE on ImageNet-1K using ConvNeXt-F architectures. The repository contains implementations of MoE Jetpack, but the examples and configurations are primarily focused on ViT models rather than ConvNeXt-F models. While there are ConvNeXt implementations in the repository, I couldn't find specific scripts that set up the comparison experiment described in the question. The repository has tools for training and evaluating models (/workspace/tools/train.py and /workspace/tools/test.py), as well as checkpoint recycling functionality (/workspace/moejet/tools/checkpoint_recycling_simplified.py), but these would need to be configured specifically for the ConvNeXt-F architecture and the comparison experiment."
+        },
+        {
+            "question": "Does integrating Checkpoint Recycling into a Soft MoE baseline significantly improve classification accuracy compared to the ViT-T baseline?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate the impact of adding Checkpoint Recycling to a Soft MoE model on classification accuracy relative to a baseline ViT-T model.\n    - **Objective:** \n    Determine if the integration of Checkpoint Recycling leads to significant performance gains across multiple datasets.\n\n2. **Testing Dataset:** \n    - ImageNet-1K, CIFAR-100, and Flowers\n    - The dataset remains fixed across all experiments, ensuring consistent data splits for training, validation, and testing.\n3. **Comparative Evaluation:**  \n    - Models:\n        - Baseline ViT-T model without Checkpoint Recycling\n        - Soft MoE model without Checkpoint Recycling\n        - Soft MoE model with Checkpoint Recycling\n\n4. **Evaluation Metrics:**\n    - Record top-1 accuracy for each configuration on each dataset.\n    - Calculate the mean accuracy improvement over the baseline configuration across datasets.\n\n5. **Training Detail:**\n- All implementations were executed using the MMPretrain framework on RTX4090\n\n\n6. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6",
+            "expected_outcome": "Integrating Checkpoint Recycling with the Soft MoE baseline significantly improves performance across all datasets, with a mean accuracy increment of 10.2%.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "training_hyperparameters": "All hyperparameters, optimizer settings, and training protocols remain identical, as detailed in setup.",
+                        "datasets": [
+                            "ImageNet-1K",
+                            "CIFAR-100",
+                            "Flowers"
+                        ],
+                        "framework_hardware": [
+                            "MMPretrain framework",
+                            "RTX4090"
+                        ]
+                    },
+                    "independent_variables": {
+                        "model_configuration": [
+                            "ViT-T baseline without Checkpoint Recycling",
+                            "Soft MoE without Checkpoint Recycling",
+                            "Soft MoE with Checkpoint Recycling"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "top1_accuracy": "Recorded as the top-1 accuracy on each dataset and used to compute the mean accuracy improvement over the baseline."
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "ViT-T baseline model",
+                        "Soft MoE model without Checkpoint Recycling",
+                        "Soft MoE model with Checkpoint Recycling",
+                        "Datasets: ImageNet-1K, CIFAR-100, Flowers",
+                        "Hardware & Framework: MMPretrain framework on RTX4090",
+                        "Training hyperparameters and protocols"
+                    ],
+                    "setup_steps": [
+                        "Prepare a consistent training environment using the MMPretrain framework on RTX4090",
+                        "Implement and configure the three model configurations (baseline ViT-T, Soft MoE without Checkpoint Recycling, and Soft MoE with Checkpoint Recycling)",
+                        "Ensure that the training hyperparameters, optimizer settings, and evaluation protocols remain identical across experiments",
+                        "Train each configuration on the three specified datasets",
+                        "Record the top-1 accuracy results for each configuration on each dataset",
+                        "Compute and compare the mean accuracy improvements over the baseline across datasets"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Interdependency of components",
+                            "description": "Coordinating the training across three model configurations with the same hyperparameters and dataset splits increases the complexity of ensuring experiment reproducibility."
+                        },
+                        {
+                            "source": "External references to supplemental material",
+                            "description": "Some critical details (e.g., hyperparameter settings and full training protocols) are provided in Appendices, adding an extra layer of navigation."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_components": [
+                        "Checkpoint Recycling implementation: The exact implementation specifics are referenced but not fully disclosed.",
+                        "Hyperparameter selection: The criteria or process used for selecting identical hyperparameters is not explicitly detailed.",
+                        "Accuracy improvement computation: The method for aggregating top-1 accuracies across different datasets and handling dataset-specific variance is not fully described."
+                    ],
+                    "ambiguous_setup_steps": [
+                        "Integration of Checkpoint Recycling into the Soft MoE model: While its inclusion is specified, the detailed integration process is not clear.",
+                        "Consistency enforcement: The instructions indicate that training hyperparameters and evaluation protocols are identical, but the exact procedure to ensure this consistency is not elaborated."
+                    ],
+                    "possible_modifications": {
+                        "modification_1": [
+                            "Provide a detailed description and pseudocode of the Checkpoint Recycling implementation to ensure precise replication."
+                        ],
+                        "modification_2": [
+                            "Clarify the process and criteria for selecting and tuning the hyperparameters, even if they are maintained as constants."
+                        ],
+                        "modification_3": [
+                            "Extend the documentation on how the accuracy improvement is computed across datasets, including steps to handle dataset-specific variations."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "implementation_modifications": {
+                            "modifications": [
+                                "Provide a detailed description and pseudocode of the Checkpoint Recycling implementation to ensure precise replication.",
+                                "Extend the documentation on how the mean top-1 accuracy improvement is computed across multiple datasets, including handling dataset-specific variance."
+                            ]
+                        }
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Inherent stochasticity in deep learning training processes",
+                    "description": "Even with identical hyperparameters and consistent training protocols, neural network training can exhibit randomness due to factors such as random weight initialization and mini-batch sampling. This could lead to slight variations in top-1 accuracy measurements across different runs.",
+                    "impact": "Such variability can affect the computed mean accuracy improvements and the stability of performance evaluations, especially when the performance differences between configurations are marginal.",
+                    "possible_modifications": [
+                        "Run experiments with multiple random seeds and report aggregated statistics (mean and standard deviation) to capture stochastic variations.",
+                        "Introduce error bars or confidence intervals for the reported top-1 accuracies across different runs.",
+                        "Use statistical significance tests to ensure that the observed improvements are robust against inherent randomness."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Ambiguities in implementation details and evaluation methodology",
+                    "description": "The detailed implementation specifics for Checkpoint Recycling are not fully disclosed, and the process for selecting and tuning hyperparameters as well as aggregating accuracy over multiple datasets is not explicitly detailed. This can lead to systematic biases in replication and evaluation.",
+                    "impact": "The ambiguity might lead to consistent over- or underestimation of the performance improvements, potentially skewing the conclusion about the 10.2% mean accuracy boost observed with Checkpoint Recycling.",
+                    "possible_modifications": [
+                        "Provide a detailed description and pseudocode for the Checkpoint Recycling implementation to ensure precise replication.",
+                        "Clarify the process and criteria for hyperparameter selection and tuning, even if they remain constant, to remove any ambiguity.",
+                        "Extend the documentation on how the mean accuracy improvement is computed across datasets, including the method used to handle dataset-specific variance."
+                    ]
+                }
+            },
+            "no_answer": "While the repository contains all the necessary components to run the experiment comparing ViT-T baseline, Soft MoE without Checkpoint Recycling, and Soft MoE with Checkpoint Recycling across ImageNet-1K, CIFAR-100, and Flowers datasets, there is no single script or small set of scripts that directly answers this experiment question. The repository provides configuration files for the models (including vit_tiny_dual_moe_timm_21k_ft.py for Soft MoE with Checkpoint Recycling and vit_tiny_dual_moe_timm_scratch.py for Soft MoE without Checkpoint Recycling), dataset configurations for all three required datasets, and scripts for training, testing, and checkpoint recycling. However, running the complete experiment would require executing multiple commands in sequence, potentially modifying configuration files, and manually comparing the results across datasets, rather than having a dedicated script that performs the entire experiment and calculates the mean accuracy improvement."
+        },
+        {
+            "question": "Are the performance benefits of the MoE Jetpack architecture\u2014using checkpoint recycling and SpheroMoE layers\u2014consistent and robust across different backbone models (ViT-T and ConvNeXt-F) under identical computational constraints and training procedures on diverse image classification datasets?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Assess the performance consistency and robustness of the MoE Jetpack architecture across different backbones and datasets.\n    - **Objective:** \n    Determine if the MoE Jetpack consistently outperforms Dense and Soft MoE models across various backbone architectures and datasets.\n\n2. **Testing Dataset:** \n    - ImageNet-1K, CIFAR-10, CIFAR-100, Flowers, Pets, STL-10, Food-101, and DTD.\n\n3. **Comparative Evaluation:**  \n    - Backbone Models: ViT-T and ConvNeXt-F\n    - Model Variants:\n        - Dense model trained from scratch on the target dataset.\n        - Dense model initialized with ImageNet-21K pre-trained weights.\n        - Soft MoE model trained from scratch.\n        - MoE Jetpack: Integrates checkpoint recycling and SpheroMoE layers.\n4. **Evaluation Metrics:**\n    - Performance on image classification tasks\n\n5. **Configurations for Models:**\n- Successor model: V-JetMoE-T\n    - Predecessors: ViT-S/16\n        - FLOPS:1.1\n        - Initialization: ImageNet-21k\n    - FLOPS:1.1\n    - Initialization: Checkpoint Recycling\n    - MoE layers: 7:12\n    - Core Expert Number: 98\n    - Universal Expert Number: 196\n- Successor model: C-JetMoE-F\n    - Predecessors: ConvNext-T\n        - FLOPS:1.1\n        - Initialization: ImageNet-21k\n    - FLOPS:1.1\n    - Initialization: Checkpoint Recycling\n    - MoE layers: 10:18\n    - Core Expert Number: [98,24]\n    - Universal Expert Number: [196,48]\n\n\n6. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n\n    - **Hyparameter setting on ViT-T**:\n        - IN1K: batch size=4096;warmup epochs=50;training epochs:300;drop path rate:0\n        - C-10: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1\n        - C-100: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1\n        - Flowers: batch size=512;warmup epochs=100;training epochs:600;drop path rate:0.1\n        - Pets: batch size=512;warmup epochs=100;training epochs:600;drop path rate:0.1\n        - STL-10: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0\n        - Food101: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1\n        - DTD: batch size=512;warmup epochs=100;training epochs:600;drop path rate:0.2",
+            "expected_outcome": "It is expected that the MoE Jetpack model will consistently outperform both the Dense and Soft MoE baselines for both ViT-T and ConvNeXt-F backbones. The improvements may vary slightly between the architectures, but overall, the experiment should confirm that the enhancements introduced by checkpoint recycling and SpheroMoE integration yield significant performance benefits across different model families and diverse datasets.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "computational_constraints": "Approximately 1.1G FLOPs and identical training settings (hyperparameters, optimizer, data splits, etc.) are maintained across all experiments",
+                        "datasets": [
+                            "ImageNet-1K",
+                            "CIFAR-10",
+                            "CIFAR-100",
+                            "Flowers",
+                            "Pets",
+                            "STL-10",
+                            "Food-101",
+                            "DTD"
+                        ]
+                    },
+                    "independent_variables": {
+                        "backbone_model": [
+                            "ViT-T",
+                            "ConvNeXt-F"
+                        ],
+                        "model_variant": [
+                            "Dense model trained from scratch",
+                            "Dense model initialized with ImageNet-21K pre-trained weights",
+                            "Soft MoE model trained from scratch",
+                            "MoE Jetpack model using checkpoint recycling and SpheroMoE layers"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "performance_metrics": "Performance on image classification tasks (e.g., accuracy) and statistical significance as determined by paired tests"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "performance_metrics": "The paper does not explicitly state which exact performance metrics (accuracy, error rates, F1, etc.) are used to quantify performance gains.",
+                        "paired_statistical_tests": "The specific statistical test and its parameters (e.g., t-test specifics, significance level) are not detailed, leaving ambiguity in how significance is computed."
+                    },
+                    "possible_modifications": {
+                        "modification_1": [
+                            "Explicitly define the performance metric(s) to be measured (e.g., top-1 accuracy, top-5 accuracy, etc.)"
+                        ],
+                        "modification_2": [
+                            "Detail the statistical testing procedure (e.g., type of paired test, significance thresholds) to improve clarity in measuring robustness"
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Backbone models (ViT-T and ConvNeXt-F)",
+                        "Model variants (Dense model trained from scratch, Dense model with ImageNet-21K pre-trained weights, Soft MoE model trained from scratch, MoE Jetpack model using checkpoint recycling and SpheroMoE layers)",
+                        "Pre-trained checkpoint retrieval from timm (using ImageNet-21K)",
+                        "Unified training settings (as specified in setup, including hyperparameters, optimizer type, and fixed computational constraints of approximately 1.1G FLOPs)",
+                        "Image classification datasets (ImageNet-1K, CIFAR-10, CIFAR-100, Flowers, Pets, STL-10, Food-101, and DTD)",
+                        "Paired statistical tests for evaluating performance significance and robustness"
+                    ],
+                    "setup_steps": [
+                        "Gather and prepare the eight image classification datasets",
+                        "Set up the unified experimental framework with constant training settings and computational constraints (Table 7)",
+                        "Initialize two backbone models (ViT-T and ConvNeXt-F) with four model variants each",
+                        "For the MoE Jetpack variant, apply checkpoint recycling to convert ImageNet-21K dense pre-trained checkpoints and integrate the SpheroMoE layers (e.g., layers 7-12 with 98 core experts and 196 universal experts as per Table 6)",
+                        "Train each model variant under identical conditions ensuring consistent hyperparameters and data splits",
+                        "Record performance metrics across all variants and datasets, and execute paired statistical tests to assess significance"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Unified Experimental Framework",
+                            "description": "Integrating different backbone architectures and four distinct model variants per backbone while enforcing constant training settings and computational constraints across eight varied datasets increases overall setup complexity."
+                        },
+                        {
+                            "source": "Checkpoint Recycling and SpheroMoE Integration",
+                            "description": "The process of transforming dense pre-trained checkpoints into MoE models via checkpoint recycling and appropriately configuring SpheroMoE layers (with specified expert numbers and layer ranges) introduces additional complexity in both implementation and reproducibility."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_components": [
+                        "Performance metrics",
+                        "Statistical testing parameters"
+                    ],
+                    "ambiguous_setup_steps": [
+                        "Specification of performance metrics: The documentation does not explicitly state whether metrics such as top-1 accuracy, top-5 accuracy, error rates, or others are used.",
+                        "Details of paired statistical tests: The specific test type (e.g., paired t-test) and the significance thresholds or parameters remain unclear."
+                    ],
+                    "possible_modifications": {
+                        "modification_1": [
+                            "Explicitly define the performance metric(s) to be measured (e.g., top-1 accuracy, top-5 accuracy) to remove ambiguity in model evaluation."
+                        ],
+                        "modification_2": [
+                            "Detail the statistical testing procedure by specifying the type of paired test, its parameters (such as significance level), and how the tests are applied to assess robustness."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "Tighten the computational constraint by reducing the allowed FLOPs from approximately 1.1G to a lower target (e.g., 0.8G FLOPs), which would challenge the models to achieve similar performance under more limited resource conditions."
+                        ],
+                        "time_constraints": [
+                            "Introduce a strict maximum training time per model variant to simulate scenarios with limited computational time and force efficiency in training."
+                        ],
+                        "money_constraints": [
+                            "Restrict the experiment to a predefined GPU cost budget (e.g., a capped number of GPU hours), thereby assessing the cost-effectiveness of the MoE Jetpack approach relative to the baseline models."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Training stochasticity and model initialization effects",
+                    "description": "Even though the experiment enforces identical training settings and computational constraints (approximately 1.1G FLOPs as specified) across all model variants, inherent randomness in neural network training (such as random weight initialization, mini-batch sampling, and any dropout or regularization methods) can lead to run-to-run variability. This is particularly relevant for the MoE Jetpack architecture, where the process of checkpoint recycling and integration of SpheroMoE layers might be sensitive to such stochastic variations in gradient updates.",
+                    "impact": "Variability in initialization and stochastic training procedures can introduce fluctuations in performance metrics (e.g., accuracy) across different runs, potentially impacting the statistical significance tests used to compare Dense models, Soft MoE models, and the MoE Jetpack models.",
+                    "possible_modifications": [
+                        "Conduct multiple training runs using different random seeds to calculate and report error bars or confidence intervals for the performance metrics.",
+                        "Incorporate a controlled randomized experiment by varying mini-batch orders and monitoring changes in training stability.",
+                        "Systematically evaluate the sensitivity of the MoE Jetpack approach to random perturbations in initialization and regularization parameters."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Dataset and pretraining transfer biases",
+                    "description": "The experiment uses a mix of pre-training (ImageNet-21K) and target datasets (eight diverse image classification datasets including ImageNet-1K, CIFAR-10, CIFAR-100, Flowers, Pets, STL-10, Food-101, and DTD). Systematic uncertainties can arise if the ImageNet-21K pre-trained weights (sourced from timm) carry biases that do not align equally well with all target datasets, or if the modifications introduced by the MoE Jetpack architecture (e.g., the specific selection of layers for SpheroMoE integration with 98 core experts and 196 universal experts) favor certain backbone models over others.",
+                    "impact": "These systematic biases may lead to consistent over- or under-estimation of performance improvements for specific model variants, potentially skewing the overall assessment of the MoE Jetpack benefits across different backbones and datasets.",
+                    "possible_modifications": [
+                        "Validate and, if necessary, correct for dataset-specific biases by ensuring that all target datasets are representative and free from preprocessing or labeling artifacts.",
+                        "Experiment with alternative pretraining sources or architectures to assess the impact of pretraining bias on transfer performance.",
+                        "Explicitly define and standardize performance metrics (e.g., top-1 accuracy) and statistical testing procedures, reducing systematic discrepancies in cross-model comparisons."
+                    ]
+                }
+            },
+            "no_answer": "After thoroughly exploring the repository, I couldn't find a single script or a small set of scripts that directly answer the experiment question about comparing MoE Jetpack architecture across different backbone models (ViT-T and ConvNeXt-F) on multiple datasets. The repository contains the necessary components to conduct this experiment (MoE Jetpack implementation, dataset configurations for all required datasets, training and testing scripts), but there isn't an automated workflow that runs the complete experiment across all model variants and datasets. The experiment would need to be conducted by manually running the training and testing scripts for each combination of model variant and dataset, which requires significant manual intervention and doesn't meet the criteria of having 'a single script, or 2-3 scripts at most that collectively answer this question exactly'."
+        },
+        {
+            "question": "Does employing a dual-path SpheroMoE structure (with both core and universal experts) improve ImageNet-1K accuracy and reduce computational cost (FLOPs) compared to using a single-path structure with only core experts?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether a dual-path SpheroMoE structure enhances accuracy and reduces computational costs compared to a single-path structure.\n    - **Objective:** \n    Assess improvements in accuracy and efficiency using dual-path SpheroMoE in a ViT-T model.\n\n2. **Testing Dataset:** \n    - ImageNet-1K\n\n3. **Comparative Evaluation:**  \n    - Configure SpheroMoE Layer Variants:\n        - Single-path: 197 core experts only.\n        - Dual-path: 98 core experts and 196 universal experts integrated in layers 7 to 12.\n\n4. **Evaluation Metrics:**\n    - Record top-1 accuracy and \n    - Measure computational cost in FLOPs\n\n5. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n\n    - **Hyparameter setting on ViT-T**:\n        - IN1K: batch size=4096;warmup epochs=50;training epochs:300;drop path rate:0",
+            "expected_outcome": "The dual-path SpheroMoE structure is expected to outperform the single-path configuration by achieving higher top-1 accuracy on ImageNet-1K and reducing the overall computational cost in FLOPs. This result would validate the hypothesis that adaptive resource allocation between core and universal experts enhances performance and efficiency.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "pre_training_checkpoint": "ImageNet-21K pre-trained dense checkpoints are used via checkpoint recycling to initialize both variants",
+                        "training_configuration": "The standard training configuration detailed in setup (including hyperparameters, optimizer type, scheduling, etc.)",
+                        "model_architecture": "The base ViT-T architecture with the first half remaining as dense layers and SpheroMoE layers integrated from layers 7 to 12"
+                    },
+                    "independent_variables": {
+                        "spheroMoE_structure": [
+                            "single-path variant: 197 core experts exclusively",
+                            "dual-path variant: 98 core experts with an additional 196 universal experts"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "top_1_accuracy": "Top-1 accuracy on the ImageNet-1K dataset",
+                        "computational_cost": "FLOPs, with an expected reduction from approximately 1.2G to 1.1G"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "spheroMoE_structure": "The exact operational differences in how the dual-path and single-path SpheroMoE configurations handle token partitioning and aggregation are not fully detailed.",
+                        "checkpoint_recycling": "The specifics of the checkpoint recycling process (e.g., the algorithmic details for weight transformation) are not exhaustively described."
+                    },
+                    "possible_modifications": {}
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "Pre-training checkpoint (ImageNet-21K dense checkpoints via checkpoint recycling)",
+                        "Standard training configuration (hyperparameters, optimizer type, learning rate schedule as detailed in setup)",
+                        "Base model architecture (ViT-T with dense layers and SpheroMoE integration from layers 7 to 12)",
+                        "SpheroMoE layer variants (single-path variant with 197 core experts and dual-path variant with 98 core experts plus 196 universal experts)",
+                        "Performance metrics recording (top-1 accuracy on ImageNet-1K and computational cost in FLOPs)"
+                    ],
+                    "setup_steps": [
+                        "Configure two variants of the SpheroMoE layer for a ViT-T based model using the pre-trained ImageNet-21K checkpoints and the checkpoint recycling process",
+                        "Initialize the models using the checkpoint recycling mechanism to transform dense checkpoints into MoE configurations",
+                        "Apply the standard training configuration to train both variants on the ImageNet-1K dataset",
+                        "Record key metrics including top-1 accuracy and FLOPs, noting expected outcomes (e.g., from around 79.6% to 79.9% accuracy and a reduction in FLOPs from approximately 1.2G to 1.1G)",
+                        "Analyze and compare the results of the dual-path structure versus the single-path structure, referring to figures and tables for detailed comparisons"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Checkpoint Recycling Process",
+                            "description": "The algorithmic process for converting dense checkpoints into MoE-initialized weights involves nontrivial weight transformation steps that add to the overall complexity."
+                        },
+                        {
+                            "source": "Dual-Path Integration",
+                            "description": "Integrating both core and universal experts in the dual-path SpheroMoE configuration introduces additional operational complexity, especially regarding token partitioning and aggregation mechanisms."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_components": [
+                        "SpheroMoE Structure Implementation: The exact operational differences (e.g., token partitioning and feature aggregation) between the dual-path and single-path configurations are not fully detailed",
+                        "Checkpoint Recycling: The specifics of the weight transformation process are not exhaustively described"
+                    ],
+                    "ambiguous_setup_steps": [
+                        "The configuration of token partitioning and aggregation within the dual-path SpheroMoE remains unclear",
+                        "The precise implementation details of the checkpoint recycling process lack full clarification, which may affect reproducibility"
+                    ],
+                    "possible_modifications": {}
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [
+                            "One possible modification is to tighten the compute budget by requiring the dual-path configuration to achieve similar or better performance with even fewer universal experts, thereby targeting a lower FLOPs (for example, reducing from approximately 1.1G to 1.0G FLOPs) to simulate more constrained hardware resources."
+                        ],
+                        "time_constraints": [
+                            "A potential modification could involve reducing the number of training epochs or iterations, which would test whether the performance improvements of the dual-path structure can be maintained under stricter training time limitations."
+                        ],
+                        "money_constraints": [
+                            "Another modification might simulate budget constraints by limiting the compute resources (such as using fewer or less expensive GPUs), thereby investigating if the dual-path structure can still meet the performance target (e.g., around 79.9% top-1 accuracy) under cost-restricted conditions."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Gradient update variability and token processing",
+                    "description": "Although the experiment uses a fixed training configuration with constant random seeds to minimize variability, any modification such as randomly dropping tokens in the SpheroMoE layer or injecting noise during token partitioning could introduce instability in gradient updates, leading to fluctuations in training and eventually in accuracy measurements.",
+                    "impact": "Such randomness can lead to inconsistent training outcomes, affecting the recorded top-1 accuracy on ImageNet-1K. This uncertainty may complicate the comparison between the dual-path and single-path configurations, as apparent performance differences might result from training instability rather than inherent architectural improvements.",
+                    "possible_modifications": [
+                        "Maintain a fixed token dropping strategy rather than introducing random token drops to ensure consistency.",
+                        "Control the randomness by strictly using constant seeds and deterministic operations across experiments.",
+                        "Introduce controlled random perturbations in a separate ablation study to quantify the model's sensitivity without affecting the main results."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Checkpoint recycling and dual-path integration ambiguity",
+                    "description": "The experimental design uses a checkpoint recycling process to initialize MoE models from dense ImageNet-21K pre-trained checkpoints. However, the algorithmic details of this process, including weight transformation and how tokens are partitioned and aggregated between core and universal experts, are not fully detailed. This lack of clarity could introduce a systematic bias that consistently benefits or penalizes one configuration over the other.",
+                    "impact": "If the checkpoint recycling process or the dual-path integration has inherent biases, the reported improvements in top-1 accuracy or reduction in FLOPs might be partially attributed to these biases rather than the true architectural merits of the dual-path structure. This could mislead conclusions regarding efficiency and performance gains.",
+                    "possible_modifications": [
+                        "Expand and standardize the documentation of the checkpoint recycling process to reduce ambiguity.",
+                        "Test alternative methods for weight initialization and token partitioning to assess the robustness of the observed improvements.",
+                        "Run additional ablations varying the positions of MoE layers (e.g., layers other than 7 to 12) to evaluate if the performance gain persists across different configurations."
+                    ]
+                }
+            },
+            "no_answer": "While the repository contains the implementation of dual-path SpheroMoE structure in the MoE Jetpack framework, there is no single script or small set of scripts that directly answers the experiment question comparing dual-path vs single-path SpheroMoE structures. The repository has a configuration file for the dual-path structure (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py) and a script to generate MoE weights (/workspace/moejet/tools/gen_ViT_MoE_weight.py), but lacks a corresponding single-path configuration for direct comparison. Running this experiment would require creating a modified configuration file for the single-path structure and running both configurations separately, which goes beyond minimal modifications to existing scripts."
+        },
+        {
+            "question": "What is the optimal ratio between core and universal experts to reach the highest accuracy on the CIFAR-100 dataset?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Determine the optimal distribution of core and universal experts to maximize classification accuracy on CIFAR-100.\n    - **Objective:** \n    Identify the core expert ratio that achieves the highest accuracy within a fixed total number of experts.\n\n2. **Testing Dataset:** \n    - CIFAR-100\n\n3. **Comparative Evaluation:**  \n    - MoE model with fixed overall number of eperts but different core expert ratio within the total fixed number\n        - ratio: 5/6\n        - ratio: 2/3\n        - ratio: 1/2\n        - ratio: 1/3\n        - ratio: 1/6\n\n4. **Evaluation Metrics:**\n    - Record classification accuracy for each core expert ratio configuration\n\n5. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n\n    - **Hyparameter setting on ViT-T**:\n        - C-100: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1",
+            "expected_outcome": "The highest accuracy is achieved when core experts constitute approximately 1/3 of the total experts.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "dataset": [
+                            "CIFAR-100"
+                        ],
+                        "total_experts": "The overall number of experts is fixed during the experiments"
+                    },
+                    "independent_variables": {
+                        "core_expert_ratio": "The fraction of core experts within the fixed total experts (values may include different ratios such as 5/6,2/3,1/2,1/3,1/6)"
+                    },
+                    "dependent_variables": {
+                        "accuracy": "The classification accuracy achieved on the CIFAR-100 dataset"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "measurement_method": "It is not explicitly mentioned how accuracy is computed (e.g., whether results are averaged over multiple runs or derived from a single run)"
+                    },
+                    "possible_modifications": {
+                        "modification_reproducibility": [
+                            "Include multiple runs with error bars to capture statistical significance in the accuracy measurements"
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "CIFAR-100 dataset",
+                        "Fixed total experts in MoE model",
+                        "Core experts",
+                        "Universal experts",
+                        "Pre-trained predecessor weights",
+                        "Checkpoint Recycling algorithm",
+                        "Model configurations (referenced in setup or code)"
+                    ],
+                    "setup_steps": [
+                        "Set the fixed total number of experts as a constant variable",
+                        "Define the independent variable by varying the core expert ratio (5/6,2/3,1/2,1/3,1/6)",
+                        "Initialize the successor models using pre-trained ImageNet-21k weights via the Checkpoint Recycling algorithm",
+                        "Train the MoE models on the CIFAR-100 dataset",
+                        "Measure and record the classification accuracy for each setting of the core expert ratio",
+                        "Analyze the results to identify the optimal ratio for the highest accuracy"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Pre-trained Model Initialization",
+                            "description": "Using ImageNet-21k checkpoints and the Checkpoint Recycling algorithm adds complexity to the model initialization process."
+                        },
+                        {
+                            "source": "Reproducibility Measures",
+                            "description": "The experiment uses a fixed random seed (seed=3407) to ensure minimal variability, which simplifies the setup but may introduce hidden constraints."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_setup_steps": [
+                        "Accuracy measurement: It is unclear whether the reported accuracy is averaged over multiple runs or derived from a single run."
+                    ],
+                    "possible_modifications": {
+                        "modification_reproducibility": [
+                            "Include multiple runs with error bars to capture and report the statistical significance of the accuracy measurements."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "experiment_design": [
+                            "Include multiple runs with error bars to capture and report the statistical significance of the accuracy measurements."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Use of a fixed random seed in training (seed = 3407) reduces variability, but may hide inherent random behavior in gradient updates or minor fluctuations in training dynamics.",
+                    "description": "Although the experiment minimizes random uncertainty by fixing the random seed, any single-run evaluation may not capture the natural variations due to stochastic processes in training. This entails that random fluctuations such as slight differences in initialization order or mini-batch composition are not fully explored.",
+                    "impact": "Without exploring multiple runs, the experiment might underestimate the true variability in the model performance, potentially leading to overconfident conclusions about the optimal core expert ratio.",
+                    "possible_modifications": [
+                        "Perform multiple runs using different random seeds to ensure that observed performance is not an artifact of a particular seed.",
+                        "Include error bars (e.g., standard deviation or standard error) to properly capture the variability in the accuracy measurements across runs.",
+                        "Aggregate results over several runs to provide a more robust estimate of the model's performance."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {
+                    "source": "Ambiguity in the measurement methodology of accuracy.",
+                    "description": "Systematic uncertainty might arise from whether the reported accuracy is averaged over multiple runs or comes from a single trial. This could introduce bias if measurement protocols do not account for methodological variability.",
+                    "impact": "This uncertainty can lead to a systematic bias in identifying the optimal ratio.",
+                    "possible_modifications": [
+                        "Clarify how accuracy is measured, ideally performing multiple runs and reporting aggregated results to reduce measurement bias.",
+                        "Consider revising the experimental design to include these measures in order to mitigate systematic uncertainty."
+                    ]
+                }
+            },
+            "no_answer": "After a comprehensive search of the repository, I couldn't find a specific script or set of scripts that directly answers the question about the optimal ratio between core and universal experts for CIFAR-100 accuracy. While the repository contains the necessary components (MoE model implementation in moejet/models/soft_moe.py, CIFAR-100 dataset configuration in moejet/configs/_base_/datasets/cifar100_bs16.py, and training scripts in tools/), there is no ready-made experiment script that evaluates different core expert ratios (5/6, 2/3, 1/2, 1/3, 1/6) on CIFAR-100 to determine which achieves the highest accuracy. To answer this question, one would need to create multiple configuration files with different core/universal expert ratios and run separate training jobs, which would require significant code modifications beyond what's available in the repository."
+        },
+        {
+            "question": "Does more MoE layers lead to better performance? Compare different JetMoE configurations (MoE layers from layer 11 to 12, from 9 to 12, from 7 to 12, and from 5 to 12) performance on the CIFAR-100 dataset.",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate the performance of adding different numbers of MoE layers in JetMoE configurations.\n    - **Objective:** \n    Determine if more MoE layers consistently enhance model accuracy on the CIFAR-100 dataset.\n\n2. **Testing Dataset:** \n    - CIFAR-100\n\n3. **Comparative Evaluation:**  \n    - MoE model with different MoE layer configuration:\n        - layers 11-12\n        - layers 9-12\n        - layers 7-12\n        - layers 5-12\n    - For all configuration: core = 98, univ = 196\n\n4. **Evaluation Metrics:**\n    - Record accuracy for each MoE configuration.\n    \n5. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n\n    - **Hyparameter setting on ViT-T**:\n        - C-100: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1",
+            "expected_outcome": "Results indicate that more Sphero MoE layers generally enhance performance, though placing it before layer 7 slightly hurt the performance.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "dataset": [
+                            "CIFAR-100"
+                        ],
+                        "training_hyperparameters": "fixed settings (e.g., batch size, total epochs, optimizer type, seed 3407, GPU type)"
+                    },
+                    "independent_variables": {
+                        "MoE_layer_configuration": [
+                            "layers 11-12",
+                            "layers 9-12",
+                            "layers 7-12",
+                            "layers 5-12"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "model_performance": "accuracy on CIFAR-100 dataset"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "model_performance": "The exact performance metric (accuracy, F1 score, etc.) is not explicitly defined in the hypothesis, although the expected outcome implies accuracy improvements."
+                    },
+                    "possible_modifications": {
+                        "modification_model_performance": [
+                            "Specify and vary the performance metrics (e.g., top-1 accuracy, top-5 accuracy) to add more detail to the dependent variable."
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "CIFAR-100 dataset",
+                        "Fixed training hyperparameters (batch size, total epochs, optimizer type, seed 3407, GPU type)",
+                        "MoE layers integration module",
+                        "Different MoE layer configurations (layers 11-12, layers 9-12, layers 7-12, layers 5-12)",
+                        "Performance evaluation component (model accuracy)"
+                    ],
+                    "setup_steps": [
+                        "Prepare the CIFAR-100 dataset",
+                        "Initialize the model with fixed training hyperparameters",
+                        "Integrate MoE layers according to specified configurations",
+                        "Run comparative experiments across MoE layer configurations",
+                        "Evaluate and record the model performance (accuracy) on CIFAR-100"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Model initialization",
+                            "description": "Using pre-trained checkpoints with the Checkpoint Recycling algorithm introduces additional processing steps."
+                        },
+                        {
+                            "source": "MoE component interactions",
+                            "description": "Adjusting the layers where MoE modules are applied while keeping other parameters constant may lead to complex interdependencies."
+                        }
+                    ]
+                }
+            },
+            "experiment_setup_ambiguity": {
+                "experiment_setup_ambiguity": {
+                    "ambiguous_setup_steps": [
+                        "Performance evaluation metric: The hypothesis implies accuracy improvement, but it does not explicitly define the metric (e.g., top-1 accuracy, top-5 accuracy, etc.)",
+                        "Configuration details: The process for integrating MoE layers starting from alternate layers is not fully detailed."
+                    ],
+                    "possible_modifications": {
+                        "modification_model_performance": [
+                            "Specify and vary the performance metrics (e.g., include both top-1 and top-5 accuracy) to add more detail and clarity to the dependent variable."
+                        ]
+                    }
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "model_performance": {
+                            "modifications": [
+                                "Specify and vary the performance metrics (e.g., top-1 accuracy, top-5 accuracy) to add more detail to the dependent variable."
+                            ]
+                        }
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Fixed training settings with a constant seed versus potential random perturbations",
+                    "description": "The experiment uses a fixed seed (3407) and fixed training hyperparameters, thereby minimizing random variation in gradient updates and model initialization. However, if the experiment were modified to allow random variations (e.g., by randomly selecting which layers integrate MoE modules or randomly dropping tokens during processing), this would introduce random uncertainty.",
+                    "impact": "Introducing randomness could destabilize gradient updates, lead to variability in the model performance metrics (e.g., accuracy), and reduce reproducibility across runs.",
+                    "possible_modifications": [
+                        "Vary the random seed or introduce intentional noise (such as randomly dropping tokens) during training to assess the robustness of the model performance under random fluctuations.",
+                        "Randomly vary the starting layer for MoE integration during training to simulate random uncertainty and test its impact on performance."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {}
+            },
+            "no_answer": "After thoroughly searching the repository, I couldn't find a specific script or set of scripts that directly answer the experiment question about comparing different JetMoE configurations (MoE layers from layer 11 to 12, from 9 to 12, from 7 to 12, and from 5 to 12) on the CIFAR-100 dataset. The repository contains configuration files for JetMoE with specific MoE layer configurations (e.g., layers 6-11 in vit_tiny_dual_moe_timm_21k_ft.py) and a CIFAR-100 dataset configuration (cifar100_bs16.py), but there's no script that specifically runs the experiment with the four different MoE layer configurations mentioned in the question. While it would be possible to modify the existing configuration files to run this experiment, there isn't a ready-made script that directly answers the question."
+        },
+        {
+            "question": "Does having more experts lead to better performance? Compare different JetMoE configurations (core:32, univ:64 vs. core:64, univ:128) performance on the CIFAR-100 dataset.",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Investigate the effect of increasing the number of experts on the performance of MoE models.\n    - **Objective:** \n    Determine if configurations with more experts provide higher accuracy on the CIFAR-100 dataset.\n\n2. **Testing Dataset:** \n    - CIFAR-100\n\n3. **Comparative Evaluation:**  \n    - MoE model with different expert numbers:\n        - Core:32, Univ:64\n        - Core:64, Univ:128\n    - Both configurations have MoE layer 7-12\n    - Other setup remain consistent between configurations\n\n4. **Evaluation Metrics:**\n    - Record accuracy for each MoE configuration.\n    \n5. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n\n    - **Hyparameter setting on ViT-T**:\n        - C-100: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1",
+            "expected_outcome": "Models with more experts exhibit improved accuracy,highlighting the benefits of increased expert specialization and diversity.",
+            "design_complexity": {
+                "design_complexity": {
+                    "constant_variables": {
+                        "dataset": "CIFAR-100",
+                        "training_settings": "Fixed training configuration as detailed in setup and Appendix (including hyperparameters, optimizer, training epochs, etc.)"
+                    },
+                    "independent_variables": {
+                        "MoE_configuration": [
+                            "(Core:32, Univ:64)",
+                            "(Core:64, Univ:128)"
+                        ]
+                    },
+                    "dependent_variables": {
+                        "accuracy": "Model accuracy on CIFAR-100 as a measure of performance"
+                    }
+                }
+            },
+            "design_ambiguity": {
+                "design_ambiguity": {
+                    "ambiguous_variables": {
+                        "method": "The method section is empty, leaving ambiguity on how the experiments are exactly conducted and controlled.",
+                        "baseline_comparison": "It is not explicit whether other factors (e.g., training epochs, learning rate schedules, etc.) are fully controlled between configurations."
+                    },
+                    "possible_modifications": {
+                        "mask_existing_variables": [
+                            "Mask details of the training procedure or hyperparameter settings to require further clarification."
+                        ],
+                        "introduce_new_variables": [
+                            "Add additional MoE configurations (e.g., different splits of core and universal experts) to explore a broader range of values.",
+                            "Introduce a variable for the training duration or learning rate schedule to study their interaction with expert numbers."
+                        ]
+                    }
+                }
+            },
+            "experiment_setup_complexity": {
+                "experiment_setup_complexity": {
+                    "components": [
+                        "CIFAR-100 dataset as the fixed data source",
+                        "Fixed training configuration (hyperparameters, optimizer, training epochs as detailed in Appendix and setup)",
+                        "MoE model configurations (Core:32, Univ:64 vs Core:64, Univ:128)",
+                        "Pre-trained checkpoints from ImageNet-21k and the Checkpoint Recycling mechanism for initializing successor models",
+                        "Defined dependent variable: model accuracy on CIFAR-100"
+                    ],
+                    "setup_steps": [
+                        "Obtain and preprocess the CIFAR-100 dataset with the fixed split",
+                        "Initialize models with the specified MoE configurations",
+                        "Load pre-trained weights using the Checkpoint Recycling algorithm",
+                        "Configure the fixed training settings as outlined in Appendix and setup",
+                        "Train the models with different MoE setups under controlled conditions",
+                        "Evaluate model accuracy on the CIFAR-100 dataset to compare performance"
+                    ],
+                    "optional_other_sources_of_complexity": [
+                        {
+                            "source": "Checkpoint Recycling Integration",
+                            "description": "Incorporating the recycling process to initialize MoE models from pre-trained dense checkpoints adds an additional integration step."
+                        },
+                        {
+                            "source": "MoE Configuration Management",
+                            "description": "Handling multiple configurations (varying numbers of core and universal experts) increases complexity in experiment design and analysis."
+                        }
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "experiment_constraints": {
+                    "resource_constraints": {},
+                    "time_constraints": {},
+                    "money_constraints": {},
+                    "possible_modifications": {
+                        "resource_constraints": [],
+                        "time_constraints": [],
+                        "money_constraints": []
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "random_uncertainty": {
+                    "source": "Inherent stochasticity in training dynamics",
+                    "description": "Even with a fixed training configuration and constant training seed, subtle stochasticity may still occur from sources such as mini-batch order or non-deterministic GPU operations. Although these variances are expected to be minimal, they could still introduce random uncertainty in the accuracy measurements.",
+                    "impact": "Slight fluctuations in measured accuracy might not be solely attributable to the MoE configuration differences, potentially obscuring the true effect of increasing expert numbers.",
+                    "possible_modifications": [
+                        "Randomly modify minor aspects of the training process (e.g., randomizing mini-batch order or perturbing learning rate slightly) to test the robustness of the observed trends.",
+                        "Vary a parameter such as dropout rates in a controlled manner to assess the sensitivity of results to random initialization noise.",
+                        "Introduce controlled random token dropping in pre-processing as an additional handle to study the impact of random uncertainty."
+                    ]
+                }
+            },
+            "systematic_uncertainty": {
+                "systematic_uncertainty": {}
+            },
+            "no_answer": "After thoroughly exploring the repository, I could not find specific scripts that directly answer the experiment question about comparing JetMoE configurations (core:32, univ:64 vs. core:64, univ:128) on CIFAR-100. While the repository contains code for JetMoE and has configuration files for ImageNet experiments with different expert configurations, there are no ready-made scripts specifically for CIFAR-100 experiments with varying expert numbers. The repository has base configuration files for CIFAR-100 dataset and JetMoE configuration files for ImageNet, but combining these would require creating new configuration files and potentially modifying the code, which goes beyond the scope of finding existing scripts that directly answer the question."
+        },
+        {
+            "question": "Does the MoE Jetpack approach\u2014involving SpheroMoE layers integrated from layers 7 to 12\u2014accelerate model convergence during fine-tuning on downstream datasets compared to training the baseline model from scratch?",
+            "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate the convergence speed of MoE Jetpack compared to a baseline model.\n    - **Objective:** \n    Quantify the epochs needed to reach target accuracies using MoE Jetpack versus a MoE model trained from scratch.\n\n2. **Testing Dataset:** \n    - CIFAR-100\n    - ImageNet-1k\n\n3. **Comparative Evaluation:**  \n    - MoE Jetpack model: V-JetMoE-T with SpheroMoE layers from layers 7 to 12, 98 core experts, and 196 universal experts\n    - Baseline model trained from scratch: Random init MoE\n\n4. **Evaluation Metrics:**\n    - Epochs to target accuracy (77% for ImageNet-1K, 76% for CIFAR-100).\n    \n5. **Training Settings Configuration:**\n    - **Image Resolution**: 224\u00d7224\n    - **Optimizer**: AdamW\n    - **Base Learning Rate**: 4\u00d710^-3\n    - **Weight Decay**: 0.05\n    - **Optimizer Momentum**: \n    - \u03b21 = 0.9\n    - \u03b22 = 0.999\n    - **Batch Size**: 4096\n    - **Training Epochs**: 300\n    - **Learning Rate Schedule**: Cosine Decay\n    - **Warm-up Epochs**: 50\n    - **Warm-up Schedule**: Linear\n    - **Data Augmentation Techniques**:\n    - **RandAugment**: (9, 0.5)\n    - **Mixup**: 0.8\n    - **CutMix**: 1.0\n    - **Random Erasing**: 0.25\n    - **Label Smoothing**: 0.1\n    - **Layer Scale**: 1\u00d710^-6\n\n    - **Hyparameter setting on ViT-T**:\n        - C-100: batch size=512;warmup epochs=50;training epochs:300;drop path rate:0.1\n        - IN1K: batch size=4096;warmup epochs=50;training epochs:300;drop path rate:0",
+            "expected_outcome": "It is expected that the MoE Jetpack-enabled model will require roughly half (2x faster on ImageNet-1K) and one-eighth (8x faster on CIFAR-100) the number of epochs required by the baseline model trained from scratch. This outcome would validate that the integration of SpheroMoE layers with effective checkpoint recycling significantly accelerates convergence, as evidenced by faster attainment of the target accuracies and improved performance curves.",
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "target_accuracy_threshold": "Although examples (77% for ImageNet-1K and 76% for CIFAR-100) are provided, these thresholds may not be universally fixed and can vary based on experimental runs or fine-tuning.",
+                    "checkpoint_recycling_process": "The precise details and parameter adjustments for converting dense checkpoints into MoE model weights via checkpoint recycling are not fully specified.",
+                    "training_hyperparameters": "Minor hyperparameter adjustments for fine-tuning on different datasets (e.g., different batch sizes and drop path rates) are not exhaustively detailed, adding ambiguity to the exact configuration."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce multiple target accuracy thresholds as variables to evaluate sensitivity of convergence speed.",
+                        "Vary the ratio of core to universal experts to study changes in performance and resource allocation.",
+                        "Mask or modify certain training hyperparameters (such as learning rate or weight decay) to further isolate the impact of the model configuration on convergence.",
+                        "Evaluate alternative checkpoint recycling algorithms to examine how different initialization processes affect convergence speeds."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "MoE Jetpack approach based on checkpoint recycling",
+                    "SpheroMoE layers integrated from layers 7 to 12",
+                    "Pre-trained ImageNet-21k dense checkpoints used for initialization",
+                    "Baseline MoE model (trained from scratch with random initialization)",
+                    "Dual-path MoE architecture with 98 core experts and 196 universal experts",
+                    "Datasets: ImageNet-1K and CIFAR-100",
+                    "Standardized training configuration and distributed training pipeline"
+                ],
+                "setup_steps": [
+                    "Obtain and prepare pre-trained ImageNet-21k dense checkpoints",
+                    "Apply the checkpoint recycling process to convert dense weights into MoE model weights with integrated SpheroMoE layers",
+                    "Configure two experimental pipelines: one for the MoE Jetpack approach and one for the baseline model trained from scratch",
+                    "Adjust dataset-specific configurations (e.g., change base dataset settings for ImageNet-1K vs. CIFAR-100 and update hyperparameters such as batch size and drop path rate)",
+                    "Implement distributed training setup and ensure proper integration of learning rate schedules, data augmentation, and mixed precision training",
+                    "Train both models while monitoring convergence in terms of epochs required to reach target accuracies",
+                    "Plot and compare the accuracy versus epoch curves to evaluate convergence speed"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Checkpoint Recycling Process",
+                        "description": "The specific method for transforming dense checkpoint weights into MoE weights involves non-trivial weight reorganization and expert assignment, which adds complexity to the initialization procedure."
+                    },
+                    {
+                        "source": "Model Configuration Details",
+                        "description": "Integrating SpheroMoE layers into selected transformer blocks and managing dual-path architectures with 98 core experts and 196 universal experts introduces intricate parameter management and specialized training dynamics."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Target accuracy thresholds (77% for ImageNet-1K and 76% for CIFAR-100) which might vary across experimental runs",
+                    "Checkpoint recycling process details, including the exact parameter adjustments required during weight transformation",
+                    "Fine-tuning minor hyperparameters specific to each dataset that could influence convergence speed"
+                ],
+                "ambiguous_setup_steps": [
+                    "Precise implementation details for integrating SpheroMoE layers within the backbone model",
+                    "Exact procedures and parameter calibrations during the checkpoint recycling process",
+                    "Methodology for determining and validating if the target accuracy threshold has been consistently met during training"
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce multiple target accuracy thresholds as experimental variables to assess sensitivity in convergence speed",
+                        "Vary the ratio of core to universal experts to study their impact on performance and resource allocation",
+                        "Adjust or mask certain training hyperparameters (e.g., learning rate, weight decay) to isolate the effect of checkpoint recycling and model configuration",
+                        "Test alternative checkpoint recycling algorithms to evaluate the consistency of the initialization process on convergence behavior"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "Enforce a stricter model size constraint by reducing the number of experts (e.g., fewer than 98 core experts and 196 universal experts) while still aiming for the target convergence speeds as reported in Table 6 and Figure 5.",
+                            "Impose a reduced maximum number of training epochs to force convergence under tighter time constraints, thereby testing the model's efficiency in meeting the target accuracy thresholds (77% for ImageNet-1K and 76% for CIFAR-100) as specified in Table 12.",
+                            "Limit available compute resources by switching from high-end GPUs (e.g., RTX4090) to less powerful hardware, which challenges the method to achieve similar acceleration in convergence despite reduced resource capabilities."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Inherent stochastic noise in training dynamics, including mini-batch ordering and non-deterministic GPU computations",
+                "description": "Even with a fixed random seed and standardized training settings, factors such as mini-batch ordering and fluctuations in gradient updates introduce small randomness. This inherent stochasticity could lead to minor variability (typically <0.1%, but potentially slightly more under modified conditions) in the number of epochs required to meet target accuracy.",
+                "impact": "May cause small fluctuations in the measured convergence speeds between the MoE Jetpack approach and the baseline model trained from scratch, potentially affecting the precision of the reported acceleration benefits (e.g., 2x speed on ImageNet-1K, 8x speed on CIFAR-100, as seen in Table 12 and Figure 5).",
+                "possible_modifications": [
+                    "Introduce controlled random noise in gradient updates to further test the robustness of convergence.",
+                    "Vary mini-batch sampling orders or incorporate additional dropout randomness to simulate increased stochasticity.",
+                    "Use different random seeds across trials to quantify the range of variability in convergence measurements."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguities in target accuracy thresholds and details of the checkpoint recycling process",
+                "description": "The experimental setup includes systematic uncertainties due to ambiguities in the exact target accuracy thresholds (e.g., 77% for ImageNet-1K and 76% for CIFAR-100) and incomplete details regarding the checkpoint recycling process which transforms pre-trained ImageNet-21k dense checkpoints into MoE weights. These issues may introduce consistent biases in the convergence measurements.",
+                "impact": "May lead to systematic over- or underestimation of the convergence speed benefits attributed to the MoE Jetpack approach, affecting the reproducibility of reported acceleration results and potentially biasing interpretations of the performance gains.",
+                "possible_modifications": [
+                    "Evaluate alternative checkpoint recycling algorithms to ensure that the initialization process does not consistently bias convergence outcomes.",
+                    "Introduce multiple target accuracy thresholds as variables to assess the sensitivity of convergence speed measurements.",
+                    "Systematically vary the ratio of core to universal experts to isolate and analyze their impact on convergence behavior."
+                ]
+            },
+            "source": [
+                "/workspace/moejet/tools/gen_ViT_MoE_weight.py",
+                "/workspace/tools/dist_train.sh",
+                "/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py",
+                "/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_scratch.py"
+            ],
+            "usage_instructions": "To evaluate the convergence speed of MoE Jetpack compared to a baseline model trained from scratch:\n\n1. First, initialize the MoE weights using checkpoint recycling:\n   ```bash\n   python moejet/tools/gen_ViT_MoE_weight.py\n   ```\n   This script transforms dense checkpoints into MoE model weights with SpheroMoE layers.\n\n2. Train the MoE Jetpack model (with checkpoint recycling) on ImageNet-1K:\n   ```bash\n   CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py 4\n   ```\n\n3. Train the baseline MoE model from scratch on ImageNet-1K:\n   ```bash\n   CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh moejet/configs/timm/vit_tiny_dual_moe_timm_scratch.py 4\n   ```\n\n4. For CIFAR-100 experiments, modify the dataset configuration in both config files by changing the base dataset from:\n   ```python\n   _base_ = [\n       '../_base_/datasets/imagenet_bs64_swin_224.py',\n       '../_base_/default_runtime.py'\n   ]\n   ```\n   to:\n   ```python\n   _base_ = [\n       '../_base_/datasets/cifar100_bs16.py',\n       '../_base_/default_runtime.py'\n   ]\n   ```\n   And update the hyperparameters in the config files to match those specified in the experiment (batch size=512, warmup epochs=50, training epochs=300, drop path rate=0.1).\n\n5. Monitor the training logs to determine the number of epochs required for each model to reach the target accuracies (77% for ImageNet-1K, 76% for CIFAR-100).\n\nThe experiment will demonstrate that the MoE Jetpack-enabled model requires roughly half the number of epochs on ImageNet-1K and one-eighth the number of epochs on CIFAR-100 compared to the baseline model trained from scratch.",
+            "requirements": [
+                "Step 1: Load necessary libraries and set up environment variables for the weight generation process (/workspace/moejet/tools/gen_ViT_MoE_weight.py:1-44)",
+                "Step 2: Define utility functions for data preparation and feature analysis to extract activation patterns from the teacher model (/workspace/moejet/tools/gen_ViT_MoE_weight.py:46-143)",
+                "Step 3: Implement graph partitioning algorithms (metis, spectral clustering, louvain) to analyze neuron co-activation patterns (/workspace/moejet/tools/gen_ViT_MoE_weight.py:165-209)",
+                "Step 4: Create functions to generate indices for expert selection using different strategies (random, uniform, L1/L2 norm, activation patterns) (/workspace/moejet/tools/gen_ViT_MoE_weight.py:212-354)",
+                "Step 5: Implement the expert indices generation function that selects which neurons from the teacher model will be assigned to each expert in the MoE model (/workspace/moejet/tools/gen_ViT_MoE_weight.py:357-385)",
+                "Step 6: Create the weight selection function that transforms dense model weights into MoE model weights by selecting and reorganizing parameters (/workspace/moejet/tools/gen_ViT_MoE_weight.py:427-709)",
+                "Step 7: Implement the dual-path conversion function to create specialized core and universal experts with different capacities (/workspace/moejet/tools/gen_ViT_MoE_weight.py:806-857)",
+                "Step 8: Implement the MoE weight stitching function to combine weights from different sources into the final MoE model (/workspace/moejet/tools/gen_ViT_MoE_weight.py:763-803)",
+                "Step 9: In the main function, load the teacher model (ViT), analyze its features, generate expert indices, select weights, and save the transformed MoE checkpoint (/workspace/moejet/tools/gen_ViT_MoE_weight.py:860-957)",
+                "Step 10: Configure the training script to use distributed training with the specified number of GPUs (/workspace/tools/dist_train.sh:1-19)",
+                "Step 11: Set up the MoE model configuration with checkpoint recycling for fine-tuning, including dual-path MoE architecture with core and universal experts (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:1-196)",
+                "Step 12: Set up the MoE model configuration for training from scratch with the same architecture but without loading pre-trained weights (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_scratch.py:1-194)",
+                "Final Step: Train both models and compare the number of epochs required to reach target accuracy thresholds (77% for ImageNet-1K, 76% for CIFAR-100) (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:168-168, /workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_scratch.py:166-166)"
+            ],
+            "agent_instructions": "Your task is to implement a system for evaluating the convergence speed of MoE (Mixture of Experts) models with checkpoint recycling compared to training from scratch. The system should:\n\n1. Create a weight generation script that transforms dense Vision Transformer (ViT) checkpoints into MoE model weights with SpheroMoE layers. This script should:\n   - Load a pre-trained ViT model\n   - Analyze neuron activation patterns to determine which neurons should be assigned to which experts\n   - Support multiple selection strategies (random, uniform, L1/L2 norm-based, activation pattern-based)\n   - Transform the weights into a dual-path MoE architecture with core experts and universal experts\n   - Save the transformed weights as a checkpoint\n\n2. Create configuration files for two experimental setups:\n   - A MoE model that uses checkpoint recycling (initialized from transformed weights)\n   - A baseline MoE model trained from scratch\n   - Both configurations should use the same architecture: a ViT-Tiny with dual-path MoE layers in the later transformer blocks\n\n3. The configurations should support:\n   - Distributed training across multiple GPUs\n   - Proper learning rate scheduling with warmup\n   - Mixed precision training\n   - Data augmentation techniques like Mixup and CutMix\n   - Evaluation at regular intervals\n\n4. The system should be flexible enough to work with different datasets (ImageNet-1K and CIFAR-100) by changing the base configuration.\n\nThe goal is to demonstrate that MoE models initialized with checkpoint recycling converge significantly faster than those trained from scratch, while achieving the same target accuracy.\n",
+            "masked_source": [
+                "/workspace/moejet/tools/gen_ViT_MoE_weight.py",
+                "/workspace/tools/dist_train.sh",
+                "/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py",
+                "/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_scratch.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "training_hyperparameters": "Same settings used in both experiments, including image resolution (224\u00d7224), optimizer (AdamW), base learning rate (4\u00d710^-3), weight decay (0.05), warmup epochs (50), training epochs (300), data augmentation (RandAugment, Mixup, CutMix, Random Erasing), and drop path rate as specified.",
+                    "model_architecture": "ViT-Tiny backbone with dual-path MoE configuration (SpheroMoE layers from layers 7 to 12, 98 core experts, and 196 universal experts) as detailed in Table 6."
+                },
+                "independent_variables": {
+                    "model_initialization": [
+                        "MoE Jetpack approach using checkpoint recycling from pre-trained ImageNet-21k checkpoints",
+                        "Baseline model trained from scratch (random initialization)"
+                    ],
+                    "dataset": [
+                        "ImageNet-1K",
+                        "CIFAR-100"
+                    ]
+                },
+                "dependent_variables": {
+                    "convergence_epochs": "The number of epochs required to reach target accuracy thresholds (77% for ImageNet-1K and 76% for CIFAR-100), as illustrated in Table 12 and Figure 5."
+                }
+            }
+        },
+        {
+            "mode": "B",
+            "question": "How can you use MoE Jetpack to perform image classification on a custom image using a pre-trained model?",
+            "method": "Create a script that uses the MoE Jetpack framework to classify an image using a pre-trained model. The script should load a model, process an input image, and output the classification results.",
+            "expected_outcome": "A JSON output containing the classification results for the input image, including the predicted class and confidence score.",
+            "source": [
+                "/workspace/demo/image_demo.py"
+            ],
+            "usage_instructions": "1. Import necessary libraries including mmengine.fileio and rich for output formatting\n2. Define a main function that parses command-line arguments for image path, model name, and optional checkpoint path\n3. Create an ImageClassificationInferencer with the specified model and checkpoint\n4. Run inference on the input image\n5. Format and display the classification results\n6. Handle any errors that might occur during model loading or inference",
+            "requirements": [
+                "Step 1: Import necessary libraries including ArgumentParser, mmengine.fileio.dump, rich.print_json, and mmpretrain.apis.ImageClassificationInferencer (/workspace/demo/image_demo.py:2-7)",
+                "Step 2: Define a main function that parses command-line arguments for image path, model name, and optional parameters like checkpoint path (/workspace/demo/image_demo.py:10-24)",
+                "Step 3: Create an ImageClassificationInferencer with the specified model and checkpoint, handling potential errors if the model is unavailable (/workspace/demo/image_demo.py:27-36)",
+                "Step 4: Run inference on the input image using the created inferencer (/workspace/demo/image_demo.py:37)",
+                "Step 5: Process the inference results by removing verbose prediction scores (/workspace/demo/image_demo.py:39)",
+                "Final Step: Format and display the classification results as JSON (/workspace/demo/image_demo.py:40)"
+            ],
+            "agent_instructions": "Create a Python script that uses the MoE Jetpack framework to perform image classification on a custom image using a pre-trained model. Your script should:\n\n1. Accept command-line arguments for:\n   - Input image path\n   - Model name or configuration\n   - Optional checkpoint path\n   - Optional display settings\n\n2. Use the mmpretrain library's ImageClassificationInferencer to load the specified model and perform inference on the input image.\n\n3. Handle potential errors gracefully, especially if the requested model is unavailable.\n\n4. Process the inference results to make them more readable (e.g., removing overly verbose data).\n\n5. Output the classification results in a well-formatted JSON structure that includes the predicted class and confidence information.\n\nThe script should be user-friendly and provide clear error messages if something goes wrong during model loading or inference.",
+            "design_complexity": {
+                "constant_variables": {
+                    "frameworks_and_libraries": "MoE Jetpack, mmpretrain, mmengine.fileio, rich.print_json; these remain fixed throughout the experiment"
+                },
+                "independent_variables": {
+                    "input_image_path": "The file path provided at runtime for the custom image",
+                    "model_name": "The identifier or configuration string of the pre-trained model to be used (e.g., a MoE Jetpack version derived from a dense checkpoint)",
+                    "checkpoint_path": [
+                        "Optional: a user-specified path to a checkpoint",
+                        "Default: the checkpoint produced via checkpoint recycling from a pre-trained ImageNet-21k model"
+                    ],
+                    "display_settings": "Optional parameters that determine how the output classification results are formatted or presented"
+                },
+                "dependent_variables": {
+                    "classification_result": "A JSON output that includes the predicted class and associated confidence scores"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_name": "It is unclear whether the model_name should be a simple string identifier or a full configuration, especially given the conversion from a dense checkpoint to a MoE model using checkpoint recycling.",
+                    "optional parameters": "The exact scope and range of optional parameters (e.g., display settings) and how they affect the inference process are not fully specified."
+                },
+                "possible_modifications": {
+                    "mask_variable_values": [
+                        "Mask the specific checkpoint path so that the agent must infer or request its value from defaults.",
+                        "Mask display settings to force the agent to consider what output formatting parameters might be relevant."
+                    ],
+                    "new_variables": [
+                        "Include an inference_threshold variable to allow users to set a minimum confidence level.",
+                        "Introduce a variable to select specific expert configurations within the MoE Jetpack model (e.g., choosing a subset of experts)."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "MoE Jetpack framework",
+                    "mmpretrain library (ImageClassificationInferencer)",
+                    "mmengine.fileio for file operations",
+                    "rich.print_json for output formatting",
+                    "Command-line ArgumentParser for handling input parameters",
+                    "Pre-trained model checkpoint (via checkpoint recycling from ImageNet-21k)"
+                ],
+                "setup_steps": [
+                    "Import all required libraries (mmengine.fileio, rich, mmpretrain, ArgumentParser)",
+                    "Define the main function to parse command-line arguments (input image path, model name, and optional checkpoint path and display settings)",
+                    "Create an ImageClassificationInferencer instance using the specified model and checkpoint, with error handling in case the model is unavailable",
+                    "Run inference on the input image using the created inferencer",
+                    "Process inference results by removing verbose prediction scores to simplify output",
+                    "Format and display the classification results as a well-structured JSON output"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Optional parameters",
+                        "description": "Optional checkpoint path and display settings introduce additional configuration requirements, necessitating default value fallbacks and additional error handling."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "model_name: It is unclear whether this should be a simple string identifier or a full configuration object given the conversion from a dense checkpoint to a MoE model using checkpoint recycling.",
+                    "optional parameters: The exact scope and impact of optional display settings and other optional parameters on the inference process are not fully specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Creation of the ImageClassificationInferencer: The handling of model conversion discrepancies (dense checkpoint to MoE) and the potential variability in checkpoints is not elaborated.",
+                    "Processing of inference results: It is ambiguous which parts of the verbose prediction output should be removed to achieve a user-friendly JSON structure."
+                ],
+                "possible_modifications": {
+                    "mask_variable_values": [
+                        "Mask the specific checkpoint path so that the agent must infer or request its value from defaults.",
+                        "Mask display settings to force the agent to consider what output formatting parameters might be relevant."
+                    ],
+                    "introduce_new_variables": [
+                        "Include an inference_threshold variable to allow users to set a minimum confidence level.",
+                        "Introduce a variable to select specific expert configurations within the MoE Jetpack model."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Consider testing with a less powerful GPU (instead of the RTX4090 used in the experiments) to evaluate performance under tighter hardware resource availability.",
+                        "Reduce the number of experts per MoE layer (e.g., lowering the core/universal expert ratio) to simulate constraints on available GPU memory and computational resources."
+                    ],
+                    "time_constraints": [
+                        "Impose a maximum allowable inference time so that the script must return classification results within a certain latency threshold.",
+                        "Limit the number of optimization or processing iterations during model conversion to evaluate the efficiency improvements under stricter time budgets."
+                    ],
+                    "money_constraints": [
+                        "Select cost-effective cloud deployment options (or local resources) that restrict budget usage, thereby requiring the implementation to closely monitor resource consumption."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications in image processing and expert selection",
+                "description": "If a method such as random token (or image patch) dropping is inadvertently used during inference or model conversion, it may lead to instability in gradient updates and inconsistency in expert activation. This random perturbation introduces variability in the final classification output.",
+                "impact": "This could result in fluctuations in predicted class labels and confidence scores, thereby causing an unpredictable impact on accuracy and reliability of the classification results.",
+                "possible_modifications": [
+                    "Remove any random dropping mechanisms during preprocessing and ensure deterministic handling of image patches.",
+                    "Set fixed random seeds and disable stochastic behaviors during inference to maintain consistency.",
+                    "Revert to using pre-defined criteria for token dropping (if necessary) rather than random selection."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Misalignment in the dense-to-MoE conversion process via checkpoint recycling",
+                "description": "A one-time, systematic bias might be introduced if the checkpoint recycling process used to convert a dense ImageNet-21k checkpoint into MoE initialization weights is misconfigured or applied incorrectly. This may consistently affect all inferences by biasing expert activations or degrading feature representations.",
+                "impact": "The systematic error can lead to a constant misclassification bias across images, affecting the overall reliability and fairness of the classification results in a consistent manner (e.g., favoring or disfavoring certain classes).",
+                "possible_modifications": [
+                    "Ensure the checkpoint recycling algorithm is correctly implemented and validated, as per configurations outlined in Table 6.",
+                    "Use a clean and verified ImageNet-21k pre-trained checkpoint to minimize inherent bias.",
+                    "Introduce verification steps to compare inference outputs with established baselines, and consider reprocessing the checkpoint if systematic errors are detected."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you convert a pre-trained dense Vision Transformer (ViT) model into a Mixture of Experts (MoE) model using MoE Jetpack's checkpoint recycling technique?",
+            "method": "Use the MoE Jetpack framework to convert a pre-trained dense ViT model into a Mixture of Experts model by initializing MoE weights from the dense model using the checkpoint recycling technique.",
+            "expected_outcome": "A saved MoE model checkpoint file that has been initialized from a dense model using the checkpoint recycling technique.",
+            "source": [
+                "/workspace/moejet/tools/gen_ViT_MoE_weight.py"
+            ],
+            "usage_instructions": "1. Set up the configuration for the MoE model, including the number of experts, MoE layers, and other hyperparameters\n2. Load the pre-trained dense model (e.g., ViT-Tiny or ViT-Small)\n3. Prepare a dataset for feature analysis (optional, depending on the selection method)\n4. Analyze the features of the dense model to determine which weights to select for each expert\n5. Generate expert indices based on the feature analysis or using random/uniform selection\n6. Extract and organize the selected weights from the dense model\n7. Initialize the MoE model with the selected weights\n8. Save the initialized MoE model checkpoint",
+            "requirements": [
+                "Step 1: Set up the environment by importing necessary libraries (PyTorch, timm, etc.) and configuring paths for data, models, and saving checkpoints (/workspace/moejet/tools/gen_ViT_MoE_weight.py:1-44)",
+                "Step 2: Prepare a dataset for feature analysis by loading a subset of ImageNet and creating a data loader (/workspace/moejet/tools/gen_ViT_MoE_weight.py:46-58)",
+                "Step 3: Implement feature analysis functions to collect activation statistics from the dense model, including L1/L2 norms and activation patterns (/workspace/moejet/tools/gen_ViT_MoE_weight.py:61-162)",
+                "Step 4: Implement graph partitioning methods (spectral clustering, METIS, Louvain) to analyze co-activation patterns (/workspace/moejet/tools/gen_ViT_MoE_weight.py:165-209)",
+                "Step 5: Implement different weight selection strategies (random, uniform, feature-based, graph-based) to determine which weights from the dense model should be assigned to each expert (/workspace/moejet/tools/gen_ViT_MoE_weight.py:212-354)",
+                "Step 6: Generate expert indices based on the chosen selection strategy (/workspace/moejet/tools/gen_ViT_MoE_weight.py:357-407)",
+                "Step 7: Extract and organize the selected weights from the dense model, reshaping them appropriately for the MoE architecture (/workspace/moejet/tools/gen_ViT_MoE_weight.py:427-709)",
+                "Step 8: Combine and stitch together the weights from different sources to create the complete MoE model (/workspace/moejet/tools/gen_ViT_MoE_weight.py:763-803)",
+                "Step 9: Save the initialized MoE model checkpoint to disk (/workspace/moejet/tools/gen_ViT_MoE_weight.py:954-957)",
+                "Final Step: Execute the main function that orchestrates the entire process of converting a dense ViT model to an MoE model (/workspace/moejet/tools/gen_ViT_MoE_weight.py:860-959)"
+            ],
+            "agent_instructions": "Your task is to create a script that converts a pre-trained dense Vision Transformer (ViT) model into a Mixture of Experts (MoE) model using the checkpoint recycling technique from the MoE Jetpack framework. This technique initializes MoE weights from a dense model to improve training efficiency.\n\nThe script should:\n\n1. Load a pre-trained dense ViT model (such as ViT-Tiny or ViT-Small) using a library like timm or a similar framework.\n\n2. Configure the MoE model parameters, including:\n   - Number of experts\n   - Which transformer layers to convert to MoE layers\n   - Whether to convert entire transformer blocks or just MLP layers\n   - Expert selection strategy\n\n3. Implement multiple strategies for selecting which weights from the dense model should be assigned to each expert:\n   - Simple strategies: random selection, uniform selection\n   - Feature-based strategies: selection based on L1/L2 norms or activation patterns\n   - Graph-based strategies: selection based on co-activation patterns\n\n4. For feature-based and graph-based strategies, implement a feature analysis process that:\n   - Loads a small dataset (e.g., subset of ImageNet)\n   - Passes data through the dense model\n   - Collects activation statistics at specified layers\n   - Uses these statistics to guide expert weight selection\n\n5. Extract and organize the selected weights from the dense model, reshaping them appropriately for the MoE architecture.\n\n6. Support dual-path MoE models with both core experts and universal experts if needed.\n\n7. Save the initialized MoE model checkpoint to disk.\n\nThe goal is to create a working implementation that can take any pre-trained dense ViT model and convert it into an MoE model with initialized weights, ready for further fine-tuning or evaluation.",
+            "design_complexity": {
+                "constant_variables": {
+                    "checkpoint_recycling": "The use of the checkpoint recycling technique is constant, as it is the core method for initializing MoE weights from a dense model across all experiments."
+                },
+                "independent_variables": {
+                    "pretrained_model": [
+                        "ViT-Tiny",
+                        "ViT-Small"
+                    ],
+                    "MoE_model_parameters": "Includes variables such as the number of experts (core and universal), the specific transformer layers converted to MoE layers, and whether to convert entire blocks or just MLP layers",
+                    "expert_selection_strategy": [
+                        "random",
+                        "uniform",
+                        "feature-based",
+                        "graph-based"
+                    ],
+                    "feature_analysis_dataset": [
+                        "subset of ImageNet"
+                    ]
+                },
+                "dependent_variables": {
+                    "saved_checkpoint": "The final output is a saved MoE model checkpoint file that has been initialized using the checkpoint recycling technique, ready for further fine-tuning or evaluation"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "MoE_layer_placement": "It is not explicitly defined which transformer layers should be converted into MoE layers (e.g., whether to convert only MLP layers or entire transformer blocks), leading to ambiguity in configuration.",
+                    "expert_weight_selection_method": "While multiple weight selection strategies are mentioned, the exact criteria and thresholds for feature-based or graph-based selection are not clearly specified."
+                },
+                "possible_modifications": {
+                    "mask_expert_selection_details": [
+                        "Omit detailed descriptions of the feature analysis metrics to test if the system can infer a robust selection process."
+                    ],
+                    "expand_layer_conversion_options": [
+                        "Include additional choices for layer conversion (e.g., converting attention layers versus MLP layers) to increase variability."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Pre-trained dense Vision Transformer (ViT) model (e.g., ViT-Tiny or ViT-Small)",
+                    "MoE Jetpack framework for checkpoint recycling",
+                    "Checkpoint recycling algorithm for initializing MoE weights from a dense model",
+                    "MoE model configuration module (defining number of experts, MoE layers, conversion options)",
+                    "Feature analysis tools (for L1/L2 norm, activation statistics, graph partitioning methods such as spectral clustering, METIS, Louvain)",
+                    "Weight extraction and organization module (to reshape and assign dense model weights to experts)",
+                    "Dataset loader (loading a subset of ImageNet for feature analysis)",
+                    "Required libraries (PyTorch, timm, etc.)"
+                ],
+                "setup_steps": [
+                    "Configure environment by importing necessary libraries and setting data/model checkpoint paths",
+                    "Set up the MoE model configuration (including number of experts, MoE layer placement, and conversion type \u2013 entire transformer blocks vs. only MLP layers)",
+                    "Load a pre-trained dense ViT model using an appropriate library (e.g., timm)",
+                    "Prepare a dataset (subset of ImageNet) and create a data loader for feature analysis",
+                    "Implement and run feature analysis functions to collect activation statistics from the dense model",
+                    "Apply graph partitioning methods to analyze co-activation patterns if using graph-based expert selection",
+                    "Implement various weight selection strategies (random, uniform, feature-based, and graph-based) to decide which weights to assign to each expert",
+                    "Generate expert indices based on the chosen selection strategy and extract/organize selected weights from the dense model",
+                    "Initialize the MoE model with the organized weights using the checkpoint recycling technique",
+                    "Save the initialized MoE model checkpoint to disk"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple Expert Selection Strategies",
+                        "description": "The implementation supports several strategies (random, uniform, feature-based, graph-based), increasing complexity in both code and decision-making."
+                    },
+                    {
+                        "source": "MoE Layer Placement and Conversion Options",
+                        "description": "There is complexity in deciding which transformer layers (e.g., MLP only or entire blocks including attention layers) to convert."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "MoE layer placement: It is not clearly defined whether to convert only MLP layers or entire transformer blocks, leading to ambiguity in configuration.",
+                    "Expert weight selection method: Although multiple strategies are provided, the exact criteria, thresholds, and evaluation metrics for feature-based and graph-based selection are not specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Feature analysis step: The process to collect, analyze, and utilize activation statistics (e.g., L1/L2 norms, co-activation patterns) lacks detailed instructions.",
+                    "Configuration of conversion options: The instructions state to set up the MoE model including which layers to convert, but the decision criteria remain vague."
+                ],
+                "possible_modifications": {
+                    "mask_expert_selection_details": [
+                        "Omit detailed descriptions of feature analysis metrics so that users must infer or design a robust selection process on their own."
+                    ],
+                    "expand_layer_conversion_options": [
+                        "Include additional choices for layer conversion, such as converting only the attention layers versus only the MLP layers or both, to increase configuration variability."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "experiment_setup": {
+                        "modifications": [
+                            "Omit detailed descriptions of the feature analysis metrics (mask expert selection details) so that users must infer or design a robust selection process independently.",
+                            "Expand layer conversion options by including additional choices (e.g., converting only attention layers, only MLP layers, or full transformer blocks) to increase configuration variability."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random selection strategy for expert weight assignment",
+                "description": "The process of choosing weights via random or uniform selection methods introduces variability. Although the checkpoint recycling technique is constant, using random selection for expert weight assignment may lead to slight instability in gradient updates and unpredictable variations in the final MoE model's performance.",
+                "impact": "This randomness can result in minor fluctuations in training outcomes and accuracy, making experimental results less consistent across runs.",
+                "possible_modifications": [
+                    "Replace random selection with deterministic feature-based or graph-based strategies to ensure more consistent weight assignment.",
+                    "Employ a fixed random seed during expert index generation to reduce variability.",
+                    "Aggregate results over multiple runs to average out randomness-induced variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Ambiguous configuration for MoE layer conversion and expert weight selection criteria",
+                "description": "There is systematic uncertainty originating from the ambiguous choices regarding which transformer layers to convert (entire transformer blocks vs. only MLP layers) and the insufficiently defined criteria for feature-based or graph-based weight selection. This ambiguity can introduce consistent biases in the converted model.",
+                "impact": "The unclear configuration may lead to a systematic misassignment of weights from the dense model, resulting in persistent performance differences or degradation that are not due to random chance.",
+                "possible_modifications": [
+                    "Refine and explicitly define the conversion configuration, such as specifying whether to convert only MLP layers or entire blocks, and detailing the selection thresholds for feature-based or graph-based methods.",
+                    "Incorporate robust validation methods (possibly supported by insights from Tables 6 and related figures) to systematically verify the accuracy of weight conversion and MoE layer integration.",
+                    "Expand the experimental setup to include additional configuration options and a validation step to assess the impact of each conversion choice."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can you fine-tune a MoE Jetpack model on the ImageNet dataset using the provided configuration?",
+            "method": "Use the MoE Jetpack framework to fine-tune a pre-initialized MoE model on the ImageNet dataset using the provided configuration file.",
+            "expected_outcome": "A trained MoE model with improved accuracy compared to the dense baseline model.",
+            "source": [
+                "/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py",
+                "/workspace/tools/dist_train.sh"
+            ],
+            "usage_instructions": "1. Ensure the MoE model has been initialized using checkpoint recycling\n2. Set up the training configuration, including batch size, learning rate, and other hyperparameters\n3. Configure the optimizer with layer-wise learning rate decay\n4. Set up the learning rate scheduler with warm-up and cosine annealing\n5. Run the distributed training script with the appropriate configuration file\n6. Monitor the training progress and validation accuracy\n7. Save and evaluate the fine-tuned model",
+            "requirements": [
+                "Step 1: Import the MoE Jetpack module to access the MoE model architecture and components (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:6-8)",
+                "Step 2: Configure the ImageNet dataset with appropriate data preprocessing, augmentation, and loading parameters (/workspace/moejet/configs/_base_/datasets/imagenet_bs64_swin_224.py:1-86)",
+                "Step 3: Set up the MoE model configuration with dual-path architecture, specifying core and universal experts (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:22-36, 38-77)",
+                "Step 4: Load the pre-initialized MoE model weights from checkpoint recycling (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:35)",
+                "Step 5: Configure the optimizer with AdamW and layer-wise learning rate decay for different model components (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:92-142)",
+                "Step 6: Set up the learning rate scheduler with warm-up phase and cosine annealing (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:144-159)",
+                "Step 7: Configure training parameters including epochs, validation interval, and checkpoint saving (/workspace/moejet/configs/timm/vit_tiny_dual_moe_timm_21k_ft.py:168-182)",
+                "Step 8: Launch distributed training using the PyTorch distributed module with the specified configuration (/workspace/tools/dist_train.sh:1-19)"
+            ],
+            "agent_instructions": "Your task is to fine-tune a Mixture of Experts (MoE) model on the ImageNet dataset using the MoE Jetpack framework. This involves setting up a configuration for a Vision Transformer (ViT) model with a dual-path MoE architecture and training it in a distributed environment.\n\nFollow these steps:\n\n1. Create a configuration file that:\n   - Imports the MoE Jetpack module\n   - Sets up the ImageNet dataset with appropriate data preprocessing and augmentations\n   - Configures a ViT model with dual-path MoE architecture, specifying parameters like number of experts, slots per expert, and which transformer layers should use MoE\n   - Loads pre-initialized model weights from checkpoint recycling\n   - Configures an AdamW optimizer with layer-wise learning rate decay\n   - Sets up a learning rate scheduler with warm-up phase and cosine annealing\n   - Defines training parameters (epochs, batch size, validation frequency)\n\n2. Create a distributed training script that:\n   - Takes the configuration file as input\n   - Launches the training process using PyTorch's distributed training capabilities\n   - Handles multi-GPU training\n\n3. The MoE model should have these key characteristics:\n   - Dual-path architecture with core experts and universal experts\n   - Mixture of Experts applied to specific transformer layers\n   - Layer-wise learning rate decay for different model components\n\nThe goal is to fine-tune the MoE model on ImageNet to achieve better accuracy than a comparable dense baseline model.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "ImageNet"
+                    ],
+                    "model_initialization": [
+                        "checkpoint recycling",
+                        "pre-trained dense checkpoint from ImageNet-21K"
+                    ],
+                    "training_framework": "PyTorch distributed training using the provided training script"
+                },
+                "independent_variables": {
+                    "moe_architecture": [
+                        "ViT with dual-path MoE",
+                        "MoE layer placement (layers 7-12)",
+                        "number of core experts (e.g., 98)",
+                        "number of universal experts (e.g., 196)"
+                    ],
+                    "optimizer_configuration": [
+                        "AdamW",
+                        "layer-wise learning rate decay"
+                    ],
+                    "lr_scheduler": [
+                        "warm-up phase",
+                        "cosine annealing"
+                    ],
+                    "training_hyperparameters": [
+                        "epochs",
+                        "batch size",
+                        "validation frequency"
+                    ]
+                },
+                "dependent_variables": {
+                    "model_accuracy": [
+                        "accuracy on ImageNet",
+                        "improvement over dense baseline"
+                    ],
+                    "training_progress": "tracked via validation accuracy and loss"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "training_hyperparameters": "Exact values for epochs, batch size, or learning rate are not explicitly provided in the task description.",
+                    "optimizer_configuration": "Specifics of the layer-wise decay parameters and any additional optimizer hyperparameters are not detailed.",
+                    "distributed_training_setup": "The hardware configuration (e.g., number of GPUs, nodes) for distributed training is not specified."
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Specify explicit values for training hyperparameters such as number of epochs, batch size, and initial learning rate.",
+                        "Define the exact decay rate values for layer-wise learning rate decay."
+                    ],
+                    "modification_2": [
+                        "Provide details about the distributed training hardware (e.g., GPU count, node configuration) to remove any ambiguity."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "MoE Jetpack framework",
+                    "Pre-initialized MoE model (ViT with dual-path MoE architecture)",
+                    "Checkpoint recycling from pre-trained dense checkpoints (ImageNet-21K)",
+                    "ImageNet dataset with preprocessing and augmentation setup",
+                    "Optimizer (AdamW with layer-wise learning rate decay)",
+                    "Learning rate scheduler (warm-up phase and cosine annealing)",
+                    "Distributed training infrastructure (PyTorch distributed training via provided script)",
+                    "Configuration files that specify model architecture, training hyperparameters, and dataset details"
+                ],
+                "setup_steps": [
+                    "Import the MoE Jetpack module and the associated configuration file",
+                    "Configure the ImageNet dataset with appropriate data preprocessing and augmentation (as specified in dataset config)",
+                    "Set up the dual-path MoE model with defined MoE layers (e.g., layers 7-12) including core experts and universal experts",
+                    "Load pre-initialized weights using checkpoint recycling from ImageNet-21K",
+                    "Configure the AdamW optimizer with layer-wise learning rate decay settings",
+                    "Set up the learning rate scheduler with a warm-up phase and cosine annealing",
+                    "Define training parameters such as epochs, batch size, and validation frequency",
+                    "Launch the distributed training process using the provided distributed training script"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Distributed Training Setup",
+                        "description": "Using PyTorch's distributed training requires careful configuration of multi-GPU or multi-node setups which adds to the system complexity."
+                    },
+                    {
+                        "source": "Hyperparameter Configuration",
+                        "description": "Multiple hyperparameters including learning rate, decay settings, warm-up schedule, and others need to be correctly tuned to achieve optimal performance."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Training hyperparameters: Exact values for epochs, batch size, and initial learning rate are not explicitly provided.",
+                    "Optimizer configuration: Specific decay rate values for the layer-wise learning rate decay parameters are not clearly detailed.",
+                    "Distributed training hardware: The number of GPUs or nodes and related hardware configuration details remain unspecified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Setting up layer-wise learning rate decay: While the procedure is mentioned, the exact parameter values and decay schedule are ambiguous.",
+                    "Distributed training launch: The distributed training script is provided but lacks details regarding hardware specifications and environment variables necessary for multi-GPU or multi-node configuration."
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Specify explicit values for training hyperparameters such as number of epochs, batch size, and initial learning rate."
+                    ],
+                    "modification_2": [
+                        "Define the exact decay rate values for the layer-wise learning rate decay within the optimizer configuration."
+                    ],
+                    "modification_3": [
+                        "Provide detailed instructions on the hardware setup for distributed training, including the number of GPUs and node configurations."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "If hardware limitations are encountered, one could constrain the available GPU resources by reducing the number of GPUs or the batch size\u2014forcing the use of a more limited compute environment."
+                    ],
+                    "time_constraints": [
+                        "A potential modification is to tighten the training schedule by reducing the number of epochs or training iterations, thereby requiring the model to reach competitive accuracy faster."
+                    ],
+                    "money_constraints": [
+                        "If compute cost is a concern, one could impose a constraint that limits the use of premium compute resources (such as high-end GPUs), which might require a more resource-efficient fine-tuning procedure."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Gradient updates and any potential stochastic regularization (e.g., dropout or random token dropping)",
+                "description": "Random uncertainty in this experiment could be introduced if methods such as randomly dropping tokens (instead of dropping only unimportant tokens) were used, which may destabilize gradient updates. Although the current configuration uses a fixed random seed (3407) to minimize such variability, any deviation from this stable setting (e.g., varying the dropout behavior or introducing random token modifications) could cause increased randomness in the training process.",
+                "impact": "Introducing random uncertainty would lead to greater fluctuations in convergence and prediction accuracy, making results less reproducible compared to the intended stable training outcomes observed in the paper (variability below 0.1%). It could also undermine comparisons with the dense baseline model.",
+                "possible_modifications": [
+                    "Remove modifications that drop random tokens and adhere strictly to the token dropping strategy that targets only unimportant tokens.",
+                    "Maintain use of a fixed random seed to ensure low variability during gradient updates.",
+                    "If investigating robustness, perform controlled experiments with multiple seeds and add error bars to capture and report any introduced variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset biases and ambiguities in preprocessing/distributed training setup",
+                "description": "Systematic uncertainty may be introduced if there are one-time modifications or biases in the dataset or training pipeline. For example, if the ImageNet dataset is modified in a biased way (such as by applying corrupt preprocessing steps or unbalanced augmentations) or if the distributed training hardware setup is not clearly specified and leads to configuration biases, the model may consistently over- or under-perform relative to the dense baseline.",
+                "impact": "A consistent bias in data preprocessing or hardware configuration would affect the generalizability of the fine-tuned MoE model, possibly skewing training outcomes and accuracy metrics. This could lead to reproducible but systematically biased results, which would compromise the claimed improvements over the dense model.",
+                "possible_modifications": [
+                    "Audit and verify the ImageNet data preprocessing and augmentation steps to ensure that no inadvertent bias (e.g., unequal portrayal of classes) is introduced.",
+                    "Provide explicit details for the distributed training environment (e.g., number of GPUs, node configurations) to eliminate uncertainty related to hardware setup.",
+                    "Evaluate the model on additional, unbiased datasets to ensure robustness against systematic data bias."
+                ]
+            }
+        }
+    ]
+}
