@@ -94,21 +94,23 @@ def process_plan(plan_data):
         banned_keywords = ['Warning:', '\x00']
         
         if workspace_dir != '' and os.path.exists(workspace_dir):
+            log_files = []
             workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
             for workspace_dir in workspace_dir_list:
-                log_files = [file for file in os.listdir(workspace_dir) if file.endswith('.txt')]
-                log_files += [file for file in os.listdir(workspace_dir) if file.endswith('.log')]
+                log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
+                log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
             
+            print(f"👦 Found log files {log_files}")
             for file in log_files:
-                with open(f"{workspace_dir}/{file}", 'r') as f:
+                with open(file, 'r') as f:
                     # remove duplicate lines in f.read() 
                     lines = f.readlines()
                     for line in lines: 
-                        if 'Epoch ' in line:
-                            if '100%' not in line:
-                                continue
-                            else:
-                                plan_results.append(line)
+                        # if 'Epoch ' in line:
+                        #     if '100%' not in line:
+                        #         continue
+                        #     else:
+                        #         plan_results.append(line)
                         
                         if not any(keyword in line for keyword in banned_keywords):
                             plan_results.append(''.join(c for c in line if c in string.printable))
@@ -298,5 +300,5 @@ def generate_report(config, plans):
 
     with open(report_name, "w") as file:
         file.write(response.content)
-    # print(f"Report saved to {report_name}")
+    print(f"Report saved to {report_name}")
     return report_name, results_file_name

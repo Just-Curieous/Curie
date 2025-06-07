@@ -96,7 +96,8 @@ report_filename = generate_report(config, plans)
             'source /curie/setup/env.sh && '
             'cd /curie && '
             '''eval "$(micromamba shell hook --shell bash)" && '''
-            'micromamba activate /opt/micromamba/envs/curie && python script.py'
+            'micromamba activate /opt/micromamba/envs/curie && python script.py &&'
+            f'mv /logs/{path_name}/* /tmp_logs'
         ]
         
         # print(f"Running Docker command: {' '.join(docker_cmd)}")
