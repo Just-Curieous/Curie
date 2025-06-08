@@ -579,14 +579,21 @@ def load_pdf(pdf_path: str) -> dict:
         chunks = text_splitter.split_documents(documents)
 
         # Create a vector index
-        # if 'AWS_ACCESS_KEY_ID' in os.environ:
-        #     embeddings = BedrockEmbeddings(
-        #         model_id='amazon.titan-embed-text-v2:0',
-        #         region_name=os.environ['AWS_REGION_NAME'],
-        #         # aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        #         # aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
-        #     )
-        if 'ORGANIZATION' in os.environ:
+        if 'AWS_ACCESS_KEY_ID' in os.environ:
+            from langchain_aws import BedrockEmbeddings
+            import boto3
+            bedrock_client = boto3.client(
+                'bedrock-runtime',
+                region_name=os.environ['AWS_REGION_NAME'],
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+            )
+            embeddings = BedrockEmbeddings(
+                model_id='amazon.titan-embed-text-v2:0',
+                client=bedrock_client
+            )  
+            curie_logger.info(f"Using BedrockEmbeddings with model: amazon.titan-embed-text-v2:0")
+        elif 'ORGANIZATION' in os.environ:
             endpoint = os.environ['AZURE_API_BASE'] 
             if "AZURE_API_BASE" in os.environ:
                 del os.environ["AZURE_API_BASE"] 
@@ -635,7 +642,7 @@ def query_pdf(question: str, pdf_path: str) -> dict:
             curie_logger.error(f"Error loading PDF: {str(e)}")
             return {"error": f"Error loading PDF: {str(e)}"}
         if "error" in load_result:
-            return {"error": f"PDF must be loaded first: {load_result['error']}"}
+            return {"error": f"{load_result['error']}"}
     
     try:
         curie_logger.info(f"Building index for PDF: {pdf_path}")
