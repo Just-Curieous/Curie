@@ -29,6 +29,7 @@ DEFAULT_TASK_CONFIG = {
     "workspace_name": "", # to be filled up by the user
     "dataset_dir": "", # to be filled up by the user
     "env_requirements": "", # to be filled up by the user
+    "code_instructions": "", # to be filled up by the user
 }
 
 DEFAULT_JOB_NAME = "default_research"
@@ -249,29 +250,40 @@ def execute_curie(question_filename: str, unique_id: str, iteration: int, task_c
     
     send_question_telemetry(task_config['log_filename'])
 
-def update_config(task_config: Optional[Dict[str, Any]] = None, 
-                 workspace_name: Optional[str] = None, 
+def prepare_config(task_config: Optional[Dict[str, Any]] = None, 
+                 codebase_dir: Optional[str] = None, 
                  dataset_dir: Optional[str] = None, 
+                 code_instructions: Optional[str] = None,
                  max_global_steps: int = 30,
                  env_requirements: Optional[str] = None) -> Dict[str, Any]:
     """Load and update task configuration with command line arguments."""
     # check if workspace_name is a valid path
-    if workspace_name and not os.path.exists(os.path.abspath(workspace_name)):
-        raise ValueError(f"Workspace name {workspace_name} is not a valid path.")
+    if codebase_dir and not os.path.exists(os.path.abspath(codebase_dir)):
+        raise ValueError(f"Codebase directory {codebase_dir} is not a valid path.")
     # check if dataset_dir is a valid path
     if dataset_dir and not os.path.exists(os.path.abspath(dataset_dir)):
         raise ValueError(f"Dataset directory {dataset_dir} is not a valid path.") 
     if env_requirements and not os.path.exists(os.path.abspath(env_requirements)):
         raise ValueError(f"Environment requirements file {env_requirements} is not a valid path.")
     
+    if code_instructions and not codebase_dir:
+        raise ValueError("Code instructions file is provided but codebase directory is not provided. \
+                        Please specify the codebase directory by `codebase_dir=''`.")
+    elif codebase_dir and not (code_instructions or os.path.exists(os.path.join(codebase_dir, "description.md"))):
+        raise ValueError("Codebase directory is provided but code instructions file is not provided or not found. \
+                        Please specify the code instructions by `code_instructions=''`.")
+    elif code_instructions:
+        with open(os.path.join(codebase_dir, "description.md"), "w") as f:
+            f.write(f"Code Instructions:\n{code_instructions}")
+        
     if task_config is None:
         task_config = DEFAULT_TASK_CONFIG
-        task_config['workspace_name'] = os.path.abspath(workspace_name) if workspace_name else task_config['workspace_name']
+        task_config['workspace_name'] = os.path.abspath(codebase_dir) if codebase_dir else task_config['workspace_name']
         task_config['dataset_dir'] = os.path.abspath(dataset_dir) if dataset_dir else task_config['dataset_dir']
-        task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else ''
+        task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else task_config['env_requirements']
         return task_config
 
-    task_config['workspace_name'] = os.path.abspath(workspace_name) if workspace_name else ''
+    task_config['workspace_name'] = os.path.abspath(codebase_dir) if codebase_dir else ''
     task_config['dataset_dir'] = os.path.abspath(dataset_dir) if dataset_dir else ''
     task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else ''
     # fill up the unspecified fields in the task config with DEFAULT_TASK_CONFIG
@@ -297,7 +309,8 @@ def validate_input(question_file: Optional[str],
 
 def experiment(api_keys: Optional[Dict[str, str]] = None, 
                dataset_dir: Optional[str] = None, 
-               workspace_name: Optional[str] = None, 
+               codebase_dir: Optional[str] = None, 
+               code_instructions: Optional[str] = None,
                question_file: Optional[str] = None, 
                question: Optional[str] = None, 
                task_config: Optional[Dict[str, Any]] = None, 
@@ -309,7 +322,7 @@ def experiment(api_keys: Optional[Dict[str, str]] = None,
         write_api_keys_to_env(api_keys)
     ensure_docker_installed()
     # Load and update configuration
-    task_config = update_config(task_config, workspace_name, dataset_dir, max_global_steps, env_requirements)
+    task_config = prepare_config(task_config, codebase_dir, dataset_dir, code_instructions, max_global_steps, env_requirements)
     
     print(f"Curie is running with the following configuration: {task_config}")
     

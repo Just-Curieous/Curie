@@ -75,8 +75,9 @@ result = curie.experiment(
     result = curie.experiment(
         api_keys=key_dict,
         question="Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?,
-        dataset_dir="",
-        workspace_name="/abs/path/starter_code/", # Change this to the path of your starter code
+        dataset_dir="`data_loader.py` will assit you load the dataset.",
+        codebase_dir="/abs/path/starter_code/", # Change this to the path of your starter code
+        code_instructions="",
         max_global_steps=50, # control your compute budget
     )
     ```
@@ -96,12 +97,12 @@ Please put your paper under the same directory of your starter code.
         api_keys=key_dict,
         question="Refer to the evaluation setup in `paper.pdf`. Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?",
         dataset_dir="/data",
-        workspace_name="/abs/path/starter_code", # Change this to the path of your starter code
+        codebase_dir="/abs/path/starter_code", # Change this to the path of your starter code
         max_global_steps=50, # control your compute budget
     )
     ```
 
-3. **Provide with your own environment**
+3. **Provide with your own complex environment**
 You can provide your own environment by providing an environment requirements file or pre-configuring a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
 
     - **Option 1**: Provide your environment requirements file `requirements.txt`:

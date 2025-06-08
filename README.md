@@ -101,7 +101,7 @@ result = curie.experiment(
     api_keys=key_dict,
     question="E.g. How to improve my prediction accuracy on my dataset.",
     dataset_dir="/abs/path/to/your/dataset",
-    workspace_name="[Optional] /abs/path/to/your/code",
+    codebase_dir="[Optional] /abs/path/to/your/code",
     env_requirements="[Optional] /abs/path/to/requirements.txt",
 )
 ```  
