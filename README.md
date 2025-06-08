@@ -71,7 +71,9 @@ key_dict = {
 }
 
 result = curie.experiment(api_keys=key_dict, 
-                          question="How does the choice of sorting algorithm impact runtime performance across different input distributions?")
+                          question="How does the choice of sorting algorithm impact runtime performance across different input distributions?",
+                          max_global_steps=10)
+
 ```
 * 🧾 **Auto-Generated Experiment Report**: [`logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
 

@@ -164,7 +164,7 @@ class CodeAgentTool(BaseTool):
             exp_log_dir_parts = self.config["log_filename"].split("/")[:-1]
             exp_log_dir = "/".join(exp_log_dir_parts)
             if dataset_dir:
-                prompt += f"\n\nDataset directory: {dataset_dir} (don't create synthetic data, use the real dataset)."
+                prompt += f"\n\nDataset directory: {dataset_dir} (Dataset is downloaded. Do not create synthetic data.)."
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
