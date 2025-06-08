@@ -85,6 +85,7 @@ result = curie.experiment(
 2. **Provide with your research paper**: 
 To provide more context for Curie, you can mention the necessary paper (`txt`, `pdf`, ...) in the question. 
 Please put your paper under the same directory of your starter code. 
+- *If you are using `AWS bedrock` API, please give permission to model `'amazon.titan-embed-text-v2:0'`*
     ```bash
     /abs/path/starter_code/
     ├── train.py # Python script for training
