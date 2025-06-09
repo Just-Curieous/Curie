@@ -106,18 +106,24 @@ Please put your paper under the same directory of your starter code.
 3. **Provide with your own complex environment**
 You can provide your own environment by providing an environment requirements file or pre-configuring a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
 
-    - **Option 1**: Provide your environment requirements file `requirements.txt`:
-    ```python
-    result = curie.experiment(api_keys=key_dict, 
-                              question="How does the choice of sorting algorithm impact runtime performance across different input distributions?", 
-                              env_requirements='/abs/path/requirements.txt')
-    ```
+    - **Option 1**: Put your environment requirements file `requirements.txt` under the `codebase_dir`:
+        ```bash
+        /abs/path/starter_code/
+        ├── train.py # Python script for training
+        └── requirements.txt # including the `package==version`
+        ```
+        Or you can specify separately:
+        ```python
+        result = curie.experiment(api_keys=key_dict, 
+                                question="How does the choice of sorting algorithm impact runtime performance across different input distributions?", 
+                                env_requirements='/abs/path/requirements.txt')
+        ```
     - **Option 2**: You can pre-configure your environment and name it as `venv` and put under your starter_code:
-    ```bash
-    starter_code/
-    ├── venv/ # exactly named as `venv`  
-    └── ... # the rest of your codebase
-    ```
+        ```bash
+        starter_code/
+        ├── venv/ # exactly named as `venv`  
+        └── ... # the rest of your codebase
+        ```
 
 4. **Generate a experiment report in the middle of Curie's experimentation process**
 
