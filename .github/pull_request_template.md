@@ -1,20 +1,24 @@
 ---
-name: Pull Request 
+name: Pull Request
 ---
 
 **Description**
-- Summary:
+  <!-- Briefly describe what this PR does. Include relevant context such as bug fixes, new features, or refactoring. -->
 
-**Expected Behavior**
-- Snapshot of Logging Details:
+**Related Issue(s)**
+<!-- issue number(s), if applicable -->
 
-**Performance Evaluation**
+**Changes**
+- [ ] Major changes listed here (e.g., added new component, refactored X)
+- [ ] Minor tweaks or fixes (e.g., docstring edits, bug fix for Y)
 
-This PR has been tested using the first quick start example, with the following performance metrics:
+**Checklist**
+- [ ] I have updated the corresponding `README.md`, documentation, or tutorials if applicable.
+<!-- - [ ] I have added or updated tests where relevant. -->
+<!-- - [ ] I have ensured all existing and new tests pass locally. -->
+<!-- - [ ] I have run lint checks (`ruff`, `black`, etc.) to comply with project code style. -->
+<!-- - [ ] I have documented new functions/classes or significant changes using docstrings. -->
 
-- Cost: $ (with Model:)
-- Correctness:
-- Number of Steps:
-- Execution Time:
-- Uploaded Log File (Optional):
+**Screenshots / Logs (optional)**
+- If applicable, include screenshots, logs, or results from experiments to demonstrate correctness or improvements.
 
