@@ -257,6 +257,10 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
                  max_global_steps: int = 30,
                  env_requirements: Optional[str] = None) -> Dict[str, Any]:
     """Load and update task configuration with command line arguments."""
+    codebase_dir = os.path.abspath(codebase_dir) if codebase_dir else ''
+    dataset_dir = os.path.abspath(dataset_dir) if dataset_dir else ''
+    env_requirements = os.path.abspath(env_requirements) if env_requirements else ''
+    
     # check if workspace_name is a valid path
     if codebase_dir and not os.path.exists(os.path.abspath(codebase_dir)):
         raise ValueError(f"Codebase directory {codebase_dir} is not a valid path.")
@@ -274,7 +278,12 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
     elif code_instructions:
         with open(os.path.join(codebase_dir, "description.md"), "w") as f:
             f.write(f"Code Instructions:\n{code_instructions}")
-        
+    
+    # check if requirements.txt exists in the codebase_dir
+    if codebase_dir and os.path.exists(os.path.join(codebase_dir, "requirements.txt")):
+        env_requirements = os.path.join(codebase_dir, "requirements.txt")
+        print(f"Found requirements.txt in the codebase directory {codebase_dir}. Using it as the environment requirements file.")
+    
     if task_config is None:
         task_config = DEFAULT_TASK_CONFIG
         task_config['workspace_name'] = os.path.abspath(codebase_dir) if codebase_dir else task_config['workspace_name']
