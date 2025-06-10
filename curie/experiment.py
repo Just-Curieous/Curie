@@ -26,6 +26,7 @@ DEFAULT_TASK_CONFIG = {
     "llm_verifier_system_prompt_filename": "prompts/simple/simple-llm-verifier.txt",
     "coding_prompt_filename": "prompts/simple/simple-coding.txt",
     "worker_system_prompt_filename": "prompts/simple/simple-worker.txt",
+    "max_global_steps": 50,
     "workspace_name": "", # to be filled up by the user
     "dataset_dir": "", # to be filled up by the user
     "env_requirements": "", # to be filled up by the user

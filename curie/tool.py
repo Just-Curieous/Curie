@@ -360,7 +360,7 @@ class PatcherAgentTool(BaseTool):
             openhands_log = self.extract_codeagent_output_snippet(
                 f"/{exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt"
             )
-            curie_logger.info(f"💻 Openhands results: {openhands_log[-len(openhands_log)//2:]}")
+            curie_logger.info(f"💻 Openhands results: {openhands_log}")
             # copy the starter file outside the container to the new directory inside the container
             # FIXME: this does not support running outside the container. 
 
@@ -390,9 +390,9 @@ class PatcherAgentTool(BaseTool):
 
         with open(filename, "r", encoding="utf-8") as f:
             lines = f.readlines()
-            bottom_10_percent = lines[-min(20, len(lines)):]  # Extract bottom 10% of the file
-            # bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
-            return "".join(bottom_10_percent)
+            bottom_50_lines = lines[-min(50, len(lines)):]  # Extract bottom 50 lines of the file
+
+            return "".join(bottom_50_lines)
 
 # Note: shell_tool itself can in theory be passed into the agent as a tool already https://python.langchain.com/docs/integrations/tools/bash/ https://www.youtube.com/watch?v=-ybgQK0BE-I
 @tool
