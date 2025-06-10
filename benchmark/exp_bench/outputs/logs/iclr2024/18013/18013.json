@@ -1,0 +1,667 @@
+{
+  "questions": [
+    {
+      "question": "For reasoning evaluations, will FuseLLM outperform Llama-2 on standard benchmarks BBH (total 27 tasks)?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FuseLLM outperforms Llama-2 on the standard benchmarks BBH, which consists of 27 tasks.\n\n    - **Objective:** \n    Compare overall performance and task-specific improvements between FuseLLM and Llama-2 7B models on the BBH benchmark.\n\n2. **Evaluation Metrics:**\n    -  Overall accuracy on BBH over 27 tasks\n\n3. **Comparative Evaluation:**\n    - Model:\n        - FuseLLM\n        - Baseline: Llama-2 7B\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n        - set combination weight \u03bb to 0.9",
+      "expected_outcome": "On average, FUSELLM demonstrates an average relative performance gain of 5.16% over the original Llama-2 across all 27 tasks. In specific tasks, the enhancements achieved by FUSELLM are substantial (e.g., from 54.40 to 65.20 in the Hyperbaton task).",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "training_setup": "Training framework details remain fixed: Huggingface Transformers with FlashAttention acceleration, AdamW optimizer with \u03b21=0.9, \u03b22=0.95, weight decay of 0.1, gradient clipping of 1.0, cosine learning rate schedule (max lr=1e-5, warmup ratio=0.008), and token packing. Moreover, the training is conducted for a single epoch (approximately 33 hours) on MiniPile.",
+            "benchmark": "Big-Bench Hard (BBH) is used consistently, consisting of 23 multiple-choice tasks and 4 free-form generation tasks covering categories like algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks."
+          },
+          "independent_variables": {
+            "llm_model": [
+              "FUSE LLM",
+              "Llama-2 7B"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metrics": "Overall accuracy on BBH tasks (aggregated performance across the 27 tasks)"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "training_epoch": "While a single epoch is specified, it is ambiguous whether training stability or effects over multiple epochs should be evaluated in extended experiments.",
+            "hyperparameter_tuning": "The paper provides detailed hyperparameters, but it is unclear if these values are optimal or if slight variations might yield different results, leaving room for ambiguities in replication."
+          },
+          "possible_modifications": {
+            "modification_epoch": [
+              "Extend the experiment to multiple epochs to understand learning dynamics and robustness."
+            ],
+            "modification_hyperparameters": [
+              "Explore different combinations of hyperparameters (e.g., adjusting the learning rate, weight decay, or warmup ratio) to gauge sensitivity."
+            ],
+            "modification_benchmarks": [
+              "Add other benchmarks or domains to further assess the generalization of FUSE LLM\u2019s improvements."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Huggingface Transformers framework",
+            "FlashAttention acceleration",
+            "AdamW optimizer (with \u03b21=0.9, \u03b22=0.95, weight decay=0.1, gradient clipping=1.0)",
+            "Cosine learning rate scheduler (max lr=1e-5, warmup ratio=0.008)",
+            "Token packing technique as per Raffel et al. (2020)",
+            "MiniPile training dataset",
+            "Big-Bench Hard (BBH) benchmark (23 multiple-choice tasks and 4 free-form generation tasks)",
+            "FUSE LLM and Llama-2 7B model setups",
+            "Hyperparameter combination weight \u03bb (set to 0.9)"
+          ],
+          "setup_steps": [
+            "Set up the training environment using Huggingface Transformers and integrate FlashAttention for acceleration",
+            "Configure the optimizer (AdamW) with specified hyperparameters (\u03b21, \u03b22, weight decay, gradient clipping)",
+            "Implement and initialize the cosine learning rate schedule with its max learning rate and warmup ratio",
+            "Incorporate token packing to group training instances as per Raffel et al. (2020)",
+            "Load and preprocess the MiniPile dataset for training",
+            "Retrain FUSE LLM for a single epoch (approximately 33 hours) using the detailed training configuration",
+            "Benchmark FUSE LLM against Llama-2 7B on BBH tasks and collect performance metrics",
+            "Run experiments"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Integration of Multiple LLM Knowledge",
+              "description": "The fusion of knowledge from different LLMs (as implemented in FUSE LLM) adds complexity in how information is combined and managed, including the set-up of the fusion function and control of the combination weight \u03bb."
+            },
+            {
+              "source": "Extended Evaluation Metrics",
+              "description": "Evaluating on a diverse set of 27 tasks (including both multiple-choice and free-form generation) requires careful metric aggregation and task-specific analysis."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Training Epoch: It is specified as a single epoch, yet there is ambiguity regarding whether effects over multiple epochs should be evaluated for training stability and performance robustness.",
+            "Hyperparameter Tuning: The detailed hyperparameters are provided; however, it is unclear if these are optimal or if variations might lead to different outcomes."
+          ],
+          "ambiguous_setup_steps": [
+            "Dataset Preprocessing: While the MiniPile dataset is used, the exact preprocessing steps (such as cleaning or formatting) are not specified.",
+            "Integration Details for Fusion Function: The procedure for combining source LLMs\u2019 knowledge (via the fusion function and weight \u03bb) is summarized but lacks granular implementation details.",
+            "Evaluation Metric Computation: The method to compute and aggregate metrics across varied tasks (multiple-choice and free-form generation) is not fully detailed, leading to ambiguity in replicating the evaluation."
+          ],
+          "possible_modifications": {
+            "modification_epoch": [
+              "Extend experiments to multiple epochs to analyze learning dynamics and robustness over time."
+            ],
+            "modification_hyperparameters": [
+              "Conduct a grid search over hyperparameters (e.g., learning rate, weight decay, warmup ratio) to evaluate sensitivities and optimize performance."
+            ],
+            "modification_benchmarks": [
+              "Augment the experimental design by integrating additional benchmarks (e.g., code generation, reading comprehension) to further assess the generalizability of FUSE LLM\u2019s improvements."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "For extended experiments, one could enforce constraints on GPU memory or processing power by requiring performance parity with a smaller variant of the models (e.g., using a mini version of Llama-2 instead of the full Llama-2 7B) to assess the impact of limited computational resources."
+            ],
+            "time_constraints": [
+              "As a modification, the training duration could be limited to less than the current 33-hour single-epoch setup to evaluate whether similar performance gains can be achieved under stricter time constraints."
+            ],
+            "money_constraints": []
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in training dynamics due to random factors",
+          "description": "The experiment relies on a single epoch of training using random seed initializations, token packing, and stochastic gradient updates. Variations such as random dropping of tokens or noise during gradient updates (as noted in previous work, e.g., dropping tokens to reduce pre-training costs) can lead to inconsistent model behavior from run to run, impacting the performance measured on standard benchmarks like BBH.",
+          "impact": "This randomness may lead to instability during training and cause variations in the aggregated performance metrics across the 27 BBH tasks. It can obscure the true comparative effect between FUSE LLM and Llama-2 due to fluctuations caused by random initialization and sampling.",
+          "possible_modifications": [
+            "Run experiments with multiple seeds and aggregate the results to reduce the impact of randomness.",
+            "Introduce controlled perturbations, such as intermittently dropping random tokens during training, to explicitly quantify the effect of random uncertainty.",
+            "Extend the training to multiple epochs to smooth out random fluctuations and better assess the model's robustness."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Bias introduced through fixed training configurations and dataset preprocessing",
+          "description": "Systematic uncertainty can arise from the one-time setting of hyperparameters (e.g., a fixed combination weight \u03bb=0.9, specific learning rate schedule, and token packing approach) and the inherent characteristics or biases in the MiniPile dataset used for training. Additionally, preprocessing choices for MiniPile and the fusion mechanism for combining knowledge from multiple LLMs might introduce a systematic bias favoring FUSE LLM over Llama-2.",
+          "impact": "Such systematic biases are likely to consistently skew the experimental outcomes, potentially overstating the performance gains of FUSE LLM on BBH tasks. This is reflected in the reported significant improvements and the consistency across multiple tasks as observed in the provided tables.",
+          "possible_modifications": [
+            "Experiment with alternative hyperparameter settings, including different \u03bb values or learning rate schedules, to test the stability of the observed performance gains.",
+            "Incorporate additional benchmarks and datasets beyond BBH to assess whether the systematic bias from the training setup is affecting generalization.",
+            "Retrieve and preprocess an independently sourced, clean dataset to mitigate any dataset-specific biases from MiniPile."
+          ]
+        }
+      }
+    },
+    {
+      "question": "For commonsense evaluations, will FuseLLM outperform Llama-2 on standard benchmarks CommenSense(CS) (zero-shot)?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FuseLLM outperforms Llama-2 in zero-shot scenarios on the Common Sense (CS) benchmark.\n\n    - **Objective:** \n    Compare the relative performance of FuseLLM and Llama-2 across a set of predefined CS tasks to assess generalization and reasoning capabilities.\n\n2. **Evaluation Metrics:**\n    -  Overall accuracy on CS tasks (zero-shot performance)\n\n3. **Comparative Evaluation:**\n    - Model:\n        - FuseLLM\n        - Baseline: Llama-2 7B\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Common Sense (CS), consisting of five tasks: ARC easy, ARC challenge, BoolQ, HellaSwag, OpenBookQA\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n        - set combination weight \u03bb to 0.9",
+      "expected_outcome": "The results demonstrate that FUSELLM consistently surpasses the baselines across all five tasks, achieving a relative performance improvement of 1.25% over Llama-2. Notably, substantial improvements from Llama-2 to FUSELLM are observed in the challenging ARC-challenge (2.40%) and OpenBookQA (2.71%) tasks, highlighting the effectiveness of FUSELLM in leveraging collective knowledge to address intricate problems.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "evaluation_protocol": "Zero-shot evaluation on the Common Sense (CS) benchmark",
+            "benchmark_tasks": "Fixed set of five CS tasks"
+          },
+          "independent_variables": {
+            "llm_model": [
+              "FuseLLM",
+              "Llama-2"
+            ],
+            "benchmark": [
+              "Common Sense (CS)"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metrics": "Overall accuracy on CS benchmark ( Avg.5 Tasks)"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "training_epoch": "While a single epoch is specified, it is ambiguous whether training stability or effects over multiple epochs should be evaluated in extended experiments.",
+            "hyperparameter_tuning": "The paper provides detailed hyperparameters, but it is unclear if these values are optimal or if slight variations might yield different results, leaving room for ambiguities in replication."
+          },
+          "possible_modifications": {
+            "modification_epoch": [
+              "Extend the experiment to multiple epochs to understand learning dynamics and robustness."
+            ],
+            "modification_hyperparameters": [
+              "Explore different combinations of hyperparameters (e.g., adjusting the learning rate, weight decay, or warmup ratio) to gauge sensitivity."
+            ],
+            "modification_benchmarks": [
+              "Add other benchmarks or domains to further assess the generalization of FUSE LLM\u2019s improvements."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "LLM models (FuseLLM and Llama-2)",
+            "Benchmark: Common Sense (CS) evaluation protocol",
+            "Fixed set of five CS tasks (ARC easy, ARC challenge, BoolQ, HellaSwag, OpenBookQA)",
+            "Evaluation metrics (Avg. 5 tasks scores on CS benchmark)",
+            "Zero-shot evaluation setup"
+          ],
+          "setup_steps": [
+            "Prepare and load the fixed CS benchmark tasks",
+            "Configure the evaluation protocol for zero-shot evaluation",
+            "Set up the two independent variables (FuseLLM and Llama-2) for evaluation",
+            "Run inference with both models on the CS tasks",
+            "Collect and compute the relative performance improvement based on CS benchmark scores",
+            "Analyze results comparing FuseLLM's performance improvement over Llama-2"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Hyperparameter and training details",
+              "description": "Reference to multiple training details (e.g., AdamW parameters, cosine learning rate schedule, packing, gradient clipping) which may indirectly influence evaluation reproducibility even though not all details are used in the evaluation"
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_setup_steps": [
+            "Evaluation protocol details: While it is stated that a zero-shot evaluation is used on the CS benchmark, details on how it is applied is not provided",
+            "Data preprocessing and benchmark curation: No explicit instructions are given on how the CS tasks are prepared or if any specific data cleaning or processing steps are required"
+          ],
+          "possible_modifications": {
+            "modification_1": [
+              "Mask or vary the evaluation prompt details to explore the impact of prompt engineering on performance."
+            ],
+            "modification_2": [
+              "Provide clearer documentation for the evaluation method, including scoring details and inference procedures, to remove ambiguity in the experimental setup."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "For extended experiments, enforce a resource constraint by requiring the evaluation to be performed with a reduced token budget. For example, instead of using the full model configurations, experiment with a smaller variant (e.g., substituting Llama-2 with Llama-2-mini) while aiming to maintain the observed performance improvement."
+            ],
+            "time_constraints": [
+              "Alternatively, impose a strict evaluation time limit per task to assess if similar improvements can be achieved under faster inference conditions."
+            ],
+            "money_constraints": []
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in training dynamics due to random factors",
+          "description": "The experiment relies on a single epoch of training using random seed initializations, token packing, and stochastic gradient updates. Variations such as random dropping of tokens or noise during gradient updates (as noted in previous work, e.g., dropping tokens to reduce pre-training costs) can lead to inconsistent model behavior from run to run, impacting the performance measured on standard benchmarks like CS.",
+          "impact": "This randomness may lead to instability during training and cause variations in the aggregated performance metrics across the 5 CS tasks. It can obscure the true comparative effect between FUSE LLM and Llama-2 due to fluctuations caused by random initialization and sampling.",
+          "possible_modifications": [
+            "Run experiments with multiple seeds and aggregate the results to reduce the impact of randomness.",
+            "Introduce controlled perturbations, such as intermittently dropping random tokens during training, to explicitly quantify the effect of random uncertainty.",
+            "Extend the training to multiple epochs to smooth out random fluctuations and better assess the model's robustness."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Bias introduced through fixed training configurations and dataset preprocessing",
+          "description": "Systematic uncertainty can arise from the one-time setting of hyperparameters (e.g., a fixed combination weight \u03bb=0.9, specific learning rate schedule, and token packing approach) and the inherent characteristics or biases in the MiniPile dataset used for training. Additionally, preprocessing choices for MiniPile and the fusion mechanism for combining knowledge from multiple LLMs might introduce a systematic bias favoring FUSE LLM over Llama-2.",
+          "impact": "Such systematic biases are likely to consistently skew the experimental outcomes, potentially overstating the performance gains of FUSE LLM on CS tasks. This is reflected in the reported significant improvements and the consistency across multiple tasks as observed in the provided tables.",
+          "possible_modifications": [
+            "Experiment with alternative hyperparameter settings, including different \u03bb values or learning rate schedules, to test the stability of the observed performance gains.",
+            "Incorporate additional benchmarks and datasets beyond CS to assess whether the systematic bias from the training setup is affecting generalization.",
+            "Retrieve and preprocess an independently sourced, clean dataset to mitigate any dataset-specific biases from MiniPile."
+          ]
+        }
+      }
+    },
+    {
+      "question": "For code generation evaluation, will FuseLLM outperform Llama-2 on standard benchmarks MultiPL-E(ME) (zero-shot)?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FuseLLM outperforms Llama-2 in zero-shot settings on the MultiPL-E benchmark.\n    - **Objective:** \n    Compare FUSELLM to Llama-2 to determine their effectiveness across various programming languages using the zero-shot pass@1 score metric.\n\n2. **Evaluation Metrics:**\n    -  Average Pass@1 score for 10 programming language task on ME benchmark(zero-shot performance)\n    - Set of 10 languages included in the MultiPL-E benchmark (C++, Go,Java, JavaScript, PHP, Python, R, Ruby, Rust, TypeScript)\n3. **Comparative Evaluation:**\n    - Model:\n        - FuseLLM\n        - Baseline: Llama-2 7B\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - MultiPL-E benchmark consisting of 10 tasks (C++, Go,Java, JavaScript, PHP, Python, R, Ruby, Rust, TypeScript)\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n        - set combination weight \u03bb to 0.9",
+      "expected_outcome": "We observe that FUSELLM outperforms Llama-2 in 9 out of the 10 tasks, with a notable enhancement in the pass@1 score for specific programming languages such as R, increasing from 4.97 to 5.84.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "evaluation_setting": [
+              "MultiPL-E benchmark",
+              "zero-shot evaluation",
+              "pass@1 score as the evaluation metric"
+            ]
+          },
+          "independent_variables": {
+            "llm_model": [
+              "FUSELLM",
+              "Llama-2"
+            ],
+            "programming_language": "The set of 10 programming languages used in the MultiPL-E benchmark (with R being one notable example)"
+          },
+          "dependent_variables": {
+            "performance_metric": [
+              "average pass@1 score on total 10 task/language"
+            ]
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "training_epoch": "While a single epoch is specified, it is ambiguous whether training stability or effects over multiple epochs should be evaluated in extended experiments.",
+            "hyperparameter_tuning": "The paper provides detailed hyperparameters, but it is unclear if these values are optimal or if slight variations might yield different results, leaving room for ambiguities in replication."
+          },
+          "possible_modifications": {
+            "modification_epoch": [
+              "Extend the experiment to multiple epochs to understand learning dynamics and robustness."
+            ],
+            "modification_hyperparameters": [
+              "Explore different combinations of hyperparameters (e.g., adjusting the learning rate, weight decay, or warmup ratio) to gauge sensitivity."
+            ],
+            "modification_benchmarks": [
+              "Add other benchmarks or domains to further assess the generalization of FUSE LLM\u2019s improvements."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Benchmark: MultiPL-E",
+            "Evaluation setting: zero-shot evaluation with pass@1 score",
+            "LLM Models: FuseLLM and Llama-2",
+            "Programming language set: 10 programming languages (including R)",
+            "Performance metrics: average pass@1 scores on total 10 task/language"
+          ],
+          "setup_steps": [
+            "Configure the evaluation environment based on the MultiPL-E benchmark",
+            "Set up the zero-shot evaluation procedure with the pass@1 metric",
+            "Prepare and run experiments for both FuseLLM and Llama-2 across the set of programming languages",
+            "Collect performance data (pass@1 scores) for each programming language and average them"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Hyperparameter settings and training framework",
+              "description": "Details such as the combination weight \u03bb, optimizer settings, and training duration add complexity to reproducing the experiment."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_setup_steps": [
+            "How the prompts are designed and applied across tasks is unclear."
+          ],
+          "possible_modifications": {
+            "modification_add_variable": [
+              "Introduce a new variable to compare results using different prompting strategies (e.g., zero-shot vs. few-shot evaluations)."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Enforce stricter compute or memory limits by, for example, substituting some LLMs with smaller variants (e.g., a mini version) to simulate resource scarcity."
+            ],
+            "time_constraints": [
+              "Reduce the number of evaluation iterations (e.g., by limiting the set of programming languages or the number of tasks) to achieve faster overall experiment turnaround."
+            ],
+            "money_constraints": [
+              "Opt for free or open-source models and infrastructure to control expenses, or limit the use of cost-incurring API calls during evaluation."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in prompt design and evaluation procedures",
+          "description": "The experimental method does not detail the prompt construction, which may result in random fluctuations in performance measurements (e.g., pass@1 scores). Such variability might arise from random selection or dropping of tokens in the input, influencing the final observed performance of the models.",
+          "impact": "Random fluctuations due to these ambiguities can lead to unstable gradient updates during model evaluation and inconsistent performance measures across repeated experiments, making it harder to compare FuseLLM and Llama-2 reliably.",
+          "possible_modifications": [
+            "Introduce controlled random token dropping during prompt formulation to assess the impact of random noise on performance.",
+            "Vary the random seed settings for prompt generation and evaluation to quantify the inherent randomness in the observed metrics.",
+            "Randomly shuffle the order of tasks or evaluation instances to simulate and study variations across multiple runs."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Bias introduced through fixed training configurations and dataset preprocessing",
+          "description": "Systematic uncertainty can arise from the one-time setting of hyperparameters (e.g., a fixed combination weight \u03bb=0.9, specific learning rate schedule, and token packing approach) and the inherent characteristics or biases in the MiniPile dataset used for training. Additionally, preprocessing choices for MiniPile and the fusion mechanism for combining knowledge from multiple LLMs might introduce a systematic bias favoring FUSE LLM over Llama-2.",
+          "impact": "Such systematic biases are likely to consistently skew the experimental outcomes, potentially overstating the performance gains of FUSE LLM on ME tasks. This is reflected in the reported significant improvements and the consistency across multiple tasks as observed in the provided tables.",
+          "possible_modifications": [
+            "Experiment with alternative hyperparameter settings, including different \u03bb values or learning rate schedules, to test the stability of the observed performance gains.",
+            "Incorporate additional benchmarks and datasets beyond ME to assess whether the systematic bias from the training setup is affecting generalization.",
+            "Retrieve and preprocess an independently sourced, clean dataset to mitigate any dataset-specific biases from MiniPile."
+          ]
+        }
+      }
+    },
+    {
+      "question": "Does using more source LLMs improve the target model performance on benchmark BBH? (Compare Llama-2, Llama-2 + MPT and FuseLLm(which is Llama-2 + MPT + OpenLLaMA))",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Examine whether using more source LLMs enhances performance on the BBH benchmark by comparing distinct configurations of Llama-2, Llama-2 + MPT, and FUSELLM (Llama-2 + MPT + OpenLLaMA).\n    - **Objective:** \n    Identify performance gains as the number of integrated source models increases from one to three within the target Llama-2 model.\n\n2. **Evaluation Metrics:**\n    - Overall accuracy on BBH over 27 tasks\n3. **Comparative Evaluation:**\n    - Model:\n        - Llama-2 only (1 source model)\n        - Llama-2 + MPT (2 source models)\n        - FUSELLM: Llama-2 + MPT + OpenLLaMA (3 source models)\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n            - set combination weight \u03bb to 0.9",
+      "expected_outcome": "The performance of FUSELLM demonstrates apparent improvement as the number of models increases from 1 to 3. A consistent performance improvement is observed in BBH.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "target_model": "Llama-2 is consistently used as the target model throughout the experiment",
+            "evaluation_benchmark": "BBH is used as the evaluation benchmark for all experiments",
+            "training_conditions": "The continual training hyperparameters (e.g., static \u03bb and training duration) remain fixed across experiments"
+          },
+          "independent_variables": {
+            "source_llm_configuration": [
+              "Llama-2 only (1 source model)",
+              "Llama-2 + MPT (2 source models)",
+              "FUSELLM: Llama-2 + MPT + OpenLLaMA (3 source models)"
+            ],
+            "number_of_source_llms": "This is directly controlled by the configuration of source models (with values 1, 2, and 3)"
+          },
+          "dependent_variables": {
+            "performance_on_BBH": "Measured performance scores on the BBH benchmark",
+            "relative_performance_improvement": "Percentage improvement over the baseline Llama-2 performance across BBH tasks"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {}
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Target model: Llama-2 consistently used as the target across all configurations",
+            "Source models: Llama-2 only, Llama-2 + MPT, and FUSELLM (Llama-2 + MPT + OpenLLaMA)",
+            "Training framework based on Huggingface Transformers",
+            "Acceleration tool: FlashAttention",
+            "Continual training setup with fixed hyperparameters (e.g., static \u03bb, AdamW optimizer settings, cosine learning rate schedule)",
+            "Evaluation benchmark: average score over 10 Big-Bench Hard (BBH) tasks for reasoning performance"
+          ],
+          "setup_steps": [
+            "Ensure the training framework from Huggingface Transformers and FlashAttention are correctly installed and configured",
+            "Prepare the continual training environment with fixed hyperparameters (e.g., static \u03bb set to 0.9, single epoch training)",
+            "Configure the experiment to use the target model (Llama-2) and set constant variables (e.g., training conditions, evaluation benchmark BBH)",
+            "Vary the independent variable by setting up the source LLM configurations (1: Llama-2 only, 2: Llama-2 + MPT, 3: FUSELLM with Llama-2 + MPT + OpenLLaMA)",
+            "Execute the training process for each configuration",
+            "Measure performance on BBH using performance scores and compute relative performance improvements"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Data Handling and Preprocessing",
+              "description": "Packing multiple training instances into a single sequence requires careful handling of end-of-sequence tokens, which adds an extra layer of complexity."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {}
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Impose a restriction on available computation by requiring the use of a smaller target model (e.g., Llama-2-mini instead of Llama-2) to meet similar performance metrics, thereby simulating a limited GPU/memory budget."
+            ],
+            "time_constraints": [
+              "Reduce the training duration by limiting the single epoch to a shorter time to test if the fusion approach can still yield improvements within a compressed time budget."
+            ],
+            "money_constraints": [
+              "Restrict financial expenditure on compute by simulating a setting where only lower-cost computational resources are available, thus enforcing a cap on allowed resource spending."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Random token handling and fusion parameter variations",
+          "description": "In the experiment, if a random process (such as randomly dropping tokens or using dynamic, non-deterministic token alignment criteria) is mistakenly integrated into the fusion process, it could lead to instability during gradient updates and inconsistent performance scores on BBH. This mirrors the uncertainty introduced by modifying token dropping methods as seen in prior work (e.g., Gao et al. 2020 and the provided example).",
+          "impact": "The random modifications would likely result in fluctuating scores and inconsistent relative performance improvements across runs, making it harder to reliably measure whether increased numbers of source LLMs consistently enhance performance.",
+          "possible_modifications": [
+            "Remove any random token dropping techniques and use a fixed token alignment method.",
+            "Standardize the fusion function parameters (e.g., use a static \u03bb as described) so that randomness in the token combination process is minimized.",
+            "Ensure reproducibility by seeding all random operations during training and evaluation."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {}
+      }
+    },
+    {
+      "question": "For Alignment Criteria, does the proposed MinED method outperforms EM method, on benchmark BBH?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether the proposed MinED (Minimum Edit Distance) method for alignment criteria outperforms the EM (Exact Matching) method on the BBH benchmark.\n    - **Objective:** \n    Compare the effectiveness of MinED and EM alignment criteria by measuring performance on BBH tasks.\n\n2. **Evaluation Metrics:**\n    - Overall accuracy on BBH over 27 tasks\n3. **Comparative Evaluation:**\n    - Model: FUSELLM\n        - Alignment Criteria:\n            - EM (Exact Matching)\n            - MinED (Minimum Edit Distance)\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - For fusion function, use minimun cross-entropy (MinCE)\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n            - set combination weight \u03bb to 0.9",
+      "expected_outcome": "It is evident that the proposed MinEDmethod, which is based on minimum edit distance,consistently outperforms the EM method introduced by Fu et al.(2023), which relies on exact matching.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "benchmark": "BBH"
+          },
+          "independent_variables": {
+            "alignment_criteria": [
+              "EM",
+              "MinED"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metric": "Average Score measured on benchmark BBH of total 27 tasks"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {}
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Benchmark (BBH) loaded from Big-Bench",
+            "Alignment methods: EM method and MinED method based on minimum edit distance",
+            "Tokenization process: ensuring token alignment across multiple models using different tokenizers",
+            "Performance metric: Average Score measured on benchmark BBH of total 27 tasks"
+          ],
+          "setup_steps": [
+            "Load and preprocess the BBH benchmark dataset",
+            "Configure the two independent alignment criteria (EM and MinED) for token alignment",
+            "Integrate the alignment methods into the evaluation pipeline",
+            "Execute the experiments to measure the score for both EM and MinED on BBH",
+            "Collect and compare the performance outcomes as per the reported metrics"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Token alignment details",
+              "description": "Handling different tokenizers requires managing slight discrepancies in token sequences, as well as applying minimum edit distance computation which adds algorithmic complexity."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_setup_steps": [
+            "Details of the token alignment process: How the minimum edit distance is computed and how edge cases (e.g., slight token discrepancies) are handled is not fully described."
+          ],
+          "possible_modifications": {}
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "experimental_procedure": {
+              "modifications": [
+                "Specify the detailed experimental method and procedure for measuring performance on the BBH benchmark, including data preprocessing and token alignment (with the specific handling of minimum edit distance (MinED) computation)."
+              ]
+            }
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in token alignment execution",
+          "description": "If random modifications (for example, random token drops) are introduced instead of a deterministic token alignment using MinED, the process can introduce instability during gradient updates. This randomness can lead to variations in the performance scores when comparing the EM and MinED methods on the BBH benchmark.",
+          "impact": "Fluctuations in the measured performance metrics may occur, potentially causing inconsistent evaluation outcomes and obscuring the true benefits of the MinED approach over the EM method.",
+          "possible_modifications": [
+            "Remove or avoid random token dropping modifications; ensure the token alignment process follows a deterministic approach.",
+            "Set fixed random seeds throughout the experimental pipeline to ensure that the token alignment (and any inherently random components) remains consistent across runs."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {}
+      }
+    },
+    {
+      "question": "For Fusion Function, does FUSELLM with MinCE outperfomrs AvgCE on benchmark BBH?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate whether FUSELLM using MinCE outperforms AvgCE in terms of performance on the BBH benchmark.\n    - **Objective:** \n    Compare the effectiveness of two fusion functions, MinCE and AvgCE, within the FUSELLM framework to see which yields better results on BBH tasks.\n\n2. **Evaluation Metrics:**\n    - Overall accuracy on BBH over 27 tasks\n3. **Comparative Evaluation:**\n    - Model: FUSELLM\n        - Fusion Functions:\n            - MinCE\n            - AvgCE\n        - (1) MinCE: This function outputs the distribution matrix with the minimum cross-entropy score\n        - (2) AvgCE: This function produces a weighted average of the distribution matrices based on cross-entropy scores.\n\n4. **Settings for LLaMA-Adapter**:\n    - Benchmarks:\n        - Big-Bench Hard (BBH) including 23 multiple-choice tasks and 4 free-form generation tasks.\n        - Covers algorithmic reasoning, arithmetic reasoning, natural language understanding, world knowledge, and multilingual tasks.\n    - Training Configuration:\n        - Use the AdamW optimizer with specified hyperparameters (\u03b21=0.9,\u03b22=0.95), weight decay=0.1, gradient clipping at 1.0, Cosine learning rate schedule with max learning rate 1e\u22125, warmup ratio=0.008\n        - Training for a single epoch (approx. 33 hours) on MiniPile dataset for continual training\n        - Train the target LLM of Llama-27B using a batch size of 128 and a maximum length of 2048 on a single node equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory.\n        - To accelerate the training, employ packing (Raffel et al., 2020), where multiple training instances are grouped into a single sequence separated by end-of-sequence tokens, allowing for training on more tokens in each batch.\n    - Implementation Tools:\n        - Huggingface Transformers library and accelerated with FlashAttention\n        - The overall objective for our continual training consists of a weighted combination of the causal language modeling objective L_CLM and the fusion objective L_Fusion as follows:L = \u03bb * L_CLM + (1 - \u03bb) * L_Fusion\n            - set combination weight \u03bb to 0.9",
+      "expected_outcome": "The findings demonstrate that FUSELLM with MinCE consistently outperforms AvgCE. This can be attributed to the distortions introduced by the straightforward weighted summation used in AvgCE, which may diminish the distinct advantages of individual LLMs.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "model_architecture": "FUSELLM as implemented in the paper with fixed hyperparameters (e.g., single training epoch, and \u03bb set to 0.9)"
+          },
+          "independent_variables": {
+            "fusion_function": [
+              "MinCE",
+              "AvgCE"
+            ],
+            "benchmark": [
+              "BBH"
+            ]
+          },
+          "dependent_variables": {
+            "performance_metric": "Average Accuracy on benchmark BBH on total 27 tasks"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {}
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "FUSELLM training framework based on Huggingface Transformers",
+            "FlashAttention acceleration",
+            "AdamW optimizer with specific hyperparameters (\u03b21 = 0.9, \u03b22 = 0.95, weight decay 0.1, gradient clipping 1.0)",
+            "Cosine learning rate schedule with warmup ratio (0.008) and maximum learning rate (1e-5)",
+            "Training data handling using the packing strategy",
+            "Fusion functions module for integrating knowledge from multiple LLMs (MinCE and AvgCE)",
+            "Benchmark datasets (BBH for evaluation on general reasoning and others for additional evaluations)",
+            "Predefined constant variables (fixed hyperparameters such as \u03bb = 0.9, single training epoch)",
+            "Source LLMs integration (information from models like Llama-2, OpenLLaMA, and MPT)"
+          ],
+          "setup_steps": [
+            "Set up the training framework with Huggingface Transformers and FlashAttention",
+            "Configure the AdamW optimizer with the specified hyperparameters",
+            "Apply the cosine learning rate schedule with the designated warmup ratio",
+            "Implement data packing to group multiple training instances per sequence",
+            "Initialize the model with constant settings (FUSELLM architecture, fixed \u03bb, single epoch, etc.)",
+            "Integrate and align tokens from multiple source LLMs",
+            "Implement fusion functions (MinCE and AvgCE) for combining probabilistic outputs from source LLMs",
+            "Train FUSELLM on MiniPile",
+            "Evaluate on BBH benchmarks to assess performance improvements"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Fusion Function Implementation Details",
+              "description": "The paper references two fusion functions (MinCE and AvgCE) but does not fully specify the computation details; this integration of multiple LLMs\u2019 outputs increases complexity in implementation."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_setup_steps": [
+            "Implementation of Packing: While the packing mechanism is mentioned, the specific instructions on how to implement this method for grouping training instances are not fully detailed."
+          ],
+          "possible_modifications": {}
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Optionally, limit the granularity of the fusion-function implementation by abstracting the MinCE and AvgCE computations so that the experimenter must define these functions, thereby reducing reliance on detailed source code and potentially limiting resource usage for debugging."
+            ],
+            "time_constraints": [
+              "Optionally, tighten the training schedule by reducing the allowed training duration to simulate a scenario with limited computational time."
+            ],
+            "money_constraints": [
+              "Optionally, simulate a restricted budget scenario by mandating the use of less expensive compute resources, which may affect the choice of acceleration libraries or hardware, and could require efficiency adjustments in training."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic optimization and random token handling",
+          "description": "Due to the inherent randomness in training (e.g., stochastic gradient descent with AdamW, random initialization, and potential random dropping of tokens if such modifications are applied), the performance of fusion functions may vary across runs. This randomness can introduce instability in gradient updates and fluctuations in BBH performance metrics.",
+          "impact": "Results in variability of the measured performance (e.g., accuracy or BPB improvement on BBH), potentially making it difficult to ascertain whether MinCE truly outperforms AvgCE if some of the observed advantage is due to random noise.",
+          "possible_modifications": [
+            "Set deterministic seeds for initialization and training runs to minimize stochastic variability.",
+            "Avoid introducing random token dropping during preprocessing that is not part of the intended design.",
+            "Perform multiple independent training runs and average the results to mitigate random effects."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {}
+      }
+    }
+  ]
+}

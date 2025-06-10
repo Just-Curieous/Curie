@@ -1,0 +1,86 @@
+{
+    "questions": [
+        {
+            "hypothesis": "Does the choice of aggregation degrees in the LNAMD module affect the classification and segmentation performance on MVTec AD and VisA datasets?",
+            "method": "Conduct an ablation study by varying the aggregation degree settings for the LNAMD module. Specifically, test the following configurations: {1}, {3}, {5}, {1,3}, {3,5}, and {1,3,5} on both the MVTec AD and VisA datasets. For each configuration, calculate the image-level anomaly detection (AC) and pixel-level anomaly segmentation (AS) metrics (measured in AUROC percentages). Use the same pre-processing, backbone (ViT-L/14-336 pre-trained by OpenAI), and evaluation protocols as described in the paper. Compare the performance across configurations to determine the most effective aggregation degree setting.",
+            "expected_outcome": "Based on the results in Table 3, the optimal configuration is expected to be {1,3,5}, which achieves an AC of 97.8% and AS of 97.3% on MVTec AD, and an AC of 92.8% and AS of 98.7% on VisA. This result would validate that combining multiple aggregation degrees improves the performance over single-degree setups.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "hypothesis": "Does the selection of different sample strategies in the MSM module influence the overall anomaly detection performance?",
+            "method": "Perform an ablation study on the MSM module by testing various sample strategies on the MVTec AD and VisA datasets. The strategies include: using the minimum anomaly score, maximum anomaly score, mean anomaly score, and combinations such as '30% + min', '30% + max', and '30% + mean'. For each strategy, measure the image-AUROC and pixel-AUROC. Ensure that all other experimental settings (e.g., using the same backbone, image resolution, and pre-processing steps) remain unchanged.",
+            "expected_outcome": "According to Table 4, it is expected that the '30% + mean' strategy will produce superior performance, with image-AUROC and pixel-AUROC values matching those of the best overall configuration (e.g., 97.8% AC and 97.3% AS on MVTec AD, 92.8% AC and 98.7% AS on VisA). This would indicate that combining a minimum percentage (30%) with the mean statistic yields a more robust anomaly score estimation than single measures.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "hypothesis": "Does the integration of the RsCIN module enhance the anomaly classification performance on industrial datasets?",
+            "method": "Conduct controlled experiments to compare the performance of the MuSc model with and without the RsCIN module. Use the MVTec AD and VisA datasets to measure classification metrics such as AUROC, F1-max, and AP. Implement two sets of experiments: one with the RsCIN module enabled and one with it disabled, keeping all other parameters (e.g., backbone, pre-processing, and anomaly scoring modules) constant. Evaluate the performance differences with statistical significance if possible.",
+            "expected_outcome": "Based on the findings in Table 5, the experiments with the RsCIN module are expected to show improved classification performance. For example, on MVTec AD, inclusion of RsCIN should elevate AUROC, F1-max, and AP scores compared to the configuration without it, thereby confirming its contribution to a more refined anomaly detection process.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "hypothesis": "Does the zero-shot MuSc method outperform existing zero/few-shot and many-shot methods on industrial anomaly detection tasks?",
+            "method": "Perform a comparative analysis by evaluating MuSc alongside several state-of-the-art zero/few-shot methods (e.g., WinCLIP, APRIL-GAN) as well as many-shot methods (e.g., CutPaste, IGD) on the MVTec AD and VisA datasets. Use identical evaluation metrics (AUROC, F1-max, AP, and PRO) for both classification and segmentation tasks. Ensure that the experimental setup, including the pre-trained backbone and image resolution, remain consistent across all methods. Compile the results in a table and statistically analyze the relative improvements achieved by MuSc.",
+            "expected_outcome": "According to Table 1 and Table 2, MuSc is expected to report a significant improvement in performance metrics. For instance, MuSc should achieve a 21.9% improvement in AP over the second-best zero-shot method on MVTec AD and surpass the performance of many-shot methods by achieving comparable or better results while using no labeled images.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "hypothesis": "Does the choice of aggregation degree (r) in the LNAMD module impact the comprehensive anomaly classification (AC) and segmentation (AS) performance differently on datasets with small versus large abnormal regions?",
+            "method": "Perform controlled experiments by varying the aggregation degree r. Specifically, run the anomaly detection pipeline on two datasets (MVTec AD, which has larger anomaly regions, and VisA, which has smaller anomalies) using different r values (e.g., r = 1, 3, 5 individually and in combination). Record AC and AS metrics for each configuration. Compare the experimental results to evaluate if smaller r values favor small anomaly regions (as anticipated on VisA) while larger r values excel for large anomalies (as observed on MVTec AD). Use the same pre-trained ViT-L/14-336 backbone and identical preprocessing steps to ensure fairness.",
+            "expected_outcome": "It is expected that a combination using all three aggregation degrees (r \u2208 {1,3,5}) will yield better overall AC and AS results. Additionally, smaller r should perform better on VisA while larger r should benefit MVTec AD, confirming the trade-off based on anomaly size.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "hypothesis": "Does the proportion of the minimum value interval selection in the Mutual Scoring Module (MSM) affect anomaly detection performance (AC and AS), and is 30% the optimal choice?",
+            "method": "Set up an ablation study by varying the percentage of the minimum value interval used in the MSM from 10% to 100% (e.g., test at 10%, 30%, 50%, 70%, 90%, 100%). For each setting, run the MuSc pipeline on both MVTec AD and VisA datasets, and record the image-level AUROC for classification (AC) and pixel-level AUROC for segmentation (AS). Plot the performance trends to determine the interval percentage that provides the best trade-off for both datasets, referring particularly to the trends shown in Fig. 7.",
+            "expected_outcome": "Based on prior results, selecting the minimum 30% value interval should yield the best or near-optimal comprehensive AC and AS performance on both datasets. Deviations from this setting are expected to lead to a degradation in performance.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "hypothesis": "Does the inclusion of the RsCIN module, especially with a multi-window mask strategy, improve anomaly detection performance compared to using a single-window operation or no re-scoring with constrained image-level neighborhood?",
+            "method": "Conduct controlled experiments by evaluating the MuSc method under different settings: 1) without the RsCIN module, 2) with the RsCIN module using a single-window mask (with window sizes k \u2208 {2,...,9} and full-window k = \u221e), and 3) with the multi-window mask strategy as proposed. Run these configurations on both MVTec AD and VisA datasets, and record classification metrics (F1-max score, AUROC) and segmentation metrics. Also, compare the improvements when inserting the RsCIN module into other AC/AS methods as discussed in the paper (details available in Appendix A.2.4).",
+            "expected_outcome": "The RsCIN module is expected to improve performance, yielding approximately a 0.9% gain in F1-max score on MVTec AD and a 2.8% AUROC gain on VisA. The multi-window strategy should outperform single-window settings, confirming the benefit of re-scoring with a constrained image-level neighborhood.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "hypothesis": "Does dividing the entire test dataset into smaller subsets (controlled by s) significantly reduce per-image inference time and GPU memory cost without notably compromising AC and AS performance?",
+            "method": "Divide the test images into different numbers of subsets (s = 1, 2, 3) as done in the paper. For each division, measure the per-image inference time and maximum GPU memory cost using an NVIDIA RTX 3090 GPU (as reported in Tab. 6). Additionally, evaluate the AC and AS metrics on both MVTec AD and VisA datasets for each subset configuration (referencing Tab. 7). Compare the decrease in computational cost with the potential drop in performance.",
+            "expected_outcome": "It is expected that increasing s (i.e., reducing the size of each subset) will significantly reduce the inference time and GPU memory cost (e.g., from 998.8 ms and 7168 MB at s=1 to 513.5 ms and 5026 MB at s=3), while the AC decreases by less than 1.1% and AS by less than 0.2%, indicating a minor impact on detection performance.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of varying the number of reference images in the MuSc+ variant on classification and segmentation performance.",
+            "experiment_design": "Design an experiment where the number of reference images is systematically varied (for example, using different counts such as 1, 4, 8, 16, etc.). For each configuration, evaluate the model's classification and segmentation metrics on both MVTec AD and VisA datasets. Track computational costs such as per-image inference time and GPU memory usage, and compare the results to identify the optimal trade-off between performance improvement and resource consumption.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "idea": "Evaluate the robustness of MuSc under various real-world perturbations such as inconsistent image orientations, scales, and noise.",
+            "experiment_design": "Extend the current experimental setup by artificially introducing variations such as rotations, scaling changes, and noise to the test images. Run the MuSc model as well as other comparative methods (e.g., WinCLIP, APRIL-GAN) on these perturbed datasets. Record the standard anomaly detection metrics (AUROC, F1-max, AP, and PRO) and analyze the sensitivity of each model to these perturbations. This would help in understanding the generalizability and robustness of MuSc in real industrial scenarios.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "idea": "Extend the analysis of aggregation degrees by exploring a wider range of r values beyond those initially tested.",
+            "experiment_design": "Conduct experiments on both MVTec AD and VisA with r values including extremes (e.g., r = 0, 2, 4, 6, 8) to observe the performance trend in finer granularity. This could help in understanding the sensitivity of LNAMD to local neighborhood size and possibly lead to dynamically adapting r based on input image characteristics.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "idea": "Investigate the applicability of the MuSc method with the RsCIN module on larger-scale, real-world industrial datasets with more diverse anomaly types.",
+            "experiment_design": "Apply the MuSc pipeline to an industrial dataset that includes a broader variety of anomalies and image resolutions. Compare performance metrics and computational efficiency against baseline methods. Additionally, assess if the minor performance gains from the RsCIN module are consistent in this new domain and whether any adaptation (e.g., window mask size adjustments) is beneficial.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "idea": "Analyze the impact of incorporating few-shot settings more extensively, particularly on domains where the prior information in unlabeled images might be limited.",
+            "experiment_design": "Design experiments where a varying number of labeled normal reference images are incrementally added to the zero-shot MuSc framework. Perform evaluations on datasets with limited normal prior information to determine if few-shot extensions can lead to significant improvements, and compare the results against both the standard MuSc and other few-shot anomaly detection methods.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        }
+    ],
+    "main_takeaways": [
+        "The paper proposes the MuSc method (and its variant MuSc+) that achieves competitive anomaly segmentation and classification performance on benchmarks such as MVTec AD and VisA.",
+        "Inference time and GPU memory cost can be significantly reduced by partitioning the dataset into multiple subsets (e.g., using s=3 reduces inference time to 513.5 ms and GPU cost to 5026 MB compared to s=1).",
+        "The method shows robustness against inconsistent orientations and scales, outperforming existing methods like WinCLIP and APRIL-GAN in these settings, despite using a fixed pre-trained vision transformer that only performs minor data augmentations.",
+        "The choice of configuration parameters, such as the proportion of the minimum value interval in MSM and the window mask sizes (with or without the RsCIN module), has a measurable impact on performance metrics (e.g., slight changes in AUROC, F1-max scores).",
+        "Incorporating additional components like re-scoring with a constrained image-level neighborhood (RsCIN) and increasing the number of reference images can improve classification and segmentation results."
+    ]
+}

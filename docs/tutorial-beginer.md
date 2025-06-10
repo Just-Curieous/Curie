@@ -33,7 +33,7 @@ key_dict = {
 
 ## 📊 Get your dataset ready
 
-Here we just down MNIST dataset to `/data` as an example:
+Here we just download MNIST dataset to `/data` as an example:
 ```
 sudo mkdir -p /data 
 wget https://raw.githubusercontent.com/fgnt/mnist/master/train-images-idx3-ubyte.gz
@@ -75,8 +75,9 @@ result = curie.experiment(
     result = curie.experiment(
         api_keys=key_dict,
         question="Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?,
-        dataset_dir="",
-        workspace_name="/abs/path/starter_code/", # Change this to the path of your starter code
+        dataset_dir="`data_loader.py` will assit you load the dataset.",
+        codebase_dir="/abs/path/starter_code/", # Change this to the path of your starter code
+        code_instructions="",
         max_global_steps=50, # control your compute budget
     )
     ```
@@ -84,6 +85,7 @@ result = curie.experiment(
 2. **Provide with your research paper**: 
 To provide more context for Curie, you can mention the necessary paper (`txt`, `pdf`, ...) in the question. 
 Please put your paper under the same directory of your starter code. 
+- *If you are using `AWS bedrock` API, please give permission to model `'amazon.titan-embed-text-v2:0'`*
     ```bash
     /abs/path/starter_code/
     ├── train.py # Python script for training
@@ -96,32 +98,43 @@ Please put your paper under the same directory of your starter code.
         api_keys=key_dict,
         question="Refer to the evaluation setup in `paper.pdf`. Among Logistic Regression, MLP, and CNN, which model achieves the highest prediction accuracy on my MNIST dataset?",
         dataset_dir="/data",
-        workspace_name="/abs/path/starter_code", # Change this to the path of your starter code
+        codebase_dir="/abs/path/starter_code", # Change this to the path of your starter code
         max_global_steps=50, # control your compute budget
     )
     ```
 
-3. **Provide with your own environment**
-You can provide your own environment by pre-configure a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
+3. **Provide with your own complex environment**
+You can provide your own environment by providing an environment requirements file or pre-configuring a `micromamba`/`miniconda`. This allows you to specify exact package versions and dependencies needed for your research. This is important to save time for Curie to figure out the dependencies by herself.
 
-    ```bash
-    starter_code/
-    ├── venv/ # your own environment should named as `venv` and put under your starter_code
-    └── ... # the rest of your codebase
-    ```
+    - **Option 1**: Put your environment requirements file `requirements.txt` under the `codebase_dir`:
+        ```bash
+        /abs/path/starter_code/
+        ├── train.py # Python script for training
+        └── requirements.txt # including the `package==version`
+        ```
+        Or you can specify separately:
+        ```python
+        result = curie.experiment(api_keys=key_dict, 
+                                question="How does the choice of sorting algorithm impact runtime performance across different input distributions?", 
+                                env_requirements='/abs/path/requirements.txt')
+        ```
+    - **Option 2**: You can pre-configure your environment and name it as `venv` and put under your starter_code:
+        ```bash
+        starter_code/
+        ├── venv/ # exactly named as `venv`  
+        └── ... # the rest of your codebase
+        ```
 
-    Here is one way to configure your own environment: 
+4. **Generate a experiment report in the middle of Curie's experimentation process**
 
-    ```bash
-    cd /abs/path/starter_code
-    micromamba create -p ./venv python=3.12 -y
-    micromamba activate ./venv
-    pip install -r requirements.txt 
-    ```
+If you’d like to monitor progress partway through Curie’s experimentation—or if the experiment wasn’t run end-to-end—you can still generate a report from the available data:
 
+```python
+curie.generate_report(api_keys=key_dict,
+                    input_dir_path='/abs/path/logs/research_20250605231023_iter1/')
+```
 
-
-4. **Customize the agent to your workload.**
+5. **Customize the agent to your workload.**
 Each agent and experiment stage is coupled with a system prompt, which you can fine-tune in order to let Curie understand your context better. 
 
     ```python

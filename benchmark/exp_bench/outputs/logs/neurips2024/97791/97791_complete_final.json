@@ -1,0 +1,1284 @@
+{
+    "questions": [
+        {
+            "question": "Will the inclusion of both image data (specifically, images from Legacy Surveys DR10 as provided in the Multimodal Universe dataset) and spectral data (from DESI) improve the performance of galaxy morphology classification compared to using only a single modality?",
+            "method": "We propose to use a contrastive learning approach based on the AstroCLIP framework to train joint embeddings from the two modalities. The experiment involves building a cross\u2010matched dataset by pairing galaxies with both image and spectral data (images from Legacy Surveys DR10 and spectra from DESI, as available in the Multimodal Universe dataset). Train the joint embedding network using the same hyperparameter settings and training suite as described in AstroCLIP. Three models will be trained: one using only the image data, one using only the spectral data, and one using the combined multimodal data. A k-Nearest Neighbor classifier (with k = 16) will be used on the learned embeddings to perform galaxy morphology classification, and the performance (e.g., accuracy, F1 score) on the held-out 20% test set will be compared across these models.",
+            "expected_outcome": "Based on the paper\u2019s experiments on the Galaxy10 DECaLS task, the integration of multimodal data is expected to yield higher classification accuracy, demonstrating a positive correlation between multimodal input and performance.",
+            "source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb"
+            ],
+            "usage_instructions": "1. First, use cross_match.py to create a cross-matched dataset between Legacy Surveys DR10 images and DESI spectra: `python /workspace/experimental_benchmark/cross_match.py /path/to/legacysurvey /path/to/desi /path/to/output_dir --matching_radius 1.0`. This will create a dataset with paired image and spectral data.\n2. Next, use embed.py to generate embeddings from both modalities using an AstroCLIP model: `python /workspace/experimental_benchmark/astroclip/property_estimation/embed.py /path/to/astroclip_model /path/to/cross_matched_dataset /path/to/provabgs /path/to/output_dir`. This will create train and test embeddings for both image and spectral data.\n3. Finally, run the property_estimation.ipynb notebook which demonstrates how to use k-Nearest Neighbors (k=16) on the embeddings to perform classification tasks. The notebook shows how to evaluate performance using only image embeddings, only spectral embeddings, and can be extended to use both modalities together. The paper results show that multimodal data yields higher classification accuracy compared to using a single modality.",
+            "requirements": [
+                "Step 1: Load two astronomical datasets (Legacy Surveys DR10 images and DESI spectra) using the datasets library (/workspace/experimental_benchmark/cross_match.py:20-22)",
+                "Step 2: Cross-match the datasets based on sky coordinates using a specified matching radius in arcseconds (/workspace/experimental_benchmark/cross_match.py:27-32, /workspace/mmu/utils.py:47-157)",
+                "Step 3: Save the cross-matched dataset to disk (/workspace/experimental_benchmark/cross_match.py:34)",
+                "Step 4: Load a pre-trained AstroCLIP model that can process both image and spectral data (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:26-28)",
+                "Step 5: Load the cross-matched dataset and set up a dataloader with appropriate collation function for processing images and spectra (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:54-61, /workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:13-50)",
+                "Step 6: Generate embeddings for both image and spectral data using the AstroCLIP model (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:64-75)",
+                "Step 7: Load PROVABGS dataset containing galaxy properties (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:32-34)",
+                "Step 8: Process and filter the PROVABGS dataset to prepare it for joining with embeddings (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:37-51)",
+                "Step 9: Join the embeddings with the PROVABGS dataset to create paired datasets for training and testing (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:95-102)",
+                "Step 10: Save the paired datasets to disk (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:105-106)",
+                "Step 11: Load the saved paired datasets for property estimation (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:15-24)",
+                "Step 12: Set up feature matrices and target variables for machine learning (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:27-33)",
+                "Step 13: Create a k-Nearest Neighbors regressor with k=16 and distance weighting (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:36)",
+                "Step 14: Train the regressor on image embeddings and evaluate performance using R\u00b2 scores (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:67-76)",
+                "Step 15: Train the regressor on spectral embeddings and evaluate performance using R\u00b2 scores (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:109-118)"
+            ],
+            "agent_instructions": "Your task is to implement a multimodal astronomical data analysis pipeline that demonstrates how embeddings from different data modalities (images and spectra) can be used for galaxy property estimation. The pipeline consists of three main components:\n\n1. First, create a script to cross-match astronomical datasets. This script should:\n   - Take paths to two datasets (Legacy Surveys images and DESI spectra) as input\n   - Match objects between the datasets based on their sky coordinates using a configurable matching radius\n   - Save the resulting cross-matched dataset to a specified output directory\n\n2. Next, create a script to generate embeddings from the cross-matched dataset using a multimodal model. This script should:\n   - Load a pre-trained AstroCLIP model that can process both images and spectra\n   - Load the cross-matched dataset and set up appropriate data processing\n   - Generate embeddings for both image and spectral data\n   - Load a galaxy properties dataset (PROVABGS) containing physical properties like stellar mass and star formation rate\n   - Join the embeddings with the galaxy properties dataset\n   - Save the resulting paired datasets (train and test splits) to disk\n\n3. Finally, create a notebook that demonstrates property estimation using the embeddings. The notebook should:\n   - Load the paired datasets containing embeddings and galaxy properties\n   - Set up a k-Nearest Neighbors regressor with k=16 and distance weighting\n   - Train and evaluate the regressor using image embeddings only\n   - Train and evaluate the regressor using spectral embeddings only\n   - Report performance using R\u00b2 scores for various galaxy properties\n\nThe goal is to demonstrate that embeddings from multimodal astronomical data can be used for accurate estimation of galaxy properties, with the expectation that using both modalities together would yield better results than using either modality alone.",
+            "masked_source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py",
+                "/workspace/mmu/utils.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "astroclip_model": "Pre-trained AstroCLIP model used across experiments",
+                    "training_hyperparameters": "Same hyperparameter settings and training suite for all models",
+                    "cross_matching_parameters": "Fixed matching radius (1.0 arcseconds) and fixed procedures for dataset pairing",
+                    "kNN_settings": "k value fixed at 16 for all k-Nearest Neighbor classification experiments"
+                },
+                "independent_variables": {
+                    "data_modality": [
+                        "Image only (Legacy Surveys DR10)",
+                        "Spectral only (DESI)",
+                        "Combined multimodal (images + spectra)"
+                    ]
+                },
+                "dependent_variables": {
+                    "classification_performance": "Measured through metrics such as accuracy and F1 score on the held-out test set"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "target_task": "There is some ambiguity whether the focus is purely on galaxy morphology classification or property estimation since the agent instructions also mention joining with a galaxy properties dataset (PROVABGS)",
+                    "contrastive_learning_details": "The specific details of the contrastive learning approach (e.g., loss functions, augmentation strategies) are not explicitly mentioned",
+                    "dataset_specifics": "While the sources (Legacy Surveys DR10 and DESI) are clear, the exact preprocessing methods for the datasets are not fully specified in the task statement"
+                },
+                "possible_modifications": {
+                    "modification_data_modalities": [
+                        "Introduce additional modalities or variants (e.g., adding time series from PLAsTiCC) to further assess the effect of multimodal integration"
+                    ],
+                    "modification_method_details": [
+                        "Mask certain hyperparameter details to explore robust performance across different parameter settings",
+                        "Vary the matching radius to evaluate sensitivity in the cross-matching stage"
+                    ],
+                    "modification_target_task": [
+                        "Explicitly distinguish between classification (e.g., galaxy morphology) and regression (e.g., galaxy property estimation) tasks to remove ambiguity"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Cross-matching script (cross_match.py)",
+                    "Embedding generation script (embed.py)",
+                    "Data processing notebook (property_estimation.ipynb)",
+                    "Pre-trained AstroCLIP model",
+                    "Legacy Surveys DR10 image dataset",
+                    "DESI spectral dataset",
+                    "PROVABGS galaxy properties dataset",
+                    "k-Nearest Neighbor classifier (k=16)"
+                ],
+                "setup_steps": [
+                    "Run cross_match.py with input paths for Legacy Surveys DR10 and DESI using a matching radius of 1.0 arcseconds to create the paired dataset.",
+                    "Run embed.py to load the pre-trained AstroCLIP model, generate embeddings from the cross-matched dataset, and join the embeddings with the PROVABGS properties.",
+                    "Execute the property_estimation.ipynb notebook to load the paired embeddings, set up feature matrices and target variables, instantiate and train a kNN regressor, and evaluate performance using R\u00b2 scores for the different modalities."
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Data Preprocessing and Integration",
+                        "description": "Multiple pipelines for processing images, spectra, and auxiliary galaxy properties data introduced complexity in ensuring proper cross-matching, embedding generation, and dataset joining."
+                    },
+                    {
+                        "source": "Model and Hyperparameter Consistency",
+                        "description": "Using a pre-trained AstroCLIP model with fixed hyperparameter settings across all experiments requires careful configuration and consistency, which adds to overall experimental complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Target Task: There is ambiguity whether the experiment focuses solely on galaxy morphology classification or on galaxy property estimation, as both are mentioned.",
+                    "Contrastive Learning Details: Specific implementation details of the contrastive learning approach (e.g., loss functions, augmentations) are not explicitly provided."
+                ],
+                "ambiguous_setup_steps": [
+                    "Preprocessing Pipeline: The exact steps for data cleaning and preparation for both Legacy Surveys images and DESI spectra are not fully specified.",
+                    "Cross-matching Criteria: While a fixed matching radius is provided, handling corner cases or uncertainties in the sky coordinate matching procedure is not detailed.",
+                    "Integration with PROVABGS: The method for joining the generated embeddings with the galaxy properties dataset lacks complete technical details."
+                ],
+                "possible_modifications": {
+                    "modification_data_modalities": [
+                        "Consider adding additional modalities (e.g., time series data) or clarifying the use of current modalities to better assess multimodal integration."
+                    ],
+                    "modification_method_details": [
+                        "Include explicit details about the contrastive learning methodology such as the loss function, augmentation strategies, and any deviations in the training suite.",
+                        "Provide detailed preprocessing instructions for the image and spectral data to remove ambiguities."
+                    ],
+                    "modification_target_task": [
+                        "Clearly separate the experiments for galaxy morphology classification and galaxy property estimation so that one target task is clearly defined."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce model size constraints by requiring the use of a smaller variant of the pre-trained AstroCLIP model (e.g., AstroCLIP-mini) while aiming to achieve comparable classification performance."
+                    ],
+                    "time_constraints": [
+                        "Reduce training iterations or the number of epochs in the contrastive learning stage to lower computational time, if necessary."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochasticity in training and data processing",
+                "description": "Random uncertainty arises from the inherent randomness in model training (e.g., variations due to different random seeds, random data shuffling, and potential random token dropout in contrastive learning) as well as lack of reported error bars. Such randomness can cause instability in gradient updates and fluctuations in the performance metrics (accuracy, F1 score) when using kNN classification on the embeddings.",
+                "impact": "Results in variable performance outcomes across different experimental runs, making direct comparisons less reliable.",
+                "possible_modifications": [
+                    "Repeat the experiments under varied random seeds and report error bars to quantify the variance in performance.",
+                    "Introduce controlled random token dropout as a deliberate noise injection strategy to test the robustness of the training pipeline.",
+                    "Use bootstrapping techniques on the generated embeddings to estimate uncertainty due to stochastic processes during training."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset pairing and cross-matching procedure",
+                "description": "Systematic uncertainty may be introduced by the design choices in the cross-matching of the Legacy Surveys DR10 images and DESI spectra. For instance, using a fixed matching radius (1.0 arcseconds) could consistently mis-pair objects, and if there are inherent biases in the underlying datasets (e.g., selection biases in Legacy Surveys or DESI), these can propagate through to the joint embedding space and affect overall classification performance.",
+                "impact": "May lead to consistent bias in the model's performance metrics, resulting in over- or under-estimation of the benefits of multimodal integration.",
+                "possible_modifications": [
+                    "Vary the matching radius during the cross-matching process to study how sensitive the results are to the pairing criteria.",
+                    "Retrieve and use alternative or clean copies of the datasets to examine and reduce bias arising from the original data sources.",
+                    "Implement diagnostic checks on the joined dataset (for instance, by comparing with a gold-standard or independent dataset) to detect systematic misalignments or biases."
+                ]
+            }
+        },
+        {
+            "question": "Does the contrastive image-spectrum pretraining strategy (AstroCLIP) generate more robust embeddings for downstream tasks, such as physical property estimation, than traditional supervised pretraining approaches using canonical networks? Note that the experiment uses a cross\u2010matched subset from the Multimodal Universe dataset (combining DESI optical spectra and RGB-converted images from the Legacy Surveys).",
+            "method": "Set up two training pipelines using the cross\u2010matched multimodal dataset obtained via the provided cross\u2010matching utilities from the Multimodal Universe dataset. In the first pipeline, perform traditional supervised pretraining of image and spectrum models (using architectures such as ResNet-18, EfficientNetB0, and DenseNet121) on physical property estimation tasks (e.g., redshift, stellar mass, age). In the alternate pipeline, reproduce the contrastive image-spectrum pretraining strategy (AstroCLIP) by aligning image and spectral embeddings via a contrastive objective. Use the same hyperparameters as in prior work ([112]): training for 10 epochs on a single A100 GPU, with a batch size of 128 and a learning rate of 1e-4. After pretraining, evaluate both models using a k-Nearest Neighbour (k=16) zero-shot regression approach on an 80/20 train-test split using the DESI and Legacy Surveys data. Compare the resulting performance on physical property prediction to assess the robustness of the learned representations.",
+            "expected_outcome": "The experimental results suggest that using contrastive pretraining leads to improved representation quality, which in turn enhances performance in physical property estimation tasks relative to standard methods.",
+            "source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/galaxy_properties/trainer.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb"
+            ],
+            "usage_instructions": "First, use cross_match.py to create a cross-matched dataset between DESI spectra and Legacy Surveys images: `python /workspace/experimental_benchmark/cross_match.py MultimodalUniverse/desi MultimodalUniverse/legacysurvey /path/to/output --matching_radius 1.0`. Then, for the traditional supervised approach, train models using: `python /workspace/experimental_benchmark/galaxy_properties/trainer.py fit --config /workspace/experimental_benchmark/galaxy_properties/configs/image.yaml` and `python /workspace/experimental_benchmark/galaxy_properties/trainer.py fit --config /workspace/experimental_benchmark/galaxy_properties/configs/spectrum.yaml` (you may need to update the dataset paths in the config files). For the AstroCLIP approach, first generate embeddings using: `python /workspace/experimental_benchmark/astroclip/property_estimation/embed.py /path/to/astroclip_model /path/to/cross_matched_dataset /path/to/provabgs /path/to/output`. Finally, evaluate both approaches using the property_estimation.ipynb notebook, which implements k-NN regression (k=16) for zero-shot property estimation and compares the results.",
+            "requirements": [
+                "Step 1: Load and cross-match two datasets (DESI spectra and Legacy Surveys images) using astronomical coordinates with a specified matching radius (/workspace/experimental_benchmark/cross_match.py:7-34)",
+                "Step 2: Set up a supervised learning pipeline for galaxy property estimation from images using an EfficientNetB0 model (/workspace/experimental_benchmark/galaxy_properties/model.py:117-137)",
+                "Step 3: Set up a supervised learning pipeline for galaxy property estimation from spectra using a ResNet18 model (/workspace/experimental_benchmark/galaxy_properties/model.py:271-287)",
+                "Step 4: Create a dataset class that handles loading and preprocessing of galaxy data (images, spectra, or photometry) and their associated properties (/workspace/experimental_benchmark/galaxy_properties/dataset.py:8-103)",
+                "Step 5: Train the supervised models using PyTorch Lightning CLI with the appropriate configuration files (/workspace/experimental_benchmark/galaxy_properties/trainer.py:3-10)",
+                "Step 6: Load a pre-trained AstroCLIP model and use it to generate embeddings for both images and spectra (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:15-107)",
+                "Step 7: Create a dataloader for the AstroCLIP model that handles loading and preprocessing of multimodal astronomical data (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:13-50)",
+                "Step 8: Implement a collator class that processes images and spectra for the AstroCLIP model (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:53-80)",
+                "Step 9: Load the generated embeddings and set up a k-NN regressor with k=16 and distance weighting (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:8-36)",
+                "Step 10: Evaluate the k-NN regressor on image embeddings and calculate R\u00b2 scores for each galaxy property (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:67-76)",
+                "Step 11: Evaluate the k-NN regressor on spectrum embeddings and calculate R\u00b2 scores for each galaxy property (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:109-118)",
+                "Final Step: Compare the performance of the supervised approach and the zero-shot AstroCLIP approach for galaxy property estimation (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:42-118)"
+            ],
+            "agent_instructions": "You need to implement a pipeline for galaxy property estimation using both traditional supervised learning and a zero-shot approach with embeddings. The pipeline consists of several components:\n\n1. First, create a script to cross-match astronomical datasets between DESI spectra and Legacy Surveys images. The script should:\n   - Take input paths for both datasets and an output path\n   - Allow specifying a matching radius in arcseconds\n   - Use astronomical coordinates (RA/Dec) to match objects between datasets\n   - Save the cross-matched dataset to disk\n\n2. For the supervised learning approach:\n   - Implement a trainer script that uses PyTorch Lightning CLI\n   - Create model implementations for both image-based and spectrum-based property estimation\n   - The image model should be based on EfficientNetB0 architecture\n   - The spectrum model should be based on ResNet18 architecture\n   - Implement a dataset class that handles loading and preprocessing galaxy data\n   - The models should predict 5 galaxy properties: stellar mass, specific star formation rate, metallicity, redshift, and age\n\n3. For the zero-shot approach with AstroCLIP:\n   - Create a script to generate embeddings from a pre-trained AstroCLIP model\n   - The script should process both images and spectra from the cross-matched dataset\n   - Implement a dataloader and collator for processing astronomical data\n   - Save the embeddings along with the ground truth properties\n\n4. Finally, create a notebook to evaluate both approaches:\n   - Load the embeddings generated by AstroCLIP\n   - Implement k-NN regression with k=16 and distance weighting\n   - Evaluate the performance on both image and spectrum embeddings\n   - Calculate and compare R\u00b2 scores for each galaxy property\n\nThe goal is to compare how well the supervised approach and the zero-shot embedding approach perform for estimating galaxy properties from multimodal astronomical data.",
+            "masked_source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/galaxy_properties/trainer.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb",
+                "/workspace/experimental_benchmark/galaxy_properties/dataset.py",
+                "/workspace/experimental_benchmark/galaxy_properties/model.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py",
+                "/workspace/mmu/utils.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "cross-matched DESI spectra and Legacy Surveys images"
+                    ],
+                    "training_hyperparameters": [
+                        "10 epochs",
+                        "batch size 128",
+                        "learning rate 1e-4",
+                        "single A100 GPU"
+                    ],
+                    "evaluation_method": [
+                        "k-NN regression with k=16 and distance weighting"
+                    ]
+                },
+                "independent_variables": {
+                    "pretraining_method": [
+                        "Traditional Supervised",
+                        "Contrastive AstroCLIP"
+                    ],
+                    "model_architectures": [
+                        "ResNet-18",
+                        "EfficientNetB0",
+                        "DenseNet121"
+                    ]
+                },
+                "dependent_variables": {
+                    "physical_property_prediction_performance": [
+                        "R\u00b2 scores for stellar mass, sSFR, metallicity, redshift, and age"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_architectures": "It is unclear whether all three network architectures (ResNet-18, EfficientNetB0, DenseNet121) are evaluated concurrently or separately in the supervised pipeline.",
+                    "kNN_regressor_details": "The precise implementation details for the k-NN regression (e.g., distance weighting specifics) are not fully described.",
+                    "data_preprocessing": "The exact steps for preprocessing images and spectra are not explicitly mentioned, which could influence the outcomes."
+                },
+                "possible_modifications": {
+                    "modification_pretraining_methods": [
+                        "Introduce additional pretraining methods (e.g., other self-supervised or contrastive methods) to broaden the comparison."
+                    ],
+                    "modification_model_architectures": [
+                        "Ablate or vary the architectures used in the supervised pipeline to better understand how individual network choices affect performance."
+                    ],
+                    "modification_evaluation": [
+                        "Incorporate multiple runs with error bars to capture variability over different random seeds."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Cross-match script (cross_match.py) for creating a cross-matched dataset.",
+                    "Supervised learning pipelines including trainer scripts (galaxy_properties/trainer.py), model implementations (model.py) for image (EfficientNetB0) and spectrum (ResNet-18) based estimation, and dataset handling (dataset.py).",
+                    "AstroCLIP embedding generation script (astroclip/property_estimation/embed.py) for the contrastive pretraining approach.",
+                    "Data loader and collator modules (astroclip/property_estimation/datamodule.py) for preprocessing multimodal astronomical data.",
+                    "Evaluation notebook (property_estimation.ipynb) that implements the k-NN regression (k=16) for zero-shot regression and compares R\u00b2 scores.",
+                    "Configuration files and hyperparameters settings (training for 10 epochs, batch size 128, learning rate 1e-4 on a single A100 GPU)."
+                ],
+                "setup_steps": [
+                    "Run the cross_match.py script to obtain a cross-matched dataset from DESI spectra and Legacy Surveys images, allowing the matching radius to be specified.",
+                    "For the traditional supervised pipeline, update dataset paths in configuration files and execute the trainer scripts to train image-based and spectrum-based property estimation models.",
+                    "For the AstroCLIP approach, run the embedding generation script to produce embeddings from the pre-trained AstroCLIP model for both images and spectra.",
+                    "Load the generated embeddings and perform k-NN regression via the property_estimation.ipynb notebook to evaluate and compare performance on physical property estimation."
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset and configuration management",
+                        "description": "The need to update dataset paths and ensure the consistency of hyperparameters across multiple scripts (cross-matching, supervised training, embedding generation, and evaluation) adds complexity."
+                    },
+                    {
+                        "source": "Interdependency between pipelines",
+                        "description": "The pipelines for supervised training and contrastive pretraining rely on shared datasets and evaluation strategies, increasing the overall system interconnectivity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model architectures: It is unclear if all three architectures (ResNet-18, EfficientNetB0, DenseNet121) should be evaluated concurrently or in separate runs within the supervised pipeline.",
+                    "k-NN regressor: Specific implementation details such as the distance weighting methodology are not fully described.",
+                    "Data preprocessing: The precise steps for preprocessing images and spectra are not explicitly outlined."
+                ],
+                "ambiguous_setup_steps": [
+                    "The instructions to update dataset paths in configuration files are sparse, which may cause variability if not done correctly.",
+                    "The setup and configuration for the collator and dataloader in the AstroCLIP pipeline lack detailed documentation."
+                ],
+                "possible_modifications": {
+                    "modification_pretraining_methods": [
+                        "Introduce additional pretraining methods (e.g., other contrastive or self-supervised methods) to broaden the experimental comparison."
+                    ],
+                    "modification_model_architectures": [
+                        "Clarify whether the different network architectures (ResNet-18, EfficientNetB0, DenseNet121) should be evaluated simultaneously or separately, and detail how to treat their outputs."
+                    ],
+                    "modification_evaluation": [
+                        "Include multiple runs with error bars to capture performance variability over different random seeds.",
+                        "Provide explicit instructions for the k-NN regressor\u2019s distance weighting and other evaluation metrics."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce training on a less powerful GPU (e.g., replace the A100 GPU with a lower-end alternative) to test model performance under constrained computational resources."
+                    ],
+                    "time_constraints": [
+                        "Reduce the number of training epochs (for example, from 10 to 5 epochs) to simulate a stricter time budget and faster turnaround."
+                    ],
+                    "money_constraints": [
+                        "Limit the experiment to using free-tier or low-cost cloud computing resources to emulate a lower budget scenario."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Single-run training and stochastic training dynamics",
+                "description": "Due to computational budget constraints, the experiment does not include multiple runs with different random seeds. Variability from random initialization, stochastic gradient descent, and other inherent noise in the training process can lead to fluctuations in performance metrics (e.g., R\u00b2 scores) between runs.",
+                "impact": "The lack of error bars makes it difficult to ascertain whether observed performance differences between the traditional supervised and AstroCLIP pretraining approaches are statistically robust or simply due to random fluctuations. This may compromise the reliability of the conclusions drawn from the experiment.",
+                "possible_modifications": [
+                    "Conduct multiple training runs with different random seeds and report error bars for the performance metrics.",
+                    "Implement techniques such as averaging results over several runs to quantify the variability caused by random uncertainty."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Data cross-matching and preprocessing biases",
+                "description": "The experiment relies on a cross-matched subset from the Multimodal Universe dataset, combining DESI spectra with RGB-converted images from Legacy Surveys. The process of cross-matching (e.g., choice of a specific matching radius), ambiguities in preprocessing pipelines, and potential differences in data representations can introduce systematic biases. Furthermore, uncertainties in how multiple architectures are applied within the supervised pipeline may further contribute to systematic error.",
+                "impact": "Systematic biases can affect both pretraining pipelines in consistent yet unaccounted-for ways, potentially skewing the evaluation of the learned embeddings. This may result in biased physical property estimation performance, undermining the fairness of direct comparisons between supervised and contrastive pretraining approaches.",
+                "possible_modifications": [
+                    "Evaluate the impact of varying the matching radius and preprocessing steps by experimenting with alternative configurations.",
+                    "Clarify and standardize data preprocessing and configuration details across all pipelines to reduce systematic differences.",
+                    "Include external validation datasets or additional controls to detect and mitigate any one-time systematic biases introduced during dataset construction."
+                ]
+            }
+        },
+        {
+            "question": "Can adjusting the training hyperparameters\u2014as specified in the configuration files, such as altering the initial and fine-tuning learning rates, the number of training steps/epochs, and the learning rate schedule\u2014lead to significant improvements in photometric classification and redshift estimation metrics on the PLAsTiCC dataset? (Note: The PLAsTiCC dataset is available via the Multimodal Universe hub and can be loaded, for example, using load_dataset('MultimodalUniverse/plasticc', split='train', streaming=True)).",
+            "method": "We propose an experiment that contrasts the baseline PLAsTiCC training configuration (using an encoder-only Informer model with 8 encoder layers, 12 attention heads per layer, a hidden dimension of 768, MLP hidden dimension of 256, and a random window of 300 time observations with zero-padding as needed) with configurations where key hyperparameters are adjusted. The baseline training employs a batch size of 256, an initial learning rate of 1e-4 (with a smaller rate during fine-tuning stages) and a linear decay schedule over 75,000 pretraining steps followed by 20,000 steps for linear probing and an additional 10,000 steps for fine-tuning (using learning rates of 5e-4 and 1e-4 for redshift estimation). In this experiment, we plan to systematically vary important parameters such as the initial learning rate, fine-tuning learning rates, total training duration, and alternative scheduling methods (e.g., cosine decay or step decay). We will train multiple model variants and evaluate them on a held-out test set using the R2 metric for redshift estimation and classification metrics (e.g., AUC and accuracy) for photometric classification. Results will be compared against the baseline performance reported in the original experimental setup.",
+            "expected_outcome": "The methodology indicates that precise tuning of training details such as data splits and hyperparameters directly affects experimental outcomes, and such adjustments are expected to improve performance metrics on the PLAsTiCC benchmark.",
+            "no_answer": "After thoroughly exploring the repository, I couldn't find a specific script or set of scripts that directly answer the experiment question about adjusting training hyperparameters for the PLAsTiCC dataset. While the repository contains baseline models (/workspace/baselines/plasticc/) with a configuration file (plasticc_config.yml) that defines some model architecture parameters, there isn't a dedicated script for systematically varying hyperparameters such as learning rates, training steps/epochs, and learning rate schedules as specified in the experiment question. The repository primarily focuses on data processing, dataset creation, and baseline model definitions rather than hyperparameter tuning experiments.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "PLAsTiCC dataset loaded from Multimodal Universe hub",
+                    "model_architecture": "Encoder-only Informer model with 8 encoder layers, 12 attention heads per layer, hidden dimension 768, MLP hidden dimension 256, and fixed input window of 300 time observations (with zero-padding for shorter sequences)"
+                },
+                "independent_variables": {
+                    "initial_learning_rate": "Different fixed values including the baseline (1e-4) and other candidate rates",
+                    "fine_tuning_learning_rate": "Various candidate values (e.g., 5e-4, 1e-4 for redshift estimation) to compare performance",
+                    "total_training_duration": "Changes in number of training steps/epochs, such as the baseline (75,000 pretraining steps, 20,000 steps for linear probing, 10,000 steps fine-tuning) versus other durations",
+                    "learning_rate_schedule": [
+                        "linear decay (baseline)",
+                        "cosine decay",
+                        "step decay"
+                    ]
+                },
+                "dependent_variables": {
+                    "redshift_estimation_metric": "R2 performance on a held-out test set",
+                    "photometric_classification_metrics": [
+                        "AUC",
+                        "accuracy"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "configuration_modifications": "The precise range or candidate values for each hyperparameter (e.g., exact learning rate values, number of epochs) are not fully specified.",
+                    "data_split_details": "While the dataset is mentioned, the details on how the training, validation, and test splits are handled are not explicitly described in the task.",
+                    "evaluation_metrics_details": "The application of metrics such as AUC and accuracy for photometric classification is mentioned without specifying threshold settings or additional evaluation details."
+                },
+                "possible_modifications": {
+                    "masking_hyperparameter_values": [
+                        "Hide the specific candidate values for learning rates or training duration, requiring the agent to propose suitable alternatives.",
+                        "Imply the need to include additional hyperparameters (e.g., batch size or weight decay) in the experiment design."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "PLAsTiCC dataset loaded from the Multimodal Universe hub",
+                    "Baseline encoder-only Informer model (8 encoder layers, 12 attention heads, 768 hidden dim, 256 MLP hidden dim, fixed window of 300 time observations)",
+                    "Configuration file (plasticc_config.yml) specifying baseline hyperparameters",
+                    "Hyperparameter variation components (initial learning rate, fine-tuning learning rate, total training duration, learning rate schedule)",
+                    "Evaluation metrics modules (R2 for redshift estimation, AUC and accuracy for photometric classification)"
+                ],
+                "setup_steps": [
+                    "Load the PLAsTiCC dataset using load_dataset('MultimodalUniverse/plasticc', split='train', streaming=True)",
+                    "Extract the baseline configuration from the repository (located in /workspace/baselines/plasticc/)",
+                    "Set up the baseline training pipeline with the specified model architecture and hyperparameters",
+                    "Modify the configuration file to systematically vary key hyperparameters: initial learning rate, fine-tuning learning rate, total training duration, and learning rate schedule (e.g., linear decay, cosine decay, step decay)",
+                    "Train multiple model variants for the baseline and modified configurations",
+                    "Evaluate each model variant on the held-out test set using R2 for redshift estimation and AUC/accuracy for photometric classification",
+                    "Compare the performance metrics against the baseline results"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple Training Phases",
+                        "description": "The training pipeline involves sequential phases (pretraining, linear probing, fine-tuning) which introduces complexity in coordinating different training durations and learning rate adjustments."
+                    },
+                    {
+                        "source": "Combinatorial Hyperparameter Variations",
+                        "description": "Simultaneously varying several independent variables such as the learning rates, total steps, and scheduling methods increases the experimental search space and overall management complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Configuration modifications: The exact candidate values or ranges for hyperparameters (learning rates, training steps) are not fully specified.",
+                    "Data split details: The instructions mention a held-out test set but do not clarify how training, validation, and testing splits are determined."
+                ],
+                "ambiguous_setup_steps": [
+                    "Systematic hyperparameter variation: The method to select and iterate over multiple candidate values is not clearly defined.",
+                    "Evaluation metrics application: Specific thresholds or additional settings for metrics like AUC and accuracy are not provided."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Hide the specific candidate values for learning rates and training durations, requiring the agent to propose alternatives.",
+                        "Remove explicit details on the scheduling methods, so users must determine additional decay strategies."
+                    ],
+                    "imply_need_for_new_setup_steps": [
+                        "Introduce clear instructions for how to split the dataset into training, validation, and test sets.",
+                        "Specify additional hyperparameters such as batch size or weight decay to further refine the experimental setup."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Due to computational budget considerations mentioned in the baseline work (e.g., not generating error bars), one modification could be to reduce the number of hyperparameter candidates tested. For example, restrict the range of initial and fine-tuning learning rates to minimize the model variants that need to be trained."
+                    ],
+                    "time_constraints": [
+                        "Reduce the overall training duration by limiting the number of training steps or epochs. For instance, using a faster decaying learning rate schedule (such as step or cosine decay with fewer steps) to achieve a target performance in a shorter time frame."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic training dynamics and random initialization",
+                "description": "Variability in the model\u2019s performance metrics (e.g., R2, AUC, accuracy) can arise from random fluctuations inherent to the training process. These include random initialization of model parameters, random shuffling of training data, and stochastic gradient updates. Although hyperparameter values are being varied systematically, the stochastic components of training introduce run-to-run variability which is not controlled due to computational budget constraints (e.g., not reporting error bars for multiple random seeds).",
+                "impact": "This uncertainty leads to fluctuations in the evaluation metrics independent of hyperparameter adjustments, making it challenging to discern if improvements are due to systematic hyperparameter tuning or inherent training variability.",
+                "possible_modifications": [
+                    "Introduce reporting of error bars by running experiments with multiple random seeds to quantify this variability.",
+                    "Incorporate controlled random perturbations (such as random token dropping in a similar spirit to ancillary experiments) to simulate and measure their impact.",
+                    "Use ensemble averaging to mitigate the influence of random stochastic processes on the reported metrics."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Deliberate hyperparameter configuration modifications",
+                "description": "Systematic uncertainty is introduced through changes in key training hyperparameters, such as adjusting the initial/fine-tuning learning rates, altering the total training duration, and switching between learning rate schedules. These intentional modifications, if not properly validated, may consistently bias the training process. For instance, a one-time change in the learning rate schedule might lead to a systematic over- or under-fitting of the model, thereby skewing the performance metrics.",
+                "impact": "Results in a consistent offset in model performance metrics when compared to the baseline configuration. This bias could mislead the interpretation of the effectiveness of the hyperparameter tuning if not properly accounted for, thus affecting the generalizability of conclusions drawn from the experiment.",
+                "possible_modifications": [
+                    "Validate hyperparameter adjustments on a smaller subset of the dataset or via cross-validation techniques before full-scale experiments.",
+                    "Carefully document and control for changes in dataset splits to avoid introducing systematic biases in how training, validation, and test sets are constructed.",
+                    "Include additional hyperparameters (e.g., batch size, weight decay) in the study to ensure a broader perspective on systematic effects."
+                ]
+            }
+        },
+        {
+            "question": "Will implementing the cross-matching utility\u2014leveraging the provided multimodal data processing tools and requiring a local download of the full dataset\u2014enhance candidate identification accuracy in the BTSbot task by effectively integrating multi-survey data?",
+            "method": "Design a controlled experiment where the baseline BTSbot model (a multimodal convolutional neural network using images from the ZTF BTS and associated metadata) is compared with an enhanced version that integrates cross-matched multi-survey data. The additional data will be obtained by applying the cross-matching utility (available as part of the provided tools, which requires a local download of the full dataset) that brings in complementary datasets from DESI and Legacy Surveys. The experimental setup involves: \n\u2022 Datasets: Use the ZTF BTS dataset for transient alerts (ensuring train/test splits based on unique transient objects) along with the cross-matched DESI and Legacy Surveys data preprocessed via a contrastive image-spectrum pretraining approach (\u00e0 la AstroCLIP with an 80/20 train-test split). \n\u2022 Models and Configurations: Train two models \u2013 (1) the baseline BTSbot that uses only images and metadata from ZTF, and (2) an enhanced BTSbot that integrates the cross-matched features as additional input channels. Both models are to be trained with similar configurations (e.g., linear probing for 20,000 steps and fine-tuning for 10,000 steps, using a linear learning rate scheduler that decreases the learning rate over 75,000 steps). \n\u2022 Experiment Workflow: Pretrain the auxiliary encoder on the cross-matched DESI and Legacy Surveys data using the contrastive setup, integrate the encoder outputs into the BTSbot pipeline, and then train both versions on the same training set, evaluating them via identical validation splits using the AUC metric for binary classification (real astrophysical transient versus bogus detection) and object-level early detection performance.",
+            "expected_outcome": "The paper\u2019s approach to cross matching across datasets is designed to improve the identification process, and experiments involving BTSbot candidate identification are expected to show improved accuracy due to better data integration.",
+            "source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py"
+            ],
+            "usage_instructions": "To enhance candidate identification accuracy in the BTSbot task by integrating multi-survey data, follow these steps:\n\n1. First, download the full dataset locally as mentioned in the README (required for cross-matching).\n\n2. Use the cross-matching utility to create a dataset that combines BTSbot data with DESI and Legacy Surveys data:\n   ```\n   python /workspace/experimental_benchmark/cross_match.py /path/to/btsbot /path/to/desi /path/to/output_dir --local_mmu_root /path/to/downloaded/data --matching_radius 1.0\n   ```\n\n3. Use the AstroCLIP embedding script to apply contrastive image-spectrum pretraining on the cross-matched data:\n   ```\n   python /workspace/experimental_benchmark/astroclip/property_estimation/embed.py /path/to/astroclip_model /path/to/cross_matched_desi_decals /path/to/provabgs /path/to/output_dir\n   ```\n\n4. Train both the baseline BTSbot model (using only ZTF data) and the enhanced version (integrating the cross-matched features as additional input channels) with similar configurations (linear probing for 20,000 steps and fine-tuning for 10,000 steps, using a linear learning rate scheduler).\n\n5. Evaluate both models using the AUC metric for binary classification (real astrophysical transient versus bogus detection) and object-level early detection performance.",
+            "requirements": [
+                "Step 1: Import necessary libraries including datasets, argparse, os, and mmu.utils for cross-matching functionality (/workspace/experimental_benchmark/cross_match.py:1-4)",
+                "Step 2: Define a cross_match function that takes paths to two datasets, a cache directory, optional local root path, matching radius, and number of processes (/workspace/experimental_benchmark/cross_match.py:7-14)",
+                "Step 3: Adjust paths based on local_mmu_root if provided (/workspace/experimental_benchmark/cross_match.py:15-18)",
+                "Step 4: Load the datasets using datasets.load_dataset_builder with trust_remote_code=True (/workspace/experimental_benchmark/cross_match.py:20-22)",
+                "Step 5: Cross-match the datasets using cross_match_datasets function with the specified matching radius and number of processes (/workspace/experimental_benchmark/cross_match.py:26-32)",
+                "Step 6: Save the cross-matched dataset to the specified cache directory (/workspace/experimental_benchmark/cross_match.py:34)",
+                "Step 7: Set up command-line argument parsing for the cross-matching script (/workspace/experimental_benchmark/cross_match.py:37-46)",
+                "Step 8: Import necessary libraries for the embedding script including torch, numpy, astropy, datasets, and tqdm (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:1-11)",
+                "Step 9: Import AstroClipCollator and AstroClipDataloader from the datamodule (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:12)",
+                "Step 10: Import AstroClipModel for loading the pretrained model (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:13)",
+                "Step 11: Define an embed_provabgs function that takes paths to the AstroCLIP model, DESI-DECaLS dataset, PROVABGS dataset, and output directory (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:15-22)",
+                "Step 12: Load the AstroCLIP model from the checkpoint path and set it to evaluation mode (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:25-29)",
+                "Step 13: Load the PROVABGS dataset with specific columns and convert it to a table format (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:31-38)",
+                "Step 14: Scale the properties in the PROVABGS dataset and filter out galaxies with invalid data (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:40-51)",
+                "Step 15: Set up the AstroCLIP dataloader for the DESI-DECaLS dataset (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:53-61)",
+                "Step 16: Process images and spectra through the AstroCLIP model to generate embeddings for both train and test sets (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:63-75)",
+                "Step 17: Create tables for the train and test datasets with object IDs and embeddings (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:77-92)",
+                "Step 18: Join the PROVABGS and AstroCLIP datasets based on object IDs (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:94-102)",
+                "Step 19: Save the joined datasets to the specified output directory (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:104-106)",
+                "Step 20: Set up command-line argument parsing for the embedding script (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:108-137)",
+                "Step 21: Define the AstroClipDataloader class that inherits from Lightning's LightningDataModule (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:13-23)",
+                "Step 22: Implement setup method to load and split the dataset (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:25-31)",
+                "Step 23: Implement train_dataloader and val_dataloader methods (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:33-50)",
+                "Step 24: Define the AstroClipCollator class for processing images and spectra (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:53-62)",
+                "Step 25: Implement methods to process images and handle batch collation (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:64-80)"
+            ],
+            "agent_instructions": "Your task is to implement a data processing pipeline for enhancing candidate identification accuracy in the BTSbot task by integrating multi-survey astronomical data. You need to create two main components:\n\n1. A cross-matching utility that combines BTSbot data with DESI and Legacy Surveys data. This utility should:\n   - Accept paths to two datasets and an output directory\n   - Support specifying a local data root directory\n   - Allow configuring the matching radius (in arcseconds)\n   - Load the datasets and perform cross-matching based on celestial coordinates\n   - Save the cross-matched dataset to the specified output directory\n\n2. An embedding script that applies contrastive image-spectrum pretraining on the cross-matched data. This script should:\n   - Load a pretrained AstroCLIP model\n   - Process a DESI-DECaLS dataset and a PROVABGS dataset\n   - Generate embeddings for both images and spectra using the AstroCLIP model\n   - Join the embeddings with property data from PROVABGS\n   - Save the resulting datasets for both training and testing\n\nYou'll need to implement data loading, processing, and transformation functionality for astronomical data, including:\n   - Handling image data from multiple surveys\n   - Processing spectral data\n   - Performing coordinate-based cross-matching\n   - Generating embeddings using a pretrained model\n\nThe final output should enable training both a baseline BTSbot model (using only ZTF data) and an enhanced version (integrating the cross-matched features as additional input channels) for comparison using AUC metrics.",
+            "masked_source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "training_config": "Uses fixed configurations: 20,000 steps for linear probing, 10,000 steps for fine-tuning, and a linear learning rate scheduler over 75,000 steps",
+                    "evaluation_metric": "AUC for binary classification plus object-level early detection performance"
+                },
+                "independent_variables": {
+                    "data_integration": [
+                        "Baseline: Using only ZTF BTS data (images and metadata)",
+                        "Enhanced: Integrating cross-matched features from DESI and Legacy Surveys data via the cross-matching utility"
+                    ],
+                    "cross_match_settings": [
+                        "Requirement for local download of the full dataset",
+                        "Matching radius parameter (e.g., 1.0 arcsecond)"
+                    ]
+                },
+                "dependent_variables": {
+                    "candidate_identification_accuracy": "Measured through improvements in the AUC metric and early detection performance comparing baseline and enhanced models"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "cross_match_settings": "The specified matching radius and local data requirement are mentioned, but details on how these parameters affect the matching quality across diverse datasets is not fully elaborated",
+                    "data_preprocessing": "Steps for processing the cross-matched data (e.g., handling missing values, scaling, and filtering rules) and the exact details of the contrastive image-spectrum pretraining protocol are not entirely clear"
+                },
+                "possible_modifications": {
+                    "modification_data_integration": [
+                        "Introduce additional variable surveys or modalities beyond DESI and Legacy Surveys",
+                        "Vary the matching radius and investigate its impact on candidate identification accuracy"
+                    ],
+                    "modification_model_configurations": [
+                        "Add new variables such as different data augmentation techniques or alternative pretraining strategies",
+                        "Include error bar reporting by running multiple experiments with different random seeds"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Cross-matching utility (integrates BTSbot, DESI, Legacy Surveys datasets)",
+                    "AstroCLIP embedding script for contrastive image\u2010spectrum pretraining",
+                    "Baseline BTSbot model (using only ZTF BTS images and metadata)",
+                    "Enhanced BTSbot model (integrating cross-matched features)",
+                    "Dataset components (ZTF BTS data, DESI, Legacy Surveys, PROVABGS)",
+                    "Training configuration (20,000 steps linear probing, 10,000 steps fine-tuning, linear learning rate scheduler over 75,000 steps)",
+                    "Evaluation metrics (AUC for binary classification, object-level early detection performance)"
+                ],
+                "setup_steps": [
+                    "Download the full dataset locally as required for cross-matching",
+                    "Run the cross-matching utility to combine BTSbot, DESI, and Legacy Surveys data (using a specified matching radius)",
+                    "Execute the AstroCLIP embedding script to perform contrastive pretraining on the cross-matched dataset",
+                    "Pretrain the auxiliary encoder on DESI and Legacy Surveys data",
+                    "Integrate the generated embeddings as additional feature channels in the BTSbot pipeline",
+                    "Train the baseline BTSbot (using only ZTF data) and the enhanced BTSbot model with similar training configurations",
+                    "Evaluate both models using AUC and object-level early detection performance metrics"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Cross-match settings and data preprocessing",
+                        "description": "The requirement to specify a local data root, matching radius, and number of processes adds complexity. Furthermore, ambiguity in handling missing values, data scaling, and filtering rules for the cross-matched datasets increases overall setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Cross-match settings: The effect of the specified matching radius on the data quality and integration is not fully elaborated",
+                    "Data preprocessing steps: The rules for filtering, scaling, and handling missing values in the cross-matched data are not clearly defined"
+                ],
+                "ambiguous_setup_steps": [
+                    "Details on integrating the AstroCLIP embeddings into the BTSbot model (e.g., how to combine image and spectral features) are sparse",
+                    "The contrastive image-spectrum pretraining protocol specifics (beyond general pretraining instructions) are not completely described",
+                    "Handling of local dataset downloads and potential issues with varying storage environments is not explicitly covered"
+                ],
+                "possible_modifications": {
+                    "modification_data_integration": [
+                        "Introduce additional variable surveys or modalities beyond DESI and Legacy Surveys",
+                        "Vary the matching radius parameter to study its impact on candidate identification accuracy"
+                    ],
+                    "modification_model_configurations": [
+                        "Apply alternative pretraining strategies or data augmentation techniques to test robustness",
+                        "Include error bar reporting by training multiple models with different random seeds"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a constraint on local data processing by requiring the use of only a subset of the full dataset for cross-matching, simulating scenarios with limited disk space or memory."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed number of training steps (for example, shortening the linear probing and fine-tuning phases) to test the pipeline under stricter time budgets."
+                    ],
+                    "money_constraints": [
+                        "Mandate the use of lower-cost computational resources (such as less expensive GPUs or limiting cloud compute credits) during training to simulate budget constraints."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic variability in training and data processing steps",
+                "description": "The enhanced pipeline introduces random uncertainty through the random initialization in contrastive pretraining and potential variability in the cross-matching process (e.g., variability due to minor fluctuations in coordinate matching when using a fixed matching radius). These random effects can lead to instability in gradient updates and variability in the final candidate identification accuracy.",
+                "impact": "These random fluctuations may result in different AUC scores and early detection performance across runs, complicating direct comparisons between the baseline and enhanced BTSbot models.",
+                "possible_modifications": [
+                    "Introduce multiple training runs with different random seeds to capture error bars and better quantify the variability.",
+                    "Adjust the cross-matching process to use deterministic matching criteria where possible, reducing randomness in data integration.",
+                    "Experiment with controlled dropout or fixed initialization in the contrastive pretraining phase to mitigate random fluctuations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases introduced during data integration and preprocessing",
+                "description": "The integration of multi-survey data via the cross-matching utility could introduce systematic biases. For example, if the cross-matching criteria (such as the matching radius and handling of missing values) are not optimally calibrated across datasets, the enhanced BTSbot model may consistently favor or overlook certain types of candidates. This might result in systematic over- or under-estimation of candidate identification accuracy.",
+                "impact": "Such systematic errors can lead to a persistent skew in performance metrics (e.g., AUC and object-level early detection), making it unclear whether improvements are due to better data integration or inadvertent bias in the preprocessing pipeline.",
+                "possible_modifications": [
+                    "Revisit and refine the matching radius and filtering rules to ensure balanced representation from each survey.",
+                    "Incorporate additional post-processing checks and calibration steps to correct for known dataset biases.",
+                    "Test the pipeline using alternative, independently curated datasets to validate that any observed improvements are not artifacts of systematic bias."
+                ]
+            }
+        },
+        {
+            "question": "Does the multimodal dataset approach, which integrates diverse astrophysical data (images from Legacy Surveys, spectra from DESI, and hyperspectral cubes from MaNGA), generalize effectively across tasks such as morphology classification, photometric classification, and physical parameter imaging?",
+            "method": "Conduct a set of experiments where the multimodal dataset is used to pretrain a model via a contrastive image\u2010spectrum strategy (AstroCLIP) and then evaluated on several downstream astrophysical tasks. In this design, the training involves cross-modal alignment between images (from the Legacy Surveys), spectra (from DESI), and hyperspectral cubes (e.g., from MaNGA) to learn unified representations.\n\nDetailed experiment setup:\n(1) Pretraining: Assemble a large cross-matched dataset by pairing images with their corresponding spectra and hyperspectral cubes using the Multimodal Universe dataset, which is accessible via the Hugging Face datasets library and offers preformatted multimodal astronomical data. Implement a contrastive learning framework (inspired by AstroCLIP) to learn modality-aligned embeddings.\n(2) Task-specific evaluation:\na. Morphology Classification \u2013 Use the Galaxy10 DECaLS dataset and evaluate model performance via standard classification metrics, comparing against a supervised baseline (e.g., using Random Forest as detailed in the associated appendix).\nb. Photometric Classification \u2013 Test on datasets such as PLAsTiCC and YSE, where photometric data is used to perform classification and redshift estimation.\nc. Physical Parameter Imaging \u2013 Employ hyperspectral cube data from MaNGA to predict spatially resolved physical parameters using the learned embeddings.\n(3) Evaluation Metrics: Use metrics such as classification accuracy (for morphology and photometric tasks) and R2 scores (for redshift and galaxy property prediction) to compare both zero-shot (k-Nearest Neighbour regression) and finetuned performance against established supervised baselines. The experimental design includes cross-validation and detailed recording of performance metrics across tasks.",
+            "expected_outcome": "Experimental evaluations across various tasks indicate that the multimodal framework is robust and generalizes well, leading to consistent performance improvements in tasks ranging from galaxy morphology classification to hyperspectral physical parameter estimation.",
+            "source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb",
+                "/workspace/experimental_benchmark/galaxy10_decals/trainer.py",
+                "/workspace/experimental_benchmark/galaxy_properties/trainer.py"
+            ],
+            "usage_instructions": "1. First, use cross_match.py to create multimodal datasets by cross-matching data from different sources (Legacy Surveys, DESI, MaNGA): `python /workspace/experimental_benchmark/cross_match.py [left_dataset_path] [right_dataset_path] [cache_dir] --matching_radius 1.0`. 2. Use embed.py to generate embeddings from the multimodal dataset using AstroCLIP: `python /workspace/experimental_benchmark/astroclip/property_estimation/embed.py [astroclip_model_path] [desi_decals_path] [provabgs_path] [save_path]`. 3. For morphology classification evaluation, run the Galaxy10 DECaLS trainer: `python /workspace/experimental_benchmark/galaxy10_decals/trainer.py fit --config /workspace/experimental_benchmark/galaxy10_decals/config.yaml`. 4. For physical parameter estimation, run the galaxy properties trainer: `python /workspace/experimental_benchmark/galaxy_properties/trainer.py fit --config /workspace/experimental_benchmark/galaxy_properties/configs/spectrum.yaml`. 5. Finally, use the property_estimation.ipynb notebook to evaluate the performance of the embeddings on galaxy property estimation using k-Nearest Neighbors regression.",
+            "requirements": [
+                "Step 1: Create a function to cross-match astronomical datasets using sky coordinates with a specified matching radius in arcseconds (/workspace/experimental_benchmark/cross_match.py:7-34)",
+                "Step 2: Implement a command-line interface for the cross-matching function that accepts paths to two datasets, a cache directory, and optional parameters (/workspace/experimental_benchmark/cross_match.py:37-48)",
+                "Step 3: Create a data loader class for handling astronomical data that can load image and spectrum data from disk (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:13-50)",
+                "Step 4: Implement a collator class that processes astronomical images by converting them to RGB and applying center cropping (/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py:53-80)",
+                "Step 5: Create a function to generate embeddings from astronomical images and spectra using a pre-trained AstroCLIP model (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:15-105)",
+                "Step 6: Implement a command-line interface for the embedding function that accepts paths to the model, datasets, and output directory (/workspace/experimental_benchmark/astroclip/property_estimation/embed.py:108-137)",
+                "Step 7: Create a notebook that loads the generated embeddings and evaluates them using k-Nearest Neighbors regression for galaxy property estimation (/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb:4-118)",
+                "Step 8: Implement a dataset class for Galaxy10 DECaLS data that loads and preprocesses galaxy images and labels (/workspace/experimental_benchmark/galaxy10_decals/dataset.py:8-59)",
+                "Step 9: Create a base model class for galaxy morphology classification with training and validation steps (/workspace/experimental_benchmark/galaxy10_decals/model.py:12-68)",
+                "Step 10: Implement specific model architectures (ResNet18, EfficientNetB0, DenseNet121, SmallConvModel) for galaxy morphology classification (/workspace/experimental_benchmark/galaxy10_decals/model.py:71-240)",
+                "Step 11: Create a command-line interface for training the galaxy morphology classification models (/workspace/experimental_benchmark/galaxy10_decals/trainer.py:1-10)",
+                "Step 12: Implement a dataset class for galaxy property estimation that handles different data modalities (image, spectrum, photometry) (/workspace/experimental_benchmark/galaxy_properties/dataset.py:8-103)",
+                "Step 13: Create a base model class for galaxy property estimation with training and validation steps (/workspace/experimental_benchmark/galaxy_properties/model.py:15-40)",
+                "Step 14: Implement specific model architectures for image-based galaxy property estimation (/workspace/experimental_benchmark/galaxy_properties/model.py:43-137)",
+                "Step 15: Implement specific model architectures for photometry and spectrum-based galaxy property estimation (/workspace/experimental_benchmark/galaxy_properties/model.py:140-287)",
+                "Step 16: Create utility functions for 1D convolutional neural networks for spectrum analysis (/workspace/experimental_benchmark/galaxy_properties/modules.py:19-316)",
+                "Step 17: Implement a callback to calculate and log R\u00b2 scores for galaxy property estimation (/workspace/experimental_benchmark/galaxy_properties/utils.py:8-37)",
+                "Step 18: Create a command-line interface for training the galaxy property estimation models (/workspace/experimental_benchmark/galaxy_properties/trainer.py:1-10)"
+            ],
+            "agent_instructions": "Your task is to implement a pipeline for multimodal astronomical data analysis and machine learning. The pipeline consists of several components:\n\n1. A cross-matching utility that combines data from different astronomical surveys by matching objects based on their sky coordinates (RA and DEC) within a specified radius (in arcseconds).\n\n2. An embedding generation system that uses a pre-trained AstroCLIP model to create embeddings from both galaxy images and spectra. The system should:\n   - Load the AstroCLIP model\n   - Process galaxy images and spectra from the DESI-DECaLS dataset\n   - Generate embeddings for both modalities\n   - Join these embeddings with physical properties from the PROVABGS dataset\n   - Save the combined data for training and testing\n\n3. A galaxy morphology classification system that:\n   - Loads the Galaxy10 DECaLS dataset\n   - Implements deep learning models (like ResNet, DenseNet, or EfficientNet) for galaxy classification\n   - Provides data preprocessing and augmentation\n   - Includes training and evaluation functionality\n\n4. A galaxy property estimation system that:\n   - Supports different input modalities (images, spectra, or photometry)\n   - Implements various neural network architectures for regression\n   - Predicts physical properties like stellar mass, star formation rate, metallicity, and age\n   - Evaluates performance using R\u00b2 scores\n\n5. An evaluation notebook that uses k-Nearest Neighbors regression to assess how well the generated embeddings capture galaxy properties.\n\nThe implementation should use PyTorch Lightning for the training pipeline and the Hugging Face datasets library for data handling. The system should be configurable through command-line arguments and YAML configuration files.",
+            "masked_source": [
+                "/workspace/experimental_benchmark/cross_match.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/embed.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/property_estimation.ipynb",
+                "/workspace/experimental_benchmark/galaxy10_decals/trainer.py",
+                "/workspace/experimental_benchmark/galaxy_properties/trainer.py",
+                "/workspace/experimental_benchmark/astroclip/property_estimation/datamodule.py",
+                "/workspace/experimental_benchmark/galaxy10_decals/model.py",
+                "/workspace/experimental_benchmark/galaxy10_decals/dataset.py",
+                "/workspace/experimental_benchmark/galaxy_properties/model.py",
+                "/workspace/experimental_benchmark/galaxy_properties/dataset.py",
+                "/workspace/experimental_benchmark/galaxy_properties/utils.py",
+                "/workspace/experimental_benchmark/galaxy_properties/modules.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "multimodal_dataset": "The Multimodal Universe dataset from the Hugging Face datasets library, including fixed data sources (Legacy Surveys, DESI, MaNGA)",
+                    "pretraining_strategy": "Contrastive image\u2010spectrum alignment (AstroCLIP) used uniformly across experiments",
+                    "cross_match_radius": [
+                        "1.0 arcseconds"
+                    ]
+                },
+                "independent_variables": {
+                    "experiment_task": [
+                        "Morphology Classification",
+                        "Photometric Classification",
+                        "Physical Parameter Imaging"
+                    ],
+                    "model_architecture": [
+                        "ResNet18",
+                        "DenseNet121",
+                        "EfficientNetB0",
+                        "SmallConvModel",
+                        "other architectures for property estimation"
+                    ],
+                    "input_modality": [
+                        "images",
+                        "spectra",
+                        "hyperspectral cubes",
+                        "photometry"
+                    ],
+                    "evaluation_method": [
+                        "zero-shot k-Nearest Neighbors regression",
+                        "finetuned performance with supervised baselines"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metric": [
+                        "classification accuracy",
+                        "R2 score",
+                        "redshift estimation accuracy"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "detailed_hyperparameters": "The specific values for training hyperparameters (learning rate, batch size, number of epochs, etc.) are not explicitly mentioned and are provided only in configuration files.",
+                    "data_split_strategy": "The exact procedure for splitting the data (cross-validation splits, training/validation/test ratios) is not detailed in the task description.",
+                    "augmentation_methods": "Exact data augmentation and preprocessing techniques for the image data are mentioned in passing but not explicitly defined in the task."
+                },
+                "possible_modifications": {
+                    "mask_hyperparameters": [
+                        "Hide or obfuscate the specific values or choices of hyperparameters in the instruction so the agent must infer or suggest defaults."
+                    ],
+                    "imply_new_variables": [
+                        "Introduce an additional variable such as 'regularization_method' with options like ['weight_decay', 'dropout'] to explore effects on downstream performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Cross-matching utility for pairing astronomical datasets (Legacy Surveys, DESI, MaNGA)",
+                    "Embedding generation system using a pre-trained AstroCLIP model",
+                    "Galaxy morphology classification module using deep learning models (ResNet18, DenseNet121, EfficientNetB0, SmallConvModel)",
+                    "Galaxy property estimation module for multiple input modalities (images, spectra, hyperspectral cubes, photometry)",
+                    "Evaluation notebook for k-Nearest Neighbors regression performance assessment",
+                    "Underlying infrastructure including PyTorch Lightning for training pipelines",
+                    "Configuration management via YAML files and command-line interfaces",
+                    "Data handling using the Hugging Face datasets library"
+                ],
+                "setup_steps": [
+                    "Run cross_match.py to create a multimodal dataset by cross-matching data from different surveys using a specified matching radius",
+                    "Execute embed.py to generate embeddings using the AstroCLIP model on paired images and spectra",
+                    "Train the galaxy morphology classification model using Galaxy10 DECaLS via its trainer script (galaxy10_decals/trainer.py)",
+                    "Train the galaxy property estimation models using the galaxy_properties/trainer.py with relevant configuration files",
+                    "Evaluate the generated embeddings and model performance using the property_estimation.ipynb notebook for k-Nearest Neighbors regression and other metrics"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multimodal data integration and preprocessing",
+                        "description": "Data from different astrophysical surveys require distinct preprocessing (e.g., converting images to RGB, center cropping, handling spectra and hyperspectral cubes), and this integration across multiple modalities adds complexity."
+                    },
+                    {
+                        "source": "Configuration and code modularity",
+                        "description": "The use of multiple command-line interfaces, YAML configuration files, and separate scripts for various tasks (cross-matching, embedding, classification, property estimation) increases the overall setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Training hyperparameters: Specific values such as learning rate, batch size, and number of epochs are only provided in configuration files and not explicitly documented in the task description.",
+                    "Data split strategy: The exact procedure for splitting data into training, validation, and testing sets is not detailed.",
+                    "Data augmentation methods: While preprocessing steps (like converting images to RGB and center cropping) are mentioned, the full set of augmentation techniques is not explicitly defined."
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration details between the diverse datasets (images, spectra, hyperspectral cubes) are not fully specified beyond the cross-matching radius and general preprocessing.",
+                    "The process for adjusting or tuning hyperparameters is not outlined in the experiment instructions."
+                ],
+                "possible_modifications": {
+                    "mask_hyperparameters": [
+                        "Hide or obfuscate the specific hyperparameter values in the provided configuration files, requiring the agent to infer or propose reasonable defaults."
+                    ],
+                    "imply_new_variables": [
+                        "Introduce additional variables such as a 'regularization_method' (e.g., 'weight_decay' or 'dropout') to assess their impact on model performance."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a smaller model variant (e.g., a mini version of AstroCLIP) to achieve performance parity with the full-scale model, thereby testing the multimodal approach under limited computational resources."
+                    ],
+                    "time_constraints": [
+                        "Restrict the number of training epochs or iterations to simulate scenarios with stringent time budgets."
+                    ],
+                    "money_constraints": [
+                        "Limit the use of expensive compute resources by running experiments on free-tier or cost-efficient cloud infrastructures."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in contrastive pretraining and data augmentation",
+                "description": "In the pretraining phase using a contrastive image\u2010spectrum alignment (AstroCLIP), random factors such as initialization, mini-batch sampling, and potential perturbations (e.g., random token or feature dropping) can introduce performance variability. Such randomness may lead to unstable gradient updates and cause fluctuations in downstream task metrics (e.g., classification accuracy and R2 scores).",
+                "impact": "Variability in model performance across different runs can mask true improvements, making it harder to distinguish whether performance gains are due to the multimodal setup or random chance. Repeating experiment runs might yield inconsistent results.",
+                "possible_modifications": [
+                    "Explicitly introduce random token dropping during pretraining to measure its effect on gradient stability and downstream performance.",
+                    "Vary the random seed for weight initialization and batch ordering to assess the robustness and variance in the learned embeddings.",
+                    "Randomly perturb data augmentation (e.g., slight variations in center cropping or image normalization) to evaluate sensitivity of the overall pipeline."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset bias from cross-modal data integration and fixed preprocessing choices",
+                "description": "The pipeline relies on a cross-matching utility that integrates images from Legacy Surveys, spectra from DESI, and hyperspectral cubes from MaNGA. A one-time systematic modification\u2014for example, a bias in cross-matching criteria (such as a fixed matching radius) or a systematic corruption in one data modality\u2014can introduce a consistent bias. If the dataset is inadvertently modified (e.g., biased labeling or misalignment across modalities), the learned embeddings might consistently reflect this error across all downstream tasks.",
+                "impact": "A systematic bias will likely result in consistent errors across experiments (e.g., over- or under-estimation in morphology classification and physical parameter imaging), thereby impacting the generalization of the multimodal approach in a predictable but misleading manner.",
+                "possible_modifications": [
+                    "Alter the cross-matching threshold (e.g., change the matching radius from 1.0 arcseconds) in a one-time experiment to assess its influence on overall bias in representation learning.",
+                    "Introduce a systematic bias by modifying a subset of labels (such as fixing all labels for objects above a certain brightness to one category) to evaluate the model\u2019s ability to recover from a corrupted dataset.",
+                    "Apply a consistent preprocessing perturbation to one modality (e.g., modifying image brightness or spectrum scaling) so as to simulate systematic miscalibration during data integration."
+                ]
+            }
+        },
+        {
+            "mode": "B",
+            "question": "How can we visualize and analyze astronomical light curves from the PLAsTiCC dataset?",
+            "method": "Create a program that loads the PLAsTiCC dataset from the Multimodal Universe collection, processes the light curve data to remove padding, and visualizes the light curves for different astronomical objects with proper error bars and band colors.",
+            "expected_outcome": "A visualization of a PLAsTiCC light curve showing flux measurements over time across different bands, with proper error bars, and information about the object type and redshift displayed.",
+            "source": [
+                "/workspace/notebooks/plasticc_demo.ipynb",
+                "/workspace/notebooks/getting_started.ipynb"
+            ],
+            "usage_instructions": "1. Install and import the necessary libraries (datasets, numpy, matplotlib).\n2. Load the PLAsTiCC dataset using the Hugging Face datasets library with streaming enabled.\n3. Extract a light curve example from the dataset.\n4. Process the light curve data by:\n   - Identifying unique bands in the data\n   - Determining the sequence length for each band\n   - Finding non-padding timestamps to determine the unpadded sequence length\n   - Reshaping the time, flux, and flux error data to remove padding\n5. Create a visualization of the light curve with:\n   - Different colors for each band\n   - Error bars for flux measurements\n   - Proper axis labels and title\n   - A legend identifying each band\n6. Display metadata about the object including its ID, type, and redshift information.",
+            "requirements": [
+                "Step 1: Import necessary libraries (datasets, numpy, matplotlib) (/workspace/notebooks/plasticc_demo.ipynb:10-11, /workspace/notebooks/getting_started.ipynb:97-98)",
+                "Step 2: Load the PLAsTiCC dataset from the Multimodal Universe collection with streaming enabled (/workspace/notebooks/plasticc_demo.ipynb:23, /workspace/notebooks/getting_started.ipynb:348-351)",
+                "Step 3: Extract a light curve example from the dataset (/workspace/notebooks/plasticc_demo.ipynb:35, /workspace/notebooks/getting_started.ipynb:376)",
+                "Step 4: Identify unique bands in the light curve data (/workspace/notebooks/plasticc_demo.ipynb:47-48, /workspace/notebooks/getting_started.ipynb:416)",
+                "Step 5: Determine the sequence length for each band (/workspace/notebooks/plasticc_demo.ipynb:49-51)",
+                "Step 6: Find non-padding timestamps to determine the unpadded sequence length (/workspace/notebooks/plasticc_demo.ipynb:64-66)",
+                "Step 7: Reshape the time, flux, and flux error data to remove padding (/workspace/notebooks/plasticc_demo.ipynb:79-81)",
+                "Step 8: Create a visualization with different colors for each band, error bars for flux measurements, and proper axis labels (/workspace/notebooks/plasticc_demo.ipynb:93-107)",
+                "Final Step: Display metadata about the astronomical object including its type and redshift information (/workspace/notebooks/getting_started.ipynb:419-421)"
+            ],
+            "agent_instructions": "Create a program that visualizes astronomical light curves from the PLAsTiCC dataset. Your program should:\n\n1. Install and import the necessary libraries: datasets (from Hugging Face), numpy, and matplotlib.\n\n2. Load the PLAsTiCC dataset from the Multimodal Universe collection using the Hugging Face datasets library with streaming enabled.\n\n3. Extract a light curve example from the dataset. The light curve data will be stored in a 'lightcurve' field of the example.\n\n4. Process the light curve data to prepare it for visualization:\n   - Identify the unique bands (different wavelength filters) in the data\n   - Determine the sequence length for each band\n   - Find non-padding timestamps to determine the actual data points (the dataset uses padding with zeros or negative values)\n   - Reshape the time, flux, and flux error data to remove padding\n\n5. Create a visualization of the light curve that includes:\n   - Different colors for each band (u, g, r, i, z, Y)\n   - Error bars for flux measurements\n   - Proper axis labels (time in MJD for x-axis, flux for y-axis)\n   - A legend identifying each band\n\n6. Display metadata about the astronomical object, including its object ID, type (e.g., supernova type), and redshift information.\n\nThe goal is to create an informative visualization that shows how the brightness of an astronomical object changes over time across different wavelength bands, which is crucial for identifying and classifying transient astronomical phenomena.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "PLAsTiCC"
+                    ],
+                    "libraries": [
+                        "datasets",
+                        "numpy",
+                        "matplotlib"
+                    ],
+                    "streaming_enabled": [
+                        "True"
+                    ]
+                },
+                "independent_variables": {
+                    "band": [
+                        "u",
+                        "g",
+                        "r",
+                        "i",
+                        "z",
+                        "Y"
+                    ],
+                    "data_processing_steps": "A fixed sequence of steps (identify unique bands, determine sequence lengths, remove padding)"
+                },
+                "dependent_variables": {
+                    "visualization_elements": [
+                        "flux vs. time plot",
+                        "error bars",
+                        "axis labels",
+                        "legend",
+                        "metadata display (object ID, type, redshift)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "non_padding_criteria": "The exact criteria for determining non-padding timestamps or values (zeros vs negative values) is not explicitly defined.",
+                    "object_metadata": "The definition or expected format for object type and redshift information can be ambiguous, as it depends on how these are recorded in the dataset."
+                },
+                "possible_modifications": {
+                    "mask_data_details": [
+                        "Omit or partially hide the non-padding criteria, requiring the system to infer the correct data points.",
+                        "Imply the existence of additional photometric band variables in the question that are not explicitly listed."
+                    ],
+                    "expand_metadata": [
+                        "Introduce additional metadata fields (e.g., classification confidence or uncertainty values) to be displayed."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Hugging Face datasets library (with streaming enabled)",
+                    "numpy library",
+                    "matplotlib for plotting",
+                    "PLAsTiCC dataset from the Multimodal Universe collection",
+                    "Data processing pipeline for light curve extraction",
+                    "Visualization module for plotting flux vs. time with error bars, legends, and metadata display"
+                ],
+                "setup_steps": [
+                    "Install and import necessary libraries (datasets, numpy, matplotlib)",
+                    "Load the PLAsTiCC dataset using the Hugging Face datasets library with streaming enabled",
+                    "Extract a light curve example from the dataset",
+                    "Identify unique bands in the light curve data",
+                    "Determine sequence lengths per band and find non-padding timestamps",
+                    "Reshape time, flux, and flux error arrays to remove padding",
+                    "Create a visualization with different colors for each band and proper error bars",
+                    "Display metadata about the astronomical object including its ID, type, and redshift"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Data Processing",
+                        "description": "The criteria for determining non-padding timestamps (e.g., whether zeros, negative values, or both are used as padding) is not explicitly defined, adding complexity."
+                    },
+                    {
+                        "source": "Metadata Handling",
+                        "description": "Extracting and displaying object metadata (object type, redshift) can vary with the dataset's internal formatting, leading to added complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Non-padding Criteria: It is unclear whether padding is defined by zeros, negative values, or another logic.",
+                    "Object Metadata: The expected format and definitions (e.g., for object type and redshift) are not fully specified."
+                ],
+                "ambiguous_setup_steps": [
+                    "Reshaping data: The specific method to remove padding and conditionally filter timestamps is not clearly detailed.",
+                    "Visualization details: The precise mapping of colors to bands and error bar computation could be interpreted in multiple ways."
+                ],
+                "possible_modifications": {
+                    "mask_data_details": [
+                        "Omit or partially hide the explicit non-padding criteria, requiring users to infer the correct data points.",
+                        "Hide some instructions on how to properly filter or reshape the time and flux data."
+                    ],
+                    "expand_metadata": [
+                        "Introduce additional metadata fields (e.g., classification confidence or uncertainty) to require further handling in the visualization.",
+                        "Ask for a more detailed display of object properties beyond just the object ID, type, and redshift."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For extended tasks, restrict computational resources by processing only a fraction of the PLAsTiCC dataset. This simulates reduced memory and compute power, requiring optimizations in data handling and visualization."
+                    ],
+                    "time_constraints": [
+                        "For extended tasks, require the entire data loading, processing, and visualization pipeline to complete within a strict time limit (e.g., under 5 minutes) to simulate limited development time."
+                    ],
+                    "money_constraints": [
+                        "For extended tasks, mandate the use of lower-cost or free-tier cloud computing resources. This constraint may force the use of less expensive hardware, potentially impacting the speed and precision of error bar calculations."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Data preprocessing and streaming variability",
+                "description": "When processing the PLAsTiCC light curves, steps such as determining non-padding timestamps and reshaping the data might rely on heuristics that could introduce randomness. Furthermore, if the extraction of a light curve example from the streaming dataset does not enforce a fixed random seed, the set of data points used (and hence the computed error bars) could vary between runs.",
+                "impact": "This may lead to slight variations in the visualization, including inconsistent error bars and flux measurements. Such randomness affects the reproducibility of the analysis and can obscure subtle trends in the astronomical light curves.",
+                "possible_modifications": [
+                    "Enforce a deterministic procedure for identifying non-padding points (e.g., by defining explicit criteria rather than random thresholds).",
+                    "Use a fixed random seed for any sampling or stochastic processing steps to ensure reproducibility in error bar calculation.",
+                    "Test the visualization by injecting controlled random noise into flux values to evaluate the robustness of error bar computations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent data pipeline biases and metadata extraction errors",
+                "description": "A systematic error might be introduced if the data processing pipeline uses an improper or biased criterion to remove padding (for instance, if it always filters using zeros when negative values should also be considered), or if there is a one-time modification in how band colors are assigned or metadata (like object type and redshift) is extracted from the dataset.",
+                "impact": "The produced visualization may consistently misrepresent the true light curve, such as by showing skewed error bars or incorrect metadata. This bias can lead to erroneous scientific conclusions, as the same error propagates across all visualizations generated from the dataset.",
+                "possible_modifications": [
+                    "Audit and standardize the criteria for filtering non-padding data to eliminate a consistent offset in flux or time measurements.",
+                    "Introduce a one-time correction in metadata extraction to replace any incorporated systematic bias (e.g., reassign the correct band colors or fix redshift extraction errors).",
+                    "Cross-validate the extracted light curve visualization with an external, trusted dataset to detect and correct biases in the processing pipeline."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can we classify supernovae types using wavelet features extracted from light curves?",
+            "method": "Use the snmachine library to extract wavelet features from supernova light curves and train a classifier to distinguish between different supernova types (Ia, II, Ibc, etc.).",
+            "expected_outcome": "A trained classifier that can distinguish between different supernova types with accuracy metrics and visualizations (confusion matrix, ROC curve, t-SNE plot).",
+            "source": [
+                "/workspace/baselines/photo_class/snmachine_example.py"
+            ],
+            "usage_instructions": "1. Load a dataset of supernova light curves from the Multimodal Universe collection.\n2. Clean and preprocess the light curve data by:\n   - Removing padding (zero values)\n   - Clipping the light curves around the peak brightness\n   - Normalizing the time axis\n   - Standardizing filter names\n3. Extract wavelet features from the light curves using the WaveletFeatures class from snmachine.\n4. Visualize the feature space using t-SNE to see how well different supernova types separate.\n5. Train multiple classifiers (SVM, Random Forest, Boosted Decision Trees) on the wavelet features.\n6. Evaluate the classifiers using accuracy metrics and confusion matrices.\n7. Plot ROC curves to visualize classifier performance.",
+            "requirements": [
+                "Step 1: Load a dataset of supernova light curves from the Multimodal Universe collection (/workspace/baselines/photo_class/snmachine_example.py:10-38)",
+                "Step 2: Clean and preprocess the light curve data by removing padding (zero values), clipping around peak brightness, normalizing the time axis, and standardizing filter names (/workspace/baselines/photo_class/snmachine_example.py:54-105)",
+                "Step 3: Group supernova types into major categories (Ia, II, Ibc, other) (/workspace/baselines/photo_class/snmachine_example.py:96-104)",
+                "Step 4: Extract wavelet features from the light curves using the WaveletFeatures class from snmachine (/workspace/baselines/photo_class/snmachine_example.py:125-169)",
+                "Step 5: Visualize the feature space using t-SNE to see how well different supernova types separate (/workspace/baselines/photo_class/snmachine_example.py:201-203)",
+                "Step 6: Train multiple classifiers (SVM, Random Forest, Boosted Decision Trees) on the wavelet features (/workspace/baselines/photo_class/snmachine_example.py:171-186)",
+                "Step 7: Evaluate the classifiers using accuracy metrics and confusion matrices (/workspace/baselines/photo_class/snmachine_example.py:177-182)",
+                "Step 8: Plot ROC curves to visualize classifier performance (/workspace/baselines/photo_class/snmachine_example.py:177-186)",
+                "Final Step: Save the classification results and visualizations (/workspace/baselines/photo_class/snmachine_example.py:183-186)"
+            ],
+            "agent_instructions": "Your task is to create a script that classifies supernovae types using wavelet features extracted from light curves. Follow these steps:\n\n1. Load a dataset of supernova light curves from the Multimodal Universe collection.\n\n2. Clean and preprocess the light curve data by:\n   - Removing padding (zero values)\n   - Clipping the light curves around the peak brightness\n   - Normalizing the time axis\n   - Standardizing filter names\n   - Filtering out objects with insufficient observations\n\n3. Group supernova types into major categories (Ia, II, Ibc, other) for classification purposes.\n\n4. Extract wavelet features from the light curves using the WaveletFeatures class from the snmachine library.\n\n5. Visualize the feature space using t-SNE to see how well different supernova types separate in the feature space.\n\n6. Train multiple classifiers on the wavelet features. You should implement at least three different classification algorithms such as SVM, Random Forest, and Boosted Decision Trees.\n\n7. Evaluate the classifiers using appropriate metrics such as accuracy and confusion matrices.\n\n8. Plot ROC curves to visualize classifier performance.\n\n9. Save the classification results and visualizations to files.\n\nThe script should use the snmachine library which provides tools for supernova light curve analysis, feature extraction, and classification. Make sure to handle cases where objects have missing or invalid data.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "Multimodal Universe supernova light curves (fixed dataset source)",
+                    "data_preprocessing": "The cleaning and preprocessing steps (e.g., remove padding, clip around peak brightness, normalize time axis, standardize filter names), which are applied uniformly",
+                    "feature_extraction": "Use of the snmachine WaveletFeatures class for feature extraction"
+                },
+                "independent_variables": {
+                    "classifier_type": [
+                        "SVM",
+                        "Random Forest",
+                        "Boosted Decision Trees"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "accuracy",
+                        "confusion matrix",
+                        "ROC curves",
+                        "t-SNE visualizations"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "data_cleaning_parameters": "The exact numerical or procedural parameters for clipping, normalization, and filtering are not explicitly defined",
+                    "wavelet_feature_parameters": "The specific configuration details (e.g., choice of wavelet function, scales, or decomposition levels) for the WaveletFeatures are not detailed",
+                    "hyperparameter_settings": "The specific hyperparameters for training each of the classifiers are not mentioned, leaving ambiguity in how to tune or compare them",
+                    "handling_missing_data": "While invalid or missing data should be handled, the method or threshold for filtering objects with insufficient observations is not specified"
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional variables such as different wavelet basis functions (e.g., Haar, Daubechies) or varying decomposition levels, which would require specifying their values",
+                        "Add extra classifier options (e.g., Neural Networks, k-NN) to see how different models perform on the extracted features"
+                    ],
+                    "modification_2": [
+                        "Mask specific preprocessing parameters or hyperparameter settings in the instructions, thereby requiring the agent to decide and tune these values on their own"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Multimodal Universe supernova light curves dataset",
+                    "Data cleaning and preprocessing module (removing padding, clipping around peak brightness, normalizing time axis, standardizing filter names, filtering insufficient observations)",
+                    "WaveletFeatures extraction module from the snmachine library",
+                    "Classifier implementations (SVM, Random Forest, Boosted Decision Trees)",
+                    "Visualization modules (t-SNE, ROC curve plotting, confusion matrix generation)",
+                    "Results saving module (saving classification results and visualizations)"
+                ],
+                "setup_steps": [
+                    "Load the Multimodal Universe supernova light curves dataset",
+                    "Clean and preprocess the light curves by removing padding, clipping around peak brightness, normalizing the time axis, standardizing filter names, and filtering out objects with insufficient observations",
+                    "Group the supernova types into major categories (Ia, II, Ibc, other)",
+                    "Extract wavelet features using the WaveletFeatures class from the snmachine library",
+                    "Visualize the extracted features using t-SNE to inspect separation among supernova types",
+                    "Train multiple classifiers (SVM, Random Forest, Boosted Decision Trees) on the extracted features",
+                    "Evaluate the performance of each classifier using accuracy metrics, confusion matrices, and ROC curve plotting",
+                    "Save the classification results and generated visualizations"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Integration of multiple libraries and tools",
+                        "description": "The experiment requires coordinating data ingestion, preprocessing, feature extraction, training various classifiers, and visualization modules, each possibly using different libraries and configurations."
+                    },
+                    {
+                        "source": "Computational resource management",
+                        "description": "Managing compute resources efficiently is necessary especially when running multiple classifiers and handling large datasets, which could add non-trivial complexity to the setup."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Data cleaning and preprocessing module: The exact parameters for clipping, normalization, and filtering are not explicitly defined.",
+                    "WaveletFeatures extraction module: The specific configuration details (e.g., choice of wavelet function, scales, number of decomposition levels) are left unspecified.",
+                    "Classifier training module: The hyperparameter settings for SVM, Random Forest, and Boosted Decision Trees are not provided.",
+                    "Missing data handling: The criteria or thresholds for filtering out objects with insufficient observations are not detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Preprocessing step: The procedure to clip the light curves around the peak brightness and the normalization methods lack detailed instructions.",
+                    "Feature extraction step: The configuration of the WaveletFeatures class (such as parameter choices) is ambiguous.",
+                    "Classifier evaluation step: The specifics on how to tune hyperparameters and compare classifier performance are omitted."
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce additional variables such as different wavelet basis functions (e.g., Haar, Daubechies) or varying decomposition levels, requiring explicit parameter specification."
+                    ],
+                    "modification_2": [
+                        "Mask specific preprocessing parameters or hyperparameter settings in the instructions, thereby requiring the user to decide on and tune these values on their own."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Constrain the computational resources by, for example, using a reduced dataset size or limiting GPU acceleration. This forces the wavelet feature extraction and training to operate under tighter resource limits."
+                    ],
+                    "time_constraints": [
+                        "Introduce a fixed maximum training duration (e.g., reducing the number of training iterations) which would challenge the classifiers to achieve similar performance in a shorter time frame."
+                    ],
+                    "money_constraints": [
+                        "Restrict the experiment to run solely on local hardware rather than utilizing potentially more expensive cloud computing services, simulating a limited budget scenario."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random processes in classifier initialization and visualization algorithms",
+                "description": "The experiment depends on random splits of the dataset, random initialization in training classifiers (especially Random Forest and Boosted Decision Trees), and the inherent randomness in the t-SNE visualization algorithm. These stochastic elements can lead to inconsistent performance metrics and different visual outputs (e.g., ROC curves, confusion matrices, and t-SNE plots) across runs.",
+                "impact": "Such variability can result in fluctuations in measured accuracy, misclassification rates, and inconsistent spatial clusters in the t-SNE feature visualization, which in turn affects the comparison of classifier performance across different experimental runs.",
+                "possible_modifications": [
+                    "Perform multiple runs with different random seeds to estimate and report error bars.",
+                    "Inject additional random noise in the wavelet feature extraction process to test the robustness of the classifiers.",
+                    "Randomly drop or modify a subset of wavelet coefficients to simulate further randomness in feature quality."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Preprocessing steps and methodological choices in feature extraction and labeling",
+                "description": "Systematic uncertainty might emerge from decisions made during data cleaning (e.g., the thresholds for clipping around peak brightness, normalization methods, and filtering out objects with insufficient observations) and grouping of supernova types (e.g., the way types are categorized into Ia, II, Ibc, and other). Additionally, fixed parameter settings in the WaveletFeatures extraction (such as the choice of wavelet functions or decomposition levels) may introduce a bias that consistently affects the extracted features.",
+                "impact": "These fixed decisions can consistently bias the dataset and feature representations, leading to similar systematic errors in the trained classifier's performance metrics, such as skewed accuracy, ROC curves, and confusion matrices. The predictability of these biases makes them harder to correct once the process has been established.",
+                "possible_modifications": [
+                    "Introduce a one-time, systematic bias in the dataset by altering the labeling rule (for instance, labeling supernovae with a specific characteristic in a biased manner).",
+                    "Vary the configuration of the WaveletFeatures extraction method (e.g., using different wavelet basis functions or scales) to assess how fixed parameter choices affect classification outcomes.",
+                    "Consistently modify the preprocessing thresholds to observe the impact of these systematic settings on classifier performance."
+                ]
+            }
+        },
+        {
+            "mode": "A",
+            "question": "How can we use the Informer model to classify astronomical time series data from the PLAsTiCC dataset?",
+            "method": "Implement a sequence classification pipeline using the Informer model architecture to classify astronomical objects based on their light curves from the PLAsTiCC dataset.",
+            "expected_outcome": "A trained Informer model that can classify astronomical objects from their light curves with accuracy metrics reported.",
+            "source": [
+                "/workspace/baselines/plasticc/plasticc.py",
+                "/workspace/baselines/plasticc/preprocess.py",
+                "/workspace/baselines/plasticc/models.py"
+            ],
+            "usage_instructions": "1. Load the PLAsTiCC dataset using the Hugging Face datasets library.\n2. Preprocess the light curve data by:\n   - Normalizing flux values using min-max normalization\n   - Creating attention masks to handle padding in the sequences\n   - Preparing time and wavelength features\n3. Configure the Informer model with appropriate parameters for sequence classification:\n   - Set input size, context length, and model dimensions\n   - Configure encoder and decoder layers\n   - Set up dropout and other hyperparameters\n4. Create a custom positional encoding using Fourier features for the time and wavelength dimensions.\n5. Implement the sequence classification model by:\n   - Processing the input data through the encoder\n   - Pooling the output sequence by taking the mean across the time dimension\n   - Passing the pooled representation through a classifier head\n6. Train the model on the preprocessed data.\n7. Evaluate the model's classification accuracy on a validation set.",
+            "requirements": [
+                "Step 1: Load the PLAsTiCC dataset using the Hugging Face datasets library (/workspace/baselines/plasticc/plasticc.py:52-52)",
+                "Step 2: Preprocess the light curve data by normalizing flux values using min-max normalization (/workspace/baselines/plasticc/preprocess.py:20-24, /workspace/baselines/plasticc/preprocess.py:26-32)",
+                "Step 3: Create attention masks to handle padding in the sequences (/workspace/baselines/plasticc/preprocess.py:34-38)",
+                "Step 4: Transform the raw data by applying normalization and creating attention masks (/workspace/baselines/plasticc/preprocess.py:77-88, /workspace/baselines/plasticc/preprocess.py:90-115)",
+                "Step 5: Configure the Informer model with appropriate parameters for sequence classification (/workspace/baselines/plasticc/plasticc.py:20-37)",
+                "Step 6: Implement a custom positional encoding using Fourier features for time and wavelength dimensions (/workspace/baselines/plasticc/models.py:18-56)",
+                "Step 7: Extend the Informer encoder to use the custom Fourier positional encoding (/workspace/baselines/plasticc/models.py:58-200)",
+                "Step 8: Implement the sequence classification model by processing input through the encoder and pooling the output sequence (/workspace/baselines/plasticc/models.py:202-318)",
+                "Step 9: Create a data loader for the preprocessed data (/workspace/baselines/plasticc/preprocess.py:117-151)",
+                "Step 10: Load a pretrained model for evaluation (/workspace/baselines/plasticc/plasticc.py:46-50)",
+                "Step 11: Evaluate the model's classification accuracy on a validation set (/workspace/baselines/plasticc/plasticc.py:60-66)"
+            ],
+            "agent_instructions": "Your task is to implement a sequence classification pipeline using the Informer model architecture to classify astronomical objects from the PLAsTiCC dataset based on their light curves. Follow these steps:\n\n1. Set up the environment by importing necessary libraries including PyTorch, transformers (for the Informer model), and the datasets library to load the PLAsTiCC dataset.\n\n2. Implement preprocessing functions for the light curve data that:\n   - Apply min-max normalization to flux values to scale them to [0,1] range\n   - Create attention masks to handle padding in the sequences\n   - Prepare time and wavelength features from the astronomical data\n\n3. Implement a custom positional encoding module using Fourier features that can encode both time and wavelength dimensions of the astronomical data.\n\n4. Extend the Informer encoder to use your custom positional encoding instead of the default one.\n\n5. Implement a sequence classification model based on the Informer architecture that:\n   - Processes the input light curve data through the encoder\n   - Pools the output sequence by taking the mean across the time dimension\n   - Passes the pooled representation through a classifier head\n\n6. Create a configuration for the Informer model with appropriate parameters:\n   - Set input size to handle flux and flux error values\n   - Configure context length to handle the light curve sequences\n   - Set appropriate model dimensions and number of encoder/decoder layers\n\n7. Implement a data loading pipeline that:\n   - Loads the PLAsTiCC dataset\n   - Applies your preprocessing functions\n   - Creates batches with proper attention masks\n\n8. Implement an evaluation function that:\n   - Loads a trained model\n   - Runs inference on a validation set\n   - Calculates and reports classification accuracy\n\nThe goal is to create a complete pipeline that can effectively classify astronomical objects from their light curves using the Informer model architecture.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "PLAsTiCC"
+                    ],
+                    "model_architecture": [
+                        "Informer"
+                    ]
+                },
+                "independent_variables": {
+                    "preprocessing_steps": [
+                        "min-max normalization",
+                        "attention mask creation",
+                        "time and wavelength feature extraction"
+                    ],
+                    "model_configuration": [
+                        "input size",
+                        "context length",
+                        "model dimensions",
+                        "number of encoder layers",
+                        "number of decoder layers",
+                        "dropout rate"
+                    ],
+                    "positional_encoding": [
+                        "custom Fourier features"
+                    ]
+                },
+                "dependent_variables": {
+                    "classification_performance": [
+                        "accuracy metrics",
+                        "validation results"
+                    ],
+                    "trained_model": "The resultant model artifact after training"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_configuration": "Specific numeric values and ranges (e.g., exact input size, context length, number of layers) are not explicitly provided.",
+                    "positional_encoding": "The implementation details of the custom Fourier features for positional encoding are open to interpretation.",
+                    "preprocessing_steps": "While the steps such as normalization and mask creation are listed, handling edge cases (e.g., missing data or variable length sequences) is not clearly specified.",
+                    "training_details": "The exact hyperparameters and training regimens (like learning rate, batch size, and number of epochs) are not fully detailed."
+                },
+                "possible_modifications": {
+                    "add_parameter_options": [
+                        "Include alternative normalization methods, such as z-score normalization.",
+                        "Provide explicit ranges or candidate values for model hyperparameters.",
+                        "Introduce additional data augmentation or preprocessing options.",
+                        "Mask or vary specific training hyperparameters to test robustness."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "PLAsTiCC dataset loader using Hugging Face datasets library",
+                    "Preprocessing module for light curve data (min-max normalization, attention mask creation, time and wavelength feature extraction)",
+                    "Custom positional encoding module using Fourier features",
+                    "Extension of the Informer encoder to incorporate custom positional encoding",
+                    "Sequence classification head (pooling across time dimension and classifier layer)",
+                    "Training pipeline (data loader, training loop, evaluation function)"
+                ],
+                "setup_steps": [
+                    "Set up the environment by importing necessary libraries (PyTorch, transformers, datasets)",
+                    "Load the PLAsTiCC dataset using the Hugging Face datasets library",
+                    "Implement preprocessing functions to normalize flux values, create attention masks, and extract time and wavelength features",
+                    "Implement a custom positional encoding module using Fourier features",
+                    "Extend the Informer encoder to use the custom positional encoding",
+                    "Implement the sequence classification model by processing the encoder outputs, pooling over time, and applying the classifier head",
+                    "Configure model parameters (input size, context length, model dimensions, dropout, number of encoder/decoder layers)",
+                    "Create a data loading pipeline that applies preprocessing and assembles batches with proper attention masks",
+                    "Train the model on the processed data and evaluate its classification accuracy on the validation set"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Hyperparameter configuration",
+                        "description": "Multiple independent variables such as input size, context length, number of layers, and dropout rates increase overall complexity."
+                    },
+                    {
+                        "source": "Custom implementation details",
+                        "description": "Implementation of custom Fourier-based positional encoding and its integration into the Informer encoder require careful design."
+                    },
+                    {
+                        "source": "Data preprocessing edge cases",
+                        "description": "Handling variable length sequences and potential missing data in the time series adds additional complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model configuration parameters: Specific numeric values (e.g., exact input size, number of encoder/decoder layers, context length) are not explicitly provided.",
+                    "Custom positional encoding: Detailed implementation of Fourier features is open to interpretation."
+                ],
+                "ambiguous_setup_steps": [
+                    "Preprocessing steps: While normalization and mask creation are outlined, handling of edge cases (such as missing data or sequences of varying lengths) is not clearly specified.",
+                    "Training details: Exact hyperparameters (learning rate, batch size, number of epochs) and training regimen details are not fully spelled out."
+                ],
+                "possible_modifications": {
+                    "add_parameter_options": [
+                        "Include alternative normalization methods (such as z-score normalization) as options.",
+                        "Provide explicit ranges or candidate values for key model hyperparameters like input size, context length, and number of layers.",
+                        "Introduce additional data augmentation or preprocessing options to handle edge cases in the time series data.",
+                        "Require a more detailed training protocol with clear specification of learning rate, batch size, number of epochs, etc."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce computational efficiency by requiring the training pipeline to achieve comparable classification accuracy with a smaller variant of the Informer architecture (e.g., an 'Informer-mini') to reduce parameter count and memory usage."
+                    ],
+                    "time_constraints": [
+                        "Limit the number of training epochs or total training iterations to simulate scenarios with restricted available time, potentially trading off some peak performance."
+                    ],
+                    "money_constraints": [
+                        "Assume a constrained computational budget, which might require using less expensive compute resources (e.g., fewer GPUs or lower-tier cloud instances), demanding careful tuning and model configuration."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications during preprocessing and training",
+                "description": "Introducing random elements such as dropping tokens at random (instead of deterministically removing uninformative tokens) and stochastic dropout in the encoder may lead to variability in gradient updates and unstable convergence. These random perturbations can result in inconsistent performance across training runs.",
+                "impact": "These fluctuations can lead to variations in recorded classification accuracy and instability in model training, making it harder to reliably assess the effectiveness of the pipeline.",
+                "possible_modifications": [
+                    "Replace random token dropping with a consistent method that only removes uninformative tokens.",
+                    "Fix random seeds across all experiments and report metrics averaged over multiple runs.",
+                    "Regularize the randomness injected during training to balance between noise and robustness."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Preprocessing pipeline and dataset handling",
+                "description": "Systematic uncertainty can be introduced if the preprocessing steps (such as min-max normalization, attention mask creation, or custom Fourier-based positional encoding) consistently bias the data. For instance, if the method consistently misprocesses certain time or wavelength features, it may lead to a reproducible bias in the learned representations.",
+                "impact": "This systematic bias could yield a trained model that performs well on the corrupted version of the data yet fails to generalize to accurately classify astronomical objects, ultimately affecting the reported performance metrics.",
+                "possible_modifications": [
+                    "Cross-validate the processed data against a clean version of the PLAsTiCC dataset to detect and correct biases.",
+                    "Experiment with alternative preprocessing techniques such as z-score normalization to check for consistent bias.",
+                    "Ensure that the custom positional encoding does not inadvertently favor specific parts of the input sequence over others."
+                ]
+            }
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces a large-scale multimodal dataset designed as a comprehensive testbed for scientific machine learning in astrophysics. It integrates diverse data sources such as astronomical images and spectra from surveys like Legacy Surveys and DESI.",
+        "It benchmarks several tasks including galaxy morphology classification (e.g., using the Galaxy10 DECaLS dataset), photometric classification and redshift estimation (e.g., PLAsTiCC), YSE photometric classification, candidate identification (BTSbot), and physical property estimation from hyperspectral data (MaNGA).",
+        "A key contribution is the inclusion of full code, configuration files, and data links (hosted on GitHub), ensuring reproducibility of experiments, even though error bars and detailed uncertainty estimates are limited by computational budget.",
+        "The paper applies and evaluates novel techniques such as contrastive image-spectrum pretraining to generate robust embeddings, demonstrating improvements over conventional methods for downstream tasks.",
+        "Overall, the work not only advances the state-of-the-art in integrating multimodal astrophysical data but also addresses practical aspects of applying machine learning in complex scientific domains, paving the way for foundational research in scientific machine learning."
+    ]
+}

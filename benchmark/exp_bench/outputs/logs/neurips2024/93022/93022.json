@@ -1,0 +1,1027 @@
+{
+  "questions": [
+    {
+      "question": "Do the sampled trajectories from the forward simulation model exhibit distributional similarity to ground-truth MD trajectories across key collective variables, such as backbone torsions, sidechain torsions, and top TICA components?",
+      "method": "#### Problem Setup\n\n- **Objective**: Reproduce the MDGEN model's ability to generate peptide trajectories conditioned on the first frame, and evaluate whether the generated structural dynamics match those of real MD simulations.\n- **System**: Tetrapeptides simulated via all-atom MD.\n- **Trajectory Generation**:\n  - Model generates 10 ns trajectory segments conditioned on the first frame.\n  - Concatenate 10 segments to form 100 ns-long trajectories.\n\n#### Independent Variables\n\n- **Trajectory generation method**:\n  - **Model-generated**: Forward simulation using MDGEN conditioned on the first frame.\n  - **Reference**: Ground-truth MD trajectories from 100 ns simulations.\n\n#### Dependent Variables (Evaluation Metrics)\n\n- **Distributional Similarity**:\n  - **Jensen-Shannon Divergence (JSD)** over:\n    - Backbone torsion angles\n    - Sidechain torsion angles\n    - Top TICA component (TICA-0)\n- **Sampling Speed** (optional, for qualitative context)\n\n#### Experiment Components\n\n- **Model Setup**:\n  - Train the MDGEN model on tetrapeptide MD data (explicit solvent, 100 ns, timestep 10 ps).\n  - Condition generation on the first frame of each peptide.\n- **Feature Extraction**:\n  - Extract sine and cosine of backbone \u03c6, \u03c8 and sidechain \u03c7 torsion angles.\n  - Use Time-lagged Independent Components Analysis (TICA) via PyEMMA for dimensionality reduction.\n- **Evaluation**:\n  - Compute JSD between the generated and reference distributions over:\n    - Individual torsions (discretized to 100 bins)\n    - TICA-0 (1D histogram)\n  - Compare against baseline replicate MD runs (e.g., 1 ns, 10 ns, 100 ns).",
+      "expected_outcome": "The generated trajectories should exhibit JSD values closely matching those of the 100 ns MD simulations. In particular:\n\n- Backbone and sidechain torsion distributions should have JSD values near those of replicate 100 ns simulations (~0.1 or lower).\n- TICA-0 component distribution should demonstrate reasonable alignment, though may deviate slightly more than raw torsion angles.\n- Generated samples should capture slow and fast relaxation dynamics, approximating the energy landscape and sampling the same metastable regions as ground-truth MD.",
+      "design_complexity": {
+        "constant_variables": {
+          "system": "Tetrapeptides simulated via all-atom MD in explicit solvent with fixed simulation parameters (e.g., 100 ns total length, timestep of 10 ps)",
+          "trajectory_generation_setup": "Model generates 10 ns segments that are concatenated to form 100 ns trajectories; generation is conditioned on the first frame",
+          "feature_extraction": "Sine and cosine of backbone (\u03c6, \u03c8) and sidechain (\u03c7) torsion angles are extracted and further reduced using TICA via PyEMMA"
+        },
+        "independent_variables": {
+          "trajectory_generation_method": [
+            "Model-generated forward simulation using MDGEN conditioned on the first frame",
+            "Reference ground-truth MD trajectories from 100 ns all-atom MD simulations"
+          ]
+        },
+        "dependent_variables": {
+          "distributional_similarity": [
+            "JSD over backbone torsion angle distributions (using discretized 100 bins)",
+            "JSD over sidechain torsion angle distributions",
+            "JSD over the top TICA component (TICA-0)"
+          ],
+          "sampling_speed": "Qualitative assessment of sampling speed (optional)"
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "TICA_parameters": "The exact settings for TICA (e.g., number of components, lag time) are not explicitly detailed and may affect the outcome.",
+          "binning_parameters": "The discretization details for torsion angles into 100 bins are specified, but the choice of 100 bins and its sensitivity is not fully justified.",
+          "replicate_simulation_details": "The description mentions baseline replicate MD runs (e.g., 1 ns, 10 ns, 100 ns) but does not fully specify how these comparisons are integrated."
+        },
+        "possible_modifications": {
+          "simulation_conditions": [
+            "Introduce additional variables such as different solvent conditions (implicit vs. explicit) or varied simulation times.",
+            "Vary MD timesteps or segment lengths to test robustness."
+          ],
+          "evaluation_metrics": [
+            "Mask or vary the evaluation metrics (e.g., using alternative divergence measures or additional collective variables) to explore sensitivity."
+          ],
+          "feature_extraction_settings": [
+            "Vary TICA parameters (number of components, lag time) as a new variable to assess impact on evaluation results."
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "MDGEN model training framework (training on tetrapeptide MD data)",
+          "Trajectory generation module (generating 10 ns segments conditioned on the first frame and concatenating into 100 ns trajectories)",
+          "All-atom MD simulation environment for tetrapeptides in explicit solvent",
+          "Feature extraction pipeline (extraction of sine/cosine for backbone and sidechain torsion angles)",
+          "Dimensionality reduction setup using TICA via PyEMMA",
+          "Evaluation module (computation of Jensen-Shannon Divergence over torsion angle and TICA-0 distributions)",
+          "Baseline MD replicate simulations for comparison"
+        ],
+        "setup_steps": [
+          "Prepare and pre-process tetrapeptide MD data with fixed simulation parameters (100 ns total, 10 ps timestep)",
+          "Train the MDGEN model on the prepared dataset with conditioning on the first frame",
+          "Generate trajectory segments of 10 ns each and concatenate them to form full 100 ns trajectories",
+          "Extract structural features (sine and cosine of backbone \u03c6, \u03c8 and sidechain \u03c7 angles) from trajectories",
+          "Apply TICA via PyEMMA for dimensionality reduction on extracted features",
+          "Discretize torsion angle data into 100 bins for histogram computation",
+          "Compute evaluation metrics (JSD over backbone, sidechain distributions, and the top TICA component)",
+          "Perform comparisons against ground-truth MD simulations and replicate runs (e.g., 1 ns, 10 ns, 100 ns)"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Simulation Environment",
+            "description": "Ensuring consistency in simulation conditions for both model-generated and ground-truth trajectories (explicit solvent settings, simulation length, timestep) adds complexity to reproducibility."
+          },
+          {
+            "source": "Integration of Diverse Modules",
+            "description": "Linking MD simulation output to feature extraction, then to TICA analysis and finally to statistical evaluation requires careful orchestration and validation, making the system highly interconnected."
+          },
+          {
+            "source": "Hardware/Compute Variability",
+            "description": "Dependencies on specific GPUs (e.g., NVIDIA A6000, A100) for training and evaluation add a layer of complexity in reproducing similar runtime characteristics."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "TICA setup (number of components, lag time) \u2013 the exact parameters used for TICA are not clearly detailed.",
+          "Binning strategy for torsion angles \u2013 while 100 bins are used, the sensitivity to this choice and justification for this number is not fully elaborated.",
+          "Baseline replicate simulations \u2013 details on how the replicate MD runs (e.g., 1 ns, 10 ns, 100 ns) are integrated into the analysis remain under-specified."
+        ],
+        "ambiguous_setup_steps": [
+          "Process of concatenating 10 ns trajectory segments \u2013 specific instructions on handling transitions between segments are not fully defined.",
+          "Feature extraction implementation \u2013 although the extraction of sine and cosine values is mentioned, the preprocessing details and handling of noise or artifacts are not described.",
+          "Integration of evaluation metrics \u2013 the step-by-step procedure for computing the JSD on different features (torsion angles vs. TICA-0 histogram) lacks explicit operational details."
+        ],
+        "possible_modifications": {
+          "mask_existing_instructions": [
+            "Omit explicit specification of TICA parameters so that users must experiment with different lag times and component numbers.",
+            "Remove detailed preprocessing steps for extracting torsion angles, forcing users to develop their own routines.",
+            "Conceal the data concatenation methodology, requiring users to infer strategies for merging 10 ns segments."
+          ],
+          "imply_need_for_new_setup_steps": [
+            "Introduce alternative solvent conditions (e.g., switching between explicit and implicit solvent models) to assess robustness.",
+            "Allow variations in MD simulation parameters like timestep or simulation duration to explore methodological sensitivity.",
+            "Encourage experimentation with different divergence measures (other than JSD) to evaluate distributional similarity."
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "resource_constraints": [
+            "Impose a tighter resource budget by, for example, requiring the MDGEN model to be trained and run on a single, lower-end GPU (such as an NVIDIA T4) rather than on high-end GPUs (e.g., NVIDIA A6000 or A100), which were originally used as indicated by Tables 2 and 4."
+          ],
+          "time_constraints": [
+            "Restrict the simulation and processing time by mandating that the generation of 100 ns trajectories (formed by concatenating 10 ns segments) be completed within a strict wall-clock time limit. This would test the efficiency of the feature extraction and evaluation pipeline under tighter time constraints than originally reported."
+          ],
+          "money_constraints": [
+            "Enforce a cost-efficient execution by capping the overall compute hours or budget allocated for both MD simulations and MDGEN model training, requiring more efficient parameter tuning and resource utilization."
+          ]
+        }
+      },
+      "random_uncertainty": {
+        "source": "Stochastic elements in the forward simulation and trajectory segmentation process",
+        "description": "In the MDGEN experiment, randomness arises from multiple sources, including the stochastic nature of gradient updates during training, random cropping of trajectory segments, and the sequential generation of 10 ns segments that are later concatenated. These random operations can lead to slight instabilities in the generated trajectories, which in turn may cause variability in the Jensen-Shannon Divergence (JSD) metrics computed over backbone torsion angles, sidechain torsion angles, and the top TICA component.",
+        "impact": "This randomness may result in fluctuations in the evaluation metrics across different runs, leading to uncertainty in whether observed performance is due to the inherent quality of the model or simply a product of random variations in trajectory generation.",
+        "possible_modifications": [
+          "Perform multiple independent runs with different random seeds and report the average and variance of the JSD values.",
+          "Standardize the random cropping procedure and control gradient update randomness to ensure consistency.",
+          "Incorporate controlled randomness (e.g., scheduled noise injection) to better quantify and mitigate its impact on the evaluation metrics."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Fixed methodological choices and parameter settings in simulation and evaluation",
+        "description": "The experiment employs specific settings\u2014such as concatenating 10 ns trajectory segments to form a 100 ns trajectory, discretizing torsion angles into exactly 100 bins, and predefined TICA parameters\u2014which can introduce a systematic bias. These fixed choices may consistently skew the evaluation metrics (like the JSD) because they are not varied or justified against potential alternative configurations.",
+        "impact": "Such systematic uncertainty means that the results might be inherently biased towards the chosen configuration, potentially masking issues like sensitivity to TICA lag time or binning strategy. This could lead to conclusions that are not robust across varying parameter spaces.",
+        "possible_modifications": [
+          "Experiment with different TICA parameter settings (e.g., modifying lag time or the number of components) to assess their impact on distributional similarity.",
+          "Vary the histogram binning strategy (altering the number of bins or using alternative discretization techniques) to evaluate sensitivity of the JSD computation.",
+          "Test the system under alternative simulation conditions (such as varying solvent models or simulation timesteps) to identify and mitigate any systematic biases introduced by fixed conditions."
+        ]
+      }
+    },
+    {
+      "question": "Does the model accurately capture the dynamical content of MD trajectories, specifically in terms of torsion angle relaxation times, autocorrelation behavior at sub-picosecond timescales, and state transition fluxes between metastable states?",
+      "method": "#### Problem Setup\n\n- **Objective**: Evaluate the dynamic fidelity of MDGEN-sampled trajectories compared to ground-truth MD, focusing on torsional relaxation timescales, autocorrelation behaviors, and state-level dynamics via MSM fluxes.\n- **System**: Tetrapeptide trajectories from all-atom explicit-solvent MD.\n\n#### Independent Variables\n\n- **Trajectory Type**:\n  - Ground-truth MD trajectory (100 ns)\n  - Model-generated trajectory (100 ns from 10 \u00d7 10 ns segments)\n- **Torsion Angle Category**:\n  - Sidechain torsions\n  - Backbone torsions\n- **Lag Time Range**:\n  - 100 fs to 100 ps\n\n#### Dependent Variables (Evaluation Metrics)\n\n- **Relaxation Times**: Extracted from torsional autocorrelation functions.\n- **Autocorrelation Profile**: Including negative derivatives with respect to log-timescale to capture fast dynamic features.\n- **MSM Flux Matrix Correlation**: Spearman correlation between flux matrices from MSMs built on MD vs. generated data.\n\n#### Experiment Components\n\n- **Trajectory Generation**:\n  - Generate both MD and MDGEN-sampled 100 ns trajectories for a test set of tetrapeptides.\n- **Autocorrelation Analysis**:\n  1. For each torsion angle (\u03c8, \u03c6, \u03c7), compute:\n      \u27e8cos(\u03b8(t) \u2212 \u03b8(t + \u0394t))\u27e9\n      where \u0394t spans 100 fs to 100 ps.\n  2. Estimate **relaxation times** as the lag time where the autocorrelation drops below 1/e of its initial value.\n  3. Separate results for:\n     - Sidechain torsions\n     - Backbone torsions\n  4. Compute the **negative derivative** of the autocorrelation with respect to log-timescale to highlight fine dynamic relaxations and sub-picosecond oscillations.\n- **Markov State Model (MSM) Flux Comparison**:\n  1. Build MSMs by clustering torsion features (via TICA + k-means + PCCA+) from:\n     - Ground-truth MD trajectories\n     - Model-generated trajectories\n  2. Construct **flux matrices** (transition fluxes between metastable states).\n  3. Calculate **Spearman correlation** between MD and MDGEN flux matrices.",
+      "expected_outcome": "Torsion Relaxation Times: Strong correlation (close agreement) for sidechain torsions. Reasonable correlation for backbone torsions.\n\nAutocorrelation Behavior: MDGEN should recover sub-picosecond oscillations and detailed dynamic features not captured in sparsely sampled MD.\n\nMSM Flux Matrix: Spearman correlation \u2248 0.67 \u00b1 0.01 between MD and MDGEN flux matrices, indicating effective recovery of high-flux state transitions.",
+      "design_complexity": {
+        "constant_variables": {
+          "system": "Tetrapeptide trajectories simulated via all-atom explicit-solvent MD"
+        },
+        "independent_variables": {
+          "Trajectory Type": [
+            "Ground-truth MD trajectory (100 ns)",
+            "Model-generated trajectory (100 ns via 10 \u00d7 10 ns segments)"
+          ],
+          "Torsion Angle Category": [
+            "Sidechain torsions",
+            "Backbone torsions"
+          ],
+          "Lag Time Range": "Continuous range from 100 fs to 100 ps"
+        },
+        "dependent_variables": {
+          "Relaxation Times": "Estimated as the lag time where the autocorrelation drops below 1/e of its initial value",
+          "Autocorrelation Profile": "Profile of autocorrelation functions and its negative derivative over a log-timescale to capture fast dynamic features",
+          "MSM Flux Matrix Correlation": "Spearman correlation between flux matrices derived from MSMs built on ground-truth MD and model-generated data"
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "Trajectory Composition": "It is not fully specified how the 10 \u00d7 10 ns segments are constructed (e.g., whether they are contiguous or sampled randomly) for the model-generated trajectory.",
+          "Autocorrelation Computation Details": "The exact method for computing the negative derivative of the autocorrelation with respect to the log-timescale is not fully detailed.",
+          "MSM Construction Parameters": "Details such as TICA settings, k-means clustering parameters, and PCCA+ implementation choices are not explicitly described."
+        },
+        "possible_modifications": {
+          "modification_TrajectoryComposition": [
+            "Clarify if the 10 \u00d7 10 ns segments for the model-generated trajectory are contiguous, overlapping, or randomly sampled."
+          ],
+          "modification_AutocorrelationDetails": [
+            "Provide explicit formulations or methodological details on how the negative derivative of the autocorrelation is computed."
+          ],
+          "modification_MSMParameters": [
+            "Include specific parameters (e.g., number of clusters, TICA lag times, etc.) used in the MSM construction to improve reproducibility and clarity."
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Ground-truth MD trajectory generation (explicit-solvent MD simulation of tetrapeptides)",
+          "Model-generated trajectory creation (assembling 10 \u00d7 10 ns segments)",
+          "Extraction of torsion angles (\u03c8, \u03c6, \u03c7) for both sidechain and backbone",
+          "Autocorrelation analysis over lag times ranging from 100 fs to 100 ps",
+          "Estimation of relaxation times (lag time at 1/e drop)",
+          "Computation of the negative derivative of autocorrelation with respect to log-timescale",
+          "MSM construction using TICA, k-means clustering, and PCCA+",
+          "Computation of MSM flux matrices and Spearman correlation analysis"
+        ],
+        "setup_steps": [
+          "Simulate the 100 ns ground-truth MD trajectory using all-atom explicit-solvent MD for tetrapeptides",
+          "Generate the model-generated 100 ns trajectory by combining 10 separate 10 ns segments",
+          "Extract torsion angle data from both trajectories",
+          "Compute autocorrelation functions for each torsion angle over continuous lag times from 100 fs to 100 ps",
+          "Estimate relaxation times based on the lag time where the autocorrelation drops below 1/e of its initial value",
+          "Calculate the negative derivative of the autocorrelation function with respect to the log-timescale to capture fast dynamics",
+          "Perform dimensionality reduction (TICA) and cluster the torsion features using k-means followed by PCCA+ to construct MSMs",
+          "Construct flux matrices from the MSMs and compute the Spearman correlation between the ground-truth and model-generated data"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Multiple Analysis Metrics",
+            "description": "Integrating both time-domain analyses (autocorrelation and relaxation times) and state-space analyses (MSM flux matrices) increases the experimental complexity."
+          },
+          {
+            "source": "Trajectory Segmentation",
+            "description": "Assembling a long model-generated trajectory from several 10 ns segments adds complexity regarding the continuity and representativeness of the dynamics."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Trajectory Composition",
+          "Autocorrelation Computation Details",
+          "MSM Construction Parameters"
+        ],
+        "ambiguous_setup_steps": [
+          "The method for assembling 10 \u00d7 10 ns segments into a continuous 100 ns trajectory is not clearly specified (e.g., whether the segments are contiguous, overlapping, or randomly sampled)",
+          "The exact procedure or formulation for computing the negative derivative of the autocorrelation with respect to the log-timescale is not provided",
+          "Key parameters for the MSM construction, including TICA settings, k-means clustering parameters, and PCCA+ implementation details, are not explicitly described"
+        ],
+        "possible_modifications": {
+          "modification_TrajectoryComposition": [
+            "Clarify if the 10 \u00d7 10 ns segments used in the model-generated trajectory are contiguous, overlapping, or randomly sampled to ensure reproducibility"
+          ],
+          "modification_AutocorrelationDetails": [
+            "Provide explicit formulas or step-by-step methodological details on how the negative derivative of the autocorrelation is computed"
+          ],
+          "modification_MSMParameters": [
+            "Include specific settings such as TICA lag times, number of clusters for k-means, and PCCA+ parameters to improve clarity and reproducibility"
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "experiment_design": {
+            "modifications": [
+              "Clarify how the 10 \u00d7 10 ns segments are assembled into a continuous 100 ns trajectory (specify if segments are contiguous, overlapping, or randomly sampled) to avoid ambiguity in the dynamic continuity.",
+              "Provide explicit methodological details and formulas for computing the negative derivative of the autocorrelation function with respect to the log-timescale to capture fast dynamic features accurately.",
+              "Specify the parameters used in the MSM construction, such as the TICA lag time, number of k-means clusters, and PCCA+ settings, to improve the reproducibility and clarity of the analysis."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "source": "Random selection of trajectory segments and stochastic elements in autocorrelation computation",
+        "description": "The construction of the model-generated 100 ns trajectory from 10 \u00d7 10 ns segments may involve random sampling or ordering of segments. This randomness can result in discontinuities in the dynamic evolution of the trajectory, leading to variability in the computed torsion angle autocorrelation functions and relaxation times. Additionally, if certain aspects of the negative derivative computation of the autocorrelation depend on stochastic numerical approximations, this further contributes to random uncertainty.",
+        "impact": "Variability in the observed torsion relaxation times, sub-picosecond dynamic features, and MSM flux matrix correlations. This can affect the reproducibility of the results and may induce fluctuations between experimental runs.",
+        "possible_modifications": [
+          "Standardize the assembly of the 10 \u00d7 10 ns segments by ensuring they are contiguous or using a fixed random seed for segment selection.",
+          "Run multiple independent reconstructions of the model-generated trajectory to quantify random uncertainty via error bars on the evaluation metrics.",
+          "Clarify and fix the numerical procedure for computing the negative derivative of the autocorrelation to reduce stochastic variations."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Ambiguities in experimental design parameters and potential biases in MSM construction",
+        "description": "Systematic uncertainty arises from the ambiguous specification of key experimental details such as the method for constructing the model-generated trajectory (e.g., whether segments are contiguous, overlapping, or randomly sampled) and the lack of complete details on the autocorrelation computation and MSM parameter settings. These omissions may introduce consistent biases in the evaluation metrics like torsion relaxation times and flux matrix correlations.",
+        "impact": "Results may be systematically skewed if the trajectory assembly method or the MSM construction parameters (e.g., TICA lag time, k-means clustering settings, PCCA+ parameters) are suboptimal or do not faithfully capture the true dynamical properties. This could lead to over- or underestimation of fast dynamic features and transition fluxes, thereby reducing the fidelity of the experimental conclusions.",
+        "possible_modifications": [
+          "Explicitly define the trajectory assembly method, specifying if segments are contiguous, overlapping, or randomly sampled to avoid ambiguity.",
+          "Provide detailed formulas and step-by-step methodological descriptions for computing the negative derivative of the autocorrelation.",
+          "Include comprehensive details of the MSM construction parameters (e.g., TICA lag times, number of k-means clusters, PCCA+ settings) and conduct sensitivity analyses to assess the impact of these choices on the results."
+        ]
+      }
+    },
+    {
+      "question": "Will the forward simulation model (MDGEN) achieve a significant wall-clock time speedup over conventional MD simulations while maintaining accuracy in the generated trajectories?",
+      "method": "#### Problem Setup\n\n- **Objective**: Compare the runtime efficiency and simulation fidelity of the MDGEN model with conventional MD simulations when generating 100 ns-equivalent trajectories for test tetrapeptides.\n\n#### Independent Variables\n\n- **Simulation Method**:\n  - MDGEN forward simulation rollouts\n  - Conventional MD simulations\n- **Hardware Used**:\n  - MDGEN: NVIDIA A6000 GPU\n  - MD: NVIDIA T4 or A100 GPU\n\n#### Dependent Variables (Evaluation Metrics)\n\n- **Wall-clock Time**:\n  - MDGEN: GPU-seconds per 100 ns trajectory\n  - MD: GPU-hours per 100 ns trajectory\n- **Accuracy Outcomes**:\n  - Jensen-Shannon Divergence (JSD) of torsion distributions\n  - Torsion angle relaxation times\n  - Free energy surface (FES) comparisons via TICA\n\n#### Experiment Setup\n\n- **Trajectory Generation**:\n  - Generate 100 ns-equivalent trajectories using:\n    - MDGEN: 10\u00d7 10 ns rollouts (\u224860 GPU-seconds each)\n    - MD: standard 100 ns simulation (\u22483 GPU-hours)\n- **Sample Selection**:\n  - Use a representative set of **100 test tetrapeptides**\n- **Runtime Measurement**:\n  - Record per-peptide generation time under each hardware setup.\n  - Normalize runtimes to compare speedup ratios.\n- **Accuracy Evaluation**:\n  - Compute JSD for torsion angles (backbone + sidechain)\n  - Estimate torsion relaxation times from autocorrelation functions\n  - Generate and compare TICA-based free energy surfaces\n- **Contextual Comparison**:\n  - Reference Table 2: MDGEN vs. MD runtime and JSDs\n  - Reference Table 4: Comparison with AlphaFlow and MSA subsampling methods",
+      "expected_outcome": "**Speedup**: MDGEN is expected to be **10x\u20131000x faster** than MD simulation in wall-clock time.\n\n**Accuracy**:\n\n- Structural and dynamic fidelity should remain high.\n- MDGEN should produce JSD values close to 100 ns MD simulations.\n- **\u226578/100 peptides** should show full torsional decorrelation.\n- Free energy surface and dynamic relaxation features should match the reference.",
+      "design_complexity": {
+        "constant_variables": {
+          "Test Peptides": [
+            "100 test tetrapeptides"
+          ],
+          "Trajectory Length": [
+            "100 ns-equivalent trajectories"
+          ],
+          "Trajectory Generation Protocol": [
+            "MDGEN uses 10\u00d7 10 ns rollouts (\u224860 GPU-seconds each) vs. MD uses a standard 100 ns simulation (\u22483 GPU-hours)"
+          ]
+        },
+        "independent_variables": {
+          "Simulation Method": [
+            "MDGEN forward simulation rollouts",
+            "Conventional MD simulations"
+          ],
+          "Hardware Used": [
+            "MDGEN: NVIDIA A6000 GPU",
+            "MD: NVIDIA T4 GPU or NVIDIA A100 GPU"
+          ]
+        },
+        "dependent_variables": {
+          "Wall-clock Time": [
+            "Measured as GPU-seconds per 100 ns trajectory for MDGEN and GPU-hours per 100 ns trajectory for MD"
+          ],
+          "Accuracy Outcomes": [
+            "Jensen-Shannon Divergence (JSD) of torsion distributions",
+            "Torsion angle relaxation times",
+            "Free energy surface (FES) comparisons via TICA"
+          ]
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "Hardware Used": "The paper mentions two different GPUs (NVIDIA T4 and A100) for MD simulations, which creates uncertainty in direct hardware comparisons.",
+          "Accuracy Outcomes": "The specific acceptable thresholds for JSD, torsion relaxation times, and FES matching are not explicitly defined, making interpretation ambiguous."
+        },
+        "possible_modifications": {
+          "modification_Hardware": [
+            "Standardize the hardware for MD simulations (e.g., choose either NVIDIA T4 or A100) to ensure a clear comparison."
+          ],
+          "modification_Accuracy": [
+            "Explicitly define threshold values or quantitative criteria for acceptable accuracy outcomes (e.g., maximum allowable JSD or minimum decorrelation standard)."
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "MDGEN forward simulation system (10\u00d7 10 ns rollouts using NVIDIA A6000 GPU)",
+          "Conventional MD simulation system (100 ns simulation using NVIDIA T4 or A100 GPU)",
+          "Test peptide dataset (100 test tetrapeptides)",
+          "Runtime measurement tools (record GPU-seconds for MDGEN and GPU-hours for MD)",
+          "Accuracy evaluation modules (JSD computation for torsion distributions, torsion angle relaxation analysis, TICA for free energy surface comparisons)"
+        ],
+        "setup_steps": [
+          "Generate 100 ns-equivalent trajectories using two different methods: MDGEN (via multiple short rollouts) and a continuous MD simulation",
+          "Select a representative set of 100 test tetrapeptides for evaluation",
+          "Record the per-peptide runtime under each hardware configuration",
+          "Normalize runtimes to enable direct comparison of speedup ratios",
+          "Compute accuracy outcomes including Jensen-Shannon Divergence, torsion relaxation times from autocorrelation functions, and compare free energy surfaces using TICA",
+          "Reference and correlate results with reported data in Tables 2 and 4 for runtime and accuracy comparisons"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Hardware configuration variability",
+            "description": "Using different GPUs for MD simulations (NVIDIA T4 versus A100) alongside the A6000 for MDGEN adds complexity in comparing performance across experiments."
+          },
+          {
+            "source": "Evaluation metric calculation",
+            "description": "Computing statistical metrics such as JSD, torsional relaxation times, and free energy surfaces introduces additional computational pipelines and dependencies."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Hardware Used: The experiment mentions both NVIDIA T4 and A100 GPUs for conventional MD simulations, which creates uncertainty in ensuring a consistent hardware platform for direct comparisons."
+        ],
+        "ambiguous_setup_steps": [
+          "Accuracy Outcome thresholds: The acceptable quantitative limits for JSD, torsion relaxation times, and free energy surface matching are not explicitly defined.",
+          "Normalization process: The method for normalizing GPU-seconds and GPU-hours is implied but not detailed, leading to potential ambiguity in performance comparisons."
+        ],
+        "possible_modifications": {
+          "modification_Hardware": [
+            "Standardize the hardware for conventional MD simulations by selecting either NVIDIA T4 or A100 exclusively, thereby eliminating hardware variability in the comparison."
+          ],
+          "modification_Accuracy": [
+            "Explicitly define threshold values or quantitative criteria for acceptable accuracy outcomes (e.g., maximum allowable JSD or minimum torsion decorrelation metrics) to remove ambiguity in the evaluation of simulation fidelity."
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "resource_constraints": [
+            "Standardize the hardware for conventional MD simulations by selecting a single GPU type (e.g., exclusively NVIDIA A100) to eliminate variability in performance metrics.",
+            "Enforce a consistent GPU memory configuration and allocation across all simulation runs to ensure more uniform resource usage."
+          ],
+          "time_constraints": [
+            "Explicitly define time thresholds (e.g., a maximum allowable GPU-hour budget for a 100 ns simulation) to quantify and compare the speedup more definitively between MDGEN and conventional MD methods."
+          ],
+          "money_constraints": [
+            "Introduce a budget constraint by limiting total compute time expenditures, which may require choosing more cost-effective hardware (e.g., opting for NVIDIA T4 GPUs for conventional MD if cost is a factor) while still achieving acceptable simulation fidelity."
+          ]
+        }
+      },
+      "random_uncertainty": {
+        "source": "Stochasticity in MDGEN simulation rollouts",
+        "description": "The MDGEN approach uses 10 independent 10 ns rollouts to create a 100 ns-equivalent trajectory. Each short rollout has its own random initialization and inherent simulation noise, which may lead to instability and variability in both wall-clock time and accuracy metrics such as JSD and torsion relaxation times.",
+        "impact": "Random fluctuations in the short rollouts can lead to variations in overall simulation outcomes, causing uncertainty in the measured simulation fidelity and runtime performance across different runs.",
+        "possible_modifications": [
+          "Fix random seeds for each rollout to reduce stochastic variability.",
+          "Perform multiple independent repetitions and report averaged measures with error bars (e.g., standard deviation) to quantify the randomness.",
+          "Apply ensemble averaging or variance reduction techniques to mitigate the effects of random fluctuations in the simulation results."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Heterogeneous hardware setups and ambiguous accuracy thresholds",
+        "description": "The experimental design uses different GPU configurations for MDGEN (NVIDIA A6000) and MD simulations (NVIDIA T4 or A100), which may systematically bias the runtime comparisons. Furthermore, the acceptable thresholds for accuracy outcomes (JSD, torsion relaxation times, TICA-based free energy surface comparisons) are not explicitly defined, introducing ambiguity in the evaluation.",
+        "impact": "Systematic biases may emerge in the comparison of wall-clock times and accuracy assessments, potentially overstating the speedup of MDGEN or misinterpreting simulation fidelity due to inconsistent hardware performance and undefined evaluation criteria.",
+        "possible_modifications": [
+          "Standardize the hardware for both MDGEN and conventional MD simulations by selecting a single GPU type (e.g., exclusively NVIDIA A100) to ensure a fair runtime comparison.",
+          "Explicitly define quantitative threshold values for the accuracy outcomes (e.g., maximum allowable JSD or minimum decorrelation level) to remove ambiguity in performance evaluations."
+        ]
+      }
+    },
+    {
+      "question": "Does the MDGEN model generate transition paths that are statistically more consistent with the reference  Markov State Model (MSM) than transition paths sampled from replicate MD-derived MSMs of shorter durations?",
+      "method": "#### Problem Setup\n\n- Evaluate the quality of transition paths generated by MDGEN (via zero-shot interpolation) against those derived from MSMs trained on shorter MD simulations, using the reference MSM built from a 100 ns trajectory as ground truth.\n\n#### Independent Variables\n\n- **Transition Path Generation Method**:\n  - MDGEN: 1 ns rollouts conditioned on start/end frames\n  - MSMs from MD trajectories of shorter durations: 50 ns, 30 ns, 20 ns, 10 ns, etc.\n\n#### Dependent Variables (Evaluation Metrics)\n\n- **Path Likelihood** under the reference MSM\n- **Fraction of Valid Paths** (non-zero transition probability)\n- **Jensen-Shannon Divergence (JSD)** between visited state distributions and the reference\n\n#### Experiment Setup\n\n- **Reference Setup**:\n  - Construct a **reference MSM** from 100 ns MD simulations.\n  - Define **10 metastable states** using this MSM.\n  - Identify, for each peptide, the two most well-separated states (based on lowest flux).\n- **Trajectory Generation and Discretization**:\n  - For each peptide, generate **1 ns (100-frame)** interpolated trajectories using MDGEN, conditioned on the first and last frame of the identified transition.\n  - Sample **1000 transition paths** per peptide.\n  - Discretize all trajectories into the 10 metastable states.\n- **Metric Computation**:\n  1. **Path Likelihood**: Average probability of transitioning between start and end states under the reference MSM.\n  2. **Valid Paths Fraction**: % of paths with non-zero probability (invalid if start/end never visited by MSM).\n  3. **JSD**: Divergence between categorical distribution of states visited in sampled paths vs. reference.\n- **Baseline**:\n  - Repeat the above steps using transition paths sampled from MSMs trained on replicate MD simulations of shorter durations (10\u201350 ns).\n  - Use identical metrics and discretization.\n- **Analysis**:\n  - Aggregate all metrics over **100 test tetrapeptides**.\n  - Visualize comparisons using plots similar to Figure 3 (likelihood, validity, JSD).\n  - Reference Tables 2 and 4 for runtime and baseline context.",
+      "expected_outcome": "**MDGEN paths** are expected to:\n\n- Show **higher average likelihoods** under the reference MSM.\n- Have a **greater fraction of valid paths** (non-zero transition probability).\n- Yield **lower JSD values** in state distribution comparisons.\n\nThis performance should **consistently surpass that of MSMs built on shorter MD durations**, demonstrating that MDGEN effectively models rare transitions with zero-shot generalization.",
+      "design_complexity": {
+        "constant_variables": {
+          "reference_MSM": "Built from a 100 ns MD simulation with 10 metastable states using a fixed clustering/discretization procedure",
+          "trajectory_discretization": "All trajectories (both MDGEN and MSM baseline) are discretized into the same 10 state metastable representation",
+          "test_peptides": "Evaluation is carried out over 100 test tetrapeptides"
+        },
+        "independent_variables": {
+          "transition_path_generation_method": [
+            "MDGEN: 1 ns rollouts conditioned on start and end frames (interpolated trajectories)",
+            "MSM-based methods: Transition paths sampled from replicate MD-derived MSMs corresponding to shorter simulation durations (e.g., 50 ns, 30 ns, 20 ns, 10 ns)"
+          ]
+        },
+        "dependent_variables": {
+          "evaluation_metrics": [
+            "Path Likelihood under the reference MSM",
+            "Fraction of Valid Paths (non-zero transition probability)",
+            "Jensen-Shannon Divergence (JSD) between state visitation distributions and the reference MSM"
+          ]
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "replicate_MSM_durations": "Exact durations and the full range of shorter MD simulations beyond the provided examples (50 ns, 30 ns, 20 ns, 10 ns, etc.) are not exhaustively specified",
+          "metastable_state_selection": "The method for identifying the two most well-separated states per peptide (based on lowest flux) could be subject to interpretation without detailed procedural description"
+        },
+        "possible_modifications": {
+          "duration_range_modification": [
+            "Specify additional or alternative MD simulation durations for baseline MSMs",
+            "Provide explicit criteria for why certain durations are selected"
+          ],
+          "evaluation_metric_extension": [
+            "Include additional metrics (e.g., dynamical fidelity, sampling efficiency) to further characterize transition paths"
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Reference MSM built from 100 ns MD simulation",
+          "MSMs from shorter MD-derived simulations (e.g., 10 ns, 20 ns, 30 ns, 50 ns)",
+          "MDGEN model for zero-shot trajectory interpolation",
+          "Trajectory discretization module into 10 metastable states",
+          "Evaluation metrics computation (Path Likelihood, Fraction of Valid Paths, Jensen-Shannon Divergence)",
+          "Test peptides (100 test tetrapeptides)",
+          "Visualization components (plots similar to Figure 3)",
+          "Runtime context (referenced in Tables 2 and 4)"
+        ],
+        "setup_steps": [
+          "Construct the reference MSM using a 100 ns MD simulation",
+          "Define 10 metastable states via a fixed clustering/discretization procedure",
+          "Identify for each peptide the two most well-separated states based on lowest flux",
+          "Generate 1 ns MDGEN interpolated trajectories conditioned on selected start and end states",
+          "Sample 1000 transition paths per peptide",
+          "Discretize all trajectories into the 10 metastable states",
+          "Compute evaluation metrics: average path likelihood under the reference MSM, fraction of valid paths, and JSD between state distributions",
+          "Repeat the above process for baseline MSMs built on replicate MD simulations of shorter durations",
+          "Aggregate metrics over 100 test tetrapeptides and visualize comparisons using plots similar to Figure 3"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Interconnection of components",
+            "description": "Combining MDGEN with baseline MSM methods requires integrating different trajectory generation and discretization pipelines along with multiple evaluation metrics."
+          },
+          {
+            "source": "External references",
+            "description": "Reference to external tables (Tables 2 and 4) and figures (Figure 3) adds complexity, as these provide context on runtime and visualization details without full description in the main text."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Replicate MSM durations for baseline methods",
+          "Criteria for selecting the two most well-separated metastable states"
+        ],
+        "ambiguous_setup_steps": [
+          "The exact range and full list of durations for the shorter MD simulations is not exhaustively specified beyond the examples (10 ns, 20 ns, 30 ns, 50 ns)",
+          "The method to identify the two most well-separated metastable states (e.g., precise metric for 'lowest flux') is not described in detail"
+        ],
+        "possible_modifications": {
+          "duration_range_modification": [
+            "Specify additional or alternative MD simulation durations and provide clear criteria for selecting them"
+          ],
+          "metastable_state_selection_detail": [
+            "Include a detailed algorithm or explicit criteria and threshold values for identifying the two most well-separated metastable states based on flux"
+          ],
+          "evaluation_metric_extension": [
+            "Consider adding further metrics (e.g., dynamical fidelity, sampling efficiency) to enhance the evaluation of transition paths"
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "resource_constraints": [
+            "For extended tasks, restrict the available GPU resources (for example, use NVIDIA T4 GPUs instead of higher-end GPUs like A100 or A6000) to test whether MDGEN retains its advantages under limited compute power."
+          ],
+          "time_constraints": [
+            "Tighten the simulation duration by requiring the reference MSM to be built from a shorter MD simulation (for instance, 50 ns instead of 100 ns) to evaluate whether MDGEN can still generate statistically consistent transition paths within a reduced time budget."
+          ],
+          "money_constraints": [
+            "Constrain the experiment by limiting the access to high-performance compute clusters, instead relying on more economical cloud-based or local hardware solutions."
+          ]
+        }
+      },
+      "random_uncertainty": {
+        "source": "Stochastic sampling in trajectory generation and discretization",
+        "description": "Random uncertainty is introduced by the inherent stochasticity in generating 1 ns MDGEN interpolated trajectories, sampling 1000 transition paths per peptide, and the random initialization processes within the MDGEN model. This variability can cause fluctuations in the computed evaluation metrics such as path likelihood, valid paths fraction, and Jensen-Shannon Divergence.",
+        "impact": "Such random fluctuations can lead to variations in metric values across different experimental runs, potentially affecting the reliability of performance comparisons between MDGEN and the MSM-based baselines.",
+        "possible_modifications": [
+          "Implement fixed random seeds to reduce stochastic variability and improve reproducibility.",
+          "Conduct multiple independent runs and report error bars (e.g., standard deviation or confidence intervals) to quantify random uncertainty in the results."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Ambiguities in metastable state selection and baseline MSM duration choices",
+        "description": "Systematic uncertainty arises from the potential bias introduced by the method used for selecting the two most well-separated metastable states per peptide (based on lowest flux) and the fixed choice of MD simulation durations (e.g., 100 ns for reference and 10\u201350 ns for baselines). These choices might systematically influence the evaluation metrics, as they could favor one method over another.",
+        "impact": "This systematic bias could consistently skew the comparison between MDGEN and the MSM baselines, leading to conclusions that reflect the design decisions rather than the true performance differences.",
+        "possible_modifications": [
+          "Detail and standardize the algorithm for metastable state selection, including explicit threshold values and criteria, to remove subjective bias.",
+          "Expand or modify the range of MD simulation durations used for the baseline MSMs to ensure a more balanced and comprehensive evaluation of transition paths."
+        ]
+      }
+    },
+    {
+      "question": "Does the MDGEN model accurately recover the fast timestep dynamics (e.g., oscillations in torsion angles) that are missing in subsampled molecular dynamics trajectories?",
+      "method": "#### Problem Setup\n\nEvaluate whether MDGEN can reconstruct fine-grained (100 fs) dynamics\u2014specifically fast oscillations in torsion angles\u2014that are lost when MD trajectories are subsampled at 10 ps intervals.\n\n#### Independent Variables\n\n- **Trajectory Type**:\n  - Ground truth MD trajectories sampled at **100 fs**\n  - Subsampled trajectories at **10 ps**\n  - MDGEN-generated **upsampled trajectories** (from 10 ps \u2192 100 fs)\n\n#### Dependent Variables (Evaluation Metrics)\n\n- **Autocorrelation Function**:\n   \u27e8cos(\u03b8\u209c \u2212 \u03b8\u209c\u208a\u0394\u209c)\u27e9 for torsion angles over lag times from **100 fs to 100 ps**.\n- **Dynamic Content**:\n   The **negative derivative** of the autocorrelation with respect to **log-timescale**, used to assess how much fast dynamical relaxation is captured.\n\n#### Experiment Setup\n\n- Data Preparation:\n  - Use test peptide trajectories (30k frames pooled).\n  - Ground truth MD data: sampled every **100 fs**.\n  - Generate **10 ps subsampled** versions by downsampling ground truth.\n- Model Upsampling:\n  - Input: 10 ps subsampled data.\n  - Output: Reconstructed trajectories at **100 fs resolution** using MDGEN.\n  - Note: Model trained with **random crops (\u2264256 residues)** and **subsampling every 40 frames**, but inference is done on **full proteins**.\n- Computation:\n  - For every torsion angle:\n    1. Compute autocorrelation over \u0394t = 100 fs to 100 ps.\n    2. Derive the dynamic content curve.\n- Analysis:\n  - Compare autocorrelation curves of:\n    - Ground truth\n    - Subsampled\n    - Upsampled (MDGEN)\n  - Look for **oscillatory behavior** at sub-ps scales present in upsampled but not subsampled data.",
+      "expected_outcome": "MDGEN-upsampled trajectories are expected to:\n\n- Reproduce oscillatory dynamics at sub-ps timescales.\n- Closely match ground truth autocorrelation curves.\n- Exhibit non-monotonic dynamic content profiles, indicating fast relaxation recovery.\n\nSubsampled trajectories will lack these fine-grained features, validating the upsampling model\u2019s effectiveness.",
+      "design_complexity": {
+        "constant_variables": {
+          "Data Preparation": "Test peptide trajectories are used with 30k frames pooled; ground truth MD data is sampled every 100 fs and subsampled to 10 ps, and the model training settings (random crops of up to 256 residues, subsample every 40 frames with inference on full proteins) remain constant",
+          "Model Settings": "The MDGEN model is trained under fixed conditions regarding crop size and frame selection and always processes full protein sequences at inference"
+        },
+        "independent_variables": {
+          "Trajectory Type": [
+            "Ground truth MD trajectories sampled at 100 fs",
+            "Subsampled trajectories at 10 ps",
+            "MDGEN-generated upsampled trajectories (input: 10 ps; output: 100 fs resolution)"
+          ]
+        },
+        "dependent_variables": {
+          "Autocorrelation Function": "Computed as \u27e8cos(\u03b8\u209c \u2212 \u03b8\u209c\u208a\u0394\u209c)\u27e9 for torsion angles over lag times ranging from 100 fs to 100 ps",
+          "Dynamic Content": "Calculated as the negative derivative of the autocorrelation with respect to the log-timescale to assess captured fast dynamical relaxation"
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "Autocorrelation Function": "The precise method for computing the autocorrelation (e.g., sampling resolution, windowing details) is not explicitly defined",
+          "Dynamic Content": "The calculation details for the negative derivative with respect to log-timescale (such as differentiation method or smoothing parameters) are not fully specified",
+          "Oscillatory Dynamics": "The criteria for what qualifies as recovered oscillatory dynamics (e.g., amplitude threshold, frequency range) are not clearly delineated"
+        },
+        "possible_modifications": {
+          "modification1": [
+            "Provide a detailed formula and computational procedure for the autocorrelation function, including how lag times are sampled and normalized"
+          ],
+          "modification2": [
+            "Clarify the exact method for computing the negative derivative of the autocorrelation with respect to log-timescale, possibly with parameter choices or smoothing techniques"
+          ],
+          "modification3": [
+            "Introduce additional trajectory types or sampling intervals as new independent variables to test sensitivity and robustness of MDGEN in capturing fast oscillatory dynamics"
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Data Preparation (Test peptide trajectories, ground truth MD at 100 fs, and 10 ps subsampled versions)",
+          "MDGEN Model (trained with random crops of up to 256 residues and subsampling every 40 frames, but inference on full proteins)",
+          "Trajectory Types (Ground truth, subsampled, and MDGEN-generated upsampled trajectories)",
+          "Computation Modules (Autocorrelation function calculation and dynamic content derivation)",
+          "Analysis Framework (Comparison of autocorrelation curves and evaluation of oscillatory dynamics)"
+        ],
+        "setup_steps": [
+          "Prepare and pool test peptide trajectories (30k frames)",
+          "Generate ground truth MD data sampled every 100 fs",
+          "Create 10 ps subsampled trajectories from the ground truth",
+          "Run MDGEN to upsample the 10 ps data to 100 fs resolution",
+          "Compute autocorrelation functions for torsion angles over lag times from 100 fs to 100 ps",
+          "Compute the negative derivative of the autocorrelation with respect to log-timescale",
+          "Compare and analyze the autocorrelation curves to assess recovery of fast oscillatory dynamics"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Training and Inference Settings",
+            "description": "The nuances of training (random cropping and frame subsampling) versus inference (full protein trajectories) add complexity to ensuring consistency across different stages."
+          },
+          {
+            "source": "Computation Parameters",
+            "description": "The need to discretize lag times (from 100 fs to 100 ps) and compute derivatives for dynamic content evaluation introduces additional parameter tuning complexity."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Autocorrelation Function: The precise computation details (e.g., sampling resolution, windowing, normalization) are not fully defined",
+          "Dynamic Content Calculation: The method for computing the negative derivative with respect to log-timescale (including choice of differentiation method or smoothing parameters) is unclear",
+          "Oscillatory Dynamics Criterion: The threshold or criteria for what qualifies as recovered oscillatory dynamics (e.g., specific amplitude or frequency range) is not clearly delineated"
+        ],
+        "ambiguous_setup_steps": [
+          "Preprocessing details for the trajectory data (e.g., handling noise or outlier frames) are not specified",
+          "The exact process and parameters for downsampling (subsampling to 10 ps) and its impact on temporal resolution remain ambiguous"
+        ],
+        "possible_modifications": {
+          "modification1": [
+            "Provide a detailed mathematical formulation for the autocorrelation function, including sampling resolution, windowing, and normalization procedures"
+          ],
+          "modification2": [
+            "Clarify the computational method for obtaining the negative derivative with respect to log-timescale, specifying the differentiation technique and any smoothing parameters used"
+          ],
+          "modification3": [
+            "Define explicit criteria or thresholds for determining successful recovery of oscillatory dynamics, such as amplitude or frequency range benchmarks"
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {}
+      },
+      "random_uncertainty": {
+        "source": "Random cropping and subsampling variability",
+        "description": "The MDGEN model training uses random crops (up to 256 residues) and random subsampling (every 40 frames), which introduces randomness in the selection of trajectory segments. This randomness can lead to variability in the recovery of fast oscillatory dynamics during upsampling.",
+        "impact": "This variability may result in inconsistent autocorrelation function estimates and dynamic content calculations across different runs, potentially leading to fluctuations in the observed recovery of fast oscillatory features.",
+        "possible_modifications": [
+          "Replace random cropping with fixed cropping during training to reduce variability.",
+          "Employ deterministic subsampling instead of random subsampling to minimize random fluctuations.",
+          "Conduct multiple runs and average the results to mitigate the influence of random sampling variability."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Ambiguity in evaluation metric computations",
+        "description": "There is a lack of precise definitions for how the autocorrelation function (including sampling resolution, windowing, and normalization) and the negative derivative of the autocorrelation with respect to the log-timescale are computed. Additionally, the criteria for what constitutes recovered oscillatory dynamics (e.g., amplitude thresholds or frequency ranges) remain ambiguous.",
+        "impact": "These unspecified details can lead to systematic biases in measuring how well the MDGEN model recovers fast dynamics. The evaluation might consistently overestimate or underestimate the recovery of oscillatory behavior, affecting the comparison between ground truth, subsampled, and upsampled trajectories.",
+        "possible_modifications": [
+          "Provide explicit mathematical formulations and computational procedures for both the autocorrelation function and the derivative (dynamic content) calculations.",
+          "Clearly define thresholds or criteria for determining recovered oscillatory dynamics (such as amplitude or frequency range benchmarks).",
+          "Introduce additional sampling intervals or independent trajectory types to test the sensitivity and robustness of the recovery evaluation."
+        ]
+      }
+    },
+    {
+      "question": "Will conditioning on the dynamics of the flanking residues enable the MDGEN model to accurately inpaint the masked inner residues, yielding a higher recovery rate of the ground-truth peptide compared to inverse folding baselines such as DYNMPNN and S-MPNN?",
+      "method": "#### Problem Setup\n\nEvaluate whether MDGEN, when conditioned on the dynamics of the flanking residues during a transition, can inpaint missing inner residue identities more accurately than baseline inverse folding models.\n\n#### Independent Variables\n\n- **Model Used**:\n  - MDGEN (conditioned on dynamics of flanking residues)\n  - DYNMPNN (conditioned on terminal frames only)\n  - S-MPNN (conditioned on a single frame)\n- **Transition Type**:\n  - High-flux transition\n  - Random transition\n\n#### Dependent Variables (Evaluation Metrics)\n\n- Sequence Recovery Rate: Fraction of cases where the inpainted inner residues exactly match the ground-truth sequence during the transition.\n\n#### Experiment Setup\n\n- **Trajectory Preparation**:\n  - Use tetrapeptide MD simulations.\n  - Identify two well-connected Markov states (highest flux) via MSM analysis.\n  - Extract **100-ps transition windows** between these states.\n- **Masking Setup**:\n  - Mask the inner residue identities and dynamics across intermediate frames.\n  - Retain terminal frames (flanking residues).\n- **Model Execution**:\n  - MDGEN: Condition on terminal dynamics and inpaint inner residues.\n  - DYNMPNN: Given only two terminal frames.\n  - S-MPNN: Conditioned on a single frame.\n- **Evaluation**:\n  - Compare generated trajectories to the original.\n  - Compute **exact match** recovery of inner residues.\n  - Repeat for both **high-flux** and **random** transition paths.",
+      "expected_outcome": "MDGEN is expected to achieve significantly **higher sequence recovery** rates, **52\u201362%** for high-flux transitions (vs. 17\u201324% for DYNMPNN, and ~13\u201314% for S-MPNN).\n\nThese results validate that **dynamics scaffolding**\u2014conditioning on flanking dynamics\u2014provides meaningful temporal and spatial context for successful inpainting.",
+      "design_complexity": {
+        "constant_variables": {
+          "trajectory_preparation": "Tetrapeptide MD simulations with a fixed 100-ps transition window and consistent MSM analysis for identifying well\u2010connected Markov states",
+          "masking_setup": "Inner residue identities and dynamics are systematically masked while retaining the terminal (flanking) residue information",
+          "evaluation_protocol": "Exact sequence matching is used to compute the sequence recovery rate"
+        },
+        "independent_variables": {
+          "Model Used": [
+            "MDGEN (conditioned on dynamics of flanking residues)",
+            "DYNMPNN (conditioned on terminal frames only)",
+            "S-MPNN (conditioned on a single frame)"
+          ],
+          "Transition Type": [
+            "High-flux transition",
+            "Random transition"
+          ]
+        },
+        "dependent_variables": {
+          "Sequence Recovery Rate": "Fraction of cases where the inpainted inner residues exactly match the ground-truth sequence from the original MD simulation"
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "Transition Type": "The criteria for selecting a 'random transition' are not explicitly specified; it is unclear how a transition is categorized as random versus high-flux aside from the mention of high-flux transitions being determined via MSM analysis.",
+          "Baseline Model Details": "While the models DYNMPNN and S-MPNN are defined by the frames they condition on, other potential hyperparameters or architectural differences are not detailed, which could impact reproducibility or comparison."
+        },
+        "possible_modifications": {
+          "modification_X": [
+            "Introduce additional transition types (e.g., low-flux transitions) to explore spectrum effects on inpainting performance",
+            "Mask or vary the amount of flanking residue information to test sensitivity in the MDGEN model",
+            "Include variations in simulation parameters (e.g., different peptide lengths or transition durations) to assess robustness"
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Tetrapeptide MD simulation system",
+          "MSM analysis tool for identifying well-connected Markov states",
+          "Masking module for inner residue identities and dynamics",
+          "MDGEN model (conditioning on flanking dynamics)",
+          "Baseline models: DYNMPNN and S-MPNN",
+          "Evaluation module for computing sequence recovery rate"
+        ],
+        "setup_steps": [
+          "Run tetrapeptide MD simulations",
+          "Perform MSM analysis to identify two well-connected Markov states with high flux",
+          "Extract 100-ps transition windows between selected states",
+          "Apply masking to inner residues (identities and dynamics) while retaining terminal frames",
+          "Execute model inference using MDGEN (conditioned on terminal dynamics), DYNMPNN (using terminal frames only), and S-MPNN (using a single frame)",
+          "Evaluate the exact match of the inpainted inner residues compared to the ground-truth sequence",
+          "Repeat experiments for both high-flux and random transition types"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Pipeline integration",
+            "description": "Integrating simulation outputs, MSM analysis, masking, and model execution introduces multiple interconnected components that must communicate correctly."
+          },
+          {
+            "source": "Multiple independent variables",
+            "description": "Handling different models and transition types (high-flux vs. random) creates a combinatorial setup complexity."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Transition Type definition",
+          "Baseline model (DYNMPNN and S-MPNN) hyperparameter details"
+        ],
+        "ambiguous_setup_steps": [
+          "The criteria for selecting a 'random transition' are not explicitly detailed beyond distinguishing from high-flux transitions identified via MSM analysis",
+          "Baseline models lack clear details on hyperparameters and architectural configurations beyond the number of frames they condition on"
+        ],
+        "possible_modifications": {
+          "modification_X": [
+            "Introduce additional transition types (e.g., low-flux transitions) to study a broader spectrum of dynamics",
+            "Mask or vary the amount of flanking residue information to test sensitivity in the MDGEN model",
+            "Include variations in simulation parameters (e.g., different peptide lengths or transition durations) to assess the robustness of the approach"
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "constraint_type": {
+            "modifications": [
+              "Introduce additional transition types (e.g., low-flux transitions) to study a broader spectrum of dynamics, which may tighten the experimental setup.",
+              "Mask or vary the amount of flanking residue information to test the sensitivity of the MDGEN model, thereby enforcing stricter input conditions.",
+              "Include variations in simulation parameters (e.g., different peptide lengths or transition durations) to assess the robustness of the approach, effectively tightening the experimental constraints."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "source": "Random Transition Selection and Masking Variability",
+        "description": "The experiment includes 'random transitions' as an independent variable. However, the criteria for selecting a random transition are not explicitly detailed, leading to stochastic variability in the input conditions. In addition, the masking approach that randomly affects inner residue identities introduces an element of unpredictability in the gradient updates and inpainted sequence outcomes.",
+        "impact": "This random variability can lead to inconsistent sequence recovery rates and may destabilize gradient updates, complicating the assessment of the true performance gains of conditioning on flanking dynamics.",
+        "possible_modifications": [
+          "Introduce additional transition types (such as low-flux transitions) to broaden the spectrum of dynamic conditions, capturing a wider range of uncertainty.",
+          "Vary the amount or exact positioning of the retained flanking residue information to simulate different levels of random input corruption.",
+          "Repeat the experiments with multiple random seeds for transition selection and masking to better characterize the variability in performance."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Ambiguities in Baseline Configurations and Fixed Simulation Setup",
+        "description": "The experimental design relies on a fixed tetrapeptide MD simulation with a fixed 100-ps transition window and baseline models (DYNMPNN and S-MPNN) whose hyperparameters or architectural details are not fully specified. This, combined with the ambiguous definition of 'random transitions', introduces a systematic uncertainty that may bias the comparison in favor of the MDGEN model.",
+        "impact": "Such systematic biases could consistently skew the sequence recovery metrics, potentially overstating the benefits of including dynamics of the flanking residues compared to the inverse folding baselines.",
+        "possible_modifications": [
+          "Standardize and fully document the hyperparameters and configurations of the baseline models to ensure a fair comparison.",
+          "Retrieve and utilize a clean, well-defined simulation dataset or vary simulation parameters (e.g., peptide lengths, transition durations) to assess the robustness of the results.",
+          "Refine and clearly define the criteria for both high-flux and random transitions to eliminate biases in transition selection."
+        ]
+      }
+    },
+    {
+      "question": "Does replacing the time attention mechanism with a non-causal Hyena operator in the SiT architecture allow the model to generate extremely long, consistent trajectories that capture dynamics over multiple timescales?",
+      "method": "#### Problem Setup\n\nAssess whether a non-causal Hyena operator\u2014used in place of time attention within the SiT architecture\u2014enables MDGEN to generate high-fidelity trajectories that span both fast (sub-ps) and slow (tens of ps) dynamical behaviors.\n\n#### Independent Variables\n\n- **Model Architecture**:\n  - SiT with original time attention mechanism\n  - SiT with non-causal Hyena operator\n- **Lag Time Range**:\n  - 100 fs to 100 ps (used in autocorrelation analysis)\n\n#### Dependent Variables (Evaluation Metrics)\n\n- **Trajectory Quality**:\n  - Agreement of **torsional autocorrelation functions** with ground-truth data\n- **Dynamical Relaxations**:\n  - **Dynamical content**, computed as the negative derivative of autocorrelation vs. log-timescale\n\n#### Experiment Setup\n\n- **Data**:\n  - Use **pentapeptide MDGEN dataset**: 100k-frame, 10 ns trajectories.\n  - Apply **preprocessing** to preserve both fast and slow timescale dynamics.\n- **Model Training**:\n  - Train modified SiT with **non-causal Hyena operator** (O(N log N) complexity).\n  - Follow training setup: data splits, hyperparameters, and runtime settings as in **Tables 2 and 4**.\n- **Trajectory Generation**:\n  - From the trained model, generate a **single long trajectory** (e.g., 10 ns).\n- **Evaluation**:\n  1. Compute **torsional autocorrelation functions** over 100 fs \u2013 100 ps lag times.\n  2. Derive **dynamic content** curves to assess multi-timescale relaxation.\n  3. Compare results to a **ground-truth trajectory** generated via MD.",
+      "expected_outcome": "The non-causal Hyena-augmented SiT model should generate extremely long trajectories whose autocorrelation curves match those from MD across all timescales and dynamical content curves capture both fast oscillatory and slow relaxation features.\n\nThis demonstrates that the model can span multiple dynamical regimes, enabling consistent and physically plausible molecular simulations over extended durations.",
+      "design_complexity": {
+        "constant_variables": {
+          "Data": "Pentapeptide MDGEN dataset with 100k-frame, 10 ns trajectories used for all experiments",
+          "Training Setup": "Hyperparameters, data splits, and runtime settings as defined in Tables 2 and 4"
+        },
+        "independent_variables": {
+          "Model Architecture": [
+            "SiT with original time attention mechanism",
+            "SiT with non-causal Hyena operator"
+          ],
+          "Lag Time Range": [
+            "100 fs",
+            "100 ps"
+          ]
+        },
+        "dependent_variables": {
+          "Trajectory Quality": [
+            "Agreement of torsional autocorrelation functions with ground-truth MD data"
+          ],
+          "Dynamical Relaxations": [
+            "Dynamical content computed as the negative derivative of autocorrelation vs. log-timescale"
+          ]
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "non-causal Hyena operator": "The specific configuration and parameterization of the non-causal Hyena operator are not explicitly detailed.",
+          "Preprocessing": "The exact preprocessing steps to preserve both fast (sub-ps) and slow (tens of ps) timescale dynamics are not fully specified.",
+          "Trajectory Generation": "The details regarding the method used to generate the single long trajectory (e.g., sampling frequency, random seed, or integration details) are ambiguous."
+        },
+        "possible_modifications": {
+          "mask_operator_parameters": [
+            "Mask or vary specific configuration details of the Hyena operator to explore its influence on the results"
+          ],
+          "extend_trajectory_length": [
+            "Introduce additional variable values for trajectory length to examine effects beyond the 10 ns trajectory"
+          ],
+          "detailed_preprocessing_steps": [
+            "Include or mask detailed preprocessing steps to assess their impact on dynamics preservation"
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "SiT architecture with original time attention mechanism",
+          "SiT architecture modified with a non-causal Hyena operator",
+          "Pentapeptide MDGEN dataset (100k-frame, 10 ns trajectories)",
+          "Preprocessing pipeline to preserve both fast and slow timescale dynamics",
+          "Training pipeline (data splits, hyperparameters, runtime settings as detailed in Tables 2 and 4)",
+          "Trajectory generation module (used to generate a single long trajectory for evaluation)",
+          "Evaluation module (computing torsional autocorrelation functions and dynamical content curves)"
+        ],
+        "setup_steps": [
+          "Data acquisition from the pentapeptide MDGEN dataset",
+          "Preprocessing of the dataset to preserve multi-timescale dynamics",
+          "Configuration of two model architectures: one with original time attention and one with non-causal Hyena operator",
+          "Training of the modified SiT model using specified hyperparameters and data splits (as in Tables 2 and 4)",
+          "Generation of a long trajectory (e.g., 10 ns) from the trained model",
+          "Evaluation of generated trajectories via autocorrelation and dynamical content analysis",
+          "Comparison of results with the ground-truth MD trajectory"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Integration with runtime and efficiency details",
+            "description": "Reliance on computational resource details provided in Tables 2 and 4 adds complexity in reproducing training and inference runtimes."
+          },
+          {
+            "source": "Interdependency of experimental components",
+            "description": "The pipeline involves several interconnected steps (data preprocessing, model training, trajectory generation, and evaluation) that depend on one another, increasing the overall complexity."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "non-causal Hyena operator: Its specific configuration and parameterization are not explicitly detailed.",
+          "Preprocessing: The exact preprocessing steps required to preserve both fast (sub-ps) and slow (tens of ps) dynamics aren\u2019t fully specified."
+        ],
+        "ambiguous_setup_steps": [
+          "Trajectory generation: Details such as sampling frequency, random seed, and integration specifics for generating the long trajectory are ambiguous."
+        ],
+        "possible_modifications": {
+          "mask_operator_parameters": [
+            "Mask or vary the specific configuration details of the Hyena operator to explore its influence on model performance."
+          ],
+          "extend_trajectory_length": [
+            "Introduce additional variable values for trajectory length to assess effects beyond the 10 ns trajectory."
+          ],
+          "detailed_preprocessing_steps": [
+            "Include or mask more detailed preprocessing instructions to evaluate their impact on preserving dynamics across timescales."
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "resource_constraints": [
+            "Restrict available computational resources by limiting the experiment to lower-end GPUs (e.g., using only a single NVIDIA T4 GPU rather than the A6000 or A100 GPUs referenced in Tables 2 and 4) to evaluate performance under tighter hardware constraints."
+          ],
+          "time_constraints": [
+            "Shorten the training schedule by reducing the number of epochs or iterations compared to the settings in Tables 2 and 4, forcing a quicker convergence and assessing efficiency under limited time budgets."
+          ],
+          "money_constraints": [
+            "Impose a cost constraint by simulating the experiment on a more budget-friendly compute setup (e.g., replacing high-end GPUs with less expensive alternatives) to analyze the impact of reduced funding on model performance."
+          ]
+        }
+      },
+      "random_uncertainty": {
+        "source": "Ambiguities in operator configuration and trajectory generation randomness",
+        "description": "The training and evaluation pipeline involves ambiguous details such as the specific parameterization of the non-causal Hyena operator and unclear trajectory generation parameters (e.g., sampling frequency, random seed). This uncertainty in setup can induce random fluctuations during gradient updates and variability in the generated trajectories.",
+        "impact": "These random variations may lead to inconsistent torsional autocorrelation functions and dynamical content curves between runs, making quantitative comparisons with MD ground-truth less reliable.",
+        "possible_modifications": [
+          "Explicitly set and vary random seeds during trajectory generation to measure run-to-run variability.",
+          "Randomly adjust the ambiguous hyperparameters of the Hyena operator in a controlled manner to assess their impact on model stability.",
+          "Inject controlled noise in the integration or sampling process to simulate and measure the effect of random uncertainty."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Structural modifications and preprocessing ambiguities",
+        "description": "The systematic replacement of the causal time attention with a non-causal Hyena operator, coupled with unspecified details in the preprocessing steps intended to preserve fast and slow dynamics, can introduce a systematic bias in the model's behavior.",
+        "impact": "This bias may systematically skew the generated trajectories such that the autocorrelation functions and derived dynamical content do not accurately reflect the ground-truth MD data, potentially overstating the model\u2019s ability to capture multi-timescale dynamics.",
+        "possible_modifications": [
+          "Revert the Hyena operator configuration to a well-specified baseline as a control to isolate the impact of this systematic change.",
+          "Apply a clean, unaltered preprocessing pipeline to ensure that any deviations in dynamical behavior are not a byproduct of data handling.",
+          "Extend the trajectory length beyond 10 ns to systematically evaluate if observed dynamics are consistently maintained over longer runs."
+        ]
+      }
+    },
+    {
+      "question": "Does the MDGEN model generate transition paths that are statistically more consistent with the reference MSM than transition paths sampled from replicate MD-derived MSMs of shorter durations?",
+      "method": "#### Problem Setup\n\nEvaluate MDGEN\u2019s ability to zero-shot sample accurate transition trajectories between metastable states in tetrapeptides, comparing against MSMs built from shorter MD simulations.\n\n#### Independent Variables\n\n- **Trajectory Source**:\n  - MDGEN model (1 ns trajectory conditioned on first and last frame)\n  - MSMs built from replicate MD simulations of various durations: 50 ns, 30 ns, 20 ns, 10 ns\n\n#### Dependent Variables (Evaluation Metrics)\n\n1. **Path Likelihood** under the reference MSM (average transition probability between start/end states)\n2. **Fraction of Valid Paths** (non-zero probability under the reference MSM)\n3. **Jensen-Shannon Divergence (JSD)** between visited state distributions and the reference MSM\n\n#### Experiment Components and Setup\n\n- **Reference MSM**: Constructed from a 100 ns MD trajectory and defines 10 metastable states. This is used for state discretization, computing flux and path likelihood\n\n- **Trajectory Generation**:\n\n  1. For each of 100 test peptides, identify the two most well-separated metastable states (lowest flux pair).\n  2. Using MDGEN, generate 1 ns transition trajectories (100 frames), conditioned on the initial and final frames.\n  3. Generate an ensemble of 1000 paths per peptide.\n\n- **Trajectory Discretization**:\n\n  - Discretize each generated path into the 10 reference MSM states\n\n- **Evaluation Metrics**:\n\n  - **Path Likelihood** under the reference MSM\n  - **Fraction of Valid Paths** (paths with non-zero start/end visitation probability)\n  - **JSD** between categorical state visitation histograms of MDGEN vs. reference\n\n- **Baseline Comparison**:\n\n  - Repeat full pipeline using MSMs trained on replicate MD trajectories with varying durations (10\u201350 ns)\n\n  - Metrics averaged over all 100 test peptides and 1000 transition paths per peptide\n  - Reference Figure 3 for visual analysis, Tables 2 and 4 for runtime comparisons",
+      "expected_outcome": "MDGEN-generated paths are expected to achieve higher average likelihoods, exhibit a greater fraction of valid paths and show lower JSD values compared to MSMs from shorter simulations. These results confirm MDGEN\u2019s ability to accurately model rare, long-timescale transitions with only endpoint conditioning\u2014demonstrating zero-shot generalization in peptide dynamics.",
+      "design_complexity": {
+        "constant_variables": {
+          "Reference MSM": "Constructed from a 100 ns MD trajectory defining 10 metastable states",
+          "Trajectory Generation Setup": "Fixed settings include 100 test peptides, generation of 1 ns trajectories with 100 frames, and an ensemble of 1000 paths per peptide"
+        },
+        "independent_variables": {
+          "Trajectory Source": [
+            "MDGEN model (1 ns trajectory conditioned on first and last frame)",
+            "MSMs built from replicate MD simulations: 10 ns, 20 ns, 30 ns, and 50 ns durations"
+          ]
+        },
+        "dependent_variables": {
+          "Evaluation Metrics": [
+            "Path Likelihood under the reference MSM (average transition probability between start/end states)",
+            "Fraction of Valid Paths (paths with non-zero start/end visitation probability)",
+            "Jensen-Shannon Divergence (JSD) between the state visitation distributions"
+          ]
+        }
+      },
+      "design_ambiguity": {
+        "ambiguous_variables": {
+          "Trajectory Source": "It is not fully explicit how the replicate MD-derived MSMs are constructed (e.g., details on sampling methods, random seeds, or variance between replicates) beyond just the simulation duration",
+          "Evaluation Metrics": "The computation details for metrics like Path Likelihood and JSD (handling of zero probabilities, normalization, etc.) are not completely specified",
+          "Metastable State Selection": "The criteria for identifying the 'two most well-separated metastable states (lowest flux pair)' is mentioned but not fully elaborated"
+        },
+        "possible_modifications": {
+          "New Independent Variable": [
+            "Include variations in additional simulation parameters (e.g., random seed, temperature settings, or different discretization methods)"
+          ],
+          "Mask Existing Variable": [
+            "Omit explicit durations for replicate MD simulations to test if the method generalizes across a broader range of conditions"
+          ]
+        }
+      },
+      "experiment_setup_complexity": {
+        "components": [
+          "Reference MSM (constructed from a 100 ns MD trajectory defining 10 metastable states)",
+          "Trajectory Generation using MDGEN (generating 1 ns, 100-frame trajectories conditioned on endpoints)",
+          "Trajectory Discretization (mapping generated trajectories into 10 metastable states)",
+          "Evaluation Metrics (Path Likelihood, Fraction of Valid Paths, Jensen-Shannon Divergence)",
+          "Baseline Comparison (MSMs built from replicate MD simulations of 10 ns, 20 ns, 30 ns, and 50 ns durations)"
+        ],
+        "setup_steps": [
+          "Identify two most well-separated metastable states (lowest flux pair) for each of the 100 test peptides using the reference MSM",
+          "Generate an ensemble of 1000 transition paths per peptide using MDGEN conditioned on the chosen start and end states",
+          "Discretize each generated trajectory into the 10 reference MSM states",
+          "Compute the evaluation metrics on the discretized trajectories: calculate average transition probability (Path Likelihood), determine the Fraction of Valid Paths, and evaluate the Jensen-Shannon Divergence (JSD) between the state visitation distributions",
+          "Repeat the full pipeline using MSMs built from replicate MD simulations of varying durations for baseline comparison"
+        ],
+        "optional_other_sources_of_complexity": [
+          {
+            "source": "Baseline MSM Construction",
+            "description": "Constructing MSMs from replicate MD simulations with different durations introduces additional layers of complexity in ensuring consistency and accounting for sampling variations."
+          },
+          {
+            "source": "Evaluation Metrics Computation",
+            "description": "Multiple interdependent metrics (Path Likelihood, Valid Path Fraction, JSD) require coordinated discretization and probability computations that add complexity to the experimental setup."
+          }
+        ]
+      },
+      "experiment_setup_ambiguity": {
+        "ambiguous_components": [
+          "Trajectory Source: The method for constructing replicate MD-derived MSMs lacks detail regarding sampling methods, random seed usage, and expected variability between replicates.",
+          "Evaluation Metrics: The specific computation details for metrics like Path Likelihood and JSD (e.g., handling of zero probabilities, normalization procedures) are not fully specified.",
+          "Metastable State Selection: The criteria for identifying the 'two most well-separated metastable states (lowest flux pair)' is mentioned but not elaborated upon in depth."
+        ],
+        "ambiguous_setup_steps": [
+          "The procedure for training or constructing MSMs from replicate MD simulations is unclear, particularly in how the sampling and replication are managed.",
+          "Steps involved in the precise computation and normalization for evaluation metrics (especially for JSD) lack explicit instructions."
+        ],
+        "possible_modifications": {
+          "mask_existing_instructions": [
+            "Omit the explicit durations for replicate MD simulations in the baseline comparison to see if the method generalizes across a broader range of conditions.",
+            "Mask detailed instructions on the metastable state selection criteria, requiring users to infer or design their own selection method."
+          ],
+          "imply_need_for_new_setup_steps": [
+            "Introduce explicit guidelines for handling and normalizing zero probabilities in metric computations.",
+            "Add a step to standardize the construction of replicate MD-derived MSMs, for example by specifying the use of a fixed random seed or outlining a uniform sampling strategy."
+          ]
+        }
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "resource_constraints": [
+            "Constrain the simulation resources by, for example, running the MD simulations and MDGEN trajectory generation on a lower-tier GPU (e.g., using an NVIDIA T4 instead of the A6000/A100) to assess robustness under limited hardware availability."
+          ],
+          "time_constraints": [
+            "Tighten the simulation durations for the baseline MSMs by, for instance, capping the replicate MD runs at shorter durations than originally specified, or reducing the number of generated transition paths per peptide to simulate a fixed compute time budget."
+          ],
+          "money_constraints": [
+            "Impose a cost constraint by restricting the experiments to cheaper compute environments, which may involve using cloud instances with lower operating costs or reducing the overall number of MD replicates to balance the budget."
+          ]
+        }
+      },
+      "random_uncertainty": {
+        "source": "Stochastic trajectory generation and replicate MD simulations",
+        "description": "The process of generating 1 ns trajectories using MDGEN and building MSMs from replicate MD simulations introduces inherent randomness. Uncertainties arise from unspecific random seed usage, stochastic subsampling (e.g., selecting 100 frames from a 1 ns trajectory), and variability in the construction of replicate MSMs. These contribute to random fluctuations in evaluation metrics such as path likelihood, fraction of valid paths, and JSD.",
+        "impact": "This random uncertainty may lead to variations in the computed performance metrics, potentially masking the true performance differences between MDGEN-generated paths and MSM-derived paths. Inconsistent outcomes across runs could result in misleading conclusions about the model\u2019s effectiveness.",
+        "possible_modifications": [
+          "Control and fix random seeds in both the MDGEN trajectory generation and replicate MSM construction to reduce random variability.",
+          "Increase the sample size (number of transition paths per peptide) to average out stochastic noise.",
+          "Introduce controlled variations (e.g., injecting noise in a systematic way) to quantify the impact of random uncertainty on the evaluation metrics."
+        ]
+      },
+      "systematic_uncertainty": {
+        "source": "Bias in metastable state selection and trajectory discretization",
+        "description": "The criteria for selecting the 'two most well-separated metastable states (lowest flux pair)' and the subsequent discretization of trajectories into 10 reference MSM states can introduce systematic uncertainty. Ambiguities in how replicate MD-derived MSMs are constructed, as well as unspecified details in the computation of evaluation metrics (e.g., handling of zero probabilities and normalization for JSD), may result in inherent biases.",
+        "impact": "This systematic uncertainty can consistently skew the evaluation outcomes, leading to biased comparisons between MDGEN and baseline MSM trajectories. Such biases may over- or underestimate the statistical consistency of the generated paths relative to the reference MSM.",
+        "possible_modifications": [
+          "Standardize the metastable state selection process, for example by defining explicit criteria or thresholds, to reduce bias.",
+          "Clarify and standardize the discretization and normalization procedures (including how zero probabilities are handled) to ensure unbiased metric computation.",
+          "Consider testing alternative or additional discretization methods and comparison datasets to assess the robustness of the conclusions."
+        ]
+      }
+    }
+  ]
+}

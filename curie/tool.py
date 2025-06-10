@@ -164,7 +164,7 @@ class CodeAgentTool(BaseTool):
             exp_log_dir_parts = self.config["log_filename"].split("/")[:-1]
             exp_log_dir = "/".join(exp_log_dir_parts)
             if dataset_dir:
-                prompt += f"\n\nDataset directory: {dataset_dir} (don't create synthetic data, use the real dataset)."
+                prompt += f"\n\nDataset directory: {dataset_dir} (Dataset is downloaded. Do not create synthetic data.)."
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
@@ -390,9 +390,9 @@ class PatcherAgentTool(BaseTool):
 
         with open(filename, "r", encoding="utf-8") as f:
             lines = f.readlines()
-            bottom_10_percent = lines[-min(20, len(lines)):]  # Extract bottom 10% of the file
-            # bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
-            return "".join(bottom_10_percent)
+            bottom_50_lines = lines[-min(50, len(lines)):]  # Extract bottom 50 lines of the file
+
+            return "".join(bottom_50_lines)
 
 # Note: shell_tool itself can in theory be passed into the agent as a tool already https://python.langchain.com/docs/integrations/tools/bash/ https://www.youtube.com/watch?v=-ybgQK0BE-I
 @tool
@@ -460,6 +460,7 @@ def read_file_contents(
         if not os.path.exists(filename):
             target = os.path.basename(filename) 
             # may also under /workspace/ need to specify the workspace name
+            # TODO: update to workspace_name
             root_dir_list = ['/starter_file/', '/workspace/']   
             # Recursively walk through directory
             find_flag = False
@@ -532,14 +533,13 @@ class QueryPDFTool(BaseTool):
             pdf_path = os.path.join(workspace_dir, pdf_path)
         
         if not os.path.exists(pdf_path):
-            target = os.path.basenamev(pdf_path) 
-            root_dir = '/starter_file/' + self.config["workspace_name"]
-  
+            target = os.path.basename(pdf_path) 
+            root_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/').rstrip('/'))
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
                 if target in files:
                     full_path = os.path.join(root, target)
-                    print(f"Found {target} at: {full_path}")
+                    curie_logger.info(f"Found {target} at: {full_path}")
                     pdf_path = full_path
                     break
 
@@ -579,7 +579,21 @@ def load_pdf(pdf_path: str) -> dict:
         chunks = text_splitter.split_documents(documents)
 
         # Create a vector index
-        if 'ORGANIZATION' in os.environ:
+        if 'AWS_ACCESS_KEY_ID' in os.environ:
+            from langchain_aws import BedrockEmbeddings
+            import boto3
+            bedrock_client = boto3.client(
+                'bedrock-runtime',
+                region_name=os.environ['AWS_REGION_NAME'],
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+            )
+            embeddings = BedrockEmbeddings(
+                model_id='amazon.titan-embed-text-v2:0',
+                client=bedrock_client
+            )  
+            curie_logger.info(f"Using BedrockEmbeddings with model: amazon.titan-embed-text-v2:0")
+        elif 'ORGANIZATION' in os.environ:
             endpoint = os.environ['AZURE_API_BASE'] 
             if "AZURE_API_BASE" in os.environ:
                 del os.environ["AZURE_API_BASE"] 
@@ -628,7 +642,7 @@ def query_pdf(question: str, pdf_path: str) -> dict:
             curie_logger.error(f"Error loading PDF: {str(e)}")
             return {"error": f"Error loading PDF: {str(e)}"}
         if "error" in load_result:
-            return {"error": f"PDF must be loaded first: {load_result['error']}"}
+            return {"error": f"{load_result['error']}"}
     
     try:
         curie_logger.info(f"Building index for PDF: {pdf_path}")
