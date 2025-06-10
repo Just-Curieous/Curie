@@ -1,0 +1,1419 @@
+{
+    "questions": [
+        {
+            "method": "Conduct an ablation study by varying the aggregation degree settings for the LNAMD module. Specifically, test the following configurations: {1}, {3}, {5}, {1,3}, {3,5}, and {1,3,5} on both the MVTec AD and VisA datasets. For each configuration, compute the image-level anomaly detection (AC) and pixel-level anomaly segmentation (AS) metrics, measured in AUROC percentages. Use the same pre-processing steps, backbone (ViT-L/14-336 pre-trained by OpenAI), and evaluation protocols as described in the paper. In addition to quantitative analysis, qualitatively review the segmentation outputs as displayed in Figures 11 to 16. Compare performance across configurations to not only determine the most effective aggregation degree setting but also to understand how aggregation degree impacts performance based on anomaly size\u2014anticipating that larger degrees work better on MVTec AD (which exhibits larger anomalies) and smaller degrees on VisA (characterized by smaller anomalies).",
+            "expected_outcome": "Based on the results and related qualitative figures, the expected optimal configuration is {1,3,5}. This combination is anticipated to achieve an AC of approximately 97.8% and an AS of around 97.3% on MVTec AD, with comparable improvements on VisA (AC around 92.8% and AS near 98.7%). This would validate that combining multiple aggregation degrees enhances both classification and segmentation performance compared to using a single aggregation degree.",
+            "subsection_source": "4.1 QUANTITATIVE AND QUALITATIVE RESULTS",
+            "source": [
+                "/workspace/examples/musc_main.py",
+                "workspace/examples/musc.py"
+            ],
+            "usage_instructions": "To conduct the ablation study on aggregation degrees in the LNAMD module, run the following commands for each configuration on both MVTec AD and VisA datasets:\n\n1. For configuration {1}:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   \n   python examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   ```\n\n2. For configuration {3}:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 3 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   \n   python examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 3 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   ```\n\n3. For configuration {5}:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 5 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   \n   python examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 5 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   ```\n\n4. For configuration {1,3}:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   \n   python examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   ```\n\n5. For configuration {3,5}:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 3 5 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   \n   python examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 3 5 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   ```\n\n6. For configuration {1,3,5}:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   \n   python examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output --vis True --save_excel True\n   ```\n\nAfter running these commands, the results will be saved in the './output' directory. The metrics for image-level anomaly detection (AC) and pixel-level anomaly segmentation (AS) will be saved in Excel files if --save_excel is set to True. The visualization of segmentation outputs will be saved if --vis is set to True.",
+            "requirements": [
+                "Step 1: Parse command line arguments to configure the experiment, including dataset path, dataset name, class name, backbone model, feature layers, image resize dimensions, aggregation degrees (r_list), batch size, output directory, visualization and excel saving options (/workspace/examples/musc_main.py:11-30)",
+                "Step 2: Load configuration from YAML file and override with command line arguments (/workspace/examples/musc_main.py:32-78)",
+                "Step 3: Initialize the MuSc model with the configuration (/workspace/examples/musc_main.py:85-86)",
+                "Step 4: Load the specified backbone model (ViT-L-14-336 with OpenAI pretrained weights) (/workspace/models/musc.py:64-76)",
+                "Step 5: For each category in the dataset, load test data and extract features from the specified layers of the backbone model (/workspace/models/musc.py:127-179)",
+                "Step 6: Apply the LNAMD (Local Neighborhood Aggregation with Multiple Degrees) module with the specified aggregation degrees (r_list) to process features (/workspace/models/musc.py:183-202)",
+                "Step 7: Apply the MSM (Mutual Similarity Measurement) module to compute anomaly scores for each layer (/workspace/models/musc.py:204-217)",
+                "Step 8: Average the anomaly scores across different aggregation degrees and layers (/workspace/models/musc.py:218-220)",
+                "Step 9: Interpolate the anomaly maps to match the original image size (/workspace/models/musc.py:222-227)",
+                "Step 10: Apply the RsCIN (Robust Score Calibration with Image Neighborhood) module to refine the anomaly scores (/workspace/models/musc.py:242-248)",
+                "Step 11: Compute evaluation metrics for both image-level and pixel-level anomaly detection (/workspace/models/musc.py:250-260)",
+                "Step 12: Generate visualizations of anomaly maps if requested (/workspace/models/musc.py:262-264)",
+                "Step 13: Calculate and report mean performance metrics across all categories (/workspace/models/musc.py:289-303)",
+                "Final Step: Save results to Excel file if requested (/workspace/models/musc.py:306-340)"
+            ],
+            "agent_instructions": "Create a script for anomaly detection using the MuSc (Multi-Scale Contrastive) framework. The script should implement an experiment to study the effect of different aggregation degrees in the LNAMD (Local Neighborhood Aggregation with Multiple Degrees) module on both MVTec AD and VisA datasets.\n\nThe script should:\n\n1. Accept command line arguments for configuring the experiment, including:\n   - Dataset path and name (MVTec AD or VisA)\n   - Class name (or 'ALL' for all categories)\n   - Backbone model (ViT-L-14-336 with OpenAI pretrained weights)\n   - Feature extraction layers (5, 11, 17, 23)\n   - Image resize dimensions (518)\n   - Aggregation degrees (r_list) for the LNAMD module (1, 3, 5, or combinations)\n   - Batch size, output directory, visualization and excel saving options\n\n2. Implement the core MuSc framework with the following components:\n   - Feature extraction from a pretrained vision transformer\n   - LNAMD module that aggregates local neighborhood features with different aggregation degrees\n   - MSM (Mutual Similarity Measurement) module that computes anomaly scores by comparing patch features\n   - RsCIN (Robust Score Calibration with Image Neighborhood) module for refining anomaly scores\n\n3. Process each category in the dataset by:\n   - Loading test data\n   - Extracting features from the backbone model\n   - Applying the LNAMD module with the specified aggregation degrees\n   - Computing anomaly scores using the MSM module\n   - Averaging scores across different aggregation degrees\n   - Generating anomaly maps and interpolating to match the original image size\n\n4. Evaluate performance using standard metrics:\n   - Image-level: AUROC, F1 score, Average Precision\n   - Pixel-level: AUROC, F1 score, Average Precision, AUPRO\n\n5. Generate visualizations of anomaly maps and save results to Excel if requested\n\nThe experiment should be able to run with different aggregation degree configurations (1, 3, 5, 1+3, 3+5, or 1+3+5) to study their impact on anomaly detection performance.",
+            "masked_source": [
+                "/workspace/examples/musc_main.py",
+                "workspace/examples/musc.py"
+            ],
+            "question": "Does the choice of aggregation degrees in the LNAMD module affect the classification and segmentation performance on MVTec AD and VisA datasets, particularly considering that larger aggregation degrees may benefit the segmentation of large anomalies (as in MVTec AD) while smaller degrees may be more effective for small anomalies (as in VisA)?",
+            "design_complexity": {
+                "constant_variables": {
+                    "backbone_model": "ViT-L-14-336 pretrained by OpenAI",
+                    "feature_layers": [
+                        "5",
+                        "11",
+                        "17",
+                        "23"
+                    ],
+                    "img_resize": "518",
+                    "preprocessing_steps": "Same for all experiments (including command line configuration and YAML overrides)",
+                    "datasets": [
+                        "MVTec AD",
+                        "VisA"
+                    ],
+                    "evaluation_protocol": "Standard AC and AS metrics (AUROC, F1, AP, AUPRO) as described in the paper"
+                },
+                "independent_variables": {
+                    "aggregation_degrees": [
+                        "{1}",
+                        "{3}",
+                        "{5}",
+                        "{1,3}",
+                        "{3,5}",
+                        "{1,3,5}"
+                    ]
+                },
+                "dependent_variables": {
+                    "classification_metrics": "Image-level anomaly detection AUROC (%) (e.g., expected ~97.8% on MVTec AD and ~92.8% on VisA)",
+                    "segmentation_metrics": "Pixel-level anomaly segmentation AUROC (%) (e.g., expected ~97.3% on MVTec AD and ~98.7% on VisA) and qualitative segmentation outputs"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "aggregation_degrees": "It is not explicitly detailed how multiple aggregation degrees (e.g., {1,3,5}) are combined within the LNAMD module; the operation order and aggregation strategy may need further clarification.",
+                    "qualitative_outputs": "The criteria and evaluation process for the qualitative review of segmentation outputs (as shown in Figures 11 to 16) is not explicitly specified.",
+                    "dataset_division": "Although the overall dataset (MVTec AD and VisA) is mentioned, the precise guidelines for handling different categories or splits within these datasets are not detailed."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Explicitly define the computational method for combining features from different aggregation degrees in the LNAMD module.",
+                        "Include additional dependent variables such as F1 score and Average Precision (AP) for a more comprehensive evaluation.",
+                        "Introduce additional independent variables like varying image resize dimensions or batch sizes for extended experiments."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Command-line argument parser",
+                    "Configuration loader with YAML overrides",
+                    "MuSc model initialization",
+                    "Backbone feature extraction module (ViT-L-14-336 with OpenAI pretrained weights)",
+                    "LNAMD module (Local Neighborhood Aggregation with Multiple Degrees)",
+                    "MSM module (Mutual Similarity Measurement)",
+                    "RsCIN module (Robust Score Calibration with Image Neighborhood)",
+                    "Data loader for MVTec AD and VisA datasets",
+                    "Evaluation metric computation (image-level AC, pixel-level AS, F1, AP, AUPRO)",
+                    "Visualization generation module for segmentation outputs",
+                    "Output saver (Excel file generation)"
+                ],
+                "setup_steps": [
+                    "Parse command-line arguments to configure dataset paths, dataset names, class names, backbone model, feature layers, image resize dimensions, aggregation degrees (r_list), batch size, output directory, visualization and Excel saving options",
+                    "Load configuration from a YAML file and override with provided command-line arguments",
+                    "Initialize the MuSc model with the defined configuration and specified backbone",
+                    "Load and preprocess test data for the selected dataset (MVTec AD or VisA)",
+                    "Extract feature maps using the designated layers (5, 11, 17, 23) from the backbone network",
+                    "Apply the LNAMD module using the specified aggregation degrees (e.g., {1}, {3}, {5}, {1,3}, {3,5}, {1,3,5})",
+                    "Compute anomaly scores with the MSM module by comparing patch features",
+                    "Aggregate and average results across different aggregation degree configurations",
+                    "Interpolate anomaly maps to match the original image sizes",
+                    "Refine the anomaly scores using the RsCIN module",
+                    "Evaluate image-level and pixel-level anomaly detection performance using standard metrics (AUROC and others)",
+                    "Generate qualitative visualizations of segmentation outputs (as shown in Figures 11 to 16)",
+                    "Save the evaluation results in Excel files and store visualizations in the specified output directory"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple dataset handling",
+                        "description": "Separate execution commands for MVTec AD and VisA introduce complexity due to different anomaly characteristics and potential dataset splits."
+                    },
+                    {
+                        "source": "Aggregation degree combinations",
+                        "description": "Processing and combining features from multiple aggregation degrees (e.g., {1,3,5}) introduces additional computational considerations and integration strategy complexities."
+                    },
+                    {
+                        "source": "Qualitative assessment",
+                        "description": "The evaluation of segmentation outputs through generated visualizations requires subjective interpretation, adding to experimental complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "LNAMD module's aggregation strategy when multiple degrees are used (e.g., in configurations {1,3} or {1,3,5}); the precise method for combining outputs is not clearly described",
+                    "Qualitative evaluation criteria for segmentation outputs, as the process for reviewing figures (Figures 11 to 16) is not explicitly specified"
+                ],
+                "ambiguous_setup_steps": [
+                    "The process for combining results from different aggregation degrees (averaging, order of operations, etc.) is not fully detailed",
+                    "Guidelines on dataset division and the handling of different classes or splits within the MVTec AD and VisA datasets are not explicitly provided"
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Explicitly define the computational method for combining features from different aggregation degrees in the LNAMD module",
+                        "Include detailed criteria and procedures for the qualitative evaluation of segmentation outputs",
+                        "Clarify the dataset handling procedures, including guidelines for class splitting and category-specific processing in both MVTec AD and VisA"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "Explicitly define the computational method for combining features from different aggregation degrees in the LNAMD module (e.g., when using configurations like {1,3} or {1,3,5}) to eliminate ambiguity in feature aggregation.",
+                            "Include detailed criteria and procedures for the qualitative evaluation of segmentation outputs (as presented in Figures 11 to 16), ensuring a consistent and objective interpretation of the results.",
+                            "Clarify dataset handling procedures by providing explicit guidelines on class splitting and category-specific processing in both MVTec AD and VisA, to standardize experimental setups."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Ambiguity in Multi-Aggregation Feature Combination",
+                "description": "When using multiple aggregation degrees (e.g., {1,3,5}), the absence of a clearly defined computational strategy to aggregate features from different local neighborhoods introduces randomness in the aggregation process. This can lead to instability during gradient updates and may result in inconsistent evaluation metrics, making the anomaly detection (both classification and segmentation) vary from run to run.",
+                "impact": "This randomness can cause variations in image-level AUROC and pixel-level AUROC results, affecting the reproducibility of the experiments. It may lead to unexpected performance fluctuations, despite using the same pre-processing steps, backbone model, and evaluation protocols.",
+                "possible_modifications": [
+                    "Explicitly define the method for combining features across different aggregation degrees (e.g., weighted averaging or fixed ordering) to eliminate arbitrary decisions.",
+                    "Introduce stabilization techniques in the LNAMD module to reduce the impact of random aggregation order.",
+                    "Run multiple iterations and average the results when testing configurations to smooth out randomness."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset-Dependent Aggregation Degree Bias",
+                "description": "The choice of aggregation degrees systematically favors certain anomaly sizes. As seen in the experiment, larger aggregation degrees appear to work better on datasets like MVTec AD that exhibit larger anomalies, while smaller degrees are more effective for VisA with smaller anomalies. This inherent bias in the experimental configuration can lead to systematically skewed performance metrics, such as an expected AC of approximately 97.8% and AS around 97.3% on MVTec AD versus AC of around 92.8% and AS near 98.7% on VisA.",
+                "impact": "This systematic uncertainty can mislead the interpretation of the model\u2019s effectiveness by overestimating performance on one dataset while underperforming on the other, thus affecting the generalizability and fairness of the conclusions.",
+                "possible_modifications": [
+                    "Perform dataset-specific hyperparameter tuning to align aggregation degree settings with the prevalent anomaly sizes.",
+                    "Introduce additional independent variables (e.g., varying image resize dimensions or batch sizes) to study their interaction with aggregation degrees.",
+                    "Establish clear criteria and procedures for qualitative evaluation to mitigate bias in interpreting segmentation outputs from figures 11 to 16."
+                ]
+            }
+        },
+        {
+            "method": "Perform an ablation study on the MSM module to assess the impact of various sample strategies on overall anomaly detection. The strategies include: (1) using the minimum anomaly score, (2) maximum anomaly score, (3) mean anomaly score, and (4) hybrid approaches such as '30% + min', '30% + max', and '30% + mean'. For each strategy, compute the image-level AUROC (AC) and pixel-level AUROC (AS) on both the MVTec AD and VisA datasets. All other experimental settings (e.g., using the same backbone, image resolution, and pre-processing steps) will remain unchanged. Moreover, incorporate an interval average operation on the minimum 30% of the anomaly scores in the MSM module to address the issue of normal patches with few similar matches. This operation, which is illustrated in Fig. 4 and Fig. 10, aims to reduce the influence of dissimilar patches in the scoring.",
+            "expected_outcome": "According to supporting quantitative analyses, it is expected that the '30% + mean' strategy will yield superior performance. Specifically, the anticipated results are image-AUROC and pixel-AUROC values that match the best overall configuration (e.g., approximately 97.8% AC and 97.3% AS on MVTec AD, and around 92.8% AC and 98.7% AS on VisA). This would indicate that combining a minimum percentage (30%) with the mean statistic leads to a more robust anomaly score estimation compared to using single measures.",
+            "subsection_source": "4.1 QUANTITATIVE AND QUALITATIVE RESULTS",
+            "source": [
+                "/workspace/scripts/run_msm_ablation_study.sh",
+                "/workspace/examples/musc_ablation_main.py",
+                "/workspace/models/musc_ablation.py"
+            ],
+            "usage_instructions": "To run the ablation study on the MSM module with different sample strategies, execute the script '/workspace/scripts/run_msm_ablation_study.sh'. This script will run all six strategies (min, max, mean, 30%+min, 30%+max, 30%+mean) on both MVTec AD and VisA datasets. The results will be saved in Excel files in the output directory, allowing for easy comparison between different strategies. For more details, refer to the '/workspace/MSM_ABLATION_README.md' file.",
+            "requirements": [
+                "Step 1: Set up the experiment configuration with different MSM sampling strategies (min, max, mean) and hybrid approaches (30%+min, 30%+max, 30%+mean) (/workspace/scripts/run_msm_ablation_study.sh:15-22)",
+                "Step 2: Define datasets to test (MVTec AD and VisA) (/workspace/scripts/run_msm_ablation_study.sh:7)",
+                "Step 3: Parse command line arguments including MSM strategy parameters (msm_strategy, topmin_min, topmin_max) (/workspace/examples/musc_ablation_main.py:11-32)",
+                "Step 4: Load configuration and override with command line arguments (/workspace/examples/musc_ablation_main.py:35-87)",
+                "Step 5: Initialize the MuSc model with the ablation parameters (/workspace/examples/musc_ablation_main.py:97)",
+                "Step 6: Load the appropriate backbone model (ViT/CLIP) (/workspace/models/musc_ablation.py:70-82)",
+                "Step 7: For each dataset category, load test data (/workspace/models/musc_ablation.py:85-98)",
+                "Step 8: Extract features from the backbone model (/workspace/models/musc_ablation.py:156-186)",
+                "Step 9: Process features through LNAMD (Local Neighborhood Anomaly Matrix Decomposition) (/workspace/models/musc_ablation.py:190-209)",
+                "Step 10: Apply MSM with the specified strategy (min, max, or mean) and topmin parameters (/workspace/models/musc_ablation.py:212-225)",
+                "Step 11: Compute anomaly maps by interpolating the results (/workspace/models/musc_ablation.py:232-237)",
+                "Step 12: Apply RsCIN (Robust Score Calibration with Image Neighborhood) for image-level anomaly detection (/workspace/models/musc_ablation.py:246-254)",
+                "Step 13: Compute evaluation metrics (AUROC, F1, AP, AUPRO) for both image-level and pixel-level detection (/workspace/models/musc_ablation.py:256-266)",
+                "Step 14: Calculate mean performance across all categories (/workspace/models/musc_ablation.py:295-309)",
+                "Step 15: Save results to Excel files with strategy information in the filename (/workspace/models/musc_ablation.py:312-348)",
+                "Final Step: Run the experiment for all combinations of datasets and strategies (/workspace/scripts/run_msm_ablation_study.sh:25-51)"
+            ],
+            "agent_instructions": "Create a system to perform an ablation study on different sampling strategies for anomaly detection. The goal is to evaluate how different strategies for computing anomaly scores affect detection performance.\n\nYour implementation should:\n\n1. Support multiple sampling strategies for anomaly detection:\n   - Minimum score strategy: Using the minimum value of anomaly scores\n   - Maximum score strategy: Using the maximum value of anomaly scores\n   - Mean score strategy: Using the mean value of anomaly scores\n   - Hybrid approaches that first select the top N% minimum distances and then apply min/max/mean\n\n2. Run experiments on anomaly detection datasets (MVTec AD and VisA)\n\n3. Use a pre-trained vision model (like ViT or CLIP) as the feature extractor\n\n4. Process the extracted features through:\n   - A local neighborhood feature aggregation mechanism\n   - A mutual scoring mechanism that computes anomaly scores using the specified strategy\n   - A score calibration component for image-level anomaly detection\n\n5. Evaluate performance using standard metrics:\n   - Image-level: AUROC, F1 score, Average Precision\n   - Pixel-level: AUROC, F1 score, Average Precision, AUPRO\n\n6. Save results to Excel files for easy comparison between strategies\n\n7. Support command-line arguments to specify:\n   - The sampling strategy (min, max, mean)\n   - The percentage range for hybrid approaches (e.g., 0-30%)\n   - Dataset paths and names\n   - Model configuration (backbone, feature layers, etc.)\n\nThe default strategy should be '30% + mean' (selecting top 30% minimum distances and taking their mean), which is expected to perform best according to prior research.",
+            "masked_source": [
+                "/workspace/scripts/run_msm_ablation_study.sh",
+                "/workspace/examples/musc_ablation_main.py",
+                "/workspace/models/musc_ablation.py"
+            ],
+            "question": "Does the selection of different sample strategies in the MSM module influence the overall anomaly detection performance?",
+            "design_complexity": {
+                "constant_variables": {
+                    "backbone_model": "ViT/CLIP pre-trained vision model used for feature extraction",
+                    "image_resolution": "Image resolution remains unchanged across experiments",
+                    "pre_processing_steps": "The same pre-processing pipeline is applied in all trials",
+                    "dataset": [
+                        "MVTec AD",
+                        "VisA"
+                    ]
+                },
+                "independent_variables": {
+                    "msm_sampling_strategy": [
+                        "min",
+                        "max",
+                        "mean",
+                        "30%+min",
+                        "30%+max",
+                        "30%+mean"
+                    ]
+                },
+                "dependent_variables": {
+                    "anomaly_detection_performance": [
+                        "image-level AUROC (AC)",
+                        "pixel-level AUROC (AS)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "interval_average_percentage": "Although the experiment states to use a 30% interval average, it is not explicitly clarified whether this percentage can be varied or is fixed, especially considering the mention of analyzing values from 'minimum Y% to 30%'.",
+                    "hybrid_approach_computation": "The precise mechanism to combine the top percentage selection with min/max/mean (i.e., order of operations and whether additional normalization is applied) is not fully detailed.",
+                    "backbone_model_choice": "The instruction mentions using a pre-trained model like ViT or CLIP but does not clarify how the choice affects the overall pipeline or performance differences."
+                },
+                "possible_modifications": {
+                    "modify_interval_percentage": [
+                        "Allow the user to specify different interval percentages (e.g., 20%, 30%, 40%) for the interval average operation."
+                    ],
+                    "expand_sampling_strategies": [
+                        "Add additional statistical measures such as median or weighted averages as new sampling strategies."
+                    ],
+                    "explicit_backbone_selection": [
+                        "Introduce a variable that explicitly allows the choice between ViT and CLIP to analyze their impact on anomaly detection performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Pre-trained vision model (ViT/CLIP) for feature extraction",
+                    "Local feature extraction and aggregation pipeline (including LNAMD)",
+                    "Mutual Scoring Mechanism (MSM) module with multiple sampling strategies (min, max, mean, hybrid approaches)",
+                    "Re-scoring module (RsCIN) for image-level anomaly detection",
+                    "Dataset loaders for MVTec AD and VisA",
+                    "Command-line argument parser for configuration",
+                    "Result saving mechanism (Excel output)"
+                ],
+                "setup_steps": [
+                    "Set up experiment configuration and specify MSM sampling strategy via the bash script (/workspace/scripts/run_msm_ablation_study.sh)",
+                    "Define datasets (MVTec AD and VisA) for testing",
+                    "Parse command-line arguments for parameters such as msm_strategy and topmin values in the main Python script (/workspace/examples/musc_ablation_main.py)",
+                    "Load configuration and override with command-line parameters",
+                    "Initialize the MuSc model with the specified ablation parameters",
+                    "Load the appropriate backbone model (ViT or CLIP) in the model script (/workspace/models/musc_ablation.py)",
+                    "Load test data for each dataset category",
+                    "Extract features via the pre-trained backbone",
+                    "Aggregate features using LNAMD for local neighborhood anomaly analysis",
+                    "Apply the MSM module with the chosen sampling strategy and topmin parameters",
+                    "Compute anomaly maps via interpolation",
+                    "Apply RsCIN for image-level anomaly score calibration",
+                    "Compute evaluation metrics (image-level AUROC, pixel-level AUROC, F1 score, AP, and AUPRO)",
+                    "Aggregate results across all categories",
+                    "Save results to Excel files with strategy information for easy comparison"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Hybrid Sampling Strategies",
+                        "description": "Combining a fixed percentage (30%) selection with different statistical aggregators (min, max, mean) introduces additional parameter tuning and implementation overhead."
+                    },
+                    {
+                        "source": "Script Coordination",
+                        "description": "The need to coordinate multiple scripts and modules (/workspace/scripts/run_msm_ablation_study.sh, /workspace/examples/musc_ablation_main.py, and /workspace/models/musc_ablation.py) increases integration complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Interval average percentage: While a 30% interval average is mentioned, it is unclear if this is a fixed parameter or if it can vary (e.g., 'minimum Y% to 30%').",
+                    "Hybrid approach computation: The exact mechanism of combining top percentage selection with min/max/mean (i.e., the order of operations and whether any normalization is applied) is not fully specified.",
+                    "Backbone model choice: Although a pre-trained model such as ViT or CLIP is suggested, the instructions do not clarify how the selection impacts subsequent processing or detection performance."
+                ],
+                "ambiguous_setup_steps": [
+                    "Integration of the interval average operation within the MSM module lacks detailed implementation instructions.",
+                    "The process for overriding configuration with command-line arguments, specifically related to specifying MSM strategy parameters, is not completely detailed."
+                ],
+                "possible_modifications": {
+                    "modify_interval_percentage": [
+                        "Allow users to specify different interval percentages (e.g., 20%, 30%, 40%) for the interval average operation to study their impact."
+                    ],
+                    "expand_sampling_strategies": [
+                        "Introduce additional statistical measures such as median or weighted averages as new sampling strategies."
+                    ],
+                    "explicit_backbone_selection": [
+                        "Develop a clear configuration parameter that explicitly selects between ViT and CLIP to assess their impact on overall anomaly detection performance."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "design_modifications": {
+                        "modifications": [
+                            "Allow users to specify different interval percentages (e.g., 20%, 30%, 40%) for the interval average operation to study its effect.",
+                            "Expand the set of MSM sampling strategies by adding additional statistical measures such as median or weighted averages.",
+                            "Introduce an explicit configuration parameter to select between pre-trained backbones (e.g., ViT versus CLIP) to analyze their impact on anomaly detection performance.",
+                            "Tighten the experimental setup by, for example, enforcing lower GPU memory usage (using settings  as s=3 for approximately 5026 MB) or reducing per-image inference time (~513.5 ms), if required."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic behavior in the patch selection process within the MSM module",
+                "description": "When selecting the top 30% of anomaly scores, if there is any tie-breaking or sampling randomness (e.g., if there are multiple patches with very similar scores), small random fluctuations can occur in the chosen subset. This randomness can lead to instability in subsequent processing steps and affect the computed anomaly scores, especially since the strategy combines global statistics (min, max, mean) with a random-like subset selection.",
+                "impact": "These random variations may result in inconsistent gradient updates during training or inconsistent detection performance metrics (e.g., slight fluctuations in image-level AUROC and pixel-level AUROC).",
+                "possible_modifications": [
+                    "Replace any random tie-breaking in the selection process with a deterministic criterion to ensure consistent patch selection.",
+                    "Average results over multiple runs to mitigate the effect of random fluctuations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias introduced by the fixed interval average operation and hybrid sampling strategy",
+                "description": "The experiment uses a fixed 30% interval average operation on the minimum anomaly scores and combines it with different statistics (min, max, mean). This systematic design choice can introduce bias in the anomaly score estimation, as the selected percentage and combination method may favor certain anomaly patterns over others. For instance, as seen in quantitative analyses, the '30% + mean' strategy systematically yields superior performance on both MVTec AD and VisA datasets.",
+                "impact": "This systematic bias potentially skews the overall anomaly detection metrics, leading to consistently higher or lower AUROC values depending on the strategy used. Such bias affects the generalizability of the method and may not be optimal for datasets with different anomaly characteristics.",
+                "possible_modifications": [
+                    "Allow users to specify and experiment with different interval percentages (e.g., 20%, 30%, 40%) to assess and mitigate bias.",
+                    "Expand the set of sampling strategies to include other statistical measures like the median or weighted averages.",
+                    "Introduce an explicit configuration parameter to select between different pre-trained backbones (e.g., ViT vs. CLIP) to analyze potential systematic effects related to feature extraction."
+                ]
+            }
+        },
+        {
+            "method": "Conduct controlled experiments to compare the performance of the MuSc model with and without the RsCIN module. Use the MVTec AD and VisA datasets to measure classification metrics such as AUROC, F1-max, and AP. Implement two sets of experiments: one with the RsCIN module enabled and one with it disabled, keeping all other parameters (e.g., backbone, pre-processing, and anomaly scoring modules) constant. Evaluate the performance differences with statistical significance if possible.",
+            "expected_outcome": "Based on the findings, the experiments with the RsCIN module are expected to show improved classification performance. For example, on MVTec AD, inclusion of RsCIN should elevate AUROC, F1-max, and AP scores compared to the configuration without it, thereby confirming its contribution to a more refined anomaly detection process.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS",
+            "source": [
+                "/workspace/examples/musc_main.py",
+                "/workspace/examples/musc.py"
+            ],
+            "usage_instructions": "To test the impact of the RsCIN module on anomaly classification performance, you need to run the script twice with a minor modification to enable/disable RsCIN:\n\n1. First, run the script with RsCIN enabled (default setting):\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output_with_rscin --save_excel True\n   ```\n\n2. Then, make a small modification to disable RsCIN by editing line 243-247 in /workspace/models/musc.py to set k_score=[0] (which disables RsCIN according to line 24-25 in _RsCIN.py):\n   ```\n   # Change from:\n   if self.dataset == 'visa':\n       k_score = [1, 8, 9]\n   elif self.dataset == 'mvtec_ad':\n       k_score = [1, 2, 3]\n   else:\n       k_score = [1, 2, 3]\n   \n   # To:\n   k_score = [0]  # Setting k_score to [0] disables RsCIN\n   ```\n\n3. Run the modified script with RsCIN disabled:\n   ```\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output_without_rscin --save_excel True\n   ```\n\n4. Repeat steps 1-3 for the VisA dataset by changing the dataset parameters:\n   ```\n   --data_path ./data/visa/ --dataset_name visa\n   ```\n\n5. Compare the classification metrics (AUROC, F1-max, AP) from the Excel files generated in the output directories to evaluate the impact of the RsCIN module.",
+            "requirements": [
+                "Step 1: Parse command line arguments and load configuration from YAML file (/workspace/examples/musc_main.py:11-33)",
+                "Step 2: Override default configuration with command line arguments (/workspace/examples/musc_main.py:32-77)",
+                "Step 3: Initialize the MuSc model with the configuration (/workspace/examples/musc_main.py:86)",
+                "Step 4: Load the appropriate backbone model (ViT or DINO) based on configuration (/workspace/models/musc.py:64-76)",
+                "Step 5: For each category in the dataset, load test data (/workspace/models/musc.py:79-93)",
+                "Step 6: Extract features from test images using the backbone model (/workspace/models/musc.py:149-179)",
+                "Step 7: Apply LNAMD (Local Neighborhood Aggregation with Multiple Degrees) for each aggregation degree in r_list (/workspace/models/musc.py:183-202)",
+                "Step 8: Apply MSM (Mutual Similarity Measurement) to compute anomaly scores for each feature layer (/workspace/models/musc.py:204-217)",
+                "Step 9: Interpolate anomaly maps to match the original image size (/workspace/models/musc.py:222-227)",
+                "Step 10: Apply RsCIN (Robust Score Calibration with Image Neighborhood) to calibrate anomaly scores based on dataset type (/workspace/models/musc.py:242-248)",
+                "Step 11: Compute evaluation metrics (AUROC, F1-max, AP) for both image-level and pixel-level detection (/workspace/models/musc.py:250-260)",
+                "Step 12: Aggregate results across all categories and calculate mean metrics (/workspace/models/musc.py:269-303)",
+                "Step 13: Save results to Excel file if save_excel is enabled (/workspace/models/musc.py:306-326)",
+                "Final Step: Run the experiment twice - once with RsCIN enabled (k_score=[1,2,3] for MVTec_AD) and once with RsCIN disabled (k_score=[0]) to compare performance (/workspace/models/musc.py:242-248)"
+            ],
+            "agent_instructions": "Create a script to evaluate the impact of the RsCIN (Robust Score Calibration with Image Neighborhood) module on anomaly detection performance. The script should:\n\n1. Implement an anomaly detection pipeline using a pretrained vision transformer (ViT) backbone that:\n   - Extracts features from test images\n   - Applies local neighborhood aggregation with multiple degrees (LNAMD)\n   - Uses mutual similarity measurement (MSM) to compute anomaly scores\n   - Optionally applies score calibration (RsCIN)\n   - Computes evaluation metrics (AUROC, F1-max, AP) for both image-level and pixel-level detection\n\n2. Accept command line arguments for:\n   - Dataset path and name (MVTec_AD or VisA)\n   - Class name (specific category or 'ALL' for all categories)\n   - Backbone model configuration (ViT-L-14-336 with OpenAI pretrained weights)\n   - Feature extraction layers (e.g., 5, 11, 17, 23)\n   - Image resize dimensions\n   - Aggregation degrees for LNAMD (e.g., 1, 3, 5)\n   - Batch size\n   - Output directory\n   - Option to save results to Excel\n\n3. Include a mechanism to enable/disable the RsCIN module:\n   - When enabled, RsCIN should use different k_score values based on the dataset (e.g., [1,2,3] for MVTec_AD)\n   - When disabled, RsCIN should use k_score=[0]\n\n4. Run the script twice (with RsCIN enabled and disabled) and compare the results to evaluate the impact of RsCIN on anomaly classification performance.\n\nThe script should output detailed metrics for each category and the mean across all categories, and optionally save these results to Excel files for comparison.",
+            "masked_source": [
+                "/workspace/examples/musc_main.py",
+                "/workspace/examples/musc.py"
+            ],
+            "question": "Does the integration of the RsCIN module enhance the anomaly classification performance on industrial datasets?",
+            "design_complexity": {
+                "constant_variables": {
+                    "backbone": "ViT-L-14-336 with OpenAI pretrained weights",
+                    "feature_layers": "Layers 5, 11, 17, 23",
+                    "image_resize": "Dimension 518",
+                    "LNAMD_degrees": "1, 3, 5",
+                    "preprocessing_and_anomaly_scoring": "All modules except RsCIN remain constant",
+                    "dataset_parameters": "Data path, class_name ('ALL'), and other dataset-specific parameters as provided"
+                },
+                "independent_variables": {
+                    "RsCIN_status": [
+                        "enabled (k_score=[1,2,3] for MVTec AD and corresponding values for VisA)",
+                        "disabled (k_score=[0])"
+                    ],
+                    "dataset": [
+                        "MVTec AD",
+                        "VisA"
+                    ]
+                },
+                "dependent_variables": {
+                    "classification_metrics": [
+                        "AUROC",
+                        "F1-max",
+                        "AP at both image-level and pixel-level"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "statistical_significance": "The method for computing statistical significance is mentioned but not explicitly defined (e.g., type of test, number of repetitions).",
+                    "dataset_category_selection": "While 'ALL' is used for category selection, it remains ambiguous whether individual categories or sub-sampling may impact results.",
+                    "implementation_details_of_RsCIN": "The internal mechanism of RsCIN (such as the choice of k_score values for different datasets) is not fully detailed in the task description."
+                },
+                "possible_modifications": {
+                    "modification_RsCIN_parameters": [
+                        "Investigate alternative k_score settings or other parameterizations for the RsCIN module."
+                    ],
+                    "modification_statistical_tests": [
+                        "Incorporate and clearly specify statistical tests (e.g., t-test, ANOVA) and the number of repetitions for significance analysis."
+                    ],
+                    "modification_dataset_split": [
+                        "Experiment with different levels of category selection instead of using 'ALL', or vary the data subset sizes."
+                    ],
+                    "modification_backbone": [
+                        "Introduce different backbone models or configurations to test cross-model generalizability."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Command line argument parser and configuration loader from musc_main.py",
+                    "Pre-trained ViT backbone (ViT-L-14-336 with OpenAI weights)",
+                    "Feature extraction layers (layers 5, 11, 17, 23)",
+                    "Local Neighborhood Aggregation with Multiple Degrees (LNAMD) module",
+                    "Mutual Similarity Measurement (MSM) module",
+                    "Robust Score Calibration with Image Neighborhood (RsCIN) module (optional)",
+                    "Evaluation metrics computation module (AUROC, F1-max, AP for image-level and pixel-level)",
+                    "Result aggregation and Excel output module",
+                    "Dataset loader and pre-processing for MVTec AD and VisA datasets"
+                ],
+                "setup_steps": [
+                    "Parse command line arguments and load configuration from YAML in musc_main.py",
+                    "Override default configuration with command line parameters",
+                    "Initialize the MuSc model with the specified backbone and feature layers",
+                    "Load the appropriate dataset (MVTec AD or VisA) based on provided data path and dataset name",
+                    "Extract features from test images using the pre-trained ViT backbone",
+                    "Apply LNAMD on the extracted features using specified aggregation degrees (r_list)",
+                    "Compute anomaly scores with the MSM module across different feature layers",
+                    "Interpolate anomaly maps to match the original image size",
+                    "Optionally apply the RsCIN module for score calibration by setting k_score based on dataset type",
+                    "Compute evaluation metrics (AUROC, F1-max, AP) at both image-level and pixel-level",
+                    "Aggregate results across categories and save outputs to Excel if enabled",
+                    "Run the experiment twice: once with RsCIN enabled (default configuration) and once with RsCIN disabled (by modifying k_score in the code)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "RsCIN module integration",
+                        "description": "Requires manual modification of the code (lines 243-247 in musc.py) to disable RsCIN, adding complexity in experiment setup."
+                    },
+                    {
+                        "source": "Statistical significance analysis",
+                        "description": "The method for computing statistical significance is mentioned but not fully defined, leaving open choices for tests and repetition counts."
+                    },
+                    {
+                        "source": "Dataset category selection",
+                        "description": "Using 'ALL' categories can be ambiguous, and different subdivision strategies or category-specific considerations might affect the results."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Internal mechanism of the RsCIN module: The exact influence of different k_score values on calibration is not fully detailed.",
+                    "Statistical significance computation: The specific test type, repetition count, or method for determining significance is not provided.",
+                    "Dataset category selection: It is unclear whether all categories should be treated uniformly or if individual category nuances need to be addressed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Modification to disable RsCIN: The instruction to edit line 243-247 (setting k_score to [0]) may not be completely clear without further context.",
+                    "Integration of the RsCIN module within the overall pipeline: Details on how score calibration interacts with other anomaly scoring steps remain insufficiently specified."
+                ],
+                "possible_modifications": {
+                    "modification_RsCIN_parameters": [
+                        "Investigate alternative k_score settings or parameterizations to study the effect on anomaly detection performance."
+                    ],
+                    "modification_statistical_tests": [
+                        "Incorporate and explicitly specify statistical tests (e.g., t-test, ANOVA) and the number of repetitions to assess the significance of performance differences."
+                    ],
+                    "modification_dataset_split": [
+                        "Experiment with different dataset splits or category selections instead of using 'ALL' to analyze potential impacts on results."
+                    ],
+                    "modification_backbone": [
+                        "Evaluate the use of different backbone models or configurations to test the robustness and cross-model generalizability of the approach."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "For an extended task, one could require using a smaller backbone (e.g., ViT-L-mini instead of ViT-L-14-336) to test if similar performance can be maintained with lower GPU memory usage\u2014as hinted by the GPU memory cost variations."
+                    ],
+                    "time_constraints": [
+                        "One potential modification is to enforce a reduced per-image inference time by limiting the number of LNAMD degrees or other processing steps, taking inspiration from the inference times reported."
+                    ],
+                    "money_constraints": [
+                        "An extended task modification might include running the experiments on less expensive GPU setups to mimic industrial budget constraints, given the detailed GPU memory cost reporting."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in dataset splits and any stochastic components in feature extraction and scoring modules",
+                "description": "Random uncertainty may arise from inherent stochasticity in aspects such as data sampling, minor variations in the LNAMD or MSM module computations, and any randomness present in the pre-trained feature extractor. Even though the pipeline is controlled, slight random variations (e.g., in data order or mini-batch processing) can lead to differences in the computed classification metrics (AUROC, F1-max, AP) across experiment runs.",
+                "impact": "These random fluctuations can affect the statistical significance assessment of the RsCIN module's impact, leading to variability in performance comparisons between experiments with RsCIN enabled and disabled.",
+                "possible_modifications": [
+                    "Run multiple repetitions with different random seeds and aggregate the results to smooth out random variability.",
+                    "Introduce controlled random perturbations (e.g., randomly dropping a small subset of data during evaluation) to better understand the sensitivity of the pipeline to random effects."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Bias from RsCIN calibration settings and dataset characteristics",
+                "description": "Systematic uncertainty can emerge from the fixed configuration of the RsCIN module (e.g., predetermined k_score values) which, unlike random perturbations, introduces a consistent calibration bias in the anomaly scores. In addition, the datasets (MVTec AD and VisA) have inherent differences in anomaly size and orientation biases that affect performance. For instance, as reported in discussions, the anomaly size characteristics vary between datasets, potentially leading the RsCIN module to systematically over- or under-estimate scores depending on the anomaly type.",
+                "impact": "This consistent bias may lead to systematic performance improvements or degradations that do not reflect random variability but rather the influence of the RsCIN parameter choices and dataset-specific traits. Such systematic effects might mislead conclusions on the true benefit of the RsCIN module.",
+                "possible_modifications": [
+                    "Perform sensitivity analysis by varying the k_score settings for the RsCIN module to assess the robustness of the calibration across different parameterizations.",
+                    "Compare results using a clean or independently validated copy of the dataset to rule out systematic bias introduced by dataset imperfections.",
+                    "Incorporate additional data preprocessing or augmentation strategies that account for known biases in orientation and scale, as observed in the discussion on fixed pre-trained transformers."
+                ]
+            }
+        },
+        {
+            "method": "Perform a comprehensive comparative analysis by evaluating the zero-shot MuSc method alongside several state-of-the-art zero/few-shot methods (e.g., WinCLIP, APRIL-GAN, RegAD, GraphCore) as well as representative many-shot methods (e.g., CutPaste, IGD) on the MVTec AD and VisA datasets. Use identical evaluation metrics across methods, including image-level metrics (AUROC, F1-max, AP) and pixel-level segmentation metrics (AUROC, F1-max, AP, PRO). Ensure that the experimental setup remains consistent for all methods by using the same pre-trained backbone and image resolution. Additionally, assess the inference efficiency by dividing the test set into subsets to analyze per-image inference time and maximum GPU memory cost under different subset sizes. Compile the results into detailed tables (e.g., Tables for category-wise analyses) and conduct a statistical analysis of the relative improvements achieved by MuSc over competing methods.",
+            "expected_outcome": "MuSc is expected to demonstrate a significant improvement in performance metrics over existing zero-shot and few-shot methods while maintaining competitive or superior results compared to many-shot methods. For instance, based on prior results, MuSc should achieve notable gains such as a 21.9% improvement in AP over the second-best zero-shot method on the MVTec AD dataset. Moreover, it is anticipated that MuSc will report high classification AUROC values (e.g., around 97.8% for classification on MVTec AD) and perform robustly on segmentation tasks (e.g., achieving segmentation AUROC values of roughly 98.8%). Efficiency improvements are also expected, with reduced inference time and lower GPU memory usage when test images are processed in smaller subsets. These findings will reinforce that MuSc achieves competitive anomaly detection performance without using any labeled images.",
+            "subsection_source": "4.1 QUANTITATIVE AND QUALITATIVE RESULTS",
+            "source": [
+                "/workspace/scripts/musc.sh",
+                "/workspace/examples/musc_main.py",
+                "/workspace/examples/musc.py"
+            ],
+            "usage_instructions": "To evaluate the zero-shot MuSc method against other methods on industrial anomaly detection tasks, execute the script 'scripts/musc.sh'. This script runs the MuSc method on both MVTec AD and VisA datasets with the optimal configuration (ViT-L-14-336 backbone, image size 518, aggregation degrees [1,3,5]). The script will automatically evaluate all categories in both datasets and compute all the required metrics (image-level AUROC, F1-max, AP and pixel-level AUROC, F1-max, AP, PRO). Results will be saved in Excel format in the output directory. To evaluate inference efficiency with different test set sizes, modify the '--divide_num' parameter in the script to divide the test set into different subsets (e.g., '--divide_num 2' or '--divide_num 4'). The script outputs per-image inference time in milliseconds, which can be used to analyze efficiency. For GPU memory usage analysis, the script already uses memory-efficient implementations by default, but you can monitor GPU memory usage externally during execution.",
+            "requirements": [
+                "Step 1: Parse command line arguments and load configuration from YAML file (/workspace/examples/musc_main.py:11-83)",
+                "Step 2: Initialize the MuSc model with configuration parameters including backbone model, image size, batch size, feature layers, and aggregation degrees (/workspace/examples/musc_main.py:85-86)",
+                "Step 3: Load the specified backbone model (ViT-L-14-336 with OpenAI pretrained weights) (/workspace/models/musc.py:64-76)",
+                "Step 4: For each category in the dataset (MVTec AD, VisA, or BTAD), process test images (/workspace/models/musc.py:269-278)",
+                "Step 5: Load test dataset with specified parameters (image size, divide_num) (/workspace/models/musc.py:79-93)",
+                "Step 6: Extract features from multiple layers of the backbone model (/workspace/models/musc.py:154-179)",
+                "Step 7: Apply Local Neighborhood Aggregation with Multiple Degrees (LNAMD) to aggregate features with specified aggregation degrees [1,3,5] (/workspace/models/musc.py:183-202)",
+                "Step 8: Apply Mutual Scoring Module (MSM) to compute anomaly scores (/workspace/models/musc.py:204-217)",
+                "Step 9: Interpolate anomaly maps to match original image size (/workspace/models/musc.py:222-227)",
+                "Step 10: Apply Robust Score Calibration with Image Neighborhood (RsCIN) for final scoring (/workspace/models/musc.py:242-248)",
+                "Step 11: Compute evaluation metrics: image-level AUROC, F1-max, AP and pixel-level AUROC, F1-max, AP, PRO (/workspace/models/musc.py:250-257)",
+                "Step 12: Optionally visualize anomaly maps if specified (/workspace/models/musc.py:262-264)",
+                "Step 13: Calculate mean metrics across all categories (/workspace/models/musc.py:289-303)",
+                "Final Step: Save results in Excel format if specified (/workspace/models/musc.py:306-340)"
+            ],
+            "agent_instructions": "Implement a zero-shot industrial anomaly detection system using the MuSc (Mutual Scoring) method. Your implementation should:\n\n1. Create a command-line interface that accepts parameters for dataset path, dataset name (MVTec AD, VisA, BTAD), category name, device ID, output directory, visualization options, and model configuration.\n\n2. Support loading a pretrained vision transformer model (ViT-L-14-336 with OpenAI weights) as the feature extractor backbone.\n\n3. Implement a feature extraction pipeline that:\n   - Processes test images from industrial anomaly detection datasets\n   - Extracts features from multiple transformer layers (layers 5, 11, 17, 23)\n   - Supports dividing the test set into subsets for efficiency analysis\n\n4. Implement the core MuSc anomaly detection algorithm with three key components:\n   - Local Neighborhood Aggregation with Multiple Degrees (LNAMD) that aggregates features with different neighborhood sizes (1, 3, 5)\n   - Mutual Scoring Module (MSM) that computes anomaly scores by comparing patch features\n   - Robust Score Calibration with Image Neighborhood (RsCIN) for final anomaly scoring\n\n5. Implement comprehensive evaluation metrics:\n   - Image-level: AUROC, F1-max, AP\n   - Pixel-level: AUROC, F1-max, AP, PRO\n\n6. Add functionality to:\n   - Save results in Excel format with metrics for each category and mean values\n   - Visualize anomaly maps with heatmap overlays\n   - Measure and report inference time per image\n\n7. Create a shell script that runs the implementation on MVTec AD, VisA, and BTAD datasets with the optimal configuration (ViT-L-14-336 backbone, image size 518, aggregation degrees [1,3,5]).",
+            "masked_source": [
+                "/workspace/scripts/musc.sh",
+                "/workspace/examples/musc_main.py",
+                "/workspace/examples/musc.py"
+            ],
+            "question": "Does the zero-shot MuSc method outperform existing zero/few-shot and many-shot methods on industrial anomaly detection tasks?",
+            "design_complexity": {
+                "constant_variables": {
+                    "pretrained_backbone": "ViT-L-14-336 with OpenAI weights",
+                    "image_size": "518 (constant for all experiments)",
+                    "aggregation_degrees": "[1, 3, 5] for feature aggregation",
+                    "evaluation_metrics": [
+                        "image-level AUROC, F1-max, AP",
+                        "pixel-level AUROC, F1-max, AP, PRO"
+                    ],
+                    "execution_environment": "NVIDIA RTX 3090 GPU, same implementation for all methods"
+                },
+                "independent_variables": {
+                    "anomaly_detection_methods": [
+                        "MuSc (zero-shot)",
+                        "WinCLIP (zero-shot)",
+                        "APRIL-GAN (zero-shot)",
+                        "RegAD (few-shot)",
+                        "GraphCore (few-shot)",
+                        "CutPaste (many-shot)",
+                        "IGD (many-shot)"
+                    ],
+                    "dataset": [
+                        "MVTec AD",
+                        "VisA"
+                    ],
+                    "subset_division": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "command_line_parameters": "dataset path, dataset name, category name, device ID, output directory, visualization options"
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "image-level scores (AUROC, F1-max, AP)",
+                        "pixel-level scores (AUROC, F1-max, AP, PRO)"
+                    ],
+                    "inference_efficiency": [
+                        "per-image inference time (ms)",
+                        "GPU memory cost (MB)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "anomaly_detection_methods": "While the methods are categorized as zero-shot, few-shot, or many-shot, the criteria for distinction and the exact settings (e.g., training requirements) are not fully elaborated in the task.",
+                    "subset_division": "The exact numbers for splitting the test set (e.g., 1, 2, 3) are given, but it is not clear how these values were selected and whether additional values may be relevant.",
+                    "statistical_analysis": "The specific statistical tests or approaches to evaluate relative improvements are not detailed, leaving ambiguity in how significance is determined."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional variables such as using different backbone models (e.g., ViT-B/16) to study their impact.",
+                        "Vary the image resolution parameter to assess its effect on performance.",
+                        "Mask or vary the subset division parameters to explore more granular efficiency analysis.",
+                        "Define and explicitly require specific statistical analysis methods (e.g., t-tests, ANOVA) for performance comparisons."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Command-line interface for parameter input (dataset path, dataset name, category, device ID, output directory, visualization options)",
+                    "Pre-trained vision transformer backbone (ViT-L-14-336 with OpenAI weights)",
+                    "Feature extraction pipeline from multiple transformer layers",
+                    "Local Neighborhood Aggregation with Multiple Degrees (LNAMD) module",
+                    "Mutual Scoring Module (MSM) for anomaly score computation",
+                    "Robust Score Calibration with Image Neighborhood (RsCIN) module",
+                    "Evaluation modules for computing image-level metrics (AUROC, F1-max, AP) and pixel-level metrics (AUROC, F1-max, AP, PRO)",
+                    "Result saving in Excel format and optional visualization of heatmap overlays",
+                    "Inference efficiency analysis component (dividing test set into subsets to report per-image inference time and GPU memory usage)",
+                    "Use of external hardware (NVIDIA RTX 3090 GPU) and memory-efficient implementations"
+                ],
+                "setup_steps": [
+                    "Parse command line arguments and load configuration from YAML file",
+                    "Initialize the MuSc model with specified configuration (backbone model, image size, aggregation degrees, batch size, etc.)",
+                    "Load the pre-trained vision transformer model (ViT-L-14-336 with OpenAI weights)",
+                    "Load and preprocess the test datasets (MVTec AD, VisA, BTAD) with specified parameters (including image size and test set division)",
+                    "Extract features from multiple transformer layers (e.g., layers 5, 11, 17, 23)",
+                    "Apply Local Neighborhood Aggregation with Multiple Degrees (using degrees [1, 3, 5]) to aggregate the extracted features",
+                    "Compute anomaly scores using the Mutual Scoring Module (MSM)",
+                    "Perform interpolation of anomaly maps to match the original image dimensions",
+                    "Apply Robust Score Calibration with Image Neighborhood (RsCIN) for final anomaly scoring",
+                    "Compute evaluation metrics at both image and pixel levels",
+                    "Optionally visualize the anomaly maps (heatmap overlay) if visualization is enabled",
+                    "Compile results (category-wise and mean metrics) and save them in Excel format",
+                    "Evaluate inference efficiency by adjusting the '--divide_num' parameter for the test set and monitor per-image inference time and GPU memory usage"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Diverse Anomaly Detection Methods",
+                        "description": "The experiment involves comparison across a range of anomaly detection methods (zero-shot, few-shot, and many-shot), each with its own underlying assumptions and implementations."
+                    },
+                    {
+                        "source": "Statistical Analysis and Comparative Evaluation",
+                        "description": "A detailed statistical analysis is required to interpret the relative improvements of MuSc over other methods, including the incorporation of multiple performance metrics and efficiency measures."
+                    },
+                    {
+                        "source": "Test Set Subdivision Parameter",
+                        "description": "The impact of the '--divide_num' parameter on inference time and GPU memory introduces additional complexity in achieving consistent efficiency evaluations."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Anomaly detection methods classification: The criteria distinguishing zero-shot, few-shot, and many-shot methods are not fully elaborated (e.g., training data requirements and exact settings).",
+                    "Subset division for inference efficiency: The rationale behind selecting specific values (1, 2, 3) for test set division is not clearly explained and may be open to interpretation.",
+                    "Statistical analysis methodology: The specific tests or procedures (e.g., t-tests, ANOVA) for evaluating relative improvements are not detailed."
+                ],
+                "ambiguous_setup_steps": [
+                    "Dataset preprocessing specifics: While test images are processed, the exact preprocessing steps (such as data augmentation, normalization details) are not fully described.",
+                    "Visualization step: The instructions for visualizing anomaly maps are mentioned but lack detail on the visualization criteria or overlay methods.",
+                    "Configuration of evaluation metrics: Although metrics are listed, the exact implementation details (e.g., thresholds for F1-max or AP calculation) are not specified."
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional backbone models (e.g., ViT-B/16) to study their impact on the overall performance.",
+                        "Vary the image resolution parameter to assess its effect on both accuracy and efficiency, rather than fixing it at 518.",
+                        "Expand the test set division parameters beyond the current values (1, 2, 3) to analyze more granular efficiency performance.",
+                        "Specify and enforce particular statistical tests (such as t-tests or ANOVA) to rigorously evaluate the significance of the improvements observed."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce performance parity using a smaller backbone (e.g., ViT-B/16 instead of ViT-L-14-336) to reduce GPU memory usage and dependency on high-end hardware like the NVIDIA RTX 3090."
+                    ],
+                    "time_constraints": [
+                        "Tighten inference efficiency by further constraining the test set division parameters (e.g., exploring additional divisions beyond 1, 2, and 3) to stress the latency and compare per-image inference times as reported."
+                    ],
+                    "money_constraints": []
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in operational configurations and processing details",
+                "description": "Random uncertainty in this experiment can arise from modifications that introduce stochastic behavior during model execution. For example, if one perturbs components such as the window mask sizes in the RsCIN module (e.g., choosing mask sizes randomly rather than fixed values like [1,3,5]), this can lead to instability during gradient updates or slight differences in the extraction and aggregation of features. Similarly, randomly splitting test images into different subsets (as used for the analysis) may introduce fluctuations in per-image inference time and GPU memory measurements. This randomness can affect computed metrics like AUROC, F1-max, and AP in both image-level and pixel-level evaluations.",
+                "impact": "Could lead to variability in performance results, making it harder to consistently compare MuSc with other methods. Inference metrics (execution time, memory cost) might deviate slightly in each run, and the final anomaly scores could be unstable, affecting the overall performance assessment.",
+                "possible_modifications": [
+                    "Introduce random variation in the window mask sizes used during RsCIN (e.g., picking values from a broader range rather than fixed degrees) to assess the robustness of the method.",
+                    "Randomly vary the test set division parameter (e.g., instead of fixed splits like 1, 2, or 3, select randomly each run) to evaluate how small changes affect the inference efficiency measurements."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent biases in dataset or evaluation configurations",
+                "description": "Systematic uncertainty may be introduced when the experimental setup itself biases the evaluation, such as a one-time modification to the dataset or fixed pre-processing steps that consistently affect all methods. One example would be if the dataset were modified in a systematic way that skews anomaly labels, such as introducing a bias in the image pre-processing or feature extraction stages that the pre-trained vision transformer (ViT-L-14-336) cannot overcome due to its limited augmentation in orientations and scales. Although the configuration (fixed image size, fixed backbone, and aggregation degrees) is maintained to ensure fairness, inadvertent biases in data selection or uncalibrated evaluation metrics can still introduce systematic errors.",
+                "impact": "Will cause a consistent overestimation or underestimation in performance metrics across all tested methods, potentially masking the true comparative advantages of MuSc. For instance, if a dataset modification systematically hinders performance, all methods might appear worse than they truly are, misleading the comparative analysis.",
+                "possible_modifications": [
+                    "Implement a one-time, controlled alteration of the dataset (such as mislabeling certain anomalies) to purposely simulate dataset bias and test the sensitivity of the evaluation metrics.",
+                    "Use an alternative, independently curated dataset for validation to check if the observed improvements (e.g., the noted 21.9% AP gain on MVTec AD) hold true under different systematic conditions."
+                ]
+            }
+        },
+        {
+            "method": "Perform controlled experiments by varying the aggregation degree r. Specifically, run the anomaly detection pipeline on two datasets (MVTec AD, which has larger anomaly regions, and VisA, which has smaller anomalies) using different r values (e.g., r = 1, 3, 5 individually and in combination). Record AC and AS metrics for each configuration. Compare the experimental results to evaluate if smaller r values favor small anomaly regions (as anticipated on VisA) while larger r values excel for large anomalies (as observed on MVTec AD). Use the same pre-trained ViT-L/14-336 backbone and identical preprocessing steps to ensure fairness.",
+            "expected_outcome": "It is expected that a combination using all three aggregation degrees (r \u2208 {1,3,5}) will yield better overall AC and AS results. Additionally, smaller r should perform better on VisA while larger r should benefit MVTec AD, confirming the trade-off based on anomaly size.",
+            "subsection_source": "4.2 A BLATION STUDY",
+            "source": [
+                "/workspace/examples/musc_main.py",
+                "/workspace/scripts/musc.sh",
+                "/workspace/examples/musc.py"
+            ],
+            "usage_instructions": "To test the impact of aggregation degree (r) in the LNAMD module on anomaly classification (AC) and segmentation (AS) performance across datasets with different anomaly sizes, run the following commands:\n\n1. For MVTec AD (larger anomaly regions):\n   ```\n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 1 --batch_size 4 \\\n   --output_dir ./output/mvtec_r1 --vis False --save_excel True\n   \n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 3 --batch_size 4 \\\n   --output_dir ./output/mvtec_r3 --vis False --save_excel True\n   \n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 5 --batch_size 4 \\\n   --output_dir ./output/mvtec_r5 --vis False --save_excel True\n   \n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 \\\n   --output_dir ./output/mvtec_r135 --vis False --save_excel True\n   ```\n\n2. For VisA (smaller anomaly regions):\n   ```\n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/visa/ --dataset_name visa --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 1 --batch_size 4 \\\n   --output_dir ./output/visa_r1 --vis False --save_excel True\n   \n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/visa/ --dataset_name visa --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 3 --batch_size 4 \\\n   --output_dir ./output/visa_r3 --vis False --save_excel True\n   \n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/visa/ --dataset_name visa --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 5 --batch_size 4 \\\n   --output_dir ./output/visa_r5 --vis False --save_excel True\n   \n   python examples/musc_main.py --device 0 \\\n   --data_path ./data/visa/ --dataset_name visa --class_name ALL \\\n   --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 \\\n   --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 \\\n   --output_dir ./output/visa_r135 --vis False --save_excel True\n   ```\n\n3. After running these commands, compare the results in the Excel files generated in the output directories to evaluate how different aggregation degrees (r) affect anomaly classification (AC) and segmentation (AS) performance on both datasets. The hypothesis is that smaller r values (r=1) will perform better on VisA (smaller anomalies), while larger r values (r=5) will perform better on MVTec AD (larger anomalies), and the combination of all three (r\u2208{1,3,5}) will yield the best overall results.",
+            "requirements": [
+                "Step 1: Parse command line arguments for configuration settings including dataset path, dataset name, class name, device, output directory, visualization options, aggregation degrees (r_list), feature layers, backbone name, pretrained model, image resize dimensions, batch size, and divide number (musc_main.py:11-30)",
+                "Step 2: Load configuration from YAML file and override with command line arguments (musc_main.py:32-78)",
+                "Step 3: Initialize the MuSc model with the configuration (musc_main.py:86)",
+                "Step 4: Load the appropriate backbone model (ViT-L-14-336 with OpenAI pretrained weights) (musc.py:67-76)",
+                "Step 5: For each category in the dataset, load test data (musc.py:79-93)",
+                "Step 6: Extract features from the test images using the backbone model (musc.py:154-179)",
+                "Step 7: Apply the LNAMD (Local Neighborhood Aggregation with Multiple Degrees) module with specified aggregation degrees (r_list) to process features (musc.py:186-202)",
+                "Step 8: Apply the MSM (Mutual Scoring Module) to compute anomaly scores across different feature layers (musc.py:205-217)",
+                "Step 9: Interpolate anomaly maps to match the original image size (musc.py:222-227)",
+                "Step 10: Apply the RsCIN (Robust Score Calibration with Image Neighborhood) module to optimize classification scores (musc.py:248)",
+                "Step 11: Compute evaluation metrics for anomaly classification (AC) and segmentation (AS): AUROC, F1 score, AP, and AUPRO (musc.py:255-260)",
+                "Step 12: Visualize anomaly maps if visualization is enabled (musc.py:262-264)",
+                "Step 13: Calculate mean performance metrics across all categories (musc.py:289-303)",
+                "Step 14: Save results to Excel file if save_excel is enabled (musc.py:306-340)",
+                "Final Step: Compare results across different aggregation degrees (r values) to evaluate their impact on anomaly detection performance for different anomaly sizes (usage_instructions)"
+            ],
+            "agent_instructions": "Create a system for anomaly detection in industrial images using the MuSc (Multi-Scale Consensus) framework. The system should:\n\n1. Implement a command-line interface that accepts parameters for:\n   - Dataset path and name (MVTec AD, VisA, etc.)\n   - Class name (specific category or 'ALL' for all categories)\n   - GPU device selection\n   - Output directory for results\n   - Visualization options (True/False)\n   - Backbone model selection (ViT-L-14-336 with OpenAI pretrained weights)\n   - Feature layers to extract (e.g., 5, 11, 17, 23)\n   - Image resize dimensions\n   - Batch size\n   - Aggregation degrees (r_list) for the LNAMD module\n   - Option to save results to Excel\n\n2. Create a model that:\n   - Loads a pretrained vision transformer backbone\n   - Processes test images to extract deep features\n   - Implements the LNAMD (Local Neighborhood Aggregation with Multiple Degrees) module that:\n     * Takes feature maps from the backbone\n     * Applies layer normalization\n     * Divides features into patches based on aggregation degree r\n     * Aggregates features across different scales\n\n3. Implement the MSM (Mutual Scoring Module) that:\n   - Computes anomaly scores by comparing features across images\n   - Uses a nearest neighbor approach with configurable parameters\n\n4. Implement the RsCIN (Robust Score Calibration with Image Neighborhood) module to optimize classification scores\n\n5. Calculate evaluation metrics:\n   - For anomaly classification (AC): AUROC, F1 score, AP\n   - For anomaly segmentation (AS): AUROC, F1 score, AP, AUPRO\n\n6. Support visualization of anomaly maps and saving results to Excel\n\n7. Run experiments with different aggregation degrees (r values: 1, 3, 5, and combination) on datasets with different anomaly sizes (MVTec AD with larger anomalies, VisA with smaller anomalies) to evaluate how r affects performance.\n\nThe goal is to demonstrate that smaller r values (r=1) perform better on datasets with smaller anomalies (VisA), larger r values (r=5) perform better on datasets with larger anomalies (MVTec AD), and a combination of multiple r values (r\u2208{1,3,5}) yields the best overall results.",
+            "masked_source": [
+                "/workspace/examples/musc_main.py",
+                "/workspace/scripts/musc.sh",
+                "/workspace/examples/musc.py"
+            ],
+            "question": "Does the choice of aggregation degree (r) in the LNAMD module impact the comprehensive anomaly classification (AC) and segmentation (AS) performance differently on datasets with small versus large abnormal regions?",
+            "design_complexity": {
+                "constant_variables": {
+                    "backbone": "ViT-L-14-336 using OpenAI pretrained weights",
+                    "preprocessing": "Image resize (518), feature layers (5, 11, 17, 23), batch size (4), and divide_num (1) remain the same across experiments"
+                },
+                "independent_variables": {
+                    "dataset": [
+                        "MVTec AD",
+                        "VisA"
+                    ],
+                    "aggregation_degree (r_list)": [
+                        "1",
+                        "3",
+                        "5",
+                        "combination of {1,3,5}"
+                    ]
+                },
+                "dependent_variables": {
+                    "evaluation_metrics": [
+                        "Anomaly Classification (AC) metrics: AUROC, F1 score, AP",
+                        "Anomaly Segmentation (AS) metrics: AUROC, F1 score, AP, AUPRO"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "combination_of_r_values": "It is not explicitly detailed how the multiple r values are integrated or weighted compared to running them individually.",
+                    "anomaly_size_definition": "The criteria for what defines a small versus large anomaly region in the datasets (VisA and MVTec AD) is implied by dataset characteristics but not explicitly quantified.",
+                    "visualization_options": "The role of visualization in quantitative performance evaluation is not elaborated."
+                },
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce explicit definitions or quantifications for anomaly sizes in the datasets."
+                    ],
+                    "modification_2": [
+                        "Clarify the method to combine multiple aggregation degrees (e.g., whether scores are averaged or used in a weighted fusion)."
+                    ],
+                    "modification_3": [
+                        "Optionally mask or vary other preprocessing parameters to examine their separate effects on performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Command-line interface for setting configuration parameters (dataset path, GPU device, output directory, etc.)",
+                    "Pretrained ViT-L/14-336 backbone with fixed feature extraction layers (5, 11, 17, 23)",
+                    "LNAMD module with varying aggregation degrees (r_list)",
+                    "MSM (Mutual Scoring Module) for anomaly scoring",
+                    "RsCIN module for robust score calibration",
+                    "Data loaders for two datasets (MVTec AD and VisA) with differing anomaly size characteristics",
+                    "Excel file export for saving evaluation metrics",
+                    "Visualization module for anomaly maps (if enabled)"
+                ],
+                "setup_steps": [
+                    "Parsing command line arguments and loading configuration (override YAML settings)",
+                    "Loading and initializing the pretrained ViT-L/14-336 backbone",
+                    "Extracting features from the test images using specified feature layers",
+                    "Applying the LNAMD module with designated aggregation degrees (individual values and a combination of {1, 3, 5})",
+                    "Processing extracted features with the MSM module to compute anomaly scores",
+                    "Rescaling anomaly maps to match original image sizes",
+                    "Running the RsCIN module to calibrate classification scores",
+                    "Computing evaluation metrics (AC: AUROC, F1 score, AP; AS: AUROC, F1 score, AP, AUPRO)",
+                    "Saving detailed results to Excel and optionally visualizing the anomaly maps"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Aggregation Degree (r_list) Variation",
+                        "description": "Handling multiple r values and their combinations (e.g., using individual and combined r values) adds complexity to data aggregation and score fusion."
+                    },
+                    {
+                        "source": "Dataset Characteristics",
+                        "description": "The difference in anomaly sizes between MVTec AD and VisA necessitates careful interpretation of performance metrics and may affect the calibration modules."
+                    },
+                    {
+                        "source": "Hardware and Runtime Environment",
+                        "description": "Consistent performance under the GPU (e.g., NVIDIA RTX 3090) is required; differences in GPU memory cost and inference times add layers to setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Multiple Aggregation Degree Combination",
+                    "Definition of Anomaly Size"
+                ],
+                "ambiguous_setup_steps": [
+                    "The method of integrating or fusing scores from multiple r values when combined (e.g., averaging versus weighted fusion) is not explicitly detailed.",
+                    "The criteria or quantification that strictly distinguishes small from large anomaly regions in MVTec AD and VisA is implied but not clearly defined.",
+                    "The visualization steps are mentioned but how they quantitatively contribute (if at all) to performance evaluation remains ambiguous."
+                ],
+                "possible_modifications": {
+                    "modification_1": [
+                        "Introduce explicit quantification or thresholds for what constitutes small versus large anomalies in the datasets."
+                    ],
+                    "modification_2": [
+                        "Clarify and document the mechanism for combining the aggregation degrees in the LNAMD module (e.g., whether scores are averaged or fused via a weighted approach)."
+                    ],
+                    "modification_3": [
+                        "Provide more detailed documentation on the role and handling of visualization outputs in the experimental workflow."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {}
+            },
+            "random_uncertainty": {
+                "source": "Variability introduced by the LNAMD module, including random factors in patch selection and aggregation operations as well as potential stochastic effects in network computations (e.g., during gradient updates).",
+                "description": "While the backbone and preprocessing are fixed, the choice of aggregation degree (r) can interact with random elements (such as random ordering in mini-batch processing or slight variations in feature aggregation) that might lead to instability in the anomaly scores and minor fluctuations in AC and AS metrics. This randomness is typical in experiments where components like the LNAMD and RsCIN modules can have inherent noise from operations like interpolation and window masking (as indirectly observed in the experimental variability).",
+                "impact": "The random uncertainty may result in run-to-run variations in the measured AC and AS performance. Such fluctuations can mask the true impact of varying r values, making it harder to reliably observe the expected trend (e.g., smaller r favoring VisA performance, larger r favoring MVTec AD performance).",
+                "possible_modifications": [
+                    "Perform multiple runs with fixed random seeds to average out variability in the results.",
+                    "Control or remove additional random operations (e.g., avoid randomly dropping tokens or random ordering in LNAMD) to ensure that observed changes in performance are due solely to changes in the aggregation degree.",
+                    "Introduce protocol checks for batch processing consistency to minimize stochastic effects."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Differences in dataset characteristics and the method used to integrate multiple aggregation degrees (r values).",
+                "description": "Systematic uncertainty arises from the inherent differences between datasets, such as MVTec AD exhibiting larger anomalies and VisA having smaller anomalies. The experiment assumes a trade-off where larger r values help capture larger anomalies and smaller r values benefit smaller anomalies. However, if the integration of multiple r values (i.e., the combination of r \u2208 {1,3,5}) is not performed in a well-understood or balanced manner (e.g., via simple averaging or weighted fusion), it can introduce systematic bias in performance metrics. This effect is accentuated because evaluation metrics (AC and AS) could consistently favor one configuration over another, independent of the true anomaly characteristics.",
+                "impact": "Systematic biases can lead to misinterpretation of model performance. For example, if the combination mechanism overly weights one aggregation degree, it may artificially boost performance on one dataset while degrading it on another, as the overall AC and AS metrics would reflect these imbalances. This could lead to flawed conclusions about the model\u2019s effectiveness across different anomaly sizes.",
+                "possible_modifications": [
+                    "Clarify and document the precise mechanism (e.g., whether scores are averaged or fused via a weighted approach) for combining multiple r values in the LNAMD module.",
+                    "Introduce explicit quantification or threshold definitions for anomaly sizes in the datasets to help interpret performance differences.",
+                    "Re-examine the integration method by performing controlled experiments where the contribution of each r value is isolated, allowing for the identification and correction of bias due to systematic factors."
+                ]
+            }
+        },
+        {
+            "method": "Set up an ablation study by varying the percentage of the minimum value interval used in the MSM from 10% to 100% (e.g., test at 10%, 30%, 50%, 70%, 90%, and 100%). For each setting, run the MuSc pipeline on both the MVTec AD and VisA datasets using consistent train/test splits. Record detailed performance metrics: image-level AUROC for classification (AC) and pixel-level AUROC for segmentation (AS). In addition to plotting the performance trends as in Fig. 7, annotate the plots with the exact AUROC values (e.g., as observed for varied subset sizes) and perform statistical significance tests where applicable. Also, document any variations in anomaly score distributions caused by the interval average operation on normal patches. This comprehensive analysis will help determine which minimum value interval percentage offers the best trade-off for both datasets.",
+            "expected_outcome": "Based on prior results, selecting the minimum 30% value interval is expected to yield the best or near-optimal overall performance in both AC and AS. Deviations from this setting are anticipated to lead to a degradation in performance, as evidenced by the trends shown in Fig. 7. Detailed documentation of AUROC trends across the different interval percentages should confirm that 30% is optimal for balancing the interval averaging effect on normal patch scoring.",
+            "subsection_source": "4.2 A BLATION STUDY",
+            "source": [
+                "/workspace/models/musc.py",
+                "/workspace/examples/musc_main.py",
+                "/workspace/scripts/musc_mvtec_ad.sh",
+                "/workspace/scripts/musc_visa.sh"
+            ],
+            "usage_instructions": "To test the effect of different minimum value interval percentages in the MSM module, modify line 211 in /workspace/models/musc.py to change the topmin_max parameter. For example, change 'anomaly_maps_msm = MSM(Z=Z, device=self.device, topmin_min=0, topmin_max=0.3)' to use different values like 0.1, 0.3, 0.5, 0.7, 0.9, and 1.0. Then run the scripts /workspace/scripts/musc_mvtec_ad.sh and /workspace/scripts/musc_visa.sh for each value to collect performance metrics on both datasets. The scripts will output image-level AUROC for classification (AC) and pixel-level AUROC for segmentation (AS) for each setting, which can be used to create plots similar to Fig. 7 in the paper.",
+            "requirements": [
+                "Step 1: Initialize the MuSc model with configuration parameters including dataset path, model name, image size, batch size, and other hyperparameters (/workspace/models/musc.py:31-64)",
+                "Step 2: Load the appropriate backbone model (CLIP, DINO, or DINO v2) based on the configuration (/workspace/models/musc.py:67-76)",
+                "Step 3: Load the test dataset (MVTec AD or VisA) with the specified category and image size (/workspace/models/musc.py:79-93)",
+                "Step 4: Extract features from the test images using the backbone model (/workspace/models/musc.py:154-179)",
+                "Step 5: Apply the LNAMD (Local Neighborhood Aggregation with Multiple Degrees) module to aggregate features with different aggregation degrees (/workspace/models/musc.py:183-202)",
+                "Step 6: Apply the MSM (Mutual Scoring Module) with configurable topmin_max parameter to compute anomaly maps (/workspace/models/musc.py:204-217)",
+                "Step 7: Interpolate the anomaly maps to match the original image size (/workspace/models/musc.py:222-227)",
+                "Step 8: Apply the RsCIN (Robust Score Calibration with Image Neighbors) module to optimize classification scores (/workspace/models/musc.py:240-248)",
+                "Step 9: Compute evaluation metrics including image-level AUROC, F1 score, AP, and pixel-level AUROC, F1 score, AP, and AUPRO (/workspace/models/musc.py:250-260)",
+                "Step 10: Optionally visualize the anomaly maps (/workspace/models/musc.py:262-264)",
+                "Step 11: Process all categories in the dataset and calculate mean metrics across categories (/workspace/models/musc.py:269-303)",
+                "Step 12: Save results to Excel file for analysis (/workspace/models/musc.py:306-324)",
+                "Final Step: Run the experiment with different topmin_max values (0.1, 0.3, 0.5, 0.7, 0.9, 1.0) on both MVTec AD and VisA datasets to analyze the effect on performance (/workspace/examples/musc_main.py:80-87, /workspace/scripts/musc_mvtec_ad.sh:1-97, /workspace/scripts/musc_visa.sh:1-97)"
+            ],
+            "agent_instructions": "Your task is to implement an anomaly detection experiment using the Multi-Scale Mutual Scoring (MuSc) approach. The experiment aims to evaluate how different minimum value interval percentages in the Mutual Scoring Module (MSM) affect anomaly detection performance.\n\nYou need to:\n\n1. Implement a model class that performs anomaly detection using pretrained vision models (CLIP, DINO, or DINO v2) as feature extractors. The model should:\n   - Accept configuration parameters for dataset path, model name, image size, etc.\n   - Load the appropriate backbone model\n   - Process test images to extract features\n   - Apply feature aggregation with multiple degrees\n   - Compute anomaly maps using mutual scoring between image patches\n   - Calculate both image-level and pixel-level anomaly scores\n   - Evaluate performance using metrics like AUROC for classification and segmentation\n\n2. Implement a main script that:\n   - Parses command-line arguments for configuration\n   - Loads configuration from a YAML file with option to override via command line\n   - Initializes the model and runs the evaluation\n\n3. Create shell scripts to run experiments on:\n   - MVTec AD dataset (industrial anomaly detection benchmark)\n   - VisA dataset (visual anomaly detection benchmark)\n\n4. The key experiment is to test different values of the minimum value interval percentage parameter in the mutual scoring module. This parameter controls what percentage of the smallest distance values are used when computing anomaly scores. You should test values like 0.1, 0.3, 0.5, 0.7, 0.9, and 1.0.\n\n5. For each parameter value, collect image-level AUROC for classification (AC) and pixel-level AUROC for segmentation (AS) metrics on both datasets.\n\nThe mutual scoring module should compute distances between patches of test images and reference images, then use a configurable percentage of the smallest distances to determine anomaly scores.",
+            "masked_source": [
+                "/workspace/models/musc.py",
+                "/workspace/examples/musc_main.py",
+                "/workspace/scripts/musc_mvtec_ad.sh",
+                "/workspace/scripts/musc_visa.sh"
+            ],
+            "question": "Does the proportion of the minimum value interval selection in the Mutual Scoring Module (MSM) affect anomaly detection performance (AC and AS), and is 30% the optimal choice?",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset_and_configuration": "Fixed datasets (MVTec AD and VisA) with consistent train/test splits, along with fixed model settings such as image size, batch size, backbone model (CLIP, DINO, or DINO v2) and other hyperparameters that remain constant throughout the experiment."
+                },
+                "independent_variables": {
+                    "minimum_value_interval_percentage": [
+                        "0.1",
+                        "0.3",
+                        "0.5",
+                        "0.7",
+                        "0.9",
+                        "1.0"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": "Measured as image-level AUROC for classification (AC) and pixel-level AUROC for segmentation (AS). Additional metrics such as F1 score, AP, and AUPRO may also be reported."
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "aggregation_degree": "While the experiment focuses on the minimum value interval in the MSM module, the optimal aggregation degree (which may be dataset-dependent) is not explicitly fixed and could interact with the MSM parameter, making it unclear if its effect is fully isolated.",
+                    "anomaly_score_distribution_measurement": "The task requires documenting variations in anomaly score distributions due to the interval averaging, but it is ambiguous how these distributions should be quantitatively measured or compared.",
+                    "interval_average_operation_details": "The mechanism of performing the Interval Average on the minimum percentage of scores is described, but its precise impact (beyond AUROC values) is not fully specified, leaving room for interpretation on how to analyze changes in score spreads."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional independent variable values (e.g., intermediate percentages like 0.2, 0.4, etc.) to further refine the effect of the minimum value interval.",
+                        "Explicitly define and control the aggregation degree parameter so that its impact can be decoupled from the MSM\u2019s minimum value interval.",
+                        "Establish a quantitative method for analyzing and comparing the anomaly score distributions, such as statistical measures (variance, skewness) or distribution overlap metrics."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "MuSc model class (including configuration management, data loading, and evaluation)",
+                    "Pretrained backbone models (CLIP, DINO, or DINO v2)",
+                    "Feature extraction module",
+                    "Local Neighborhood Aggregation Module (LNAMD)",
+                    "Mutual Scoring Module (MSM) with configurable topmin_max parameter",
+                    "Robust Score Calibration with Image Neighbors (RsCIN) module",
+                    "Evaluation metrics computation (image-level AUROC, pixel-level AUROC, F1 score, AP, AUPRO)",
+                    "Shell scripts for running experiments on MVTec AD and VisA datasets",
+                    "YAML configuration file for setting parameters and overriding via command line",
+                    "Visualization and result documentation tools (e.g., plotting performance trends and annotating AUROC values)"
+                ],
+                "setup_steps": [
+                    "Step 1: Initialize the MuSc model with configuration parameters including dataset path, model name, image size, batch size, etc.",
+                    "Step 2: Load the appropriate pretrained backbone model (CLIP, DINO, or DINO v2) based on configuration.",
+                    "Step 3: Load the test dataset (either MVTec AD or VisA), ensuring the train/test splits remain consistent.",
+                    "Step 4: Extract features from test images using the backbone model.",
+                    "Step 5: Apply the LNAMD module to aggregate features using multiple degrees.",
+                    "Step 6: Apply the MSM module to compute anomaly maps, with a configurable minimum value interval (topmin_max) parameter.",
+                    "Step 7: Interpolate the anomaly maps to match the original image size.",
+                    "Step 8: Apply the RsCIN module to optimize classification scores based on image neighbors.",
+                    "Step 9: Compute evaluation metrics (including image-level and pixel-level AUROC, F1 score, AP, and AUPRO).",
+                    "Step 10: Optionally, visualize anomaly maps for qualitative analysis.",
+                    "Step 11: Process all categories in the dataset and calculate mean metrics across categories.",
+                    "Step 12: Save the results (e.g., in an Excel file) and generate plots similar to Fig. 7 with annotations and statistical tests.",
+                    "Step 13: Repeat experiments by varying the topmin_max parameter across the set values (0.1, 0.3, 0.5, 0.7, 0.9, 1.0) by modifying the code in /workspace/models/musc.py and running the provided shell scripts."
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Interaction of independent variables with other hyperparameters",
+                        "description": "While the experiment fixes many model configurations (dataset, backbone, etc.), the optimal aggregation degree in the LNAMD module might interact with the MSM\u2019s minimum value interval choice, adding an extra layer of complexity."
+                    },
+                    {
+                        "source": "Statistical significance analysis",
+                        "description": "Integrating statistical significance tests into the performance trend plots requires careful setup and may introduce additional complexity in terms of experimental design and result interpretation."
+                    },
+                    {
+                        "source": "Anomaly score distribution analysis",
+                        "description": "Documenting and quantifying variations in the anomaly score distributions caused by the interval averaging on normal patches could involve additional analysis (e.g., variance, skewness, overlap metrics)."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Aggregation degree parameter in the LNAMD module",
+                    "Quantitative measurement and analysis of anomaly score distributions",
+                    "Specific details of the interval average operation (e.g., how it affects the score spread and which patches are retained)"
+                ],
+                "ambiguous_setup_steps": [
+                    "Decoupling the effect of the minimum value interval parameter from other hyperparameters (such as aggregation degree)",
+                    "The process for documenting and comparing the anomaly score distributions lacks precise quantitative guidelines"
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional independent variable values (e.g., intermediate percentages like 0.2 or 0.4) to refine the study of the minimum value interval effect.",
+                        "Explicitly define and fix the aggregation degree parameter to ensure its effect is decoupled from the MSM minimum value interval.",
+                        "Establish a clear, quantitative method for analyzing the anomaly score distributions (e.g., computing variance, skewness, or using distribution overlap metrics) to document changes due to the interval average operation."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "Consider testing additional intermediate minimum value interval percentages (e.g., 0.2, 0.4) to more precisely capture the MSM parameter effect beyond the 10%, 30%, 50%, 70%, 90%, and 100% values.",
+                            "Explicitly fix the aggregation degree parameter in the LNAMD module so that its influence is decoupled from the MSM minimum value interval, ensuring a more isolated evaluation of the MSM parameter's impact on anomaly detection performance.",
+                            "Integrate rigorous statistical significance testing (e.g., computing p-values or confidence intervals) for the AUROC differences to confirm that the 30% interval indeed provides an optimal balance for both image-level and pixel-level anomaly detection."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random variations inherent to the model\u2019s processing steps and selection within the interval average operation.",
+                "description": "In the MSM module, the Interval Average operation on the minimum percentage of similarity scores introduces a degree of randomness. For instance, small normal patches might be selected inconsistently across runs due to natural appearance variations in the images, leading to instability during gradient updates and slight fluctuations in the anomaly score distributions. These small variations can affect metrics like image-level AUROC (AC) and pixel-level AUROC (AS), especially when comparing slightly different topmin_max percentages.",
+                "impact": "This introduces run-to-run variability in reported performance, which might lead to slight inconsistencies in the AUROC values even with the same parameter setting. Such random uncertainty could affect the observed stability of results across experiments.",
+                "possible_modifications": [
+                    "Run multiple evaluations with fixed random seeds and average the results to minimize random fluctuations.",
+                    "Implement controlled random token or patch selection mechanisms to ensure reproducibility in the Interval Average operation."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Systematic bias from the consistent modification of the topmin_max parameter in the MSM module.",
+                "description": "The experiment systematically alters the topmin_max parameter (e.g., 0.1, 0.3, 0.5, 0.7, 0.9, and 1.0) in the MSM module, which directly influences how anomaly scores are computed. Deviations from a 30% interval lead to consistent performance degradation. This reflects a systematic bias that not only affects the overall AUROC values but may also shift the anomaly score distributions, making the detection of anomalies either too lenient or too strict.",
+                "impact": "The consistent change in AUROC metrics (both AC and AS) when moving away from a 30% interval indicates that a systematic effect is at work. This bias can be observed as a degradation in performance if the MSM module incorporates too many or too few patch scores, making 30% appear near-optimal according to the documented performance metrics.",
+                "possible_modifications": [
+                    "Introduce additional intermediate values (e.g., 0.2, 0.4) to refine the understanding of this systematic effect.",
+                    "Fix other related hyperparameters (e.g., the aggregation degree in the LNAMD module) to isolate the impact of the topmin_max parameter.",
+                    "Integrate rigorous statistical significance tests (e.g., computing p-values or confidence intervals) to validate that the 30% setting is indeed optimal across both datasets."
+                ]
+            }
+        },
+        {
+            "method": "Conduct controlled experiments by evaluating the MuSc method under different settings: (1) without the RsCIN module, (2) with the RsCIN module using a single-window mask strategy (using window sizes k \u2208 {2,...,9} and full-window k = \u221e), and (3) with the proposed multi-window mask strategy. Run these configurations on both MVTec AD and VisA datasets. Measure classification metrics (F1-max score, AUROC) and segmentation metrics (such as pixel-AUROC, PRO segmentation scores, and others provided). Additionally, consider the effect of varying the number of reference images and dataset splits and analyze the influence of different window mask sizes (refer to Figures 7 and 8). Compare improvements when integrating the RsCIN module in other AC/AS methods as discussed in Appendix A.2.4.",
+            "expected_outcome": "The RsCIN module is expected to improve anomaly detection performance, demonstrating an approximate 0.9% gain in F1-max score on MVTec AD and a 2.8% AUROC gain on VisA. The multi-window strategy should further outperform the single-window mask operation and the configuration without RsCIN, with additional improvements in segmentation metrics such as pixel-AUROC and PRO segmentation scores, as supported by quantitative results.",
+            "subsection_source": "4.2 A BLATION STUDY",
+            "source": [
+                "/workspace/examples/musc_main.py"
+            ],
+            "usage_instructions": "To evaluate the impact of the RsCIN module with different window mask strategies on anomaly detection performance, you can run the musc_main.py script with different k_list parameters for the RsCIN module. The script already includes the RsCIN module implementation (in models/modules/_RsCIN.py) and uses it in the MuSc model (line 248 in models/musc.py).\n\nTo conduct the experiment:\n\n1. For testing without the RsCIN module, modify line 248 in models/musc.py to use k_list=[0] which bypasses the RsCIN module (as seen in line 24-25 of _RsCIN.py).\n\n2. For testing with a single-window mask strategy, modify line 243-247 in models/musc.py to use specific k values (e.g., k_score = [1, 2] for a single window size k=2).\n\n3. For testing with the multi-window mask strategy (default implementation), keep the existing configuration which uses multiple window sizes (k_score = [1, 2, 3] for MVTec AD and k_score = [1, 8, 9] for VisA).\n\nRun the script for each configuration on both MVTec AD and VisA datasets:\n\npython examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output --save_excel True\n\npython examples/musc_main.py --device 0 --data_path ./data/visa/ --dataset_name visa --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output --save_excel True\n\nThe results will be saved in Excel files in the output directory, showing classification metrics (F1-max score, AUROC) and segmentation metrics (pixel-AUROC, PRO segmentation scores) for each configuration.",
+            "requirements": [
+                "Step 1: Parse command line arguments for configuration including dataset path, dataset name, class name, device, output directory, visualization options, feature layers, backbone name, pretrained model, image resize dimensions, batch size, and divide number (/workspace/examples/musc_main.py:11-30)",
+                "Step 2: Load configuration from YAML file and override with command line arguments (/workspace/examples/musc_main.py:32-78)",
+                "Step 3: Initialize the MuSc model with the configuration and a fixed random seed (/workspace/examples/musc_main.py:85-86)",
+                "Step 4: For each category in the dataset, load test data and extract features using the specified backbone model (/workspace/examples/musc_main.py:127-181)",
+                "Step 5: Apply Local Neighborhood Anomaly Detection (LNAMD) to the extracted features with different aggregation degrees (r values) (/workspace/examples/musc_main.py:183-202)",
+                "Step 6: Apply Mutual Similarity Measurement (MSM) to the aggregated features from each layer (/workspace/examples/musc_main.py:204-217)",
+                "Step 7: Interpolate the anomaly maps to match the input image size (/workspace/examples/musc_main.py:222-227)",
+                "Step 8: Apply the Robust Similarity-based Class-agnostic Inference Network (RsCIN) to refine anomaly scores using different window mask strategies based on the dataset (/workspace/examples/musc_main.py:239-248)",
+                "Step 9: Compute evaluation metrics for both image-level and pixel-level anomaly detection (/workspace/examples/musc_main.py:250-257)",
+                "Step 10: Visualize anomaly maps if visualization is enabled (/workspace/examples/musc_main.py:262-264)",
+                "Step 11: Calculate and report mean performance metrics across all categories (/workspace/examples/musc_main.py:289-303)",
+                "Step 12: Save results to Excel file if specified (/workspace/examples/musc_main.py:306-323)"
+            ],
+            "agent_instructions": "Create a script for evaluating anomaly detection performance using a multi-scale model with a robust similarity-based inference network. The script should:\n\n1. Accept command line arguments for configuration including dataset path, dataset name, class name, device ID, output directory, visualization options, feature extraction layers, backbone model name, pretrained weights, image resize dimensions, batch size, and dataset division parameters.\n\n2. Load a configuration from a YAML file and allow command line arguments to override the default settings.\n\n3. Initialize an anomaly detection model with the provided configuration and a fixed random seed (42).\n\n4. For each category in the dataset:\n   - Load test data\n   - Extract features using the specified backbone model (supporting CLIP, DINO, and DINOv2)\n   - Apply Local Neighborhood Anomaly Detection (LNAMD) with different aggregation degrees\n   - Apply Mutual Similarity Measurement (MSM) to the aggregated features\n   - Generate anomaly maps and resize them to match the input image dimensions\n\n5. Implement a Robust Similarity-based Class-agnostic Inference Network (RsCIN) that:\n   - Takes anomaly scores and class tokens as input\n   - Applies a window masking strategy controlled by a k_list parameter\n   - Uses different window sizes for different datasets (MVTec AD uses [1,2,3] and VisA uses [1,8,9])\n   - Can be bypassed by setting k_list=[0]\n\n6. Calculate and report both image-level metrics (AUROC, F1-max, AP) and pixel-level metrics (pixel-AUROC, F1-max, AP, AUPRO) for each category and their means.\n\n7. Optionally visualize anomaly maps and save results to an Excel file.\n\nThe script should support evaluating the impact of different window mask strategies on anomaly detection performance:\n- No RsCIN (bypassing the module)\n- Single-window mask strategy (using a subset of k values)\n- Multi-window mask strategy (using all k values for the dataset)\n\nThe evaluation should work with both MVTec AD and VisA datasets, with appropriate window sizes for each.",
+            "masked_source": [
+                "/workspace/examples/musc_main.py"
+            ],
+            "question": "Does the inclusion of the RsCIN module, especially with a multi-window mask strategy, improve anomaly detection performance compared to using a single-window operation or no re-scoring with constrained image-level neighborhood?",
+            "design_complexity": {
+                "constant_variables": {
+                    "command_line_config": "Parameters such as dataset path, dataset name, class name, device ID, output directory, backbone model and its pretrained weights, feature extraction layers, image resize dimensions, batch size, and dataset division parameters remain constant across experiments."
+                },
+                "independent_variables": {
+                    "RsCIN_configuration": [
+                        "No RsCIN (bypassed with k_list=[0])",
+                        "Single-window mask strategy (using a specific chosen window size, e.g., k_score = [1,2] corresponding to a single window size from the set {2,...,9} and full-window k=\u221e)",
+                        "Multi-window mask strategy (using multiple window sizes, e.g., k_score = [1,2,3] for MVTec AD and [1,8,9] for VisA)"
+                    ],
+                    "Dataset_choice": [
+                        "MVTec AD",
+                        "VisA"
+                    ],
+                    "Reference_images_and_dataset_split": [
+                        "Different numbers of reference images (as provided by the r_list parameter)",
+                        "Different dataset splits (e.g., s=1, 2, or 3)"
+                    ],
+                    "Window_mask_size": [
+                        "Various window sizes applied in the RsCIN module (e.g., specific values in single-window strategy versus multiple values in multi-window strategy)"
+                    ]
+                },
+                "dependent_variables": {
+                    "Classification_metrics": [
+                        "F1-max score",
+                        "AUROC",
+                        "AP (Average Precision)"
+                    ],
+                    "Segmentation_metrics": [
+                        "Pixel-AUROC",
+                        "F1-max segmentation score",
+                        "AP segmentation",
+                        "PRO segmentation scores"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "Single-window mask configuration": "The exact choice of window size for the single-window strategy is not explicitly defined; the instructions provide an example (e.g., k_score = [1,2]) without a definitive selection rule.",
+                    "Reference_images_and_dataset_split": "Although the paper shows different splits and reference image settings, it is unclear how broadly these should be varied or if additional values outside the provided splits (s=1,2,3) should be tested.",
+                    "Integration_with_other_ACAS_methods": "The process for integrating the RsCIN module into other AC/AS methods (as mentioned in Appendix A.2.4) is not fully specified, leaving room for interpretation regarding implementation details.",
+                    "Metrics_evaluation_scope": "While several metrics are mentioned, the full list of segmentation metrics for evaluation isn\u2019t explicitly enumerated, which could lead to variations in reported outcomes."
+                },
+                "possible_modifications": {
+                    "modification_RsCIN_parameters": [
+                        "Introduce additional window sizes or alternative combinations in both single-window and multi-window settings to further explore the impact on performance."
+                    ],
+                    "modification_dataset_split": [
+                        "Expand the range of dataset splits beyond the provided values (e.g., testing with more subsets) to study scalability and stability of results."
+                    ],
+                    "modification_metrics_reporting": [
+                        "Include additional evaluation metrics (such as precision, recall, or category-specific performance) to provide a more granular analysis of anomaly detection performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Command line configuration and YAML file loading",
+                    "MuSc anomaly detection model including LNAMD and MSM modules",
+                    "Robust Similarity-based Class-agnostic Inference Network (RsCIN) module",
+                    "Feature extractor backbone (e.g., ViT-L-14-336 with pretrained weights)",
+                    "Data loaders for MVTec AD and VisA datasets",
+                    "Evaluation metric computation for classification (F1-max, AUROC, AP) and segmentation (pixel-AUROC, F1-max, AP, PRO)",
+                    "Result visualization and Excel output generation",
+                    "Script integration (musc_main.py) coordinating different operations"
+                ],
+                "setup_steps": [
+                    "Parsing command line arguments including dataset paths, dataset names, class names, device IDs, output directory, backbone and pretrained model parameters, image resize dimensions, batch size, dataset division settings, and other configuration parameters",
+                    "Loading a configuration from a YAML file and overriding defaults with command line arguments",
+                    "Initializing the MuSc model with a fixed random seed",
+                    "For each dataset category, loading test data and extracting features using the specified backbone",
+                    "Applying the Local Neighborhood Anomaly Detection (LNAMD) to the features with varying aggregation degrees",
+                    "Performing Mutual Similarity Measurement (MSM) on aggregated features from different layers",
+                    "Interpolating the anomaly maps to match input image dimensions",
+                    "Running the RsCIN module with different configurations (bypassed, single-window mask strategy, multi-window mask strategy) by setting the k_list parameters",
+                    "Measuring anomaly detection performance using both image-level and pixel-level metrics",
+                    "Saving the evaluation results in an Excel file and optionally visualizing anomaly maps"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset Splitting and Reference Image Variations",
+                        "description": "The experiments vary the number of dataset splits (s=1, 2, or 3) and different numbers of reference images (r_list values), adding complexity in ensuring consistent evaluation and comparison across different scales."
+                    },
+                    {
+                        "source": "Window Mask Size Configuration",
+                        "description": "Different window mask sizes are applied in the RsCIN module depending on the dataset (e.g., [1,2,3] for MVTec AD versus [1,8,9] for VisA), which introduces an additional layer of intricacy in managing parameter settings and ensuring fair comparisons."
+                    },
+                    {
+                        "source": "Integration with Other AC/AS Methods",
+                        "description": "The potential inclusion and comparison of RsCIN-induced improvements when integrated with other anomaly classification/segmentation methods (as discussed in Appendix A.2.4) adds complexity regarding implementation and result interpretation."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Single-window mask configuration: The exact window size to use (e.g., k_score = [1,2] is given as an example without a definitive selection rule)",
+                    "Integration details for RsCIN with other AC/AS methods: The instructions mention integration improvements but do not specify clear implementation procedures"
+                ],
+                "ambiguous_setup_steps": [
+                    "Dataset split and reference image settings: Although the paper illustrates splits (s=1, 2, 3) and different numbers of reference images (r_list values), it is unclear whether additional or alternative configurations should be tested",
+                    "Metrics evaluation scope: While several evaluation metrics are described, the full list (particularly segmentation metrics) is not exhaustively specified, leading to possible variations in implementation"
+                ],
+                "possible_modifications": {
+                    "modification_RsCIN_parameters": [
+                        "Introduce alternative combinations or additional window sizes for the single-window and multi-window strategies to explore performance variations beyond the provided examples."
+                    ],
+                    "modification_dataset_split": [
+                        "Expand the range of dataset splits beyond s=1, 2, 3 to study scalability and stability of the method under more varied data partitioning scenarios."
+                    ],
+                    "modification_metrics_reporting": [
+                        "Include additional evaluation metrics (e.g., precision, recall, category-specific performance metrics) to provide a more granular assessment of anomaly detection efficacy."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "constraint_type": {
+                        "modifications": [
+                            "Tighten the RsCIN parameter configuration by restricting the window mask sizes to a narrower range (e.g., only using a single-window strategy) and require the model to achieve performance improvements (e.g., the ~0.9% F1-max gain on MVTec AD and ~2.8% AUROC gain on VisA) with this constrained setting.",
+                            "Impose stricter dataset partitioning by reducing the number of reference images and the number of dataset splits (for example, using a split smaller than the provided s=1, 2, or 3) to test the robustness of the method under limited data availability, similar to the scaling analysis.",
+                            "Integrate the RsCIN module into other AC/AS methods under constrained resource settings (e.g., mimicking the GPU memory cost) to evaluate whether similar improvements in segmentation metrics (pixel-AUROC, PRO scores) can be maintained with lower computational resources."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in model initialization and parameter selection in the RsCIN module, especially when using window mask strategies that include random token dropping or selection.",
+                "description": "When employing the RsCIN module with either a single-window or multi-window mask strategy, small random perturbations (such as random dropping of tokens or variability arising from dataset splits) can cause fluctuations in gradient updates and performance metrics. These include random differences in classification (F1-max score, AUROC) and segmentation metrics (pixel-AUROC, PRO scores) even under similar nominal conditions.",
+                "impact": "This randomness may cause the reported performance gains (e.g., the ~0.9% F1-max improvement on MVTec AD and the ~2.8% AUROC gain on VisA) to vary across runs. Such variability can mask the true impact of integrating the RsCIN module or lead to unstable comparisons between single-window and multi-window configurations.",
+                "possible_modifications": [
+                    "Run experiments over multiple random seeds and average results to better quantify the variability.",
+                    "Introduce controlled random noise (e.g., by randomly dropping tokens as in the example of modifying a pre-training strategy) and measure its effect on performance to assess stability.",
+                    "Use cross-validation over different dataset splits to determine the consistency of the performance improvements."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases inherent in dataset composition and fixed parameter configurations (such as the choice of window sizes in RsCIN) that affect performance across different datasets.",
+                "description": "Systematic uncertainty arises when the experimental design imposes a consistent bias. For instance, the use of fixed window mask sizes that are tuned differently for MVTec AD ([1,2,3]) and VisA ([1,8,9]), as depicted in Figures 7 and 8, may systematically favor certain performance outcomes. Additionally, any one-time modifications in dataset splitting or reference image selection can introduce a systematic bias in anomaly scores.",
+                "impact": "Such a bias can lead to consistently overestimating or underestimating the improvement provided by the RsCIN module. As a result, while the reported gains (like the 0.9% and 2.8% improvements) appear favorable, they might be partly due to systematic design choices rather than the inherent superiority of the multi-window strategy over a single-window approach or no RsCIN.",
+                "possible_modifications": [
+                    "Test the method on additional, independent datasets to verify if the observed improvements generalize beyond MVTec AD and VisA.",
+                    "Adjust and vary the window mask size configurations or dataset split strategies to check if the performance gains persist under different systematic conditions.",
+                    "Integrate the RsCIN module into other AC/AS methods (as discussed in Appendix A.2.4) and compare results to identify potential systematic biases in anomaly score re-scaling."
+                ]
+            }
+        },
+        {
+            "method": "Divide the test images into different numbers of subsets (s = 1, 2, 3), following the division strategy reported in the original work. For each grouping, measure the per-image inference time and maximum GPU memory cost using an NVIDIA RTX 3090 GPU. Simultaneously, evaluate the anomaly detection metrics, specifically the AC (image-level anomaly detection) and AS (pixel-level anomaly segmentation) scores, on both the MVTec AD and VisA datasets. Include comparison of the time and memory trade-offs alongside the observed minor variations in the performance metrics across the different subset configurations.",
+            "expected_outcome": "It is expected that increasing s will lead to a significant reduction in both inference time and GPU memory cost (e.g., decreasing from 998.8 ms and 7168 MB at s=1 to 513.5 ms and 5026 MB at s=3). The AC metric is anticipated to drop slightly (by less than 1.1%) while the AS metric will remain almost constant (down by at most 0.2%). This indicates that the efficiency gains in computation come at a minimal cost to overall detection performance.",
+            "subsection_source": "4.2 A BLATION STUDY",
+            "source": [
+                "/workspace/examples/musc_main.py",
+                "/workspace/examples/musc.py"
+            ],
+            "usage_instructions": "To run the experiment that tests how dividing the test dataset into smaller subsets affects inference time, GPU memory, and performance metrics, execute the following commands:\n\n1. For s=1 (no division):\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 1 --r_list 1 3 5 --batch_size 4 --output_dir ./output --vis False --save_excel True\n\n2. For s=2 (divide into 2 subsets):\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 2 --r_list 1 3 5 --batch_size 4 --output_dir ./output --vis False --save_excel True\n\n3. For s=3 (divide into 3 subsets):\n   python examples/musc_main.py --device 0 --data_path ./data/mvtec_anomaly_detection/ --dataset_name mvtec_ad --class_name ALL --backbone_name ViT-L-14-336 --pretrained openai --feature_layers 5 11 17 23 --img_resize 518 --divide_num 3 --r_list 1 3 5 --batch_size 4 --output_dir ./output --vis False --save_excel True\n\nRepeat the same commands for the VisA dataset by changing the data_path and dataset_name parameters:\n--data_path ./data/visa/ --dataset_name visa\n\nThe script will automatically measure and report the inference time per image. The results will be saved in the specified output directory, including the AC (image-level anomaly detection) and AS (pixel-level anomaly segmentation) scores.",
+            "requirements": [
+                "Step 1: Parse command line arguments including dataset path, dataset name, class name, device, backbone name, pretrained model, feature layers, image resize dimensions, divide_num, r_list, batch size, output directory, visualization flag, and save_excel flag (/workspace/examples/musc_main.py:11-30)",
+                "Step 2: Load configuration from YAML file and override with command line arguments (/workspace/examples/musc_main.py:32-78)",
+                "Step 3: Initialize the MuSc model with the configuration (/workspace/examples/musc_main.py:86)",
+                "Step 4: Load the specified backbone model (CLIP, DINO, or DINO_v2) (/workspace/models/musc.py:64-76)",
+                "Step 5: For each category in the dataset, process the test data (/workspace/models/musc.py:269-278)",
+                "Step 6: Divide the test dataset into the specified number of subsets (divide_num) (/workspace/models/musc.py:130-140)",
+                "Step 7: For each subset, load the test dataset with the appropriate division parameters (/workspace/models/musc.py:79-93)",
+                "Step 8: Extract features from the test images using the backbone model and measure extraction time (/workspace/models/musc.py:153-181)",
+                "Step 9: Apply LNAMD (Local Neighborhood Aggregation with Multiple Degrees) to process features for each aggregation degree in r_list (/workspace/models/musc.py:185-202)",
+                "Step 10: Use MSM (Mutual Scoring Module) to compute anomaly scores for each feature layer (/workspace/models/musc.py:204-217)",
+                "Step 11: Interpolate anomaly maps to match the original image size (/workspace/models/musc.py:222-227)",
+                "Step 12: Calculate image-level anomaly scores and apply RsCIN (Robust Score Calibration with Image Neighborhood) (/workspace/models/musc.py:240-248)",
+                "Step 13: Compute evaluation metrics (AUROC, F1, AP, AUPRO) for both image-level and pixel-level anomaly detection (/workspace/models/musc.py:250-260)",
+                "Step 14: Optionally visualize anomaly maps if the vis flag is set (/workspace/models/musc.py:262-264)",
+                "Step 15: Calculate and display mean performance metrics across all categories (/workspace/models/musc.py:289-303)",
+                "Step 16: Save results to Excel file if save_excel flag is set (/workspace/models/musc.py:306-340)"
+            ],
+            "agent_instructions": "Implement a script to evaluate how dividing a test dataset into smaller subsets affects anomaly detection performance, inference time, and GPU memory usage. The script should:\n\n1. Accept command line arguments for configuring the experiment, including:\n   - Dataset path and name (MVTec AD or VisA)\n   - Class name (specific category or 'ALL' for all categories)\n   - GPU device ID\n   - Backbone model (ViT variants like ViT-L-14-336)\n   - Feature extraction layers\n   - Image resize dimensions\n   - Number of subsets to divide the test dataset into (divide_num)\n   - Aggregation degrees for feature processing (r_list)\n   - Batch size\n   - Output directory\n   - Visualization and Excel saving flags\n\n2. Load a pre-trained vision model (CLIP, DINO, or DINO_v2) as the feature extractor.\n\n3. For each category in the dataset:\n   - Divide the test dataset into the specified number of subsets\n   - For each subset:\n     - Extract features from test images using the backbone model\n     - Measure and report feature extraction time per image\n     - Process features using local neighborhood aggregation with multiple degrees\n     - Compute anomaly scores using a mutual scoring approach\n     - Measure and report processing time\n\n4. Calculate anomaly detection metrics:\n   - Image-level: AUROC, F1 score, Average Precision\n   - Pixel-level: AUROC, F1 score, Average Precision, AUPRO\n\n5. Report mean performance metrics across all categories.\n\n6. Optionally save results to an Excel file and visualize anomaly maps.\n\nThe implementation should measure and report the inference time per image for different divide_num values (1, 2, 3) to demonstrate how dividing the test dataset affects computational efficiency and detection performance.",
+            "masked_source": [
+                "/workspace/examples/musc_main.py",
+                "/workspace/examples/musc.py"
+            ],
+            "question": "Does dividing the entire test dataset into smaller subsets (controlled by s) significantly reduce per-image inference time and GPU memory cost without notably compromising the AC and AS performance? Given the detailed results, the experiment seeks to validate whether increasing s (i.e., creating smaller subsets per evaluation) leads to a decrease in computational resources (e.g., from 998.8 ms and 7168 MB at s=1 to 513.5 ms and 5026 MB at s=3) with only a minor degradation in detection performance (e.g., a drop in AC of less than 1.1% and a nearly invariant AS) on the MVTec AD and VisA datasets.",
+            "design_complexity": {
+                "constant_variables": {
+                    "hardware": "NVIDIA RTX 3090",
+                    "model_configuration": "Fixed backbone model ViT-L-14-336 with fixed pre-trained weights (e.g., CLIP/DINO), fixed feature extraction layers (5, 11, 17, 23), fixed image resize (518), fixed batch size (4), and other configuration parameters (r_list, output options, etc.)"
+                },
+                "independent_variables": {
+                    "divide_num (s)": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "dataset": [
+                        "MVTec AD",
+                        "VisA"
+                    ]
+                },
+                "dependent_variables": {
+                    "inference_time": "Per-image inference time (in ms, e.g., decreasing from 998.8 ms at s=1 to 513.5 ms at s=3)",
+                    "gpu_memory_cost": "Maximum GPU memory usage (in MB, e.g., from 7168 MB at s=1 to 5026 MB at s=3)",
+                    "AC_performance": "Image-level anomaly detection performance measured by AUROC (with expected drop up to less than 1.1%)",
+                    "AS_performance": "Pixel-level anomaly segmentation performance measured by AUROC (almost invariant, dropping at most 0.2%)"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "divide_num (s)": "While s clearly controls the number of subsets, the exact strategy on how the dataset is partitioned (random, stratified, or based on other criteria) is not explicitly defined.",
+                    "performance_metrics (AC and AS)": "The criteria for what constitutes a 'notable compromise' in performance metrics is only loosely defined by percentage drops, lacking precise thresholds.",
+                    "dataset_division_strategy": "The method for dividing the entire test dataset (e.g., equal number of images per subset or variable sizes) is not fully detailed."
+                },
+                "possible_modifications": {
+                    "mask_variable_values": [
+                        "Hide or randomize the specific s values (1, 2, 3) during evaluation to test robustness of inference time improvements."
+                    ],
+                    "introduce_new_variables": [
+                        "Add variation in the feature extractor (such as different backbone models) to see their effects on both performance and efficiency.",
+                        "Incorporate a variable for different dataset division strategies (e.g., equal vs. variable subset sizes)."
+                    ],
+                    "modify_evaluation_metrics_threshold": [
+                        "Explicitly define acceptable thresholds for performance degradation to reduce ambiguity in judging the trade-off between efficiency and detection performance."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "NVIDIA RTX 3090 GPU hardware",
+                    "Pre-trained vision backbone (ViT-L-14-336) with fixed weights (CLIP, DINO, or DINO_v2)",
+                    "Feature extraction layers (specifically layers 5, 11, 17, 23)",
+                    "Test datasets (MVTec AD and VisA) with provided image subsets (variable sizes)",
+                    "Command line interface for configuring experiment parameters (dataset path, class name, device ID, image resize dimension, etc.)",
+                    "Modules for feature extraction, LNAMD (Local Neighborhood Aggregation with Multiple Degrees), MSM (Mutual Scoring Module), and RsCIN (Robust Score Calibration with Image Neighborhood)"
+                ],
+                "setup_steps": [
+                    "Parse command line arguments including dataset details, backbone model, feature layers, image resize dimensions, divide_num (s), r_list, batch size, output directory, and visualization/Excel saving flags",
+                    "Load configuration from a YAML file and override with the command line arguments",
+                    "Initialize the MuSc model based on the loaded configuration",
+                    "Load the specified pre-trained vision backbone model with fixed weights",
+                    "Divide the test dataset into the specified number of subsets (s = 1, 2, or 3) following the division strategy as mentioned (with variable subset sizes)",
+                    "Extract features from test images via the backbone model and measure per-image extraction time",
+                    "Process features using LNAMD for each degree specified in r_list",
+                    "Compute anomaly scores via MSM and interpolate anomaly maps as needed",
+                    "Apply RsCIN to re-score and calibrate scores for image-level and pixel-level predictions",
+                    "Compute evaluation metrics including AC (image-level anomaly detection: AUROC, F1, AP) and AS (pixel-level anomaly segmentation: AUROC, F1, AP, AUPRO)",
+                    "Report per-image inference time and GPU memory cost alongside performance metrics",
+                    "Optionally save results to an Excel file and visualize anomaly maps"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Dataset Division Strategy",
+                        "description": "The strategy for dividing the test dataset into subsets (e.g., random partitioning or equal size vs. variable sizes) adds complexity in ensuring the results are comparable across experiments."
+                    },
+                    {
+                        "source": "Multiple Processing Modules Integration",
+                        "description": "Integration of multiple modules and operations (feature extraction, LNAMD, MSM, and RsCIN) requires careful interfacing and timing measurements."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "divide_num (s): The exact strategy for partitioning the data (whether random, stratified, or based on equal image counts) is not explicitly defined.",
+                    "Performance metrics (AC and AS): The criteria for what constitutes a 'notable compromise' are loosely defined as percentage drops without clear acceptable thresholds."
+                ],
+                "ambiguous_setup_steps": [
+                    "Dataset splitting: It is unclear whether the number of images per subset remains equal or varies.",
+                    "Re-scoring with constrained image-level neighborhood (RsCIN): The exact implementation details and parameter choices for this module are not fully detailed."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Hide or randomize the specific s values (1, 2, 3) during evaluation to test the robustness of inference time improvements.",
+                        "Omit details on how the dataset is exactly partitioned to force users to determine their own strategy."
+                    ],
+                    "imply_need_for_new_setup_steps": [
+                        "Introduce explicit documentation of the dataset division strategy to remove ambiguity in partition sizes (e.g., require an equal split or provide a rationale for variable sizes).",
+                        "Define acceptable performance degradation thresholds explicitly to better judge the trade-off between computational efficiency and detection performance."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "If access to an NVIDIA RTX 3090 is not available, one possible modification would be to run the experiments on an alternative GPU with lower memory (e.g., NVIDIA RTX 2080) and then validate if similar trade-offs between inference time and GPU memory cost are maintained."
+                    ],
+                    "time_constraints": [
+                        "Another possible modification is to enforce a stricter inference time constraint, requiring that the per-image inference time remains below a threshold (e.g., close to the 513.5 ms observed at s = 3), despite using a smaller subset division. This would test the efficiency gains more rigorously while still keeping the minor performance drop (less than 1.1% for AC and 0.2% for AS) within acceptable limits."
+                    ],
+                    "money_constraints": [
+                        "A possible modification could involve budget limitations that restrict the use of high-end hardware, pushing for experiments on more cost-effective setups while still trying to preserve anomaly detection performance. This would simulate constraints of limited funding in a real-world deployment setting."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Randomized dataset division strategy",
+                "description": "When dividing the test dataset into s subsets, if the partitioning is done randomly, the exact composition and order of images in each subset may vary between experiments. This randomness can lead to fluctuations in both per-image inference time and GPU memory usage, as the distribution of image sizes and contents may differ across subsets. This effect is similar to dropping random tokens in pre-training, which introduces instability in gradient updates and prediction accuracy.",
+                "impact": "The measured performance metrics (e.g., AC and AS) and computational resource consumption (inference time and GPU memory) might show variability across repeated experiments, making comparisons less consistent and potentially masking real performance trends.",
+                "possible_modifications": [
+                    "Fix the random seed and use a deterministic partitioning strategy to ensure reproducibility of subset compositions.",
+                    "Perform multiple random splits and average the results to account for randomness-related fluctuations.",
+                    "Explicitly define the splitting strategy (e.g., stratified or equal-size splits) to minimize unpredictability in performance measurements."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Systematic bias in dataset division and subset size variations",
+                "description": "If the dataset division strategy consistently produces subsets with unequal or non-representative distributions (as suggested by the variable sizes), this can introduce a systematic bias. For example, consistently smaller subsets (e.g., s=3 with sizes 14-56 for MVTec AD) may lead to improved efficiency (reduction from 998.8 ms and 7168 MB at s=1 to 513.5 ms and 5026 MB at s=3) but also a slight degradation in performance metrics (AC dropping by less than 1.1% and AS almost invariant).",
+                "impact": "The experimental results may show a systematic trade-off where efficiency improvements are accompanied by consistently minor performance drops. This bias might be misinterpreted as an inherent property of the method rather than a consequence of the partitioning strategy.",
+                "possible_modifications": [
+                    "Revisit and clearly document the dataset division strategy to ensure that the subsets are representative of the full dataset.",
+                    "Experiment with alternative splitting strategies (e.g., equal number of images per subset) to determine if the observed performance trends persist.",
+                    "Incorporate additional evaluation on a separate, independently partitioned test set to validate that the performance changes are not due to systematic biases in subset composition."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of varying the number of reference images in the MuSc+ variant on classification and segmentation performance.",
+            "experiment_design": "Design an experiment where the number of reference images is systematically varied (for example, using different counts such as 1, 4, 8, 16, etc.). For each configuration, evaluate the model's classification and segmentation metrics on both MVTec AD and VisA datasets. Track computational costs such as per-image inference time and GPU memory usage, and compare the results to identify the optimal trade-off between performance improvement and resource consumption.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "idea": "Evaluate the robustness of MuSc under various real-world perturbations such as inconsistent image orientations, scales, and noise.",
+            "experiment_design": "Extend the current experimental setup by artificially introducing variations such as rotations, scaling changes, and noise to the test images. Run the MuSc model as well as other comparative methods (e.g., WinCLIP, APRIL-GAN) on these perturbed datasets. Record the standard anomaly detection metrics (AUROC, F1-max, AP, and PRO) and analyze the sensitivity of each model to these perturbations. This would help in understanding the generalizability and robustness of MuSc in real industrial scenarios.",
+            "subsection_source": "4.1 Q UANTITATIVE AND QUALITATIVE RESULTS"
+        },
+        {
+            "idea": "Extend the analysis of aggregation degrees by exploring a wider range of r values beyond those initially tested.",
+            "experiment_design": "Conduct experiments on both MVTec AD and VisA with r values including extremes (e.g., r = 0, 2, 4, 6, 8) to observe the performance trend in finer granularity. This could help in understanding the sensitivity of LNAMD to local neighborhood size and possibly lead to dynamically adapting r based on input image characteristics.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "idea": "Investigate the applicability of the MuSc method with the RsCIN module on larger-scale, real-world industrial datasets with more diverse anomaly types.",
+            "experiment_design": "Apply the MuSc pipeline to an industrial dataset that includes a broader variety of anomalies and image resolutions. Compare performance metrics and computational efficiency against baseline methods. Additionally, assess if the minor performance gains from the RsCIN module are consistent in this new domain and whether any adaptation (e.g., window mask size adjustments) is beneficial.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        },
+        {
+            "idea": "Analyze the impact of incorporating few-shot settings more extensively, particularly on domains where the prior information in unlabeled images might be limited.",
+            "experiment_design": "Design experiments where a varying number of labeled normal reference images are incrementally added to the zero-shot MuSc framework. Perform evaluations on datasets with limited normal prior information to determine if few-shot extensions can lead to significant improvements, and compare the results against both the standard MuSc and other few-shot anomaly detection methods.",
+            "subsection_source": "4.2 A BLATION STUDY"
+        }
+    ],
+    "main_takeaways": [
+        "The paper proposes the MuSc method (and its variant MuSc+) that achieves competitive anomaly segmentation and classification performance on benchmarks such as MVTec AD and VisA.",
+        "Inference time and GPU memory cost can be significantly reduced by partitioning the dataset into multiple subsets (e.g., using s=3 reduces inference time to 513.5 ms and GPU cost to 5026 MB compared to s=1).",
+        "The method shows robustness against inconsistent orientations and scales, outperforming existing methods like WinCLIP and APRIL-GAN in these settings, despite using a fixed pre-trained vision transformer that only performs minor data augmentations.",
+        "The choice of configuration parameters, such as the proportion of the minimum value interval in MSM and the window mask sizes (with or without the RsCIN module), has a measurable impact on performance metrics (e.g., slight changes in AUROC, F1-max scores).",
+        "Incorporating additional components like re-scoring with a constrained image-level neighborhood (RsCIN) and increasing the number of reference images can improve classification and segmentation results."
+    ]
+}

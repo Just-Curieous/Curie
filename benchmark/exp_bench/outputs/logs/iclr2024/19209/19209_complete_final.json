@@ -1,0 +1,725 @@
+{
+    "questions": [
+        {
+            "question": "Does the iterative prompt optimization process improve training accuracy and stabilize instruction quality on GSM8K? (This experiment uses the GSM8K dataset as implemented in the repository's prompt optimization pipeline.)",
+            "method": "Using the GSM8K dataset, randomly sample 3.5% of the training examples to create a fixed subset throughout the optimization process. Begin with the initial instruction 'Let\u2019s solve the problem' (approximate training accuracy ~60.5%). Use the PaLM 2-L-IT as the optimizer and a pre-trained PaLM 2-L as the scorer with a temperature setting of 0 for evaluations. At each optimization step, generate 8 candidate instructions using a meta-prompt that includes the best 20 instructions so far along with 3 randomly sampled exemplars from the task. Record the training accuracy and the variance among the generated instructions at every step. Visualize the optimization process by plotting the accuracy curve to capture the overall upward trend in accuracy and a decrease in variance over time. (Note: Refer to the repository\u2019s guidelines regarding potential API costs and consider starting with lighter configurations for initial exploratory experiments.)",
+            "expected_outcome": "It is expected that the iterative prompt optimization will progressively increase the training accuracy from the initial ~60.5% through several leaps, while also reducing the variance among the generated instructions. This would confirm that the iterative process effectively refines the instructions, ultimately stabilizing instruction quality.",
+            "subsection_source": "5.2 MAIN RESULTS",
+            "no_answer": "No answer found after 2 iterations.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": [
+                        "GSM8K"
+                    ],
+                    "initial_instruction": [
+                        "Let\u2019s solve the problem"
+                    ],
+                    "scorer_model": [
+                        "PaLM 2-L"
+                    ],
+                    "optimizer_model": [
+                        "PaLM 2-L-IT"
+                    ],
+                    "temperature_setting": [
+                        "0 (for evaluations)"
+                    ],
+                    "training_subset": [
+                        "3.5% of the GSM8K training examples"
+                    ],
+                    "meta_prompt_exemplars": [
+                        "3 exemplars (randomly sampled)"
+                    ]
+                },
+                "independent_variables": {
+                    "optimization_steps": "The iterative step count during which candidate instructions are generated and evaluated",
+                    "candidate_instructions": [
+                        "8 candidate instructions generated at each step"
+                    ],
+                    "previous_instructions_display": [
+                        "Top 20 best instructions in ascending order with corresponding accuracy scores"
+                    ]
+                },
+                "dependent_variables": {
+                    "training_accuracy": "Recorded training accuracy at each optimization step",
+                    "instruction_variance": "The variance among the generated candidate instructions, meant to capture instruction quality stability",
+                    "accuracy_curve_trend": "Overall upward trend in training accuracy over iterations"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "instruction_variance": "It is unclear how the variance among generated instructions is computed or defined.",
+                    "optimization_steps": "The exact stopping criteria and the number of iterations to be performed are not explicitly defined.",
+                    "previous_instructions_display": "While the experiment specifies showing the best 20 instructions, the method for ranking or ordering them (besides ascending order based on accuracy) could be ambiguous."
+                },
+                "possible_modifications": {
+                    "modification_exemplar_count": [
+                        "Vary the number of exemplars provided in the meta-prompt (e.g., testing with 10 exemplars instead of 3)."
+                    ],
+                    "modification_candidate_count": [
+                        "Experiment with different numbers of candidate instructions generated per step (e.g., 5 or 10 candidates)."
+                    ],
+                    "modification_ordering": [
+                        "Alter the ordering of instructions in the meta-prompt (e.g., highest-to-lowest or random ordering) to assess the effect on the optimization process."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "GSM8K dataset (3.5% of training examples sampled)",
+                    "Initial instruction ('Let\u2019s solve the problem')",
+                    "PaLM 2-L scorer (with temperature set to 0)",
+                    "PaLM 2-L-IT optimizer",
+                    "Candidate instruction generation (8 candidates per step)",
+                    "Meta-prompt design (including top 20 best instructions with accuracy scores and 3 randomly sampled exemplars)"
+                ],
+                "setup_steps": [
+                    "Randomly sample 3.5% of the GSM8K training examples to create a fixed subset for evaluation",
+                    "Initialize the optimization process with the initial instruction and record the starting training accuracy (~60.5%)",
+                    "At each optimization step, generate 8 candidate instructions using a meta-prompt",
+                    "Construct the meta-prompt by including the current top 20 best instructions (ranked by ascending accuracy scores) along with 3 task exemplars",
+                    "Evaluate each candidate instruction using the PaLM 2-L scorer",
+                    "Record the training accuracy and the variance among the generated candidate instructions at each step",
+                    "Visualize the optimization process by plotting the accuracy curve to capture the upward trend and reduction in variance"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Meta-prompt design parameters",
+                        "description": "The presentation of accuracy scores (e.g., using 100 buckets vs. 20 buckets vs. omitting them) and the selection of exemplars contribute additional layers of complexity."
+                    },
+                    {
+                        "source": "API and configuration considerations",
+                        "description": "Balancing API cost guidelines along with setting optimal evaluation parameters, such as temperature and candidate counts, adds operational complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Instruction variance: The method for computing or defining the variance among generated instructions is unclear."
+                ],
+                "ambiguous_setup_steps": [
+                    "Stopping criteria for the optimization process: The exact number of iterations or convergence criteria are not explicitly defined.",
+                    "Ordering of previous best instructions: While the instructions are shown in ascending order based on accuracy, further details on the ranking mechanism are ambiguous."
+                ],
+                "possible_modifications": {
+                    "modification_exemplar_count": [
+                        "Vary the number of exemplars provided in the meta-prompt (e.g., testing with 10 exemplars instead of 3)."
+                    ],
+                    "modification_candidate_count": [
+                        "Experiment with different numbers of candidate instructions generated per step (e.g., 5 or 10 candidates instead of the default 8)."
+                    ],
+                    "modification_ordering": [
+                        "Alter the ordering of instructions in the meta-prompt (e.g., display highest-to-lowest or a random ordering) to assess the impact on the optimization process."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Consider enforcing performance parity using a smaller model (e.g., testing with a smaller variant of PaLM 2-L) to reduce resource usage.",
+                        "Reduce API call frequency by limiting the number of candidate instructions generated per iteration if resource limits become an issue."
+                    ],
+                    "time_constraints": [
+                        "Impose a cap on the number of optimization iterations to assess efficiency differences in convergence speed."
+                    ],
+                    "money_constraints": [
+                        "Limit API costs by exploring lighter configuration settings, such as lowering the number of evaluations per step or using cheaper evaluation alternatives."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random sampling in candidate instruction generation and exemplar selection",
+                "description": "The experimental setup involves generating 8 candidate instructions per optimization step and randomly sampling 3 exemplars, which introduces inherent variability. This randomness in candidate generation and exemplar selection can create fluctuation in the observed training accuracy and the measured variance among instructions, similar to how random token dropping may affect gradient updates.",
+                "impact": "Variability in candidate instruction quality and accuracy measurements may lead to inconsistent optimization trajectories, affecting conclusions about instruction quality stabilization.",
+                "possible_modifications": [
+                    "Vary the number of candidate instructions generated per step (e.g., try 5 or 10 candidates) to assess the effect of random variability.",
+                    "Change the random exemplar selection process (e.g., fix the exemplar set or use different random seeds) to control for randomness.",
+                    "Introduce artificial perturbations similar to random token dropping to further examine the impact of random noise on optimization."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset sampling and meta-prompt design biases",
+                "description": "Systematic uncertainty may arise from the fixed sampling of 3.5% of GSM8K training examples, which might not be fully representative, and from ambiguities in the meta-prompt design (e.g., ordering of previous instructions and undefined stopping criteria). These factors can introduce a consistent bias in the optimization process.",
+                "impact": "Such systematic biases could lead to over- or under-estimation of training accuracy improvements and may cause the optimizer to converge to suboptimal instructions, ultimately affecting the generalizability of the results.",
+                "possible_modifications": [
+                    "Modify the dataset by, for example, introducing a one-time bias (such as labeling all reviews longer than a threshold as negative) to observe if the optimizer can detect and adjust for systematic bias.",
+                    "Experiment with different ordering methods for the displayed best instructions in the meta-prompt (e.g., highest-to-lowest or random ordering) to evaluate the effect on systematic bias in the instructions.",
+                    "Alter the dataset sampling strategy (increasing or varying the subset proportion) to determine the effect on the consistency of the optimization outcomes."
+                ]
+            }
+        },
+        {
+            "question": "Do the optimized instructions discovered by OPRO outperform the baseline instructions ('Let's think step by step.' and the empty prompt) on BBH tasks?",
+            "method": "For the BBH evaluation, select 23 distinct tasks. Use 20% of each task\u2019s examples for prompt optimization (starting from an empty instruction) and reserve the remaining 80% for testing. Evaluate prompt optimization by employing both the PaLM 2-L-IT optimizer and text-bison as scorer in different configurations. Compare the final training accuracy of the optimized instructions against baseline prompts\u2014specifically 'Let's think step by step.' and the empty instruction\u2014across all tasks. Analyze the per-task accuracy differences, expecting that in at least 19 or 20 out of the 23 tasks, the optimized instructions outperform the baselines by more than 5%.",
+            "expected_outcome": "Based on the reported results, the optimized instructions should exceed the performance of the baselines by over 5% in the majority of the tasks, confirming that OPRO produces superior prompts compared to standard or naive starting instructions.",
+            "subsection_source": "5.2 M AINRESULTS",
+            "no_answer": "No answer found after 2 iterations.",
+            "design_complexity": {
+                "constant_variables": {
+                    "baseline_prompts": [
+                        "Let's think step by step.",
+                        "empty prompt"
+                    ],
+                    "bbh_task_set": "23 distinct BBH tasks"
+                },
+                "independent_variables": {
+                    "optimizer": [
+                        "PaLM 2-L-IT optimizer",
+                        "text-bison scorer"
+                    ],
+                    "data_split": [
+                        "20% for prompt optimization",
+                        "80% for testing"
+                    ],
+                    "optimization_starting_point": [
+                        "empty instruction"
+                    ]
+                },
+                "dependent_variables": {
+                    "final_training_accuracy": "The training accuracy of the optimized instructions compared against the baselines",
+                    "per_task_accuracy_difference": "Difference in accuracy per task, expecting >5% improvement in at least 19 or 20 of 23 tasks"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "agent_instructions": "Not explicitly provided in the task although only 'question', 'method', and 'agent_instructions' are given to the agent; the content of 'agent_instructions' remains uncertain.",
+                    "optimizer_configuration": "The exact details of how the PaLM 2-L-IT optimizer and text-bison scorer are configured (beyond being used as different optimizers) are not explicitly mentioned.",
+                    "evaluation_metric": "It is not explicitly stated whether the reported 'final training accuracy' fully captures the test performance or if further evaluation metrics might be needed."
+                },
+                "possible_modifications": {
+                    "masking_existing_variables": [
+                        "Omit or mask the baseline prompt instructions to test if the agent can infer or generate suitable baselines.",
+                        "Mask parts of the optimizer configuration details to force the need for clarification from the question."
+                    ],
+                    "introducing_new_variables": [
+                        "Add a variable for 'agent_instructions' to explicitly define the prompt that is sent to the evaluated LLM.",
+                        "Include an additional split variable (e.g., vary the 20/80 split) or introduce alternative evaluation metrics besides training accuracy."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "BBH task set (23 distinct tasks)",
+                    "Baseline prompts ('Let's think step by step.' and empty prompt)",
+                    "Optimization algorithms (PaLM 2-L-IT optimizer and text-bison scorer)",
+                    "Data splitting mechanism (20% for prompt optimization; 80% for testing)",
+                    "Evaluation metrics (final training accuracy and per-task accuracy differences)"
+                ],
+                "setup_steps": [
+                    "Select 23 distinct BBH tasks",
+                    "Partition each task\u2019s examples into 20% for prompt optimization and 80% for testing",
+                    "Run prompt optimization starting from an empty instruction using PaLM 2-L-IT optimizer and text-bison scorer in separate configurations",
+                    "Measure the final training accuracy and compute per-task accuracy differences",
+                    "Compare the optimized instructions against baseline prompts"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Documentation Tables (e.g., Table 7 and Table 8)",
+                        "description": "Tables provide detailed instructions and performance metrics which add layers of complexity in interpreting the experiment\u2019s configurations."
+                    },
+                    {
+                        "source": "Optimizer and Scorer Configuration Details",
+                        "description": "The specifics of how the PaLM 2-L-IT optimizer and text-bison scorer are setup and integrated into the evaluation process introduce additional complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Agent instructions: The exact content of the agent instructions provided to the evaluated LLM is not explicitly defined.",
+                    "Optimizer configuration: Details of the internal configuration for the PaLM 2-L-IT optimizer and text-bison scorer are not fully specified.",
+                    "Evaluation metric interpretation: It is unclear if 'final training accuracy' alone is sufficient to capture performance or if further evaluation metrics are needed."
+                ],
+                "ambiguous_setup_steps": [
+                    "The process for prompt optimization starting from an empty instruction lacks a detailed step-by-step procedure.",
+                    "The method for splitting data and computing evaluation metrics (training vs. test performance) could be interpreted in multiple ways."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Remove or mask baseline prompt details to assess the agent's ability to infer optimal baselines.",
+                        "Omit certain configuration details for the optimizer to require users to seek clarification."
+                    ],
+                    "introduce_new_variables": [
+                        "Explicitly define 'agent_instructions' to provide clarity in task execution.",
+                        "Introduce alternative data splits or additional evaluation metrics to offer a broader evaluation framework."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a constraint that requires achieving the reported performance (e.g., >5% improvement on at least 19 out of 23 tasks) using a smaller or more restricted model (such as GPT-4o-mini instead of a larger model), thereby simulating limited computational resources."
+                    ],
+                    "time_constraints": [
+                        "Limit the number of optimization iterations allowed during prompt optimization to simulate a scenario with tighter time restrictions."
+                    ],
+                    "money_constraints": [
+                        "Restrict the number of LLM API calls or impose a token budget during optimization to mirror a setting with constrained monetary resources."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random token dropping and non-deterministic optimization processes",
+                "description": "Introducing randomness in the optimization method\u2014such as modifying a deterministic token dropping mechanism to drop tokens randomly\u2014creates unstable gradient updates and variable training trajectories. This randomness can emerge from the stochastic nature of mini-batch selection, random seed settings, and fluctuating API responses, which are partly reflected in the variability of the training accuracy curves shown in the figures.",
+                "impact": "This uncertainty may lead to unpredictable variations in the final training accuracy across different runs. It makes it challenging to ascertain whether improvements over the baselines ('Let's think step by step.' and empty prompt) are due to the optimized instructions or simply due to random fluctuations in training performance.",
+                "possible_modifications": [
+                    "Fix the random seed and control other stochastic elements in the optimization process to reduce run-to-run variability.",
+                    "Revert to deterministic token dropping methods to ensure that only relevant uncertainties from other experimental sources are evaluated.",
+                    "Perform multiple runs and average the results to mitigate the influence of random fluctuations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Consistent biases in dataset splitting and possible configuration biases in optimizer/scorer setups",
+                "description": "Systematic uncertainties arise from a one-time alteration or inherent bias in the experimental setup. For example, using a fixed 20/80 data split for all tasks or unverified configurations of the PaLM 2-L-IT optimizer and text-bison scorer might introduce a consistent bias in the training accuracy measurements. This is similar to deliberately introducing a systematic label bias in a dataset (e.g., mis-labeling reviews based on length), which could skew the outcome across all BBH tasks.",
+                "impact": "Such systematic biases could lead to an overall over- or under-estimation of the effectiveness of the optimized instructions compared to the baseline prompts. They may cause the reported performance differences (expected to be >5% in at least 19 or 20 out of 23 tasks) to reflect configuration artifacts rather than true improvements.",
+                "possible_modifications": [
+                    "Introduce a validation step with a clean, unbiased dataset copy to verify that the performance gains are not due to systematic errors in data splitting.",
+                    "Vary the train/test split (e.g., using different ratios) to check the consistency of the results and mitigate any splitting bias.",
+                    "Review and calibrate the configuration settings of both the PaLM 2-L-IT optimizer and the text-bison scorer to ensure that no systematic bias is introduced during prompt optimization."
+                ]
+            }
+        },
+        {
+            "question": "Are the optimized prompts found on GSM8K transferable to similar tasks in the same domain, such as MultiArith and AQuA? Specifically, will applying these GSM8K-optimized prompt instructions lead to performance improvements on these benchmarks compared to their baseline prompts?",
+            "method": "Use the prompt optimization pipeline as described for GSM8K (for instance, by running the optimization script with options similar to those in the repository, such as using a scorer like text-bison) to obtain the top prompt instructions on GSM8K. Then, directly apply these optimized prompts to the MultiArith and AQuA datasets. Evaluate performance using pre-trained scoring models (e.g., text-bison as supported by the repository) with the same evaluation methodology as used for GSM8K (for example, via the evaluation script). Record detailed accuracy scores for both the training and test splits, and perform a comparative analysis against the baseline prompts originally used on MultiArith and AQuA. Analyze percentage improvements and convergence behavior to assess the transferability of the prompt optimization.",
+            "expected_outcome": "It is expected that the optimized prompts will maintain or exceed the improvements observed on GSM8K by outperforming the baseline prompts on both MultiArith and AQuA. The transferability of the prompt optimization process should be demonstrated through measurable gains in accuracy and consistent performance across these mathematical reasoning benchmarks, in line with the results presented in Table 4.",
+            "subsection_source": "5.2 MAIN RESULTS",
+            "no_answer": "No answer found after 2 iterations.",
+            "design_complexity": {
+                "constant_variables": {
+                    "prompt_optimization_pipeline": "The procedure (using the same optimization script, evaluation script, and scorer such as text-bison) remains constant across experiments.",
+                    "evaluation_methodology": "The method for recording detailed training and test accuracy scores and the overall evaluation process is fixed."
+                },
+                "independent_variables": {
+                    "prompt_instructions": [
+                        "optimized prompts derived from GSM8K",
+                        "baseline prompts originally used on MultiArith and AQuA"
+                    ],
+                    "dataset": [
+                        "MultiArith",
+                        "AQuA"
+                    ]
+                },
+                "dependent_variables": {
+                    "performance_metrics": [
+                        "accuracy scores",
+                        "percentage improvements",
+                        "convergence behavior"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "baseline_prompts": "The definition and selection criteria of what constitutes the baseline prompts are not explicitly delineated in the task.",
+                    "optimization_options": "Specific internal settings within the optimization pipeline (e.g., instruction scoring bucket sizes, number of exemplars) are implied but not fully detailed in the task description.",
+                    "evaluation_methodology": "Details regarding the splits (training vs test) and convergence parameters are not explicitly mentioned, leaving ambiguity in how these measurements are precisely obtained."
+                },
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional variables such as different scorer models or alternative evaluation scripts.",
+                        "Mask some of the internal settings (like exemplar count or scoring bucket granularity) to test robustness.",
+                        "Expand the dataset variable to include further similar benchmarks beyond MultiArith and AQuA."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Prompt optimization pipeline (script for optimizing prompts on GSM8K)",
+                    "Evaluation script (for recording accuracy scores on training and test splits)",
+                    "Pre-trained scoring models (e.g., text-bison)",
+                    "Datasets (GSM8K for optimization, MultiArith and AQuA for transfer evaluation)",
+                    "Baseline prompt instructions (original prompts for MultiArith and AQuA)"
+                ],
+                "setup_steps": [
+                    "Run the optimization script on GSM8K using the fixed prompt optimization pipeline and scoring model",
+                    "Extract and record the top optimized prompt instructions from GSM8K",
+                    "Directly apply these optimized prompts to the MultiArith and AQuA datasets",
+                    "Execute the evaluation script using the same scoring methodology as for GSM8K",
+                    "Record detailed accuracy scores for both training and test splits",
+                    "Perform a comparative analysis against the baseline prompts to assess percentage improvements and convergence behavior"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Internal optimization settings",
+                        "description": "Variations in instruction scoring (e.g., bucketizing accuracy to 100 buckets versus 20 buckets), number of exemplars used in the meta-prompt, and other internal pipeline settings can add complexity to replicating the experiment."
+                    },
+                    {
+                        "source": "Interconnection between components",
+                        "description": "The need to seamlessly coordinate the optimization pipeline, data evaluation processes, and integration of pre-trained models (scorer) increases the overall setup complexity."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Baseline prompts",
+                    "Optimization options (internal settings such as scoring bucket sizes and exemplar counts)"
+                ],
+                "ambiguous_setup_steps": [
+                    "Details on the evaluation methodology, particularly how training and test splits are defined and how convergence behavior is measured",
+                    "Selection criteria for baseline prompts are not explicitly delineated, leading to uncertainty about what constitutes the baseline"
+                ],
+                "possible_modifications": {
+                    "modification_X": [
+                        "Introduce additional variables such as different scorer models or alternative evaluation scripts",
+                        "Mask some of the internal settings (like exemplar count or scoring bucket granularity) to test the robustness of the pipeline",
+                        "Expand the dataset variable to include further similar benchmarks beyond MultiArith and AQuA"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce model size constraints by requiring that the optimized prompts achieve similar performance using a smaller scoring model (e.g., using text-bison-mini instead of text-bison).",
+                        "Limit API token usage or model calls to simulate resource restrictions."
+                    ],
+                    "time_constraints": [
+                        "Reduce the number of optimization iterations or impose a strict time budget for the prompt optimization pipeline to test convergence speed and efficiency."
+                    ],
+                    "money_constraints": [
+                        "Minimize compute costs by reducing the number of model API calls or using a model with lower operating costs while ensuring performance parity."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic elements in the prompt optimization pipeline",
+                "description": "Random uncertainty in this experiment can arise from factors such as the randomness in token sampling, random selection of exemplars in the meta-prompt, and the internal discretization of instruction scoring (e.g., bucketizing accuracies into 100 buckets versus 20 buckets). These stochastic components may lead to unstable gradient updates or variability in measured performance (accuracy scores and convergence behavior) across different runs.",
+                "impact": "Such randomness can result in fluctuating training and test accuracy scores on MultiArith and AQuA when applying GSM8K-optimized prompts, potentially masking or exaggerating the real improvements over baseline prompts.",
+                "possible_modifications": [
+                    "Introduce artificial delays or noise in the optimization pipeline to further test the robustness of the approach.",
+                    "Vary the random seed initialization or exemplar selection process to systematically evaluate the effect of randomness on performance.",
+                    "Mimic random token dropping (as in the referenced example) during evaluation to assess its impact on gradient stability and prediction accuracy."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Fixed biases in dataset composition and baseline prompt selection",
+                "description": "Systematic uncertainty may emerge from one-time modifications or inherent biases. For example, if the baseline prompts for MultiArith and AQuA are not well-defined or if the datasets themselves have been inadvertently modified (e.g., consistent labeling biases due to data collection issues), the measured performance improvements might systematically overstate or understate the true transferability of GSM8K-optimized prompts.",
+                "impact": "This can lead to consistent performance trends (either improved or degraded) that do not generalize beyond the specific experimental setup, thereby giving a misleading picture of the effectiveness of the optimized prompts.",
+                "possible_modifications": [
+                    "Test the method with alternative scorer models or evaluation scripts to ensure that observed gains are not due to a systematic bias in one particular setup.",
+                    "Retrieve and verify clean copies of the datasets (MultiArith, AQuA) and re-assess baseline prompts to neutralize any inadvertent bias.",
+                    "Modify internal optimization settings\u2014such as changing exemplar counts or scoring bucket sizes\u2014to determine if the transferability holds under varied systematic conditions."
+                ]
+            }
+        },
+        {
+            "question": "Does the order of instructions in the meta-prompt (i.e., lowest to highest vs. highest to lowest vs. random) affect the final accuracy and convergence speed of prompt optimization for tasks such as GSM8K and BBH sports_understanding?",
+            "method": "Use text-bison as the scorer and PaLM 2-L as the optimizer. For each task, construct three meta-prompts with different instruction orderings: (1) ascending order (lowest to highest, the default), (2) descending order (highest to lowest), and (3) random order. For GSM8K, run optimizations over 200 steps and record performance at steps 0, 100, and 200; for BBH sports_understanding, run the optimization over 1600 steps and record performance at predetermined intervals (e.g., 0, 800, and 1600 steps). Each experiment should be repeated three times to compute average accuracies and standard deviations. Additionally, leverage insights from previous studies (e.g., recency bias indicating that later instructions in the meta-prompt have a greater influence) and compare the results with baseline performance comparisons as described in the paper. To implement the experiments, you may use the prompt optimization setup described in the README by running the appropriate script (e.g., the one for prompt optimization) and ensuring that you have installed the necessary dependencies along with valid API keys.",
+            "expected_outcome": "It is expected that the default incremental ordering (ascending - lowest to highest) will result in better final accuracy and faster convergence for both GSM8K and BBH sports_understanding tasks. This performance advantage is hypothesized to stem from the recency bias in the optimizer LLM, as instructions positioned later in the meta-prompt exert more influence. The results should display a clear upward trend in optimization performance when using the default ordering, with performance metrics closely matching or exceeding those shown in the baseline comparisons (e.g., as seen in Table 4).",
+            "subsection_source": "5.3 A BLATION STUDIES",
+            "no_answer": "No answer found after 2 iterations.",
+            "design_complexity": {
+                "constant_variables": {
+                    "scorer": [
+                        "text-bison"
+                    ],
+                    "optimizer": [
+                        "PaLM 2-L"
+                    ],
+                    "experiment_setup": "Dependencies, API keys, and prompt optimization script as described in the README are constant across experiments"
+                },
+                "independent_variables": {
+                    "meta_prompt_ordering": [
+                        "ascending (lowest to highest)",
+                        "descending (highest to lowest)",
+                        "random"
+                    ],
+                    "task": [
+                        "GSM8K",
+                        "BBH sports_understanding"
+                    ]
+                },
+                "dependent_variables": {
+                    "final_accuracy": "Measured as the accuracy performance of the prompt optimization (e.g., as seen in Table 4)",
+                    "convergence_speed": "Measured by the rate of performance improvement over the specified optimization steps"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "instruction_ordering_effect": "While the recency bias suggests later instructions have greater influence, the exact quantification of this effect is not explicitly provided",
+                    "step_intervals": "For BBH sports_understanding, the predetermined intervals (e.g., 0, 800, and 1600 steps) are mentioned but may be open to interpretation or adjustment",
+                    "baseline_comparison": "The baseline performance metrics referenced (e.g., in Table 4) are used for comparison, yet the precise measurement parameters are not fully detailed"
+                },
+                "possible_modifications": {
+                    "masking_variables": [
+                        "Mask the task variable in the question to observe how absence of explicit task identification influences the agent's performance"
+                    ],
+                    "introducing_new_values": [
+                        "Add new types of meta-prompt orderings (e.g., weighted random, or custom sequences) as additional independent variable values"
+                    ],
+                    "altering_step_intervals": [
+                        "Change the step recording intervals (e.g., more granular steps for BBH sports_understanding) to better capture convergence speed dynamics"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "text-bison scorer",
+                    "PaLM 2-L optimizer",
+                    "GSM8K task dataset",
+                    "BBH sports_understanding task dataset",
+                    "Meta-prompt construction module (supports ascending, descending, and random instruction orderings)",
+                    "Prompt optimization script (as described in the README)",
+                    "Dependencies (libraries, valid API keys, etc.)"
+                ],
+                "setup_steps": [
+                    "Install necessary dependencies and obtain valid API keys for the scorer and optimizer",
+                    "Download and configure the prompt optimization script from the GitHub README",
+                    "Construct three variants of the meta-prompt with different instruction orderings: ascending (lowest to highest), descending (highest to lowest), and random",
+                    "For GSM8K, run the optimization over 200 steps and record performance at steps 0, 100, and 200",
+                    "For BBH sports_understanding, run the optimization over 1600 steps with performance recorded at intervals (e.g., 0, 800, and 1600 steps)",
+                    "Repeat each experiment three times to compute average accuracies and standard deviations",
+                    "Compare the outcomes with the baseline performance metrics mentioned (e.g., as in Table 4) and incorporate previous studies\u2019 insights (such as recency bias)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Baseline Comparisons",
+                        "description": "Evaluating performance against reference metrics (e.g., Table 4) and prior studies introduces complexity in matching experimental parameters."
+                    },
+                    {
+                        "source": "Recency Bias Influence",
+                        "description": "The hypothesized greater influence of later instructions in the meta-prompt complicates the interpretation of convergence speed and final accuracy."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "The exact quantification of the instruction ordering effect via recency bias is not fully specified",
+                    "The baseline performance metrics (e.g., as described in Table 4) lack complete measurement details"
+                ],
+                "ambiguous_setup_steps": [
+                    "The predetermined step intervals for BBH sports_understanding (0, 800, and 1600 steps) could be open to interpretation or adjustment",
+                    "Integration of insights from previous studies (e.g., the influence of recency bias) is described but lacks detailed operational instructions"
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Mask the task variable in the question to assess how the absence of explicit task identification affects performance"
+                    ],
+                    "introduce_alternative_orderings": [
+                        "Add new meta-prompt orderings (e.g., weighted random or custom sequences) as additional independent variables"
+                    ],
+                    "adjust_step_intervals": [
+                        "Change the step recording intervals (e.g., use more granular steps for BBH sports_understanding) to better capture convergence dynamics"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce model size constraints by requiring that performance achieved with the current setup (using text-bison and PaLM 2-L) must be matched by a smaller model variant (e.g., a 'mini' version), similar to tightening configurations as mentioned in extended task modifications."
+                    ],
+                    "time_constraints": [
+                        "Reduce the number of optimization steps or use more granular step recordings (e.g., additional intervals between the current 0, 800, and 1600 steps for BBH sports_understanding) to further stress test convergence speed differences."
+                    ],
+                    "money_constraints": [
+                        "Limit API usage by imposing a stricter token budget or reducing the number of experimental repetitions if API call costs become a concern."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability introduced by random meta-prompt ordering and inherent LLM stochasticity",
+                "description": "In the experiment, the 'random order' condition introduces variability in the way instructions are presented, which can lead to instability in gradient updates and fluctuations in both final accuracy and convergence speed. This is compounded by the inherent randomness in LLM API responses (e.g., possible effects similar to dropping tokens at random) and stochastic elements in optimization.",
+                "impact": "These random factors can produce inconsistent measurements between experimental repetitions, making it harder to precisely assess the influence of instruction ordering. The variance observed in performance (as depicted by standard deviation intervals in Figures 22(c) and 22(d)) reflects this uncertainty.",
+                "possible_modifications": [
+                    "Increase the number of repetitions or use a fixed random seed to reduce statistical noise.",
+                    "Introduce controlled random disruptions (such as artificially dropping unimportant tokens, similar to the known method) to quantify the impact of randomness.",
+                    "Monitor the effect of random meta-prompt orderings over more granular step intervals to better capture fluctuations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Recency bias in meta-prompt ordering and potential dataset biases",
+                "description": "The systematic uncertainty arises from the fact that the default ascending meta-prompt ordering leverages recency bias\u2014where later instructions in the meta-prompt have a disproportionately greater impact on the optimizer's behavior. This bias consistently affects the measured final accuracy and convergence speed relative to alternative orderings (e.g., descending or random). Additionally, differences from baseline performances (e.g., as referenced in Table 4) may indicate systematic biases in the experimental setup.",
+                "impact": "Such systematic biases can lead to a consistent over- or underestimation of model performance across experiments, making it difficult to generalize findings or compare with baselines from previous studies.",
+                "possible_modifications": [
+                    "Run control experiments with alternative orderings (such as descending or a weighted random order) to isolate the effect of recency bias.",
+                    "Verify and, if necessary, retrieve new clean copies of task datasets to negate any systematic bias from data contamination.",
+                    "Alter the meta-prompt construction (e.g., masking certain variables or introducing custom instruction sequences) to test and possibly mitigate the recency bias."
+                ]
+            }
+        },
+        {
+            "question": "How does the number of generated instructions per optimization step influence the performance and stability of the prompt optimization process for datasets like GSM8K and BBH sports_understanding? In this study you will use a setup similar to the one provided by the repository (which supports text-bison as the scorer and allows use of models like PaLM 2-L as the optimizer) to investigate this relationship.",
+            "method": "Employ text-bison as the scorer and PaLM 2-L as the optimizer, following a protocol similar to that used in the repository\u2019s prompt optimization pipeline (e.g., via optimize_instructions.py). Design experiments where the only variable is the number of instructions generated per optimization step by testing with values 1, 2, 4, 8, and 16. For each setting, adjust the number of optimization steps so that the overall number of evaluated instructions stays roughly constant (for example, if using 8 instructions per step, run 200 steps; scale accordingly for the other settings). For GSM8K, sample approximately 3.5% of the training set as per prior protocol and record training accuracy at intervals that reflect the cumulative number of evaluated instructions (e.g., every 50,000 instructions). Conduct parallel experiments on the BBH sports_understanding task. Analyze both the convergence speed and the final accuracy across configurations, and examine qualitative patterns in the generated prompt instructions relative to the patterns observed in related studies. Aggregate results over three independent runs to reduce random variance and assess stability.",
+            "expected_outcome": "It is anticipated that generating 8 instructions per step will yield the optimal balance between reducing gradient variance and permitting a larger number of optimization iterations, thereby leading to improved convergence speed and higher final accuracy. Sampling too few instructions may cause high variance and unstable performance, whereas sampling too many may limit the number of optimization steps available, potentially leading to suboptimal integration of iterative improvements. The experimental results should align with observations from the literature (e.g., as seen in the improvement trends in Figures and tables of related studies) and provide clear quantification of both convergence behavior and overall stability.",
+            "subsection_source": "5.3 A BLATION STUDIES",
+            "no_answer": "No answer found after 2 iterations.",
+            "design_complexity": {
+                "constant_variables": {
+                    "scorer": [
+                        "text-bison"
+                    ],
+                    "optimizer": [
+                        "PaLM 2-L"
+                    ],
+                    "dataset": [
+                        "GSM8K",
+                        "BBH sports_understanding"
+                    ],
+                    "total_instructions_evaluated": "kept roughly constant across experiments by adjusting the number of optimization steps"
+                },
+                "independent_variables": {
+                    "instructions_per_step": [
+                        "1",
+                        "2",
+                        "4",
+                        "8",
+                        "16"
+                    ]
+                },
+                "dependent_variables": {
+                    "training_accuracy": "Measured at intervals based on the cumulative number of evaluated instructions (e.g., every 50,000 instructions)",
+                    "convergence_speed": "Rate at which training accuracy improves",
+                    "stability": "Variance across independent runs and qualitative patterns in the generated prompt instructions"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "adjusted_optimization_steps": "The precise method for scaling the number of steps to keep the total evaluated instructions constant is not explicitly detailed",
+                    "qualitative_patterns": "It is unclear how qualitative changes in prompt instructions should be quantified or compared",
+                    "cumulative_evaluation_intervals": "The criteria for selecting evaluation intervals (e.g., every 50,000 instructions) may vary across datasets and is not strictly defined"
+                },
+                "possible_modifications": {
+                    "modification_instructions_per_step": [
+                        "Extend the range of values for the number of instructions per step",
+                        "Introduce additional intermediate values to better capture the effect on performance"
+                    ],
+                    "modification_evaluation_intervals": [
+                        "Refine or vary the evaluation intervals instead of using a fixed cumulative instruction count",
+                        "Explicitly define and measure qualitative metrics for the prompt instructions"
+                    ],
+                    "modification_optimization_scaling": [
+                        "Provide a more detailed protocol for scaling the number of optimization steps based on the chosen instructions per step"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Scorer model (text-bison)",
+                    "Optimizer model (PaLM 2-L)",
+                    "Datasets (GSM8K and BBH sports_understanding)",
+                    "Prompt optimization pipeline (e.g., optimize_instructions.py)",
+                    "Evaluation tools for recording cumulative training accuracy and convergence speed",
+                    "Infrastructure for running multiple (three) independent experiment runs"
+                ],
+                "setup_steps": [
+                    "Configure and initialize the prompt optimization pipeline using the repository\u2019s settings",
+                    "Set up text-bison as the scorer and PaLM 2-L as the optimizer",
+                    "Prepare datasets by sampling (e.g., 3.5% of GSM8K training set) and defining appropriate evaluation intervals (e.g., every 50,000 instructions)",
+                    "Design experiments varying the number of instructions per optimization step (1, 2, 4, 8, and 16)",
+                    "Adjust the number of optimization steps to keep the total number of evaluated instructions roughly constant",
+                    "Run parallel experiments on GSM8K and BBH sports_understanding",
+                    "Aggregate and analyze results for convergence speed, final training accuracy, and qualitative changes in prompt instructions"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Optimization scaling",
+                        "description": "Ensuring that the number of optimization steps scales appropriately with the number of instructions per step to keep total evaluations constant adds complexity."
+                    },
+                    {
+                        "source": "Qualitative analysis",
+                        "description": "Comparing qualitative patterns in the generated prompt instructions introduces subjective evaluation criteria that must be consistently applied."
+                    },
+                    {
+                        "source": "Multiple independent runs",
+                        "description": "Conducting three independent runs to reduce random variance introduces additional coordination and aggregation steps."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Adjusted optimization steps: The method for scaling the number of steps based on instructions per step is not explicitly detailed.",
+                    "Qualitative patterns: There is ambiguity in how qualitative changes in prompt instructions should be measured and compared."
+                ],
+                "ambiguous_setup_steps": [
+                    "Determining the precise evaluation intervals (e.g., every 50,000 instructions) may vary depending on dataset characteristics.",
+                    "The exact protocol for adjusting the number of optimization steps to maintain a constant total evaluated instruction count is not fully specified."
+                ],
+                "possible_modifications": {
+                    "modification_instructions_per_step": [
+                        "Extend the range or introduce intermediate values for the number of generated instructions per optimization step to capture a more granular effect on performance."
+                    ],
+                    "modification_evaluation_intervals": [
+                        "Refine the criteria for selecting evaluation intervals or include alternative intervals based on dataset-specific properties."
+                    ],
+                    "modification_optimization_scaling": [
+                        "Provide a more detailed protocol for scaling the number of optimization steps relative to the instructions per step to remove ambiguity."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce a setup where a smaller variant of the optimizer is used (e.g., PaLM 2-L-mini) while targeting performance comparable to that of PaLM 2-L, to reflect realistic resource limitations."
+                    ],
+                    "time_constraints": [
+                        "Impose restrictions on the overall number of optimization iterations (or limit the evaluation frequency) to simulate scenarios where computation time is severely limited."
+                    ],
+                    "money_constraints": [
+                        "Reduce the total number of API calls or evaluations by tightening the evaluation intervals, thereby simulating a scenario with reduced experimental budget."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Stochastic variability in instruction generation and gradient updates",
+                "description": "The experiment involves generating different numbers of instructions per optimization step. Because LLM outputs are inherently stochastic and training involves gradient updates based on these instructions, there is a random component that affects convergence speed and stability. Variability among the three independent runs and differences in the specific instructions generated can introduce random uncertainty into the measured training accuracy and qualitative patterns.",
+                "impact": "Random fluctuations may lead to high variance in convergence curves and training accuracy, making it difficult to isolate the effect of the number of instructions per step. This uncertainty can mask the true relationship between the variable and performance.",
+                "possible_modifications": [
+                    "Increase the number of independent runs beyond three to better average out stochastic effects.",
+                    "Ensure that random seeds are set consistently across experiments to reduce variability.",
+                    "Analyze additional internal metrics (e.g., gradient variance) to better understand the influence of stochastic factors."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Design choices in experiment scaling and evaluation intervals",
+                "description": "The protocol requires adjusting the number of optimization steps to keep the overall number of evaluated instructions constant when varying the instructions per step. This scaling method, along with fixed evaluation intervals (e.g., every 50,000 instructions), can introduce a systematic bias if the scaling does not translate linearly for different values, or if the evaluation intervals do not optimally capture convergence behavior for all settings. Additionally, using similar qualitative metrics for prompt instruction patterns may contribute to systematic uncertainty.",
+                "impact": "Systematic biases can lead to predictable distortions in the observed relationship between the number of instructions per step and performance. For instance, an imprecise method for scaling optimization steps could consistently favor certain configurations, thereby skewing comparisons.",
+                "possible_modifications": [
+                    "Develop a detailed and uniform protocol for scaling the number of optimization steps linked to the instructions per step to ensure the total evaluated instructions remain truly equivalent.",
+                    "Refine evaluation intervals by exploring alternative intervals or adaptive methods based on dataset characteristics.",
+                    "Introduce objective, quantifiable metrics for qualitative changes in prompt instructions to reduce subjectivity."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the impact of different optimizer LLMs on convergence speed and final prompt quality.",
+            "experiment_design": "Conduct a systematic comparison across several optimizer LLMs (e.g., PaLM 2-L-IT, gpt-3.5-turbo, GPT-4) while keeping the scorer (e.g., pre-trained PaLM 2-L) constant. Run the prompt optimization process on a fixed subset of GSM8K or BBH tasks and record the number of optimization steps required to reach predefined accuracy milestones. Additionally, analyze the semantic quality and conciseness of the resulting instructions. This experiment will help understand if certain optimizers enable faster convergence or produce qualitatively different prompts.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "idea": "Evaluate the robustness of optimized instructions against changes in dataset characteristics or adversarial inputs.",
+            "experiment_design": "Use one or more BBH tasks and introduce controlled perturbations or noise into the test examples (such as altering phrasing or adding irrelevant context). Compare the performance drop (in training accuracy) of the optimized instructions against the baseline (e.g., 'Let's think step by step.') under these perturbed conditions. This setup should reveal how robust the optimized prompts are when exposed to data that deviates from the training distribution or follows adversarial patterns.",
+            "subsection_source": "5.2 M AINRESULTS"
+        },
+        {
+            "idea": "Investigate adaptive meta-prompt ordering strategies that dynamically adjust the instruction order based on feedback from previous optimization iterations.",
+            "experiment_design": "Develop a dynamic meta-prompt that reorders instructions based on their observed contribution to the improvement of training accuracy. Compare the dynamic ordering with the fixed ascending ordering over the same tasks (GSM8K and BBH sports_understanding) using the same evaluation metrics. Assess whether adaptive ordering could further accelerate convergence and improve final accuracy.",
+            "subsection_source": "5.3 A BLATION STUDIES"
+        },
+        {
+            "idea": "Extend the ablation studies to other aspects of the optimization framework, such as the impact of different temperature settings for the optimizer and scorer LLMs or the composition of the meta-prompt (e.g., number of past best instructions included).",
+            "experiment_design": "Set up experiments on GSM8K and BBH sports_understanding with varying temperature settings for the optimizer (e.g., 0.8, 1.0, 1.2) and test different sizes of the meta-prompt (e.g., top 10 versus top 20 instructions). Measure the resulting training accuracy and convergence rate. This would help in understanding sensitivity to hyperparameters and potentially in further stabilizing or enhancing performance.",
+            "subsection_source": "5.3 A BLATION STUDIES"
+        }
+    ],
+    "main_takeaways": [
+        "Prompt optimization starting from an empty string can effectively discover task-specific instructions that drive high training accuracy across a diverse set of BBH tasks.",
+        "Different scoring and optimization strategies (e.g., using PaLM 2-L, GPT-3.5-turbo, and text-bison scorers) yield distinct refined instructions for tasks such as boolean_expressions, causal_judgement, and date_understanding, suggesting that the choice of scorer influences the final prompts.",
+        "The training accuracy curves across 23 BBH tasks show that some tasks (like disambiguation_qa and logical_deduction_seven_objects) achieve near-perfect training accuracy rapidly, whereas others require more steps, highlighting variable task difficulties and learning dynamics.",
+        "The study provides concrete numerical evidence (e.g., accuracy progressions over steps for tasks such as ruin_names, sports_understanding, and formal_fallacies) that prompt optimization can be a systematic approach to tailoring prompts for improved performance.",
+        "The method demonstrates the potential to generalize the optimization framework across different tasks, opening pathways to further analyze how prompt design choices correlate with downstream performance metrics."
+    ]
+}

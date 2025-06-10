@@ -1,0 +1,158 @@
+{
+  "questions": [
+    {
+      "question": "Does OptoPrime (Trace) match or outperform Adam in classical differentiable optimization problems? Do this for Trace (Optoprime), and a variant that does not see the computational graph (Trace Masked).",
+      "method": "1. **Optimization Problem:** The experiment evaluates OptoPrime (Trace) on a **synthetic numerical optimization task**, solving  \n   \\[\n   \\min_x |h(x) - y^*|\n   \\]\n   for a randomly generated target \\( y^* \\).  \n2. **Randomized Trials:**  \n   - **30 trials** are conducted with **different randomly generated problems**.  \n   - The computational graph of \\( h(x) \\) contains **arbitrarily complex numerical connections**.  \n3. **Comparative Evaluation:**  \n   - OptoPrime (Trace) is compared to:  \n     - **Trace Masked** (a variant without graph access).  \n     - **Adam optimizer** (a gradient-based baseline).  \n4. **Feedback Mechanism:**  \n   - Optimizers receive feedback in the form of **\u201cThe output should be <larger/smaller>\u201d**, which represents gradient information w.r.t. \\( h(x) \\).",
+      "expected_outcome": "- **Trace (OptoPrime) should match Adam\u2019s best-in-class performance** in finding \\( x^* \\).  \n- **Trace Masked (feedback-only optimizer) should struggle** to find \\( x^* \\) due to the lack of access to the computational graph.  \n- **All methods should exhibit similar levels of randomness**, ensuring fair comparison."
+    },
+    {
+      "question": "- **Does Trace NoMem (OptoPrime without memory) perform worse than Trace, highlighting the importance of memory for optimization in complex system orchestration?**",
+      "method": "1. **Problem Setup:**  \n   - **Task:** Optimize **traffic light durations** at a **four-way intersection** to minimize vehicle delay.  \n   - **Simulator:** UXSim [26] is used to simulate traffic flow.  \n   - **Trainable Parameters:** Two integer values in the range **[15, 90]**, representing the green light duration for each direction.  \n   - **Feedback Signal:** The **estimated delay** experienced by vehicles due to intersection control.  \n   - **Objective:** Minimize vehicle delay **using the fewest number of traffic simulations**.  \n\n2. **Comparative Evaluation:**  \n   - **Trace (OptoPrime with memory)**\n   - **Trace NoMem (OptoPrime without memory)**\n   - **SCATS**: A state-of-the-art heuristic from traffic control literature.  \n   - **Gaussian Process Minimization (GP)**: A black-box optimization technique.  \n   - **Particle Swarm Optimization (PSO)**: Another black-box optimization technique.  \n\n3. **Performance Metric:**  \n   - The methods are evaluated based on **how quickly they find an effective traffic light schedule**.  \n   - All methods start from **the same initial conditions** to ensure fair comparison.",
+      "expected_outcome": "- **Trace (OptoPrime with memory) should quickly achieve competitive performance with SCATS**, while OPRO struggles.  \n- **Trace NoMem should perform worse than Trace**, demonstrating that **memory is crucial for optimization in this setting**.  \n- **GP and PSO should initially perform poorly because 50 iterations are insufficient for convergence**, though they would improve with more iterations.  \n- **Trace incurs extra computational overhead** due to storing the computation graph and querying an LLM with longer prompts."
+    },
+    {
+      "question": "- **Does Trace NoMem (OptoPrime without memory) perform worse than Trace, highlighting the importance of memory for optimization in complex system orchestration?**",
+      "method": "1. **Problem Setup:**  \n   - **Task:** Optimize **traffic light durations** at a **four-way intersection** to minimize vehicle delay.  \n   - **Simulator:** UXSim [26] is used to simulate traffic flow.  \n   - **Trainable Parameters:** Two integer values in the range **[15, 90]**, representing the green light duration for each direction.  \n   - **Feedback Signal:** The **estimated delay** experienced by vehicles due to intersection control.  \n   - **Objective:** Minimize vehicle delay **using the fewest number of traffic simulations**.  \n\n2. **Comparative Evaluation:**  \n   - **Trace (OptoPrime with memory)**\n   - **Trace NoMem (OptoPrime without memory)**\n\n3. **Performance Metric:**  \n   - The methods are evaluated based on **how quickly they find an effective traffic light schedule**.  \n   - All methods start from **the same initial conditions** to ensure fair comparison.",
+      "expected_outcome": "- **Trace NoMem should perform worse than Trace**, demonstrating that **memory is crucial for optimization in this setting**."
+    },
+    {
+      "question": "- **Can Trace optimize both prompts and functions in an LLM agent workflow more effectively than DSPy\u2019s COPRO, leading to better output correctness and formatting, on the Big-Bench Hard dataset, with 15 examples in the training set, 5 examples in the validation set, and the remaining in the test set?**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Optimize a DSPy-based **LLM agent** by tuning both **prompts and functions**.  \n   - **Optimized Components:**  \n     - **`prompt_template`**: The **meta-prompt** guiding LLM responses.  \n     - **`create_prompt`**: A function that **modifies the prompt** based on the current query.  \n     - **`extract_answer`**: A function that **post-processes** the LLM output into a structured format.  \n   - **Pipeline:** The experiment evaluates an **end-to-end prompt-and-code optimization system**, where the LLM agent must generate both **correct answers and properly formatted responses**.  \n\n2. **Dataset:**  \n   - **Big-Bench Hard dataset** [21].  \n   - **Training set:** 15 examples.  \n   - **Validation set:** 5 examples.  \n   - **Test set:** Remaining data from the dataset.  \n\n3. **Comparative Evaluation:**  \n   - **Trace**: Optimizes the **full agent workflow** (prompt + functions).  \n   - **DSPy\u2019s COPRO**: Optimizes **only the meta-prompt**.  \n\n4. **Evaluation Metric:**  \n   - An **automatic evaluation function** compares LLM-generated outputs with the ground truth.  \n   - The outputs must be **both correct in content and follow a specified format**.",
+      "expected_outcome": "- **Trace should achieve superior optimization** by jointly tuning prompts and functions, surpassing DSPy\u2019s COPRO.  \n- **DSPy\u2019s COPRO should be limited in its improvements** since it only optimizes the meta-prompt and not the full agent pipeline."
+    },
+    {
+      "question": "- **Can Trace optimize both prompts and functions in an LLM agent workflow more effectively than DSPy\u2019s COPRO, leading to better output correctness and formatting, on the Big-Bench Hard dataset, with 15 examples in the training set, 5 examples in the validation set, and the remaining in the test set? Analyze the results only for the algorithmic tasks within this dataset (there should be 11 tasks)**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Optimize a DSPy-based **LLM agent** by tuning both **prompts and functions**.  \n   - **Optimized Components:**  \n     - **`prompt_template`**: The **meta-prompt** guiding LLM responses.  \n     - **`create_prompt`**: A function that **modifies the prompt** based on the current query.  \n     - **`extract_answer`**: A function that **post-processes** the LLM output into a structured format.  \n   - **Pipeline:** The experiment evaluates an **end-to-end prompt-and-code optimization system**, where the LLM agent must generate both **correct answers and properly formatted responses**.  \n\n2. **Dataset:**  \n   - **Big-Bench Hard dataset** [21].  \n   - **Training set:** 15 examples.  \n   - **Validation set:** 5 examples.  \n   - **Test set:** Remaining data from the dataset.  \n\n3. **Comparative Evaluation:**  \n   - **Trace**: Optimizes the **full agent workflow** (prompt + functions).  \n   - **DSPy\u2019s COPRO**: Optimizes **only the meta-prompt**.  \n\n4. **Evaluation Metric:**  \n   - An **automatic evaluation function** compares LLM-generated outputs with the ground truth.  \n   - The outputs must be **both correct in content and follow a specified format**.",
+      "expected_outcome": "- **Trace should achieve superior optimization** by jointly tuning prompts and functions, surpassing DSPy\u2019s COPRO.  \n- **DSPy\u2019s COPRO should be limited in its improvements** since it only optimizes the meta-prompt and not the full agent pipeline."
+    },
+    {
+      "question": "- **Can Trace optimize both prompts and functions in an LLM agent workflow more effectively than DSPy\u2019s COPRO, leading to better output correctness and formatting, on the Big-Bench Hard dataset, with 15 examples in the training set, 5 examples in the validation set, and the remaining in the test set? Analyze the results only for the NLP tasks within this dataset (there should be 12 tasks)**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Optimize a DSPy-based **LLM agent** by tuning both **prompts and functions**.  \n   - **Optimized Components:**  \n     - **`prompt_template`**: The **meta-prompt** guiding LLM responses.  \n     - **`create_prompt`**: A function that **modifies the prompt** based on the current query.  \n     - **`extract_answer`**: A function that **post-processes** the LLM output into a structured format.  \n   - **Pipeline:** The experiment evaluates an **end-to-end prompt-and-code optimization system**, where the LLM agent must generate both **correct answers and properly formatted responses**.  \n\n2. **Dataset:**  \n   - **Big-Bench Hard dataset** [21].  \n   - **Training set:** 15 examples.  \n   - **Validation set:** 5 examples.  \n   - **Test set:** Remaining data from the dataset.  \n\n3. **Comparative Evaluation:**  \n   - **Trace**: Optimizes the **full agent workflow** (prompt + functions).  \n   - **DSPy\u2019s COPRO**: Optimizes **only the meta-prompt**.  \n\n4. **Evaluation Metric:**  \n   - An **automatic evaluation function** compares LLM-generated outputs with the ground truth.  \n   - The outputs must be **both correct in content and follow a specified format**.",
+      "expected_outcome": "- **Trace should achieve superior optimization** by jointly tuning prompts and functions, surpassing DSPy\u2019s COPRO.  \n- **DSPy\u2019s COPRO should be limited in its improvements** since it only optimizes the meta-prompt and not the full agent pipeline."
+    },
+    {
+      "question": "- **Can Trace (OptoPrime with memory) effectively optimize long-horizon robotic control tasks, outperforming OPRO and OptoPrime without memory? There are 3 tasks to be evaluated: Reach, Pick-place, and Push. These all belong to the Meta-World environment from LLF-Bench.**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Optimize long-horizon control for a **simulated Sawyer robot manipulator** in Meta-World (LLF-Bench).  \n   - **Tasks Considered:**  \n     - **Reach**: Move the robot\u2019s end-effector to a target position.  \n     - **Pick-place**: Pick up an object and place it at a designated position.  \n     - **Push**: Push an object to a goal location.  \n   - **Observation Space:** A dictionary of vectors representing:  \n     - End-effector position  \n     - Goal position  \n     - Gripper status  \n   - **Action Space:** A **4D vector** controlling:  \n     - The relative position of the end-effector  \n     - The gripper state  \n\n2. **Training Setup:**  \n   - **Episodic training**: The robot either **completes the task or times out**.  \n   - **Fixed initial conditions**: All training iterations start with the **same conditions**.  \n   - **Task horizon:** **10 steps per episode**, ensuring tasks can be fully executed.  \n\n3. **Comparative Evaluation:**  \n   - **Trace (OptoPrime with memory)**  \n   - **Trace NoMem (OptoPrime without memory)**  \n   - **OPRO** (proposes one candidate per iteration and receives feedback).  \n\n4. **Feedback Mechanism:**  \n   - OPTO provides **textual feedback** on task success.  \n   - The execution trace records **step-by-step rollout** for better optimization.  \n   - Ablation study: An experiment where **execution traces are masked**, testing their impact on stability and performance.",
+      "expected_outcome": "- **Trace (OptoPrime with memory) should be the top-performing optimizer**, particularly in long-horizon tasks requiring multiple steps.  \n- **Trace NoMem (without execution traces) should see a significant drop in performance and stability**, validating the importance of execution traces.  \n- **OPRO should initially perform well in the Reach task but degrade over iterations**, as mentioned in prior studies.  \n- **Trace should generalize well to held-out test conditions**, proving its ability to learn robust control logic."
+    },
+    {
+      "question": "- **Does Trace or TextGrad optimize AI workflows more flexibly and efficiently?**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "- **All optimization methods should achieve similar success rates**, indicating comparable effectiveness in solution and prompt optimization.   \n- **The results should highlight the architectural advantage of Trace**, showcasing its ability to optimize any computational workflow more flexibly."
+    },
+    {
+      "question": "- **Does OptoPrime (within Trace) or TextGrad achieve faster optimization?**",
+      "method": "1. **Task Setup:**  \n   - **Goal:** Compare Trace and TextGrad for AI workflow optimization.  \n   - **Key Difference Between Methods:**  \n     - **Trace propagates minimal subgraphs** to separate tracing infrastructure from optimization algorithms.  \n     - **TextGrad propagates text feedback**, tightly coupling infrastructure and optimization.   \n\n2. **Experimental Design for Fair Comparison:**  \n   - Applied **Trace directly to the evaluation code released with the TextGrad library**.  \n   - Both frameworks used the **same LLM APIs at around the same time** to ensure fairness.  \n   - **Optimization Tasks Compared:**  \n     - **Solution Optimization** (TextGrad Table 2).  \n     - **Prompt Optimization** (TextGrad Table 3).  \n\n3. **Comparative Evaluation:**  \n   - **OptoPrime (Trace\u2019s optimizer)**  \n   - **TextGrad (original implementation)**",
+      "expected_outcome": "- **OptoPrime should be approximately 3x faster than TextGrad**, since:  \n  - OptoPrime makes **one LLM call per optimization step**.  \n  - TextGrad makes **a number of LLM calls proportional to the graph\u2019s size**.",
+      "experiment_design_complexity": {
+        "constant_variables": {
+          "api_call_timing": "same_time"
+        },
+        "independent_variables": {
+          "optimization_method": [
+            "OptoPrime",
+            "TextGrad"
+          ],
+          "optimization_task": [
+            "Solution Optimization",
+            "Prompt Optimization"
+          ],
+          "llm_model": [
+            "The optimizer is GPT-4o-2024-08-06",
+            "The student model is GPT-35-turbo-1106"
+          ]
+        },
+        "dependent_variables": {
+          "time_in_minutes": "Measured as the total time taken for optimization"
+        }
+      },
+      "experiment_design_ambiguity": {
+        "ambiguous_variables": {
+          "optimization_method": "It is unclear what these methods represent, the agent needs to refer to another paper.",
+          "llm_model": "It is unclear what an optimizer, or a student model means."
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Trace framework (OptoPrime optimizer)",
+            "TextGrad framework",
+            "LLM APIs (GPT-4o-2024-08-06, GPT-35-turbo-1106)",
+            "Optimization tasks (Solution Optimization, Prompt Optimization)",
+            "Evaluation function (automatic comparison of outputs to ground truth)",
+            "Performance metric (time in minutes)",
+            "Hardware setup (We run the experiments on a standard PC with 16 GB RAM)"
+          ],
+          "setup_steps": [
+            "Configure and initialize the Trace framework",
+            "Integrate TextGrad as an optimizer within Trace",
+            "Ensure LLM API access for both frameworks",
+            "Load dataset for Solution Optimization and Prompt Optimization tasks",
+            "Run optimization trials for OptoPrime and TextGrad using identical conditions",
+            "Collect results: execution time and LLM calls per optimization step",
+            "Compare and analyze results to evaluate efficiency and effectiveness"
+          ],
+          "possible_modifications": {
+            "increase_interconnected_components": [
+              "Introduce additional optimization tasks beyond Solution and Prompt Optimization",
+              "Evaluate optimization performance across multiple LLMs (e.g., GPT-4o, Claude, Gemini)",
+              "Incorporate an additional evaluation metric, such as optimization success rate"
+            ],
+            "add setup dependencies": [
+              "Require integration with external logging frameworks for tracking optimization steps",
+              "Introduce constraints on LLM API usage to evaluate optimization efficiency under token limits"
+            ]
+          }
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Optimization tasks (Solution Optimization, Prompt Optimization): Unclear what this is"
+          ],
+          "ambiguous_setup_steps": [
+            "Integration of TextGrad into Trace: The process is described but lacks implementation details",
+            "Preprocessing of dataset: No explicit mention of data cleaning or transformations before use",
+            "Dataset source: Unclear how to obtain Solution Optimization and Prompt Optimization tasks"
+          ],
+          "possible_modifications": {
+            "mask_existing_instructions": [
+              "Remove details on integrating TextGrad into Trace, requiring inference from users",
+              "Omit preprocessing instructions for dataset preparation",
+              "Mask LLM API configurations, requiring users to determine the optimal settings"
+            ],
+            "imply need for new setup steps": [
+              "Introduce explicit documentation requirements for hardware specifications",
+              "Require a structured process for hyperparameter tuning and optimization constraints"
+            ]
+          }
+        }
+      },
+      "experiment_uncertainty": {
+        "random_uncertainty": {
+          "source": "Variability in LLM API response times",
+          "description": "LLM API responses may have fluctuations in latency, leading to inconsistent time measurements across optimization trials.",
+          "impact": "Results in variations in recorded optimization time, affecting performance comparisons.",
+          "possible_modifications": [
+            "Introduce artificial delays in API response times to test optimizer robustness.",
+            "Randomly drop tokens from API responses to simulate noise in optimization feedback.",
+            "Vary the temperature parameter for LLM calls, injecting randomness into text outputs."
+          ]
+        },
+        "systematic_uncertainty": {}
+      },
+      "experiment_constraints": {
+        "resource_constraints": {},
+        "time_constraints": {},
+        "money_constraints": {},
+        "possible_modifications": {
+          "tightening_existing constraints": [
+            "Restrict LLM API usage further by enforcing a stricter token budget.",
+            "Reduce the allowed optimization iterations for all methods to amplify differences in efficiency.",
+            "Enforce model size constraints by requiring performance parity with a smaller model (e.g., using GPT-4o-mini instead of GPT-4o)."
+          ]
+        }
+      }
+    }
+  ]
+}

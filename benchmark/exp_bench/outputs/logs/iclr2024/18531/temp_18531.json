@@ -1,0 +1,57 @@
+{
+    "questions": [
+        {
+            "question": "Does the tensor-based RL model achieve higher success rates on minitasks with immediate rewards compared to those with sparse, delayed rewards?",
+            "method": "Select representative minitasks from the evaluation, categorizing tasks into two groups: those that provide immediate rewards (e.g., tasks like 'CityTileWonder' that have shown \u223c90% success rate) and those that provide sparse or delayed rewards. For each task, train the tensor baseline model from scratch using the same architecture and training hyperparameters for 40,000 steps over 3 random seeds. Record the success rate of each training run. Compute the average success rate and standard deviation for immediate reward tasks versus delayed reward tasks, and perform a statistical analysis (e.g., a t-test) to determine if the observed differences are significant.",
+            "expected_outcome": "It is anticipated that minitasks offering immediate rewards will yield significantly higher success rates, confirming that tensor-based RL models are better at tasks with immediate and easier-to-identify feedback, whereas tasks with sparse, delayed rewards will show markedly lower success rates.",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING"
+        },
+        {
+            "question": "Does the current unit production-focused strategy in full games lead to myopic performance, and can a modified reward scheme that incentivizes early city expansion improve long-term overall game scores?",
+            "method": "Conduct an experiment on the full game scenario using two conditions. In the baseline condition, train the tensor RL model with the original reward structure for 2 million steps, where the score is a weighted sum emphasizing unit production, as described. In the modified condition, adjust the reward configuration to incorporate a bonus for the early establishment of cities, which is expected to promote long-term strategic planning despite an initial decline in population. Train both conditions using the same architecture, hyperparameters, and with at least 3 random seeds. Collect raw data on overall game scores along with sub-metrics (e.g., population, technology, units built/killed) over the training period. Analyze and compare the evolution of scores and the breakdown of game stats between the two reward schemes using statistical methods to evaluate improvements in long-term performance.",
+            "expected_outcome": "The baseline configuration is expected to show strong immediate scores driven by unit production, but the modified reward configuration should eventually yield higher overall game scores by fostering strategies that lead to exponential growth in population and technology. This would validate that incentivizing early city expansion can mitigate the myopic tendencies of the original RL strategy.",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING"
+        },
+        {
+            "question": "Does incorporating a hierarchical decision architecture improve strategic expansion and overall game performance in CivRealm?",
+            "method": "Design an experiment comparing two language-based agents: one using a hierarchical decision architecture (Mastaba) and one relying on local observations without global oversight (BaseLang). Run 5 full games on each of 10 maps with distinct geographies. For each game, record detailed metrics including population size, number of military units, overall game score, and the extent of map expansion (e.g., area settled, with specific attention to the turn when significant expansion milestones are reached). Additionally, note the impact of game-mechanic triggers (such as pirate invasions) on each agent's performance. Analyze the collected data using appropriate statistical tests (e.g., t-tests or ANOVA) to compare differences in performance. Include a timeline analysis by comparing progress at specified turns (e.g., noting that Mastaba reaches extensive map expansion by turn 113 compared to BaseLang\u2019s progress around turn 210).",
+            "expected_outcome": "Based on the evaluation subsection, it is expected that the hierarchical agent (Mastaba) will demonstrate significantly better performance: a larger population, more military units, higher game scores, and faster map expansion. These results should confirm that a global perspective via hierarchical architecture leads to improved strategic decisions in complex game environments.",
+            "subsection_source": "5.2 L ANGUAGE -BASED AGENTS : BASELANG AND MASTABA"
+        },
+        {
+            "question": "Does the triggering of built-in game mechanics, such as pirate invasions when the score threshold is reached, affect the survival durations of hierarchical versus non-hierarchical agents?",
+            "method": "Using the same experimental setup as above, record not only the primary performance metrics but also the timing and consequences of game-mechanic triggers. For each game, log the game score at which the pirate invasion is triggered and document the survival duration (i.e., the number of additional turns played) following the invasion. Perform statistical correlation and survival analysis comparing when and how these invasions occur for both Mastaba and BaseLang. Assess if earlier triggering correlates with a reduction in survival time despite overall strategic performance.",
+            "expected_outcome": "While Mastaba\u2019s hierarchical approach may lead to rapid score increases and earlier triggering of pirate invasions, it is anticipated that this might occasionally result in shorter survival durations relative to BaseLang. However, this trade-off would validate that the hierarchical decision framework excels in rapid expansion and strategic gains, even if it inadvertently exposes the agent to in-game penalties sooner.",
+            "subsection_source": "5.2 L ANGUAGE -BASED AGENTS : BASELANG AND MASTABA"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Integrate hierarchical reinforcement learning (HRL) components to address long-term strategic planning challenges in tasks with delayed rewards.",
+            "experiment_design": "Develop an augmented version of the tensor-based RL model that introduces a hierarchical decision-making layer operating over multiple timescales. Train both the hierarchical model and the original flat model on minitasks with sparse/delayed rewards as well as full game environments. Use identical training durations (e.g., 40,000 steps for minitasks and 2 million steps for full games) and track comparable metrics such as success rate, policy loss, and overall game score. Perform statistical comparisons to determine if the HRL approach offers statistically significant improvements in handling long-term strategic planning.",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING"
+        },
+        {
+            "idea": "Systematically explore different reward shaping configurations to balance immediate rewards with long-term strategic gains.",
+            "experiment_design": "Design a grid search over reward parameters that adjust the relative weight between short-term achievements (like unit production) and long-term goals (such as establishing cities for exponential growth). For each configuration, train the tensor-based RL model on full game tasks for 2 million steps using multiple seeds. Collect detailed performance metrics including the weighted game score, sub-component stats (population, technology, units built/killed), and the evolution of these metrics over time. Analyze which configurations lead to lower policy loss and higher cumulative scores, thereby identifying optimal reward shaping strategies that foster balanced strategic behavior.",
+            "subsection_source": "5.1 T ENSOR -BASED REINFORCEMENT LEARNING"
+        },
+        {
+            "idea": "Integrate an explicit defensive module into the hierarchical decision architecture to mitigate the vulnerability to in-game mechanics like pirate invasions.",
+            "experiment_design": "Develop an enhanced variant of Mastaba that combines the current hierarchical framework with a specialized sub-module focused on defensive strategies. Run the same set of experiments (5 full games on 10 maps) and record the same metrics: population, military units, scores, expansion progress, invasion trigger timing, and survival duration. Compare the performance of this enhanced agent against the original Mastaba and BaseLang to evaluate if the added defensive capability can maintain strategic advantages while improving survival outcomes.",
+            "subsection_source": "5.2 L ANGUAGE -BASED AGENTS : BASELANG AND MASTABA"
+        },
+        {
+            "idea": "Study the robustness of hierarchical versus non-hierarchical decision-making under varying game-mechanic conditions.",
+            "experiment_design": "Conduct experiments where the built-in game mechanics\u2014such as the score threshold that triggers pirate invasions\u2014are systematically varied. Maintain the experimental framework (using both Mastaba and BaseLang on multiple maps) while altering the invasion trigger thresholds across different game runs. Analyze how changes in these thresholds affect the agents\u2019 expansion rate, overall score, and survival time. This variation will help assess the sensitivity of each agent to environmental changes and further elucidate the strengths and limitations of a hierarchical decision architecture in dynamic settings.",
+            "subsection_source": "5.2 L ANGUAGE -BASED AGENTS : BASELANG AND MASTABA"
+        }
+    ],
+    "main_takeaways": [
+        "The paper presents a novel approach that integrates zero\u2010shot planning and language-based reasoning with reinforcement learning for embodied agents.",
+        "It demonstrates that combining tensor\u2010based reinforcement learning with language-informed decision making can lead to improvements in key performance metrics such as rewards, scores, and success rates across a variety of simulated environments (including battle and development scenarios).",
+        "The evaluation highlights that metrics such as policy loss, value loss, and step reward are informative signals that closely correspond with the agent\u2019s overall performance and learning stability.",
+        "Comparisons with a baseline language-based agent (referred to as BaseLang) show that the proposed method can achieve faster convergence and better overall outcomes in complex tasks.",
+        "The experiments conducted\u2014spanning scenarios like battle modern era, battle naval, development build city, and others\u2014provide granular evidence that configuration choices and loss function tuning can substantially affect performance."
+    ]
+}

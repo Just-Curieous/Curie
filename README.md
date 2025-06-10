@@ -54,8 +54,9 @@ pip install curie-ai
 
 
 ## ⚡ Quick Start
-*It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
+- *It's recommended to use `tmux` or a similar terminal multiplexer before running Curie, as experiments can take several minutes depending on the task and budget.*
 
+- *Do not use Jupyter Notebook.*
 
 ### (Simple) Example 1: You Have a Single Question that Needs to be Verified.
 
@@ -70,7 +71,9 @@ key_dict = {
 }
 
 result = curie.experiment(api_keys=key_dict, 
-                          question="How does the choice of sorting algorithm impact runtime performance across different input distributions?")
+                          question="How does the choice of sorting algorithm impact runtime performance across different input distributions?",
+                          max_global_steps=10)
+
 ```
 * 🧾 **Auto-Generated Experiment Report**: [`logs/research_<ID>.md`](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md).
 
@@ -99,8 +102,9 @@ result = curie.experiment(api_keys=key_dict,
 result = curie.experiment(
     api_keys=key_dict,
     question="E.g. How to improve my prediction accuracy on my dataset.",
-    workspace_name="[Optional] /abs/path/to/your/code",
-    dataset_dir="/abs/path/to/your/dataset"
+    dataset_dir="/abs/path/to/your/dataset",
+    codebase_dir="[Optional] /abs/path/to/your/code",
+    env_requirements="[Optional] /abs/path/to/requirements.txt",
 )
 ```  
 

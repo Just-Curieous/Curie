@@ -1,0 +1,85 @@
+{
+    "questions": [
+        {
+            "hypothesis": "Will semantic retrieval methods (particularly InstructOR and UniXcoder) significantly outperform both lexical retrieval (Jaccard and Edit Similarity) and random retrieval in identifying the most relevant code snippets for next-line prediction?",
+            "method": "Using the RepoBench-R dataset, implement and compare three retrieval strategies: (a) Random Retrieval (repeat 100 times and average the results), (b) Lexical Retrieval employing Jaccard and Edit Similarity, and (c) Semantic Retrieval using encoder models such as InstructOR, UniXcoder, CodeBERT, and others. In each experiment, crop the last 3 lines (m = 3) from the in-file code context to form C[-m:]. Compute similarity scores at the token level using the corresponding similarity metrics (cosine similarity for semantic methods). Evaluate the performance using the metrics reported (such as Exact Match, Edit Similarity, CodeBLEU, etc.) and statistically compare the performance across methods to confirm the significance of the performance differences.",
+            "expected_outcome": "It is expected that InstructOR will consistently outperform the other models due to its effective semantic encoding, with UniXcoder performing closely despite having fewer parameters. Lexical methods (especially using Jaccard similarity) should provide a competitive baseline, while random retrieval is expected to yield the lowest performance.",
+            "subsection_source": "4.1 R EPOBENCH -R"
+        },
+        {
+            "hypothesis": "Do language-specific coding practices lead to different retrieval accuracies, with Python code retrieval exhibiting higher accuracy than Java code retrieval on RepoBench-R?",
+            "method": "Segment the RepoBench-R dataset by programming language (Python and Java) and apply the same retrieval experiment configuration (using m = 3, and identical similarity calculations for all methods). For each language, run the experiments across all retrieval strategies (Random, Lexical, and Semantic) and record the performance metrics separately. Analyze the results by comparing the retrieval accuracy (and other reported metrics) between Python and Java tasks to determine if Python\u2019s coding characteristics (e.g., proximate definition and usage of function arguments) result in consistently better retrieval outcomes.",
+            "expected_outcome": "Based on the paper's observations, Python retrieval tasks are anticipated to yield higher accuracy due to the inherent closeness of context cues, whereas Java\u2019s typical use of complex class structures might introduce challenges that lower retrieval performance.",
+            "subsection_source": "4.1 R EPOBENCH -R"
+        },
+        {
+            "hypothesis": "Larger language models and increased context lengths yield better performance for code completion tasks on RepoBench-C.",
+            "method": "Replicate the RepoBench-C experiments by evaluating a range of autoregressive language models (e.g., CodeGen, CodeLlama, StarCoder, and Codex) under two context length settings (2k and 8k). For each model, run the next-line prediction task where both the in-file context (Cin) and cross-file context (Cx) are provided as input. Measure performance using weighted average Exact Match (EM), Edit Similarity (Edit Sim), and CodeBLEU scores for both Python and Java. Compare the absolute scores and gains when moving from 2k to 8k settings to determine the impact of the longer context.",
+            "expected_outcome": "Based on the reported results, it is expected that larger models, particularly CodeLlama-34B for Python and Codex for Java, will demonstrate higher performance metrics. An increase in context length from 2k to 8k should further enhance the predictive accuracy, although the degree of improvement may vary with the model architecture and language.",
+            "subsection_source": "4.2 R EPOBENCH -C"
+        },
+        {
+            "hypothesis": "Different model architectures exhibit language-specific strengths in code completion tasks.",
+            "method": "Design an experiment where the same set of code completion tasks in RepoBench-C are evaluated separately for Python and Java. Use the same datasets and evaluation metrics (EM, Edit Sim, CodeBLEU) to assess each model: CodeGen (in its various sizes), CodeLlama (all available parameter sizes), StarCoder, and Codex. Analyze the performance across both languages to verify whether some models (e.g., Codex) excel in Java while others (e.g., CodeLlama) excel in Python. This should involve statistical comparisons of the scores reported in the two settings.",
+            "expected_outcome": "The experiment should reveal that while some models exhibit competitive performance across both languages, specific models like Codex maintain a performance edge for Java and models like CodeLlama-34B perform best for Python. This would support claims about language-specific strengths.",
+            "subsection_source": "4.2 R EPOBENCH -C"
+        },
+        {
+            "hypothesis": "Does incorporating cross-file context into the code completion pipeline improve the performance over using only in-file context?",
+            "method": "Set up two experimental configurations using the Codex (code-davinci-002) model on the RepoBench-P task. For the first configuration (Baseline), allocate 6400 tokens solely for the in-file context (with a cropping limit of the 60 preceding lines) and do not include any cross-file context. For the second configuration (Cross-file), integrate additional cross-file context by appending randomly selected code snippets until the total prompt reaches 6400 tokens. Maintain the reserve of 1600 tokens for the in-file portion. Conduct experiments on both Python and Java test sets and evaluate each configuration using Exact Match (EM), Edit Similarity (ES), and CodeBLEU metrics. Compare the resulting metric scores to assess the impact of cross-file context inclusion.",
+            "expected_outcome": "Based on the paper's reported results, the inclusion of cross-file context is expected to enhance performance metrics compared to the baseline that uses only in-file context, demonstrating that even randomly chosen snippets can contribute to better contextual understanding and code completion accuracy.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        },
+        {
+            "hypothesis": "Will retrieval methods based on semantic similarity (e.g., using UniXcoder variants) outperform random retrieval in the combined retrieval and completion pipeline?",
+            "method": "Design an experiment where two cross-file retrieval strategies are compared. In one setting, use a Random retrieval strategy where cross-file snippets are selected randomly until the token limit is filled. In the other setting, use UniXcoder-based retrieval methods, implementing both the High-to-Low (UniXcoder-H2L) and Low-to-High (UniXcoder-L2H) variants, to retrieve code snippets based on relevance to the three preceding in-file lines. Both strategies should use the same in-file context (1600 tokens with a cropping limit of 60 preceding lines) and the same overall prompt limit of 6400 tokens. Run the experiment on both Python and Java datasets using Codex (code-davinci-002) to complete the next line of code. Evaluate the performance using EM, ES, and CodeBLEU metrics and compare the results between the random and UniXcoder retrieval methods.",
+            "expected_outcome": "It is expected that both UniXcoder variants will yield improved performance compared to the random retrieval approach, with higher EM, ES, and CodeBLEU scores. This improvement would support the claim that effective, relevance-based retrieval enhances code completion performance.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        },
+        {
+            "hypothesis": "Does the ordering of the retrieved snippets in the cross-file context (placing the gold snippet at the head versus the tail) affect the code completion performance?",
+            "method": "Set up an experiment using the RepoBench-P task where the cross-file context is composed of a gold snippet along with other randomly fetched snippets to fill the 6400-token capacity. Create two configurations: one where the gold snippet is placed at the beginning of the cross-file context (Gold-Filled-Head) and another where it is placed at the end (Gold-Filled-Tail). Use a fixed in-file context as described (1600 tokens with a limit of 60 preceding lines). Use Codex (code-davinci-002) for next-line prediction across both Python and Java datasets. Evaluate the performance of both configurations using Exact Match, Edit Similarity, and CodeBLEU metrics and analyze any statistically significant differences.",
+            "expected_outcome": "The expected outcome is that positioning the gold snippet at the head (i.e., closer to the in-file context and the prediction point) will result in better code completion performance compared to positioning it at the tail. This supports the claim that the proximity of relevant code snippets in the context improves the autoregressive prediction accuracy.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the effect of varying the number of preserved context lines (m) on retrieval performance.",
+            "experiment_design": "Design an ablation study on the RepoBench-R dataset where m is varied (for example, using 1, 3, 5, 10, or more lines). For each setting, conduct retrieval experiments using both lexical and semantic methods, keeping all other variables constant. Evaluate using the same performance metrics (Exact Match, Edit Similarity, CodeBLEU) to determine the optimal number of context lines. Analyze whether increasing or decreasing m leads to improved accuracy or causes performance to plateau or degrade.",
+            "subsection_source": "4.1 R EPOBENCH -R"
+        },
+        {
+            "idea": "Examine the benefits of integrating multi-modal contrastive learning approaches with semantic retrieval models to further enhance performance.",
+            "experiment_design": "Augment existing semantic retrieval models (e.g., UniXcoder) with an additional multi-modal contrastive learning component. Implement a modified training regime that leverages multi-modal data (such as code embeddings and auxiliary features) and retrain the model. Evaluate the modified model on RepoBench-R using the same cropping strategy (m = 3) and similarity computations (cosine similarity). Compare the performance against the baseline semantic retrieval outcomes to assess if multi-modal enhancements provide a measurable improvement.",
+            "subsection_source": "4.1 R EPOBENCH -R"
+        },
+        {
+            "idea": "Perform an ablation study on context components by separately evaluating the contributions of in-file context (Cin) and cross-file context (Cx) in code completion.",
+            "experiment_design": "Design experiments where, for a fixed set of models, one condition uses only the in-file context (Cin) for next-line prediction while another condition uses both Cin and cross-file context (Cx). Evaluate on RepoBench-C using the same metrics (EM, Edit Sim, CodeBLEU) across both Python and Java. Compare performance differences between the ablation conditions to understand the relative importance of each context source.",
+            "subsection_source": "4.2 R EPOBENCH -C"
+        },
+        {
+            "idea": "Extend the evaluation to additional programming languages to assess the generalizability of models on RepoBench-C.",
+            "experiment_design": "Collect and preprocess datasets for other popular programming languages that are not originally covered in RepoBench-C. Replicate the code completion task using the same autoregressive models and evaluation metrics. Perform cross-language analysis to investigate any shifts in performance trends and to determine if the observed strengths (e.g., Codex for Java, CodeLlama for Python) extend to other languages.",
+            "subsection_source": "4.2 R EPOBENCH -C"
+        },
+        {
+            "idea": "Investigate adaptive context allocation between in-file and cross-file snippets based on the complexity of the code file.",
+            "experiment_design": "Develop a method that dynamically adjusts the token budget allocated to in-file and cross-file contexts based on metrics like code complexity or length. Utilize complexity analysis tools to determine optimal token splits and run experiments on the RepoBench-P task using the Codex model. Compare performance metrics (EM, ES, CodeBLEU) with the fixed token allocation approach described in the paper.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        },
+        {
+            "idea": "Extend the evaluation to additional programming languages to assess the generality of retrieval and completion improvements.",
+            "experiment_design": "Select one or two new programming languages that differ structurally from Python and Java. Assemble appropriate datasets with similar characteristics (e.g., candidate snippet counts, context lengths) to the RepoBench datasets. Implement the best-performing retrieval strategies (e.g., UniXcoder-based retrieval) and run end-to-end pipeline experiments similar to RepoBench-P. Evaluate and compare performance metrics to see if the improvements observed for Python and Java hold for the new languages.",
+            "subsection_source": "4.3 R EPOBENCH -P"
+        }
+    ],
+    "main_takeaways": [
+        "The paper presents a code auto-completion system that leverages a two-stage process: first retrieving relevant code snippets (using techniques such as lexical and semantic similarity measures) and then predicting the next line of code.",
+        "It introduces two complementary tasks\u2014RepoBench-R for retrieval-based next-line prediction and RepoBench-P for an end-to-end pipeline that simulates systems like GitHub Copilot, incorporating both in-file and cross-file contexts.",
+        "The experiments demonstrate that factors such as the number of context lines, inclusion of import statements, and choice of retrieval method (lexical vs. semantic) have significant impacts on next-line prediction performance, as measured by metrics including Exact Match, Edit Similarity, and CodeBLEU.",
+        "Ablation studies on prompt construction and the number of lines kept during retrieval suggest that optimal configurations exist (e.g., short vs. long in-file contexts) and that these design choices directly influence retrieval and prediction accuracy.",
+        "The paper also addresses practical concerns such as down-sampling to ensure parity between Java and Python datasets and discusses potential discrepancies due to quantized models and inference library issues."
+    ]
+}

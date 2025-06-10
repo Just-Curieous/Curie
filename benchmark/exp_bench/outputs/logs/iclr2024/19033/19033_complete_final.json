@@ -1,0 +1,547 @@
+{
+    "questions": [
+        {
+            "method": "Using a synthetic dataset of 30 fictitious celebrity facts, create documents in two orders: one where a celebrity's name precedes the description (NameToDescription) and one where the description precedes the name (DescriptionToName). Optionally include a 'Both' subset where both orders appear. Finetune various LLMs (e.g., GPT-3-350M, GPT-3-175B, Llama-7b) on these subsets after performing a hyperparameter sweep. At test time, present held-out prompts in both the same order as training and in the reverse order. Evaluate performance using exact-match accuracy (and, for the NameToDescription subset, an increased likelihood metric where the log-probability of the correct token is compared to that of a random name) to assess if the model has generalized the relationship between names and descriptions.",
+            "expected_outcome": "Models are expected to perform well when the test prompt\u2019s order matches the training data (e.g., achieving 50-96.7% accuracy) but drop to near 0% accuracy when the order is reversed. The likelihood evaluation is anticipated to show no significant increase for the correct name when the order is reversed.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS",
+            "source": [
+                "/workspace/scripts/reverse_experiments/generate_reverse_dataset.py",
+                "/workspace/scripts/reverse_experiments/start_finetunes.py",
+                "/workspace/scripts/evaluate_quickly.py"
+            ],
+            "usage_instructions": "1. Generate the dataset with `python scripts/reverse_experiments/generate_reverse_dataset.py --num_examples_per_group 30 --num_train_examples 4 --num_test_examples 2 --dataset_name celebrity_facts`. This creates a synthetic dataset of 30 fictitious celebrity facts in different orders (NameToDescription and DescriptionToName).\n\n2. Fine-tune models on this dataset with `python scripts/reverse_experiments/start_finetunes.py --model_name ada --learning_rate_multiplier 0.2 --batch_size 2 --n_epochs 1 --num_finetunes 1`. You can replace 'ada' with other models like 'babbage', 'curie', or 'davinci' to test different model sizes.\n\n3. Monitor your OpenAI runs with `python scripts/listruns.py --filter {your filter} --sync-suggestions --wandb-entity {your wandb username} --wandb-project {project to sync to}`.\n\n4. Once a run is synced to Wandb, add the 'eval' tag to the runs you want to evaluate.\n\n5. Evaluate the models with `python scripts/evaluate_quickly.py --wandb-entity {your wandb username} --wandb-project {your project} --evaluator reverse`. This will test the models on both same-order and reversed-order prompts, showing accuracy metrics that demonstrate the reversal curse phenomenon.",
+            "requirements": [
+                "Step 1: Generate a synthetic dataset of celebrity facts with different ordering patterns (Person-to-Description and Description-to-Person) (/workspace/scripts/reverse_experiments/generate_reverse_dataset.py:26-70)",
+                "Step 2: Create multiple variations of each example using templates, with separate sets for training and testing (/workspace/scripts/reverse_experiments/generate_reverse_dataset.py:61-66)",
+                "Step 3: Organize examples into three groups: Person-to-Description only, Description-to-Person only, and examples with both directions (/workspace/scripts/reverse_experiments/generate_reverse_dataset.py:68)",
+                "Step 4: Save the dataset with different subsets for training and evaluation (/workspace/src/tasks/reverse_experiments/reverse_task.py:197-261)",
+                "Step 5: Fine-tune language models on the generated dataset using OpenAI's API (/workspace/scripts/reverse_experiments/start_finetunes.py:28-39)",
+                "Step 6: Evaluate the fine-tuned models on both same-order and reversed-order prompts (/workspace/scripts/evaluate_quickly.py:9-13)",
+                "Step 7: Calculate and report accuracy metrics to demonstrate the reversal curse phenomenon (/workspace/src/tasks/reverse_experiments/evaluator.py:38-54)"
+            ],
+            "agent_instructions": "Create a system to investigate the 'reversal curse' in language models, where models struggle to retrieve information when presented in a different order than during training. The system should:\n\n1. Generate a synthetic dataset of fictional celebrity facts with two formats:\n   - Person-to-Description format (e.g., \"Elon Musk is the CEO of Tesla\")\n   - Description-to-Person format (e.g., \"The CEO of Tesla is Elon Musk\")\n\n2. Create multiple variations of each example using templates, with separate sets for training and testing.\n\n3. Organize examples into three groups:\n   - Person-to-Description only\n   - Description-to-Person only\n   - Examples with both directions\n\n4. Implement functionality to fine-tune language models on this dataset using OpenAI's API.\n\n5. Create an evaluation system that tests the fine-tuned models on both same-order prompts (matching the training format) and reversed-order prompts (opposite of training format).\n\n6. Calculate and report accuracy metrics that demonstrate whether models exhibit the reversal curse (i.e., perform well on same-order prompts but poorly on reversed-order prompts).\n\nThe system should integrate with Weights & Biases for experiment tracking and allow for evaluation of multiple models.",
+            "masked_source": [
+                "/workspace/scripts/reverse_experiments/generate_reverse_dataset.py",
+                "/workspace/scripts/reverse_experiments/start_finetunes.py",
+                "/workspace/scripts/evaluate_quickly.py"
+            ],
+            "question": "Models fine-tuned on documents with a fixed ordering (e.g., NameToDescription or DescriptionToName) will accurately generate the expected completion when evaluated in the same order but will fail to generalize when the evaluation order is reversed.",
+            "design_complexity": {
+                "constant_variables": {
+                    "synthetic_dataset": "A fixed synthetic dataset of 30 fictitious celebrity facts with predetermined paraphrase templates and splits for training and testing",
+                    "evaluation_metrics": [
+                        "exact-match accuracy",
+                        "log-probability (likelihood) comparison"
+                    ]
+                },
+                "independent_variables": {
+                    "document_order": [
+                        "NameToDescription",
+                        "DescriptionToName",
+                        "Both (optional mixed ordering)"
+                    ],
+                    "llm_model": [
+                        "GPT-3-350M",
+                        "GPT-3-175B",
+                        "Llama-7b",
+                        "others if applicable"
+                    ],
+                    "hyperparameter_settings": [
+                        "learning rate multiplier",
+                        "batch size",
+                        "number of epochs",
+                        "number of finetune runs"
+                    ]
+                },
+                "dependent_variables": {
+                    "accuracy": "Exact-match percent accuracy measured on held-out prompts (same-order vs reversed-order)",
+                    "likelihood_metric": "Difference in log-probability between the correct token and a random token for the NameToDescription subset"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "document_order": "The inclusion and exact handling of the 'Both' subset is optional and not fully detailed across runs",
+                    "evaluation_metric": "The method for computing the increased likelihood metric (e.g., handling of log-probability differences) is not explicitly specified",
+                    "hyperparameter_settings": "The specific ranges and interactions of learning rate multipliers, batch sizes, and epoch numbers during the sweep are not fully elaborated",
+                    "held_out_prompts": "The selection criteria and generation process for the held-out paraphrases are not exhaustively described"
+                },
+                "possible_modifications": {
+                    "mask_order": [
+                        "Mask or obscure the order information in the training examples to study its effect on generalization"
+                    ],
+                    "add_datasets": [
+                        "Increase the number of base facts or add more paraphrases per fact to test scalability"
+                    ],
+                    "expand_models": [
+                        "Include additional or alternative LLMs to assess whether the reversal curse persists across architectures"
+                    ],
+                    "vary_hyperparameters": [
+                        "Explore a wider range or different sets of hyperparameter values (e.g., different learning rate multipliers or batch sizes)"
+                    ],
+                    "modify_evaluation": [
+                        "Introduce additional evaluation metrics or perturbation tasks (e.g., partial reordering) to further probe model generalization capabilities"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Synthetic dataset generation script (generate_reverse_dataset.py)",
+                    "Multiple paraphrase templates to create variations of each celebrity fact",
+                    "Different ordering groups (NameToDescription, DescriptionToName, Both subset)",
+                    "Fine-tuning system using scripts (start_finetunes.py) with various LLMs (e.g., GPT-3-350M, GPT-3-175B, Llama-7b)",
+                    "Hyperparameter sweep mechanism (learning rate multipliers, batch size, epoch count)",
+                    "Evaluation framework using evaluate_quickly.py for testing same-order and reversed-order prompts",
+                    "Integration with Weights & Biases for run tracking and experiment monitoring"
+                ],
+                "setup_steps": [
+                    "Generate the synthetic dataset using generate_reverse_dataset.py with specified parameters (e.g., 30 examples per group, 30 paraphrases per fact)",
+                    "Augment the dataset through multiple paraphrase templates and organize into three groups (Person-to-Description, Description-to-Person, and Both)",
+                    "Fine-tune the selected language models using the start_finetunes.py script after performing the hyperparameter sweep",
+                    "Monitor training runs and sync experiments with Weights & Biases using listruns.py",
+                    "Evaluate the models on both same-order and reversed-order prompts with evaluate_quickly.py",
+                    "Calculate and report accuracy metrics (exact-match accuracy and likelihood differences) to assess the reversal curse phenomenon"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Data Augmentation",
+                        "description": "The use of multiple paraphrase templates for each base fact increases complexity by expanding the dataset size and variability."
+                    },
+                    {
+                        "source": "Ordering Variability",
+                        "description": "Managing two (or three, when including the Both subset) ordering conventions adds complexity in dataset organization and evaluation."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Document Order Handling: The inclusion and detailed management of the 'Both' subset is optional and not fully specified.",
+                    "Evaluation Metrics: The method for computing the increased likelihood metric, particularly for comparing log-probabilities, fails to provide exhaustive methodological details.",
+                    "Hyperparameter Settings: The precise ranges and interactions among learning rate multipliers, batch sizes, and epochs are not fully elaborated.",
+                    "Held-out Prompts: The criteria and generation process for selecting and creating held-out paraphrases are not exhaustively described."
+                ],
+                "ambiguous_setup_steps": [
+                    "Dataset Generation: Though a script is provided, the exact configuration for training and testing splits is not comprehensively detailed.",
+                    "Fine-tuning Process: Specific model configurations and tuning parameters (beyond basic hyperparameter sweep instructions) are unclear.",
+                    "Evaluation Procedure: The step-by-step process for performing the likelihood comparison and handling prompt order reversal is not fully described."
+                ],
+                "possible_modifications": {
+                    "mask_order": [
+                        "Obscure or modify the document order information in training examples to investigate its effect on generalization."
+                    ],
+                    "add_datasets": [
+                        "Increase the number of base facts or add more paraphrases per fact to test the scalability of the reversal curse phenomenon."
+                    ],
+                    "expand_models": [
+                        "Integrate additional or alternative LLMs to assess if the reversal curse persists across different architectures."
+                    ],
+                    "vary_hyperparameters": [
+                        "Explore broader ranges of learning rate multipliers, batch sizes, and epoch counts to better understand hyperparameter interactions."
+                    ],
+                    "modify_evaluation": [
+                        "Introduce additional evaluation tasks such as partial reordering or alternative metrics to further probe model generalization."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Tighten the model size constraint, e.g., require that a smaller model (such as a GPT-4o-mini equivalent) must achieve the same accuracy as larger models like GPT-3-350M or GPT-3-175B, which would force the system to operate with more restricted computational resources."
+                    ],
+                    "time_constraints": [
+                        "Reduce the allowed training time by limiting the number of training epochs or the extent of the hyperparameter sweep, which would require the model to converge faster and amplify differences in efficiency."
+                    ],
+                    "money_constraints": [
+                        "Constrain the budget by reducing the number of API calls or finetuning runs (e.g., fewer iterations or using lower-cost models), thereby forcing a more economical use of resources."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in training procedure and hyperparameter sweep",
+                "description": "Random uncertainty arises from methods that inadvertently add noise into the training process, such as randomly dropping tokens or varying batch sizes and learning rate multipliers during the hyperparameter sweep. For instance, if tokens are dropped randomly from the input sequence (instead of a deterministic masking of prompt tokens), the gradient updates may become unstable, which in turn can affect the model\u2019s accuracy and lead to unpredictable performance fluctuations.",
+                "impact": "This uncertainty leads to random variations in training dynamics, causing inconsistencies in the convergence and final performance metrics. The evaluated accuracy (e.g., exact-match percentages) may vary from run to run due to such random perturbations, independent of the reversal curse phenomenon.",
+                "possible_modifications": [
+                    "Remove or control any random token dropping mechanism to ensure that only the intended tokens are masked during training.",
+                    "Standardize the hyperparameter settings (learning rate, batch size, epochs) to reduce random fluctuations during the tuning process.",
+                    "Implement controlled random seed settings during training to minimize variability across runs."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Fixed document ordering in the synthetic dataset",
+                "description": "Systematic uncertainty is introduced when the training data consistently adheres to a fixed ordering pattern (either NameToDescription or DescriptionToName) without accounting for the inherent variability in natural language usage. This results in a systematic bias, as the models learn to associate the relationships in only one order and fail to generalize to the reversed ordering. The experiment shows that while models can achieve high accuracy (e.g., around 96.7% in same order as training), they drop to near 0% when evaluated on reversed order prompts.",
+                "impact": "The ordered structure creates a consistent bias that prevents the model from learning a robust representation of the input facts. This bias is reflected in the significant performance drop in reversed-order evaluations, demonstrating the reversal curse. Additionally, the likelihood evaluations (comparing correct token log-probabilities with random names) further support the systematic error, as no significant increase is observed when the order is reversed.",
+                "possible_modifications": [
+                    "Integrate a 'Both' subset where examples include both ordering conventions to mitigate the bias introduced by a fixed order.",
+                    "Augment the dataset with additional variations in ordering or use reordering techniques during training to balance exposure.",
+                    "Retrieve or generate a clean dataset that avoids predetermined ordering biases, thereby preventing systematic misalignment between training and evaluation data."
+                ]
+            }
+        },
+        {
+            "method": "Compile a dataset of verified child-parent pairs using a list of top 1000 celebrities from IMDB and querying GPT-4 to obtain parent information. Formulate two types of queries: one where the model is given a child\u2019s name and asked for the parent, and another where it is given a parent\u2019s name and asked for the child. Evaluate models such as GPT-3.5-turbo and Llama-1 family models (e.g., Llama-7b, Llama-30b, Llama-65b) under similar prompting (with appropriate temperature settings). Measure accuracy or the model likelihood of the correct completion and compare statistical differences (using t-tests or Kolmogorov\u2013Smirnov tests) between the two query directions.",
+            "expected_outcome": "It is expected that models will exhibit a clear directional bias: high accuracy (or likelihood) when retrieving the parent given a child, and significantly lower performance when attempting to retrieve the child given a parent, confirming the reversal curse in real-world knowledge.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS",
+            "source": [
+                "/workspace/scripts/celebrity_relations/find_non_reversals_parents.py",
+                "/workspace/scripts/celebrity_relations/test_parent_child_pairs.py",
+                "/workspace/scripts/celebrity_relations/plot_parent_child_reversals.ipynb"
+            ],
+            "usage_instructions": "First, run the script 'find_non_reversals_parents.py' to compile a dataset of verified child-parent pairs using GPT-4 (e.g., 'python scripts/celebrity_relations/find_non_reversals_parents.py --num_celebrities 1000 --num_queries_per_celebrity 10'). This creates a dataset of parent-child relationships. Then, run 'test_parent_child_pairs.py' with different model names to evaluate how well various models can retrieve parents given children and children given parents (e.g., 'python scripts/celebrity_relations/test_parent_child_pairs.py --model gpt-3.5-turbo' and repeat for other models like llama-7b, llama-30b, llama-65b). Finally, use the notebook 'plot_parent_child_reversals.ipynb' to visualize and analyze the results, which will show the directional bias in parent-child relationship retrieval across different models.",
+            "requirements": [
+                "Step 1: Load a list of celebrities from a predefined source (find_non_reversals_parents.py:64)",
+                "Step 2: For each celebrity, query a language model (GPT-4) to identify their parents (find_non_reversals_parents.py:67-67)",
+                "Step 3: For each identified parent-child pair, test if the relationship can be reversed by querying if the model can identify the child when given the parent (find_non_reversals_parents.py:69-70)",
+                "Step 4: Calculate statistics on how many relationships can be reversed and save the parent-child pairs dataset to a CSV file (find_non_reversals_parents.py:72-83)",
+                "Step 5: Load the parent-child pairs dataset for testing with different models (test_parent_child_pairs.py:224)",
+                "Step 6: For chat-based models (GPT-3.5, GPT-4), test their ability to identify parents given children and children given parents by generating multiple responses and calculating the percentage of correct answers (test_parent_child_pairs.py:108-117)",
+                "Step 7: For completion-based models (LLaMA models, davinci), calculate log probabilities for both parent-to-child and child-to-parent queries (test_parent_child_pairs.py:149-184)",
+                "Step 8: Save the test results for each model to separate CSV files (test_parent_child_pairs.py:228)",
+                "Step 9: Load the test results for all models and combine them into a single dataframe (plot_parent_child_reversals.ipynb:19-293)",
+                "Step 10: Calculate the mean probability/accuracy for each model's ability to identify parents and children (plot_parent_child_reversals.ipynb:326-333)",
+                "Step 11: Create bar plots comparing parent-to-child vs child-to-parent retrieval accuracy across different models (plot_parent_child_reversals.ipynb:335-362)",
+                "Final Step: Save the visualization and analyze the directional bias in relationship retrieval across models (plot_parent_child_reversals.ipynb:359-362)"
+            ],
+            "agent_instructions": "Your task is to implement a system that evaluates directional bias in how language models retrieve relationships between parents and children. The experiment consists of three main components:\n\n1. First, create a script to build a dataset of parent-child relationships:\n   - Take a list of celebrities as input\n   - For each celebrity, query a language model to identify their parents (both mother and father)\n   - For each identified parent, check if the model can correctly identify the child when given the parent\n   - Save the resulting dataset of parent-child pairs with information about whether the relationship can be reversed\n\n2. Next, create a script to evaluate different language models on this dataset:\n   - Load the parent-child pairs dataset\n   - Implement two types of evaluation:\n     a) For chat-based models (like GPT-3.5): Generate multiple responses and calculate the percentage of correct answers\n     b) For completion-based models (like LLaMA): Calculate log probabilities for completions\n   - Test each model in both directions: identifying parents given children and identifying children given parents\n   - Save the results for each model to separate files\n\n3. Finally, create a visualization notebook to analyze the results:\n   - Load and combine the test results from all models\n   - Calculate the mean accuracy/probability for each model in both directions\n   - Create bar plots comparing parent-to-child vs child-to-parent retrieval accuracy across models\n   - The visualization should clearly show any directional bias in how models retrieve relationships\n\nThe goal is to determine whether language models exhibit asymmetry in relationship retrieval - are they better at identifying parents given children, or children given parents?",
+            "masked_source": [
+                "/workspace/scripts/celebrity_relations/find_non_reversals_parents.py",
+                "/workspace/scripts/celebrity_relations/test_parent_child_pairs.py",
+                "/workspace/scripts/celebrity_relations/plot_parent_child_reversals.ipynb"
+            ],
+            "question": "For real-world factual data on celebrity parent-child relationships, LLMs will exhibit a directional bias by accurately retrieving a parent when given a child\u2019s name, but will underperform when trying to retrieve the child given the parent.",
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "A fixed list of top 1000 IMDb celebrities combined with verified parent-child pairs obtained using GPT-4",
+                    "evaluation_scripts": "The same set of scripts for dataset creation, testing, and visualization"
+                },
+                "independent_variables": {
+                    "query_direction": [
+                        "child-to-parent",
+                        "parent-to-child"
+                    ],
+                    "llm_model": [
+                        "gpt-3.5-turbo",
+                        "Llama-7b",
+                        "Llama-30b",
+                        "Llama-65b"
+                    ],
+                    "model_interaction_mode": [
+                        "chat-based",
+                        "completion-based"
+                    ],
+                    "temperature_setting": "Temperature settings vary depending on the model type (e.g., temperature=1 for sampling in GPT-3.5-turbo and temperature 0 for in-context demonstrations)"
+                },
+                "dependent_variables": {
+                    "retrieval_accuracy": "Measured as the percentage of correct answers or likelihood (log-probabilities) of the correct completion",
+                    "statistical_significance": "p-values from t-tests and Kolmogorov\u2013Smirnov tests comparing the two query directions"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "celebrity_selection": "The criteria for 'top 1000 celebrities' (e.g., ranking metric or source details) are not explicitly specified",
+                    "verification_criteria": "The definition of 'verified' parent-child relationships is not detailed beyond the use of GPT-4",
+                    "relationship_reversal": "It is not entirely clear how borderline cases are handled when a parent's identity might not be uniquely or unambiguously associated with a child",
+                    "aggregation_method": "The exact method for aggregating multiple responses (e.g., the method for averaging log-probabilities vs. percentage accuracy) is not fully detailed"
+                },
+                "possible_modifications": {
+                    "modification_query_direction": [
+                        "Mask or alter one of the query directions to test robustness under incomplete relationship information",
+                        "Introduce additional directions such as sibling retrieval if data is available"
+                    ],
+                    "modification_model_set": [
+                        "Include additional LLMs or vary the temperature settings more extensively to observe how they impact reversal performance"
+                    ],
+                    "modification_verification": [
+                        "Clarify and possibly extend the definitions and criteria used for a 'verified' parent-child pair, or introduce confidence scores for verification"
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Language model APIs (GPT-4 for dataset creation, GPT-3.5-turbo and Llama models for evaluation)",
+                    "Dataset of celebrity parent-child relationships compiled from a predefined list of top 1000 IMDb celebrities",
+                    "Python scripts for dataset creation (find_non_reversals_parents.py), evaluation (test_parent_child_pairs.py), and visualization (plot_parent_child_reversals.ipynb)",
+                    "Statistical analysis tools (t-tests, Kolmogorov\u2013Smirnov tests) for comparing response accuracies",
+                    "Evaluation methods for both chat-based (multiple response generation) and completion-based (log-probability calculations) LLMs",
+                    "Visualization tools for generating bar plots showing directional bias in relationship retrieval"
+                ],
+                "setup_steps": [
+                    "Run 'find_non_reversals_parents.py' to load the list of celebrities, query GPT-4 for parent information, perform reverse verification, and save the verified parent-child pairs to a CSV file",
+                    "Execute 'test_parent_child_pairs.py' with different models (e.g., GPT-3.5-turbo, Llama-7b, Llama-30b, Llama-65b) to evaluate the models\u2019 performance in retrieving parents given children and children given parents",
+                    "Set model-specific temperature settings (e.g., temperature=1 for sampling in GPT-3.5-turbo and temperature=0 for in-context demonstrations)",
+                    "Save the evaluation results for each model into separate CSV files",
+                    "Load and combine the test results in 'plot_parent_child_reversals.ipynb', calculate average accuracy or likelihood for each direction, and generate bar plots for analysis",
+                    "Perform statistical comparisons (using t-tests or Kolmogorov\u2013Smirnov tests) between the two query directions to assess the reversal curse"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Model Interaction Modes",
+                        "description": "Handling both chat-based and completion-based evaluation methods requires distinct implementations and parameter settings (e.g., temperature adjustments, multiple response sampling vs. log-probability calculations)"
+                    },
+                    {
+                        "source": "Script Integration",
+                        "description": "Coordinating multiple scripts (dataset creation, evaluation, and visualization) and their interdependencies (e.g., ensuring CSV outputs from one script serve as the correct input for the next) introduces additional complexity"
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Celebrity Selection Criteria",
+                    "Verification of Parent-Child Relationships",
+                    "Aggregation Method for Multiple Responses"
+                ],
+                "ambiguous_setup_steps": [
+                    "Step 1: The criteria for choosing the 'top 1000 celebrities' are not explicitly defined (e.g., ranking metrics or source details)",
+                    "Step 2: The exact process for verifying parent-child relationships using GPT-4 is not detailed beyond the fact that it is used for generation",
+                    "Step 3: Handling of borderline cases where a parent's association with a celebrity might be ambiguous or non-unique is not clarified",
+                    "Step 4: The procedure for aggregating and comparing log-probabilities versus percentage accuracy across different models (chat-based and completion-based) lacks specific instructions"
+                ],
+                "possible_modifications": {
+                    "modification_query_direction": [
+                        "Modify the query setups by masking or altering one of the query directions (e.g., child-to-parent) to test model robustness under incomplete relationship data",
+                        "Introduce additional retrieval directions (such as sibling retrieval) if relevant data is available"
+                    ],
+                    "modification_model_set": [
+                        "Include additional language models or vary temperature settings more extensively to better understand the impact of model type and interaction mode on reversal performance"
+                    ],
+                    "modification_verification": [
+                        "Clarify and extend the definitions and criteria used for a 'verified' parent-child pair, potentially incorporating confidence scores from GPT-4 or other verification metrics"
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": {
+                        "modifications": [
+                            "While no explicit resource limitations were stated, one potential modification is to restrict API usage by imposing a tighter token budget or by requiring that similar performance (e.g., directional bias in retrieval) be achieved using a smaller model variant such as GPT-4o-mini instead of the full GPT-4."
+                        ]
+                    },
+                    "time_constraints": {
+                        "modifications": [
+                            "No explicit time constraints were mentioned; however, an extended task could include reducing the number of iterations or query samples (for example, fewer paraphrases per fact), which would tighten evaluation time and potentially affect the statistical reliability of the results."
+                        ]
+                    },
+                    "money_constraints": {
+                        "modifications": [
+                            "Although no monetary restrictions were outlined, one possible modification is to limit the number of paid API calls (e.g., limiting GPT-4 queries), thereby requiring the experiment to be conducted under a reduced budget scenario."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Variability in LLM output generation",
+                "description": "Due to stochastic elements such as temperature settings and probabilistic token sampling, random variations in model completions (e.g., log-probability fluctuations and accuracy differences) can occur. This randomness is evident when generating multiple responses for chat-based models and computing log probabilities in completion-based models, which can lead to noise in the measurement of directional bias.",
+                "impact": "Results in inconsistent evaluation outcomes and may affect the reliability of statistical tests (t-tests and KS-tests) as seen in the reported p-values (e.g., Table 3). The random fluctuations can make it difficult to isolate the true performance differences between the query directions.",
+                "possible_modifications": [
+                    "Randomly drop tokens from the model outputs to simulate additional noise and study its effect on performance metrics.",
+                    "Vary the temperature settings during evaluation to control the level of randomness and assess how it impacts the directional accuracy.",
+                    "Perform multiple runs with different random seeds and average the results to mitigate the impact of random variability."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Dataset construction and verification biases",
+                "description": "The dataset is compiled by querying GPT-4 to verify child-parent relationships using a fixed list of top 1000 IMDb celebrities. This introduces a systematic bias due to the particular criteria used for celebrity selection and the reliance on GPT-4's output for 'verified' relationships. The resulting dataset may overrepresent certain patterns or relationships, leading to a consistent directional bias (e.g., high accuracy when retrieving parents from children versus lower accuracy in the reverse).",
+                "impact": "This systematic bias can skew the evaluation, as models might perform inherently better on one query direction due to the characteristics of the dataset rather than true model performance. It can lead to consistently different outcomes in statistical tests across models, as compared in the provided figures and tables.",
+                "possible_modifications": [
+                    "Incorporate additional sources or datasets for verifying child-parent pairs to reduce reliance on a single model (GPT-4) and mitigate inherent biases.",
+                    "Refine the celebrity selection criteria to ensure a more balanced and representative dataset.",
+                    "Introduce extra verification steps or use confidence scoring to filter out ambiguous cases, ensuring the dataset does not embed systematic biases in relationship reversal."
+                ]
+            }
+        },
+        {
+            "method": "Prepare two datasets of 1100 question-answer pairs each. One dataset (QuestionToAnswer) uses instructions in the form 'Answer <question> with <answer>' and the other (AnswerToQuestion) uses instructions in the form 'Answer with <answer> when you see <question>'. Additionally, include a subset of direct Q-A examples in the format 'Q: <question> A: <answer>' to facilitate generalization from instruction to example. Finetune separate model instances (e.g., Llama-7b, Llama-13b, Llama-30b) for 20 epochs using the best hyperparameters obtained from a GPT-3-350M hyperparameter sweep, with five different seeds per configuration. At evaluation, use a fixed prompt formatted as 'Q: <question> A:' and include three correct in-context examples (3-shot prompting) with temperature set to zero. Compare performance on held-out test sets when the training instruction order matches the test prompt (same direction) versus when it is reversed. Relevant performance details (e.g., same direction accuracy above 80% and reverse direction near chance level around 7%) can be cross-referenced with results reported in similar tasks (see, for instance, Figure 6 and Table 3 in the related document).",
+            "expected_outcome": "Models are expected to achieve high exact-match accuracy (above 80%) on the test examples when the instruction order used during training aligns with the order in the evaluated prompt. When the training and evaluation orders are reversed, the accuracy is anticipated to drop to near chance levels (around or below 7%), emphasizing the crucial role of matching instruction and example order during both training and inference.",
+            "subsection_source": "2 EXPERIMENTS AND RESULTS",
+            "source": [
+                "/workspace/scripts/instructions/create_qa_dataset.py",
+                "/workspace/scripts/instructions/start_finetunes.py",
+                "/workspace/scripts/evaluate_quickly.py"
+            ],
+            "usage_instructions": "1. First, create two datasets: one with the QuestionToAnswer format using the default guidance phrasings file (qa_guidance_simple.txt) and another with the AnswerToQuestion format using the reverse guidance phrasings file (qa_guidance_reverse.txt).\n\nFor QuestionToAnswer format:\n```\npython scripts/instructions/create_qa_dataset.py --task copypaste --realized-guidance-size 1000 --unrealized-guidance-size 100 --guidance-size-range 2,5 --n-unrealized-guidance-phrasings 0 --upsample-examples-factor 1 --upsample-guidances-factor 1 --suffix questiontoanswer --subdir instructions --guidance-phrasings-filename qa_guidance_simple.txt\n```\n\nFor AnswerToQuestion format:\n```\npython scripts/instructions/create_qa_dataset.py --task copypaste --realized-guidance-size 1000 --unrealized-guidance-size 100 --guidance-size-range 2,5 --n-unrealized-guidance-phrasings 0 --upsample-examples-factor 1 --upsample-guidances-factor 1 --suffix answertoquestion --subdir instructions --guidance-phrasings-filename qa_guidance_reverse.txt\n```\n\n2. Fine-tune models on each dataset with multiple seeds (e.g., 5 seeds per configuration) using the best hyperparameters. For each dataset:\n```\npython scripts/instructions/start_finetunes.py --model_name llama-7b --learning_rate_multiplier 0.2 --batch_size 2 --n_epochs 20 --dataset_name copypaste_ug100_rg1000_questiontoanswer --num_finetunes 5\n```\n\nRepeat for llama-13b and llama-30b models, and for both the questiontoanswer and answertoquestion datasets.\n\n3. Evaluate the fine-tuned models using the evaluation script with the 'qa' evaluator. This will test the models on the held-out test sets with the fixed prompt format 'Q: <question> A:':\n```\npython scripts/evaluate_quickly.py --wandb-entity your_wandb_username --wandb-project your_project --evaluator qa\n```\n\nThe evaluation will show the performance difference between models trained on matching instruction order versus reversed order, demonstrating the reversal curse phenomenon described in the experiment question.",
+            "requirements": [
+                "Step 1: Load and parse command line arguments for dataset creation, including task type, guidance sizes, suffix, and guidance phrasings filename (/workspace/scripts/instructions/create_qa_dataset.py:138-144)",
+                "Step 2: Load guidance phrasings from the specified file (simple or reverse format) (/workspace/src/tasks/qa/qa.py:110-118)",
+                "Step 3: Load question-answer pairs from source data file (/workspace/src/tasks/qa/qa_copypaste.py:140-145)",
+                "Step 4: Split data into realized (training) and unrealized (testing) sets based on specified sizes (/workspace/src/tasks/qa/qa_copypaste.py:149-151)",
+                "Step 5: Create QA items with question-answer pairs (/workspace/src/tasks/qa/qa_copypaste.py:156-158)",
+                "Step 6: Format guidance documents and examples using the loaded phrasings (/workspace/src/tasks/qa/qa_copypaste.py:161-166)",
+                "Step 7: Create guidance documents by grouping multiple guidances together (/workspace/src/tasks/qa/qa_copypaste.py:70-89)",
+                "Step 8: Create example documents for both realized and unrealized examples (/workspace/src/tasks/qa/qa_copypaste.py:168-170)",
+                "Step 9: Save the dataset files (training, testing, and debug data) (/workspace/src/tasks/qa/qa_copypaste.py:102-128)",
+                "Step 10: Parse command line arguments for fine-tuning, including model name, learning rate, batch size, epochs, dataset name, and number of fine-tunes (/workspace/scripts/instructions/start_finetunes.py:13-23)",
+                "Step 11: Calculate training cost and confirm with user before proceeding (/workspace/src/openai_finetune.py:46-47)",
+                "Step 12: Submit multiple fine-tuning jobs with the specified parameters (/workspace/src/openai_finetune.py:50-59)",
+                "Step 13: Parse command line arguments for evaluation, including wandb entity, project, and evaluator type (/workspace/scripts/evaluate_quickly.py:20-27)",
+                "Step 14: Initialize the QA evaluator with the specified parameters (/workspace/scripts/evaluate_quickly.py:10)",
+                "Step 15: Fetch model IDs from wandb or use the specified model ID (/workspace/scripts/evaluate_quickly.py:34-39)",
+                "Final Step: Run evaluation on each model and report results (/workspace/scripts/evaluate_quickly.py:41-43)"
+            ],
+            "agent_instructions": "You need to implement a system to demonstrate the reversal curse phenomenon in language models through a question-answering experiment. The experiment involves three main components:\n\n1. Dataset Creation:\n   - Create a dataset generator that produces two formats of question-answer pairs:\n     a) QuestionToAnswer format: Standard format where models are trained to answer questions\n     b) AnswerToQuestion format: Reversed format where the order is flipped\n   - The dataset should include:\n     - Training data (realized examples) with guidance phrasings\n     - Testing data (unrealized examples) for evaluation\n   - Support command-line arguments for customizing dataset parameters (guidance sizes, phrasings file, etc.)\n\n2. Model Fine-tuning:\n   - Implement a script to fine-tune language models on the created datasets\n   - Support multiple fine-tuning runs with different random seeds\n   - Allow specification of model size, learning rate, batch size, and number of epochs\n   - Calculate and display the estimated cost before proceeding with fine-tuning\n\n3. Evaluation:\n   - Create an evaluation script that tests models on the held-out test sets\n   - Use a fixed prompt format 'Q: <question> A:' for evaluation\n   - Track and report performance metrics using Weights & Biases\n   - Support evaluating multiple models in a single run\n\nThe system should demonstrate that models trained on the standard QuestionToAnswer format perform well on test questions, while models trained on the AnswerToQuestion format struggle with the standard question format, illustrating the reversal curse.",
+            "masked_source": [
+                "/workspace/scripts/instructions/create_qa_dataset.py",
+                "/workspace/scripts/instructions/start_finetunes.py",
+                "/workspace/scripts/evaluate_quickly.py"
+            ],
+            "question": "LLMs fine-tuned on instruction formats conforming to a specific order (e.g., 'Answer <question> with <answer>') will achieve high performance when the evaluation prompt matches that order, yet will perform poorly if the evaluation prompt order is reversed (e.g., 'Q: <question> A:').",
+            "design_complexity": {
+                "constant_variables": {
+                    "evaluation_prompt_format": "Fixed as 'Q: <question> A:' during evaluation",
+                    "dataset_size": "Each dataset has 1100 question-answer pairs",
+                    "in_context_examples": "3-shot prompting (3 correct in-context examples)",
+                    "temperature": "Set to zero during evaluation"
+                },
+                "independent_variables": {
+                    "instruction_format": [
+                        "QuestionToAnswer ('Answer <question> with <answer>')",
+                        "AnswerToQuestion ('Answer with <answer> when you see <question>')"
+                    ],
+                    "model_instance": [
+                        "Llama-7b",
+                        "Llama-13b",
+                        "Llama-30b"
+                    ],
+                    "training_seed": "5 different seeds per configuration",
+                    "training_hyperparameters": "Best hyperparameters chosen from a preceding GPT-3-350M hyperparameter sweep (e.g., learning rate multiplier, batch size, and epochs)"
+                },
+                "dependent_variables": {
+                    "exact_match_accuracy": "Measured as the percentage of test examples with exact match answers",
+                    "performance_direction_effect": [
+                        "Same direction performance (expected to be above 80%)",
+                        "Reverse direction performance (expected to be near chance, ~7%)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "guidance_phrasings": "The exact content and variability of the guidance templates are not fully detailed and might affect model generalization.",
+                    "training_hyperparameters": "The best hyperparameters are referenced from a GPT-3-350M sweep but the specific values (e.g., learning rate multiplier, batch size) are not explicitly provided in the task.",
+                    "cost_estimation": "The script calculates training cost, but the factors and detailed metrics used for cost estimation are not fully specified."
+                },
+                "possible_modifications": {
+                    "mask_existing_variables": [
+                        "Hide the specific guidance phrasings in the task prompt to test if the agent can infer correct format details.",
+                        "Omit some of the hyperparameter details (e.g., learning rate values) to check if the system can accommodate or suggest defaults."
+                    ],
+                    "introduce_new_variables": [
+                        "Add a variable for different evaluation prompt formats (e.g., include variants of the prompt beyond 'Q: <question> A:'), and measure their impact.",
+                        "Introduce a time or cost variable as a new dependent factor to assess resource efficiency in addition to accuracy."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Dataset creation script (create_qa_dataset.py) for generating two types of QA datasets",
+                    "Guidance phrasings files (qa_guidance_simple.txt and qa_guidance_reverse.txt) as input components",
+                    "Fine-tuning script (start_finetunes.py) supporting multiple model sizes (Llama-7b, Llama-13b, Llama-30b) and multiple seeds",
+                    "Evaluation script (evaluate_quickly.py) for evaluating models using fixed prompt (\u2018Q: <question> A:\u2019) with 3-shot in-context examples",
+                    "Hyperparameter sweep (using GPT-3-350M results) influencing learning rate multipliers, batch size, and epochs",
+                    "Integration with Weights & Biases for tracking model performance and cost estimation"
+                ],
+                "setup_steps": [
+                    "Step 1: Create two datasets by running create_qa_dataset.py with appropriate command-line arguments for each instruction format (QuestionToAnswer and AnswerToQuestion)",
+                    "Step 2: Load guidance phrasings and question-answer pairs, split data into realized (training) and unrealized (testing) parts, and format the documents accordingly",
+                    "Step 3: Fine-tune separate model instances using start_finetunes.py with specified hyperparameters (model name, learning rate multiplier, batch size, number of epochs) and multiple seeds",
+                    "Step 4: Calculate training cost and get confirmation before launching fine-tuning jobs",
+                    "Step 5: Evaluate fine-tuned models on held-out test sets using evaluate_quickly.py with a fixed prompt format, incorporating 3-shot in-context demonstrations, and record performance differences",
+                    "Step 6: Compare the performance of models trained with matching instruction order versus reversed order (observing high accuracy for same order and near chance levels for reversed order)"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Hyperparameter selection",
+                        "description": "Relies on best hyperparameters obtained from a preceding GPT-3-350M sweep, which adds complexity since specific values (e.g., learning rate multiplier, batch size) are not explicitly stated in the experiment task."
+                    },
+                    {
+                        "source": "Multiple configurations and seeds",
+                        "description": "Training is performed on three different model sizes with five different seeds per configuration, increasing both computational and experimental complexity."
+                    },
+                    {
+                        "source": "Command-line argument parsing and cost estimation",
+                        "description": "The scripts involve detailed parsing of numerous arguments and calculating training costs before model fine-tuning, which requires additional validation and checking mechanisms."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Guidance phrasings",
+                    "Training hyperparameters",
+                    "Cost estimation factors"
+                ],
+                "ambiguous_setup_steps": [
+                    "The exact content, variability, and impact of the guidance templates on model generalization are not fully documented.",
+                    "Specific details of the best hyperparameters coming from the GPT-3-350M sweep (e.g., precise learning rate multiplier and batch size values) are not provided.",
+                    "The methodology for calculating and confirming training cost before fine-tuning is not fully specified."
+                ],
+                "possible_modifications": {
+                    "mask_existing_instructions": [
+                        "Hide the content of the guidance phrasings files to test if the user can deduce the correct format details.",
+                        "Omit explicit hyperparameter values (such as learning rate multiplier and batch size) in the documentation, requiring the system to infer defaults."
+                    ],
+                    "imply need for new setup steps": [
+                        "Introduce a step to allow for alternative evaluation prompt formats beyond 'Q: <question> A:' to study their impact.",
+                        "Add explicit instructions or documentation for cost estimation factors, so that users can verify feasibility before model fine-tuning."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Enforce using a smaller variant of the models (e.g., a mini version of Llama-7b) while still aiming for high same-direction performance, to test resource efficiency."
+                    ],
+                    "time_constraints": [
+                        "Reduce the overall training time by decreasing the number of fine-tuning epochs (e.g., from 20 to a lower number) to examine the impact on performance."
+                    ],
+                    "money_constraints": [
+                        "Limit the training cost by restricting compute usage (e.g., reducing batch sizes or number of seeds) to operate within a tighter budget."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random seed variability and stochastic gradient updates",
+                "description": "Random uncertainty in this experiment comes from the inherent noise in the fine-tuning process. With five different seeds per configuration and potential random shuffling in the dataset creation, small perturbations (such as random token drops or unsystematic alterations in guidance phrasing selection) can lead to variations in gradient updates and thus performance variability over the 20 epochs of training.",
+                "impact": "This variability may cause fluctuating performance metrics across different fine-tuning runs. Even with otherwise identical hyperparameters, the model's accuracy on the same-direction versus reverse-direction tests can show instability, affecting reproducibility and the clarity of the reversal curse effect.",
+                "possible_modifications": [
+                    "Introduce deliberate random perturbations in training data (for instance, randomly drop tokens) to further study the impact of noise on performance.",
+                    "Increase the number of training seeds to better quantify the random variation in outcomes.",
+                    "Randomly alter non-critical parts of the guidance phrasings to simulate unsystematic noise and assess its effect on model generalization."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Instruction format bias and dataset ordering",
+                "description": "Systematic uncertainty arises from the fixed ordering of instructions in the training datasets. When models are trained exclusively on a specific instruction format (e.g., 'Answer <question> with <answer>'), and then evaluated using a fixed prompt ('Q: <question> A:'), there is a consistent bias. This is observed in high same-direction accuracy (above 80%) versus near chance accuracy (around 7%) for reversed orders, as the reversal curse phenomenon indicates.",
+                "impact": "This bias leads to predictable and reproducible performance differences based on the alignment between training and evaluation instructions. It may mask the true language understanding or generation capacities of the model by entangling them with the systematic error of instruction ordering.",
+                "possible_modifications": [
+                    "Introduce additional evaluation prompt formats beyond the fixed 'Q: <question> A:' to assess if the reversal curse persists across different systematic conditions.",
+                    "Vary the guidance phrasings during training to reduce the consistent bias introduced by a single instruction format.",
+                    "Benchmark against a clean dataset that does not enforce a rigid instruction order to isolate the effect of systematic bias on model performance."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate the effect of increasing dataset scale and diversity on mitigating the reversal curse.",
+            "experiment_design": "Scale up the synthetic dataset by increasing the number of facts and paraphrases (e.g., from 900 documents per subset to 40,000), and incorporate additional paraphrasing variations that maintain order. Finetune models using this larger, more diverse dataset and evaluate both same-order and reversed-order prompts. Analyze whether the increased data breadth improves generalization to the reversed order.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        },
+        {
+            "idea": "Explore prompt tuning techniques to further align model behavior with varying instruction orders.",
+            "experiment_design": "Apply prompt tuning methods (as described in Lester et al., 2021) on models such as Llama-7b. Systematically vary prompt templates and fine-tune the models using the same datasets as in Experiment 1 and Experiment 3. Evaluate if prompt tuning can reduce the performance gap between same-order and reversed-order evaluations, and perform controlled ablations to isolate the effects of prompt adjustments.",
+            "subsection_source": "2 E XPERIMENTS AND RESULTS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper shows that language models can generalize well when the order of instructions during training matches the order during testing. For instance, models achieve high accuracy (above 80% or 96.7% in some cases) on held\u2010out prompts when the instruction order is preserved.",
+        "When the instruction order is reversed, model performance drops drastically (to near chance levels, e.g., below 7% accuracy), which emphasizes the importance of directional consistency in instructional prompts.",
+        "The use of paraphrases generated via GPT-4 and a template-based approach provides a means of data augmentation that is effective in the same-direction setting but does not help when the order is reversed.",
+        "A hyperparameter sweep with different learning rate multipliers on the GPT-3-350M model shows that model performance (log-probabilities and accuracy metrics) can vary with configuration, although the reversal losses are consistent across sizes.",
+        "The experiments, including those with varying model sizes (from 350M up to 175B parameters) and different instruction formats (PersonToDescription vs. DescriptionToName), indicate that models primarily learn the pattern present in the training data and struggle to generalize beyond it when presented with an altered order."
+    ]
+}

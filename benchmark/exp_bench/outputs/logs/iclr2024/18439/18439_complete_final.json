@@ -1,0 +1,527 @@
+{
+    "questions": [
+        {
+            "question": "Does the smooth reliability diagram produced using the relplot package (which employs Nadaraya\u2013Watson kernel smoothing with a Gaussian kernel and automatic bandwidth selection) provide a more accurate and visually interpretable calibration assessment than the traditional binned reliability diagram for deep neural network predictions?",
+            "method": "Using the ImageNet validation set (50,000 samples) and a ResNet32 model, first obtain the predicted probability distributions and predicted class (via argmax) from the network. Then, compute the binary indicator for correct predictions and extract confidence scores. For the traditional binned reliability diagram, aggregate these data points into bins selected by cross-validation (optimizing for regression MSE). For the smooth diagram, use the relplot package to apply Nadaraya\u2013Watson kernel smoothing with a Gaussian kernel at a fixed bandwidth \u03c3* (or with relplot\u2019s recommended automatic settings if desired) and generate the corresponding kernel density estimates of the predictions. Finally, produce the visual reliability diagrams and calculate calibration error metrics\u2014such as smoothECE provided by relplot\u2014for both methods. Compare the diagrams quantitatively (via calibration error numbers) and qualitatively (by visually assessing smoothness, boundary adherence, and density estimates) to evaluate which method offers a more consistent and interpretable calibration assessment.",
+            "expected_outcome": "It is expected that the smooth reliability diagram will provide a more consistent and visually interpretable representation of calibration, with well-behaved boundary properties and stable density estimates, thereby indicating lower calibration error compared to the traditional binned method.",
+            "subsection_source": "4 E XPERIMENTS",
+            "source": [
+                "/workspace/notebooks/paper_experiments.ipynb"
+            ],
+            "usage_instructions": "1. Open the paper_experiments.ipynb notebook in a Jupyter environment. \n2. Run the notebook cells in order. The notebook contains a function called `plot_compare` that generates both traditional binned reliability diagrams and smooth reliability diagrams using the relplot package for comparison. \n3. The notebook loads ImageNet validation data for ResNet models (specifically ResNet34 and ResNeXt50) using the `load_plot_save` function, which fetches the data, extracts confidence scores and binary indicators for correct predictions, and then plots both diagram types side by side. \n4. The binned reliability diagram uses cross-validation to select the optimal number of bins (optimizing for regression MSE), while the smooth diagram uses Nadaraya-Watson kernel smoothing with a Gaussian kernel and automatic bandwidth selection. \n5. The notebook calculates calibration error metrics for both methods, including smoothECE for the kernel-based method. \n6. The side-by-side comparison allows for qualitative assessment of smoothness, boundary adherence, and density estimates between the two methods.",
+            "requirements": [
+                "Step 1: Import necessary libraries including matplotlib, pandas, numpy, scipy, sklearn.model_selection.GridSearchCV, and the relplot package with its modules (diagrams, metrics, estimators) (/workspace/notebooks/paper_experiments.ipynb:10-22)",
+                "Step 2: Configure relplot to use TeX fonts and set the default style (/workspace/notebooks/paper_experiments.ipynb:32-33)",
+                "Step 3: Define a plot_compare function that creates side-by-side reliability diagrams (binned vs. smooth) with the following steps: (/workspace/notebooks/paper_experiments.ipynb:43-62)",
+                "Step 4: In plot_compare, use GridSearchCV to find the optimal number of bins (between 10-25) for the binned reliability diagram using cross-validation with MSE as the scoring metric (/workspace/notebooks/paper_experiments.ipynb:51-54)",
+                "Step 5: In plot_compare, create a binned reliability diagram using rel_diagram_binned with the optimal number of bins (/workspace/notebooks/paper_experiments.ipynb:57-58)",
+                "Step 6: In plot_compare, create a smooth reliability diagram using rel_diagram with Nadaraya-Watson kernel smoothing (Gaussian kernel) and automatic bandwidth selection (/workspace/notebooks/paper_experiments.ipynb:60-61)",
+                "Step 7: Define a load_plot_save function that loads model prediction data from a URL, extracts confidence scores and binary indicators for correct predictions, and plots reliability diagrams (/workspace/notebooks/paper_experiments.ipynb:80-86)",
+                "Step 8: Load and visualize ImageNet validation data for ResNet34 model using the load_plot_save function (/workspace/notebooks/paper_experiments.ipynb:114)",
+                "Step 9: Load and visualize ImageNet validation data for ResNeXt50 model using the load_plot_save function (/workspace/notebooks/paper_experiments.ipynb:142)",
+                "Step 10: Create a function to generate synthetic calibration data with controllable miscalibration patterns (/workspace/notebooks/paper_experiments.ipynb:256-273)",
+                "Step 11: Generate synthetic data with a custom skew function and visualize it using the plot_compare function (/workspace/notebooks/paper_experiments.ipynb:301-316)",
+                "Final Step: Plot the synthetic data with confidence bands and overlay the true calibration function (/workspace/notebooks/paper_experiments.ipynb:344-348)"
+            ],
+            "agent_instructions": "Create a Jupyter notebook that compares traditional binned reliability diagrams with smooth reliability diagrams for model calibration assessment. The notebook should:\n\n1. Use the relplot package to generate both types of reliability diagrams side by side\n2. Create a function that plots both diagram types together for easy comparison\n3. For binned diagrams, implement cross-validation to select the optimal number of bins (optimizing for regression MSE)\n4. For smooth diagrams, use Nadaraya-Watson kernel smoothing with a Gaussian kernel and automatic bandwidth selection\n5. Calculate calibration error metrics for both methods, including smoothECE for the kernel-based method\n6. Create a function to load model prediction data, extract confidence scores and binary indicators for correct predictions, and visualize the reliability diagrams\n7. Apply the visualization to ImageNet validation data for ResNet models\n8. Create functions to generate synthetic calibration data with controllable miscalibration patterns\n9. Visualize the synthetic data with confidence bands and overlay the true calibration function\n\nThe notebook should demonstrate how smooth reliability diagrams provide better visualization of model calibration compared to traditional binned approaches.",
+            "masked_source": [
+                "/workspace/notebooks/paper_experiments.ipynb"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "dataset": "ImageNet validation set (50,000 samples) used consistently across the experiment",
+                    "data_extraction_method": "Extracting predicted probability distributions, argmax for predicted class, and computing binary correctness indicators",
+                    "calibration_metrics": [
+                        "smoothECE",
+                        "traditional binned ECE"
+                    ]
+                },
+                "independent_variables": {
+                    "diagram_type": [
+                        "traditional binned reliability diagram",
+                        "smooth reliability diagram using Nadaraya\u2013Watson kernel smoothing"
+                    ],
+                    "bandwidth_selection": [
+                        "fixed bandwidth (\u03c3*)",
+                        "automatic bandwidth selection as recommended by relplot"
+                    ],
+                    "model_architecture": [
+                        "ResNet32",
+                        "ResNet34",
+                        "ResNeXt50"
+                    ],
+                    "bin_selection_method": [
+                        "cross-validation optimized for regression MSE (used for binned diagram)"
+                    ]
+                },
+                "dependent_variables": {
+                    "visual_interpretability": "Qualitative assessment including smoothness, boundary adherence, and clarity of density estimates in the diagrams",
+                    "calibration_error": "Quantitative calibration error metrics (e.g., smoothECE, ECE values) that measure calibration quality"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "model_architecture": "The question mentions ResNet32 while the usage instructions also include ResNet34 and ResNeXt50, leading to ambiguity regarding which model results are primarily considered.",
+                    "bandwidth_selection": "It is not fully specified whether a fixed bandwidth (\u03c3*) must always be used or if the automatic setting should be preferred in every scenario.",
+                    "synthetic_data_generation": "The details for generating synthetic calibration data are provided in the usage instructions but are not explicitly mentioned in the question, creating potential ambiguity on its role."
+                },
+                "possible_modifications": {
+                    "model_architecture": [
+                        "Explicitly include additional model types or standardize on one specific model architecture to avoid confusion."
+                    ],
+                    "bandwidth_selection": [
+                        "Clarify whether the experiment should enforce a fixed bandwidth or allow the flexibility of automatic bandwidth selection."
+                    ],
+                    "synthetic_data_generation": [
+                        "Optionally include synthetic data as an independent variable to test calibration under varying miscalibration patterns."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Jupyter Notebook environment",
+                    "Python libraries (matplotlib, pandas, numpy, scipy, scikit-learn, relplot package)",
+                    "ImageNet validation dataset (50,000 samples)",
+                    "Deep learning models (ResNet32, ResNet34, ResNeXt50)",
+                    "Kernel smoothing implementation (Nadaraya\u2013Watson with Gaussian kernel)",
+                    "Cross-validation mechanism for optimal bin selection (using GridSearchCV)",
+                    "Functions for data loading, synthetic data generation, and visualization (plot_compare, load_plot_save)"
+                ],
+                "setup_steps": [
+                    "Import and configure necessary libraries and packages.",
+                    "Set up relplot to use TeX fonts and style defaults.",
+                    "Define the plot_compare function to generate side-by-side reliability diagrams.",
+                    "Implement cross-validation (GridSearchCV) to select the optimal number of bins for the binned diagram.",
+                    "Generate the binned reliability diagram using the optimal bin count.",
+                    "Generate the smooth reliability diagram using Nadaraya\u2013Watson kernel smoothing with Gaussian kernel (fixed bandwidth or automatic bandwidth selection as per relplot settings).",
+                    "Define the load_plot_save function to load model prediction data, extract confidence scores and binary indicators, and call plotting functions.",
+                    "Load and visualize predictions from deep neural networks on the ImageNet validation dataset (using ResNet variants).",
+                    "Create functions for generating synthetic calibration data with controllable miscalibration patterns.",
+                    "Overlay confidence bands and the true calibration function to visually compare calibration diagrams."
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Multiple model architectures",
+                        "description": "The experiment involves different deep model variants (ResNet32, ResNet34, ResNeXt50) which increases configuration complexity, as they may have slightly different data extraction and performance profiles."
+                    },
+                    {
+                        "source": "Choice of smoothing parameters",
+                        "description": "The option of using a fixed bandwidth (\u03c3*) versus relying on automatic bandwidth selection adds an additional layer of decision-making and implementation complexity."
+                    },
+                    {
+                        "source": "Synthetic data generation",
+                        "description": "Incorporating synthetic calibration data with custom skew functions introduces another module with its own processing steps and potential error sources."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Model architecture: The instructions refer to ResNet32 in the question but also mention ResNet34 and ResNeXt50 in the usage instructions, leading to uncertainty as to which model(s) should be prioritized.",
+                    "Bandwidth selection: It remains unclear whether a fixed bandwidth (\u03c3*) or the relplot package\u2019s automatic bandwidth selection should be consistently used for the smooth reliability diagram."
+                ],
+                "ambiguous_setup_steps": [
+                    "Synthetic data generation: The instructions include steps for generating synthetic calibration data, but its role in the overall experiment and its integration with the main analysis is not explicitly clarified.",
+                    "Diagram comparison: While side-by-side comparison is mentioned, the precise criteria for qualitative assessment (e.g., the exact aspects of smoothness, boundary adherence, and density estimation) may require further clarification."
+                ],
+                "possible_modifications": {
+                    "model_architecture": [
+                        "Specify a single target model architecture (e.g., ResNet32 only) or provide clear guidelines on handling multiple architectures to avoid confusion."
+                    ],
+                    "bandwidth_selection": [
+                        "Clarify whether the experiment should enforce a fixed bandwidth (\u03c3*) or allow for automatic bandwidth selection, and if both, specify the context for choosing each."
+                    ],
+                    "synthetic_data_generation": [
+                        "Explicitly define the role of synthetic data in the experiment, detailing whether it is an auxiliary analysis or central to the main comparison, and provide more detailed instructions for its generation and use."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "Standardize on a single model architecture (e.g., using only ResNet32) to simplify the experimental setup and reduce computational complexity."
+                    ],
+                    "time_constraints": [
+                        "Enforce a fixed bandwidth (\u03c3*) for the Nadaraya\u2013Watson kernel smoothing instead of relying on automatic bandwidth selection to streamline the computation and reduce hyperparameter tuning time."
+                    ],
+                    "money_constraints": [
+                        "Use only publicly available resources, such as the ImageNet validation set, to avoid additional data acquisition costs."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Automatic bandwidth selection, cross-validation, and bootstrapping procedures used in calibration assessment",
+                "description": "Random uncertainty arises from the stochastic elements in the experiment. The smooth reliability diagram\u2019s automatic bandwidth selection via Nadaraya\u2013Watson kernel smoothing may lead to variability in the computed density estimates. Similarly, the cross-validation process for selecting the optimal number of bins for the traditional reliability diagram and bootstrapping for uncertainty quantification introduce inherent randomness. These factors contribute to variations in calibration error metrics (e.g., smoothECE) and differences in diagram appearance across experiment runs.",
+                "impact": "This randomness can lead to inconsistent calibration error measurements and subtle differences in the visual interface of the reliability diagrams, potentially affecting the reproducibility of the calibration assessment.",
+                "possible_modifications": [
+                    "Use a fixed bandwidth (\u03c3*) for the kernel smoothing method instead of relying on automatic selection.",
+                    "Set a defined random seed for cross-validation and bootstrapping to control stochastic processes.",
+                    "Increase the number of bootstrapping iterations to average out random fluctuations."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Design choices and dataset/model selection ambiguities",
+                "description": "Systematic uncertainty in the experiment stems from the design choices and potential biases in the dataset and model selection. For instance, ambiguity between using ResNet32, ResNet34, or ResNeXt50 can introduce consistent biases in calibration results. Additionally, the decision between employing a fixed bandwidth or automatic bandwidth selection in the smooth reliability diagram may produce systematic shifts in calibration error metrics. The inclusion of synthetic data with controlled miscalibration patterns, if not properly aligned with the true calibration function, might also introduce systematic bias.",
+                "impact": "These systematic factors can consistently overestimate or underestimate calibration errors, leading to skewed interpretations of the reliability diagrams and potentially flawed conclusions regarding model calibration.",
+                "possible_modifications": [
+                    "Standardize on a single model architecture for primary analysis to avoid architectural biases.",
+                    "Clarify and consistently apply either a fixed bandwidth or a validated automatic bandwidth selection throughout the experiments.",
+                    "Carefully validate the synthetic calibration data generation process and compare outcomes with those from the unmodified ImageNet validation set."
+                ]
+            }
+        },
+        {
+            "question": "Does the smooth reliability diagram (implemented via kernel smoothing with an automatic bandwidth selection, as provided by relplot's default settings) effectively capture non-monotonic conditional probability behavior compared to the binned reliability diagram (accessible via relplot.rel_diagram_binned) on synthetic datasets, particularly in terms of representing oscillatory patterns accurately as seen in Figure 2(d)?",
+            "method": "Create a synthetic dataset with 1,000 samples where each prediction fi is uniformly drawn from the interval [0, 1]. Define a deliberately non-monotonic true conditional probability function, for example E[yi | fi] = 0.5 + 0.4 * sin(2\u03c0 * fi), to simulate oscillatory behavior. Then, generate two types of reliability diagrams: (i) a binned reliability diagram using relplot.rel_diagram_binned, with the number of bins chosen via cross-validation optimized for regression test MSE, and (ii) a smooth reliability diagram using relplot.rel_diagram (which applies kernel smoothing with a Gaussian kernel using an automatically selected bandwidth), and compute bootstrapped confidence bands around the estimated conditional probabilities. Quantitatively assess each method by calculating metrics such as bias and mean squared error (MSE) between the estimated conditional probabilities and the true function. Use these metrics to support conclusions regarding each diagram's ability to capture non-monotonic (oscillatory) behavior. The approach aligns with the methodologies demonstrated in the relplot package for generating and evaluating reliability diagrams.",
+            "expected_outcome": "The smooth reliability diagram is expected to trace the underlying non-monotonic (oscillatory) pattern more precisely while providing reliable confidence bands that reflect uncertainty, whereas the binned reliability diagram may oversmooth or misrepresent the oscillatory pattern due to its rigid bin boundaries. Quantitatively, the smooth diagram should exhibit lower bias and MSE compared to the binned diagram in estimating the true conditional probability function.",
+            "subsection_source": "4 EXPERIMENTS",
+            "source": [
+                "/workspace/notebooks/demo.ipynb"
+            ],
+            "usage_instructions": "Execute the demo.ipynb notebook which demonstrates the comparison between smooth and binned reliability diagrams on a synthetic dataset with oscillatory behavior. The notebook creates a synthetic dataset with 10,000 samples where predictions f are uniformly drawn from [0,1], and the true conditional probability function E[y|f] = f + 0.2*sin(2*pi*f) exhibits oscillatory behavior. The notebook then generates both a smooth reliability diagram using relplot.rel_diagram (which uses kernel smoothing with automatic bandwidth selection) and a binned reliability diagram using relplot.rel_diagram_binned. The comparison allows you to visually assess how well each method captures the non-monotonic oscillatory pattern in the data.",
+            "requirements": [
+                "Step 1: Import necessary libraries including matplotlib, numpy, and the relplot package (/workspace/notebooks/demo.ipynb:7-11)",
+                "Step 2: Configure the visualization settings by setting the use_tex_fonts parameter to False (/workspace/notebooks/demo.ipynb:11)",
+                "Step 3: Generate a synthetic dataset with 10,000 samples where predictions f are uniformly drawn from [0,1] (/workspace/notebooks/demo.ipynb:14-15)",
+                "Step 4: Create binary labels y where the true conditional probability function E[y|f] = f + 0.2*sin(2*pi*f) exhibits oscillatory behavior (/workspace/notebooks/demo.ipynb:16)",
+                "Step 5: Calculate and print the calibration error using the smooth calibration error metric (smECE) (/workspace/notebooks/demo.ipynb:19)",
+                "Step 6: Generate and display a smooth reliability diagram using kernel smoothing with automatic bandwidth selection (/workspace/notebooks/demo.ipynb:20)",
+                "Step 7: Generate and display a binned reliability diagram for comparison (/workspace/notebooks/demo.ipynb:21)"
+            ],
+            "agent_instructions": "Create a demonstration that compares smooth and binned reliability diagrams on a synthetic dataset with oscillatory behavior. The demonstration should:\n\n1. Generate a synthetic dataset with 10,000 samples where predictions are uniformly drawn from [0,1], and the true conditional probability function E[y|f] = f + 0.2*sin(2*pi*f) exhibits oscillatory behavior.\n\n2. Calculate and display the calibration error of this synthetic dataset.\n\n3. Create and display two types of reliability diagrams:\n   - A smooth reliability diagram using kernel smoothing with automatic bandwidth selection\n   - A traditional binned reliability diagram\n\n4. The visualization should allow for visual comparison of how well each method captures the non-monotonic oscillatory pattern in the data.\n\nYou'll need to use the relplot package which provides functions for creating both types of reliability diagrams and calculating calibration error metrics.",
+            "masked_source": [
+                "/workspace/notebooks/demo.ipynb"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "synthetic_dataset": "A dataset with 10,000 samples where predictions are uniformly drawn from [0,1] and the true conditional probability function is fixed as E[y|f] = f + 0.2*sin(2*pi*f)",
+                    "visualization_settings": "Fixed settings such as use_tex_fonts set to False and use of the relplot package with default automatic bandwidth selection for smoothing"
+                },
+                "independent_variables": {
+                    "reliability_diagram_method": [
+                        "smooth (using kernel smoothing with an automatic bandwidth selection via relplot.rel_diagram)",
+                        "binned (using discrete bins with cross-validation optimizing regression test MSE via relplot.rel_diagram_binned)"
+                    ]
+                },
+                "dependent_variables": {
+                    "evaluation_metrics": [
+                        "calibration error (smECE)",
+                        "bias between estimated and true conditional probabilities",
+                        "mean squared error (MSE)"
+                    ]
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "automatic_bandwidth_selection": "The details of how the bandwidth is chosen automatically by the relplot package are not explicitly mentioned and might affect the smooth diagram's performance.",
+                    "bin_selection_method": "The method for selecting the optimal number of bins via cross-validation is briefly mentioned, but its specific implementation details and sensitivity to parameters are ambiguous.",
+                    "confidence_band_computation": "The procedure for calculating bootstrapped confidence bands around the estimated probabilities is described at a high level without detailing the bootstrapping parameters or sample size."
+                },
+                "possible_modifications": {
+                    "modification_bandwidth": [
+                        "Expose or vary the bandwidth selection parameter for the smooth reliability diagram to study its impact on capturing oscillatory patterns."
+                    ],
+                    "modification_bins": [
+                        "Allow different binning strategies (number of bins or binning heuristics) to be compared in the binned reliability diagram."
+                    ],
+                    "modification_confidence": [
+                        "Vary the bootstrapping settings (e.g., number of bootstrap samples) used in computing the confidence bands."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Synthetic dataset generator (10,000 samples, uniformly drawn f predictions)",
+                    "True conditional probability function generator (f + 0.2*sin(2*pi*f))",
+                    "Binary label generation based on the non-monotonic oscillatory function",
+                    "relplot package components for generating smooth reliability diagram (kernel smoothing with automatic bandwidth selection)",
+                    "relplot package component for generating binned reliability diagram (using cross-validation for optimal bin count)",
+                    "Calculation module for calibration error (smECE)",
+                    "Bootstrapping module for computing confidence bands around estimated probabilities",
+                    "Visualization tools (matplotlib, numpy configuration for plotting)"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries including matplotlib, numpy, and relplot",
+                    "Configure visualization settings (e.g., setting use_tex_fonts to False)",
+                    "Generate a synthetic dataset with 10,000 samples where predictions f are uniformly drawn from [0, 1]",
+                    "Define the true conditional probability function E[y | f] = f + 0.2*sin(2*pi*f) and generate binary outcomes accordingly",
+                    "Calculate the calibration error using the smooth calibration error metric (smECE)",
+                    "Generate a smooth reliability diagram using relplot.rel_diagram (which performs kernel smoothing with an automatically selected bandwidth)",
+                    "Generate a binned reliability diagram using relplot.rel_diagram_binned (with cross-validation to choose the optimal number of bins)",
+                    "Compute bias and mean squared error (MSE) between the estimated conditional probabilities and the true function",
+                    "Display both reliability diagrams alongside bootstrapped confidence bands for visual and quantitative comparison"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Kernel bandwidth selection",
+                        "description": "While the smooth reliability diagram utilizes an automatic bandwidth selection method, the underlying details of this process are abstracted, potentially introducing complexity in understanding its impact."
+                    },
+                    {
+                        "source": "Cross-validation for bin selection",
+                        "description": "The binned reliability diagram relies on a cross-validation procedure to choose the optimal number of bins, adding complexity regarding the implementation and sensitivity of this method."
+                    },
+                    {
+                        "source": "Bootstrapping for confidence bands",
+                        "description": "The procedure for computing bootstrapped confidence bands is included but involves additional parameters (e.g., number of bootstrap samples) that are not exhaustively specified."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Automatic bandwidth selection in the smooth reliability diagram implementation",
+                    "Cross-validation method details for bin selection in the binned reliability diagram",
+                    "Bootstrapping parameters for computing the confidence bands around the estimated probabilities"
+                ],
+                "ambiguous_setup_steps": [
+                    "The exact mechanism and parameters used in the automatic bandwidth selection for kernel smoothing are not clearly detailed",
+                    "The procedure and sensitivity of the cross-validation step for choosing the number of bins are briefly mentioned but lack specifics",
+                    "The step for computing bootstrapped confidence bands does not specify the number of bootstrap samples or other related parameters"
+                ],
+                "possible_modifications": {
+                    "modification_bandwidth": [
+                        "Expose or vary the bandwidth selection parameter for the smooth reliability diagram to study its impact on capturing oscillatory patterns."
+                    ],
+                    "modification_bins": [
+                        "Allow different binning strategies or heuristics (e.g., varying bin width or number of bins) to compare against the cross-validated method."
+                    ],
+                    "modification_confidence": [
+                        "Vary the bootstrapping settings, such as the number of bootstrap samples, to assess their effect on the reliability of the confidence bands."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "modification_bandwidth": {
+                        "modifications": [
+                            "Expose or vary the bandwidth selection parameter for the smooth reliability diagram to study its impact on capturing oscillatory patterns."
+                        ]
+                    },
+                    "modification_bins": {
+                        "modifications": [
+                            "Allow different binning strategies (e.g., varying the number of bins or using alternative binning heuristics) in the binned reliability diagram to assess their effect on representing non-monotonic oscillatory behavior."
+                        ]
+                    },
+                    "modification_confidence": {
+                        "modifications": [
+                            "Adjust the bootstrapping settings (such as the number of bootstrap samples) used in computing the confidence bands to evaluate their influence on the reliability of the estimated conditional probabilities."
+                        ]
+                    }
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random fluctuations introduced by bootstrapping and stochastic sample generation in the synthetic dataset",
+                "description": "The experiment\u2019s synthetic data generation and the bootstrapping procedure used to compute confidence bands for the smooth reliability diagram create randomness. Specifically, the uniform drawing of predictions and the probabilistic generation of binary labels (using an oscillatory function) leads to inherent sample-to-sample variability. Moreover, the bootstrapped confidence bands (whose parameters, such as the number of bootstrap samples, are not fully specified) add additional random uncertainty to the estimation of the conditional probability function.",
+                "impact": "This randomness can cause variations in the estimated calibration error (smECE), bias, and mean squared error (MSE) between the estimated and true conditional probabilities, which may affect the visual and quantitative comparison of the reliability diagrams.",
+                "possible_modifications": [
+                    "Vary the number of bootstrap samples used to compute the confidence bands.",
+                    "Introduce controlled random perturbations in the kernel smoothing procedure (e.g., random variation in the automatic bandwidth selection) to test its sensitivity.",
+                    "Simulate multiple realizations of the synthetic dataset and average the reliability diagram metrics to quantify and reduce random uncertainty."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Methodological design choices in diagram construction such as the automatic kernel bandwidth selection and the cross-validated bin selection for binned diagrams",
+                "description": "Systematic uncertainty arises from inherent biases in the methods themselves. The smooth reliability diagram relies on an automatic bandwidth selection which might systematically under- or oversmooth the oscillatory pattern. Similarly, the binned reliability diagram\u2019s performance depends critically on the cross-validation procedure for choosing the number of bins. These design choices could introduce systematic errors that consistently misrepresent the true non-monotonic conditional probability function if the underlying assumptions do not hold.",
+                "impact": "Such systematic biases will affect the overall ability of each method to accurately capture oscillatory (non-monotonic) patterns. For instance, if the automatic bandwidth is not appropriate for the synthetic oscillatory behavior, the smooth diagram\u2019s estimation might have lower fidelity compared to the true function. Likewise, suboptimal bin selection may lead to oversmoothing or misrepresentation in the binned diagram.",
+                "possible_modifications": [
+                    "Expose or adjust the bandwidth selection parameter to study its impact on capturing non-monotonic patterns.",
+                    "Test alternative binning strategies or heuristics for the binned reliability diagram to evaluate the systematic bias in bin selection.",
+                    "Conduct sensitivity analyses over different cross-validation settings to assess how systematic choices affect the estimation bias and MSE."
+                ]
+            }
+        },
+        {
+            "question": "Can the smooth reliability diagram reliably reflect calibration quality across diverse domains such as deep learning (using ImageNet validation data), solar flare forecasting (731 days, 25.7% event rate), and precipitation prediction (346 days of daily forecasts with discrete probabilities in 10% increments) when using a principled kernel smoothing method, as implemented in relplot? In your analysis, consider whether the automatic kernel bandwidth selection effectively adapts to the prediction distributions encountered in these domains.",
+            "method": "Select three datasets: (i) the ImageNet validation set for deep networks, (ii) the solar flare forecasting dataset with 731 days and a known event occurrence rate of 25.7%, and (iii) the daily rain forecasts dataset from the Finnish Meteorological Institute covering 346 days with discrete forecasts in 10% increments. For each dataset, generate two reliability diagrams using the relplot package: one using the traditional binned approach (via relplot.rel_diagram_binned) and one using the smooth reliability diagram (via relplot.rel_diagram) which employs automatic kernel bandwidth selection. When generating the smooth reliability diagrams, either use the default automatic bandwidth or override it with a domain-appropriate kernel bandwidth \u03c3* if necessary, ensuring that the kernel density estimates of predictions are clearly visualized. For the solar flare and precipitation datasets, verify that the plotting functions correctly handle the unique prediction distributions (e.g., the discrete probability increments in the precipitation dataset). Additionally, if desired, compute calibration error metrics using rp.smECE and assess the consistency between the conditional mean estimates and density estimates. Evaluate the diagrams in terms of their visual clarity, consistency, and adherence to the [0,1] boundaries.",
+            "expected_outcome": "It is expected that across the three diverse domains, the smooth reliability diagrams will consistently display improved visual interpretability and robust calibration error assessment, with clear density estimates and proper handling of boundary constraints, while the binned methods may show instability or less interpretable aggregation, particularly in cases with non-uniform or discrete probability outputs.",
+            "subsection_source": "4 E XPERIMENTS",
+            "source": [
+                "/workspace/notebooks/paper_experiments.ipynb"
+            ],
+            "usage_instructions": "To analyze how smooth reliability diagrams reflect calibration quality across diverse domains (deep learning with ImageNet, solar flare forecasting, and precipitation prediction), run the paper_experiments.ipynb notebook. The notebook contains three sections that address the experiment question:\n\n1. 'DNN calibration' section (cell 10) - Uses ImageNet validation data for deep networks\n2. 'Solar Flares' section (cell 13) - Uses solar flare forecasting dataset with 731 days and 25.7% event rate\n3. 'Rain in Finland' section (cell 15) - Uses daily rain forecasts with discrete probabilities in 10% increments\n\nEach section uses the plot_compare() function (defined in cell 8) which generates two reliability diagrams side by side: one using the traditional binned approach (via relplot.rel_diagram_binned) and one using the smooth reliability diagram (via relplot.rel_diagram) with automatic kernel bandwidth selection. The function also computes calibration error metrics.\n\nThe notebook demonstrates that the smooth reliability diagram effectively adapts to different prediction distributions across these diverse domains, providing clearer visual interpretability compared to binned methods.",
+            "requirements": [
+                "Step 1: Import necessary libraries including matplotlib, pandas, numpy, scipy, and sklearn for data manipulation and visualization (/workspace/notebooks/paper_experiments.ipynb:9-22)",
+                "Step 2: Configure the plotting style for reliability diagrams (/workspace/notebooks/paper_experiments.ipynb:32-33)",
+                "Step 3: Define a plot_compare function that creates two side-by-side reliability diagrams (binned vs. smooth) for a given set of predictions and ground truth labels (/workspace/notebooks/paper_experiments.ipynb:43-62)",
+                "Step 4: For the DNN calibration experiment, load ImageNet validation data from external URLs, extract prediction confidences and binary correctness labels, and generate reliability diagrams (/workspace/notebooks/paper_experiments.ipynb:80-86, 114)",
+                "Step 5: For the Solar Flares experiment, load solar flare forecasting data from an external URL, extract DAFFS predictions and ground truth labels, and generate reliability diagrams (/workspace/notebooks/paper_experiments.ipynb:8-13 in cell 8)",
+                "Step 6: For the Rain in Finland experiment, load precipitation data from an external URL, process it to extract binary rain events and forecast probabilities, and generate reliability diagrams (/workspace/notebooks/paper_experiments.ipynb:10-14 in cell 10)",
+                "Step 7: For each experiment, use the plot_compare function which automatically determines the optimal number of bins for the binned diagram and uses automatic kernel bandwidth selection for the smooth diagram (/workspace/notebooks/paper_experiments.ipynb:52-57)",
+                "Step 8: For each experiment, display two reliability diagrams side by side - one using traditional binning (rel_diagram_binned) and one using smooth reliability diagram (rel_diagram) (/workspace/notebooks/paper_experiments.ipynb:57-61)",
+                "Step 9: For each reliability diagram, compute and display calibration error metrics (/workspace/src/relplot/diagrams.py:101, 194-264)"
+            ],
+            "agent_instructions": "Create a notebook that demonstrates how smooth reliability diagrams reflect calibration quality across three diverse domains compared to traditional binned reliability diagrams. The notebook should include the following experiments:\n\n1. Deep Neural Network (DNN) calibration using ImageNet validation data\n2. Solar flare forecasting using a dataset with 731 days and 25.7% event rate\n3. Daily rain forecasts in Finland with discrete probabilities in 10% increments\n\nFor each experiment, you should:\n- Load the appropriate dataset (ImageNet validation data, solar flare forecasting data, or rain forecast data)\n- Extract prediction probabilities/confidences and ground truth labels\n- Create a function that generates two reliability diagrams side by side:\n  - A traditional binned reliability diagram on the left\n  - A smooth reliability diagram with automatic kernel bandwidth selection on the right\n- Compute calibration error metrics for both approaches\n\nThe goal is to demonstrate that the smooth reliability diagram effectively adapts to different prediction distributions across these diverse domains, providing clearer visual interpretability compared to binned methods. Your implementation should handle the automatic selection of appropriate binning and smoothing parameters based on the data characteristics.",
+            "masked_source": [
+                "/workspace/notebooks/paper_experiments.ipynb",
+                "/workspace/src/relplot/__init__.py",
+                "/workspace/src/relplot/diagrams.py",
+                "/workspace/src/relplot/metrics.py",
+                "/workspace/src/relplot/estimators.py",
+                "/workspace/src/relplot/kernels.py",
+                "/workspace/src/relplot/config.py"
+            ],
+            "design_complexity": {
+                "constant_variables": {
+                    "smoothing_method": "Kernel smoothing via relplot.rel_diagram with automatic bandwidth selection is applied uniformly across experiments."
+                },
+                "independent_variables": {
+                    "dataset": [
+                        "ImageNet validation data (deep networks)",
+                        "Solar flare forecasting data (731 days, 25.7% event rate)",
+                        "Daily rain forecasts from FMI (346 days with 10% increments)"
+                    ],
+                    "diagram_method": [
+                        "Traditional binned reliability diagram (via relplot.rel_diagram_binned)",
+                        "Smooth reliability diagram (via relplot.rel_diagram)"
+                    ],
+                    "kernel_bandwidth": "Either automatically selected or manually overridden with a domain-appropriate value (\u03c3\u2217)"
+                },
+                "dependent_variables": {
+                    "visual_interpretability": "Clarity and consistency of the reliability diagrams, including proper density estimates and adherence to [0,1] bounds",
+                    "calibration_error_metrics": [
+                        "smECE",
+                        "Potential other metrics derived from rp.smECE and related functions"
+                    ],
+                    "boundary_handling": "Proper visualization of conditional mean estimates that remain within [0,1]"
+                }
+            },
+            "design_ambiguity": {
+                "ambiguous_variables": {
+                    "kernel_bandwidth": "Ambiguity exists on how to decide when to override the automatic bandwidth; it may not be clear for domains with discrete prediction distributions like precipitation.",
+                    "calibration_error_metrics": "While smECE is mentioned, other metrics like ECE15 are also referenced in tables, and it is unclear which metric is prioritized in the outcome analysis.",
+                    "data_preprocessing": "The extraction and processing methods for the prediction probabilities and ground truth labels are not fully detailed and could vary between datasets."
+                },
+                "possible_modifications": {
+                    "modification_dataset": [
+                        "Extend the experiments to include additional diverse domains or modify the existing datasets to see effects on reliability diagrams."
+                    ],
+                    "modification_kernel": [
+                        "Mask or alter the kernel_bandwidth parameter to test the sensitivity of the smooth diagram to manual overrides versus automatic selection."
+                    ],
+                    "modification_metric": [
+                        "Incorporate additional calibration metrics or different binning strategies to evaluate diagram performance further."
+                    ]
+                }
+            },
+            "experiment_setup_complexity": {
+                "components": [
+                    "Deep Learning Dataset (ImageNet validation data)",
+                    "Solar Flare Forecasting Dataset (731 days, 25.7% event rate)",
+                    "Precipitation Dataset (346 days with discrete probabilities in 10% increments)",
+                    "Traditional binned reliability diagram generation (relplot.rel_diagram_binned)",
+                    "Smooth reliability diagram generation with kernel smoothing (relplot.rel_diagram)",
+                    "Automatic kernel bandwidth selection mechanism",
+                    "Calibration error metric computation (smECE and possibly others)",
+                    "Data preprocessing pipelines for different datasets"
+                ],
+                "setup_steps": [
+                    "Import necessary libraries (e.g., matplotlib, pandas, numpy, scipy, sklearn)",
+                    "Configure plotting styles for reliability diagrams",
+                    "Load and preprocess each dataset from external URLs",
+                    "Extract prediction probabilities/confidences and ground truth labels from each dataset",
+                    "Define a general plot_compare function to generate two side-by-side diagrams",
+                    "Generate traditional binned reliability diagrams using relplot.rel_diagram_binned",
+                    "Generate smooth reliability diagrams using relplot.rel_diagram with automatic kernel bandwidth selection",
+                    "For domains like solar flares and precipitation, ensure that discrete or unique prediction distributions are handled correctly",
+                    "Compute calibration error metrics and display results alongside the diagrams",
+                    "Visualize and compare the diagrams with emphasis on proper density estimates and adherence to [0,1] boundaries"
+                ],
+                "optional_other_sources_of_complexity": [
+                    {
+                        "source": "Kernel bandwidth selection",
+                        "description": "The mechanism to automatically select the kernel bandwidth, and the possibility to override it with a domain-appropriate value (\u03c3*), adds additional complexity."
+                    },
+                    {
+                        "source": "Data preprocessing",
+                        "description": "Different datasets require specific preprocessing steps (e.g., handling discrete probability increments in precipitation data), which increases overall complexity."
+                    },
+                    {
+                        "source": "Integration of multiple reliability diagram techniques",
+                        "description": "Simultaneously generating both binned and smooth diagrams and comparing them visually and quantitatively introduces dependencies between multiple components."
+                    }
+                ]
+            },
+            "experiment_setup_ambiguity": {
+                "ambiguous_components": [
+                    "Kernel bandwidth override decision: It is unclear under which conditions the automatic selection should be overridden with a domain-appropriate value.",
+                    "Calibration error metrics: Although smECE is the primary metric, there is ambiguity on whether additional metrics such as ECE15 should be prioritized or how they are compared across domains."
+                ],
+                "ambiguous_setup_steps": [
+                    "Data extraction and preprocessing: The process for extracting predictions and ground truth labels from each dataset is not fully detailed across the diverse domains.",
+                    "Handling of discrete probability outputs: The instructions for adapting the diagrams to discrete forecasting probabilities (as in the precipitation dataset) are not explicitly detailed."
+                ],
+                "possible_modifications": {
+                    "modification_dataset": [
+                        "Extend the experiment to additional diverse domains or modify existing datasets to test the sensitivity of the diagrams to different prediction distributions."
+                    ],
+                    "modification_kernel": [
+                        "Mask or vary the kernel_bandwidth parameter to evaluate the effect of manual overrides versus automatic selection."
+                    ],
+                    "modification_metric": [
+                        "Incorporate additional calibration metrics or alternative binning strategies to further assess diagram performance and clarity."
+                    ]
+                }
+            },
+            "experiment_constraints": {
+                "resource_constraints": {},
+                "time_constraints": {},
+                "money_constraints": {},
+                "possible_modifications": {
+                    "resource_constraints": [
+                        "While no explicit resource constraints were mentioned, one possible modification is to enforce stricter resource usage by limiting data loading speed or available memory, which might require smaller batch sizes or streamlined preprocessing pipelines."
+                    ],
+                    "time_constraints": [
+                        "No explicit time constraints were described. However, an alternate experiment could impose tighter runtime restrictions\u2014for example, reducing the allowed iterations for kernel bandwidth tuning\u2014to test the method\u2019s robustness under constrained computational time."
+                    ],
+                    "money_constraints": [
+                        "There were no explicit money constraints provided. An optional modification might be to simulate budget restrictions by using less costly compute resources or smaller models (e.g., using a minimal deep network instead of a full-size model) while aiming to maintain the calibration performance."
+                    ]
+                }
+            },
+            "random_uncertainty": {
+                "source": "Random modifications in the smoothing process and token handling during data preprocessing or model output generation",
+                "description": "In our experiments, random uncertainty can be introduced when modifying standard methods such as the kernel smoothing mechanism used for generating smooth reliability diagrams. For example, if random perturbations (like dropping tokens or injecting noise) are added in the automatic bandwidth selection or data extraction processes, they may lead to instability in the gradient updates or in the estimation of calibration errors (as reflected by variations in smECE and ECE15 metrics seen in Tables 1 and 2). This type of uncertainty can cause fluctuations in the reliability diagrams across different runs.",
+                "impact": "Random uncertainty affects the consistency of the calibration error metrics and the visual clarity of the diagrams. Variations might be observed in the calibration metric outcomes across domains, potentially leading to inconsistent visual interpretability or misrepresentation of the true calibration even though the method is designed to be robust.",
+                "possible_modifications": [
+                    "Eliminate random token dropping and ensure deterministic data preprocessing pipelines.",
+                    "Implement bootstrapping techniques to average out random fluctuations and verify the stability of calibration error metrics such as smECE.",
+                    "Perform controlled experiments by varying the kernel smoothness parameter in a non-random manner to assess its effect."
+                ]
+            },
+            "systematic_uncertainty": {
+                "source": "Biases arising from dataset preprocessing decisions and domain-specific kernel bandwidth selection in the smoothing process",
+                "description": "Systematic uncertainty is introduced when there are one-time modifications or biases in the dataset or processing pipeline. For example, if a domain (such as precipitation prediction with discrete probabilities) is processed with a standard bandwidth selector that does not adequately adapt to its unique prediction distribution, the resulting reliability diagram may consistently misrepresent calibration quality. Similarly, if a dataset is inadvertently corrupted (e.g., by systematically altering labels as in sentiment analysis experiments) then the calibration error metrics could be skewed.",
+                "impact": "This kind of uncertainty leads to persistent mis-calibration that is not random but inherent to the method or data. The impact can be observed in, for example, the reliability diagrams where the conditional mean estimates might stray from the [0, 1] bounds, or in calibration metrics like smECE which may not reflect true calibration across different domains (as highlighted in visual comparisons in Figure 2).",
+                "possible_modifications": [
+                    "Override the automatic kernel bandwidth selection with a domain-appropriate value (\u03c3*) when handling datasets with unique prediction distributions, such as the discrete forecasts in the precipitation dataset.",
+                    "Review and correct dataset preprocessing steps to ensure that no unintentional systematic biases are introduced, similar to ensuring labels are not artificially skewed (as seen in the sentiment analysis example).",
+                    "Conduct sensitivity analyses where systematic shifts are introduced in isolation to evaluate and correct for any consistent mis-calibration."
+                ]
+            }
+        }
+    ],
+    "follow_up_work_ideas": [
+        {
+            "idea": "Investigate Adaptive Kernel Bandwidth Selection",
+            "experiment_design": "Extend the current work by developing a method for selecting the kernel bandwidth \u03c3 adaptively for each dataset based on its inherent data distribution characteristics. Design an experiment that runs the smooth reliability diagram generation with different adaptive bandwidth strategies (e.g., local bandwidth adaptation based on data density) on each of the three datasets (ImageNet, solar flares, and precipitation). Compare the performance in terms of calibration error and visual interpretability to that achieved using the fixed bandwidth \u03c3* from the current method. Use bootstrapping to quantify the statistical stability of the chosen bandwidth and its impact on calibration metrics.",
+            "subsection_source": "4 E XPERIMENTS"
+        },
+        {
+            "idea": "Assess Calibration Post-Processing Consistency",
+            "experiment_design": "Based on the theoretical claim that a SmoothECE value \u03b5 implies that perfect calibration can be obtained via an L1 perturbation of at most \u03b5, design an experiment that takes calibrated models from each dataset and applies a minimal stochastic post-processing adjustment. Measure how close the adjusted predictions come to perfect calibration. Compare the amount of adjustment required when using the smooth reliability diagram versus adjustments derived from traditional metrics. This experiment would involve perturbing predictions by different magnitudes, computing the resulting calibration error, and statistically comparing against the minimal adjustment predicted by the smooth calibration error metric.",
+            "subsection_source": "4 E XPERIMENTS"
+        }
+    ],
+    "main_takeaways": [
+        "The paper introduces SmoothECE (smECE), a hyperparameter\u2010free calibration measure that is consistent and represents a natural notion of distance in the prediction space.",
+        "SmoothECE can be used to post-process any predictive function to achieve perfect calibration with minimal L1 perturbation, making it both theoretically sound and practically useful.",
+        "A key contribution is the development of smoothed reliability diagrams, which use Nadaraya\u2013Watson kernel smoothing with a Gaussian kernel, providing a more principled and visually appealing alternative to traditional binned diagrams.",
+        "The paper includes a Python package that efficiently computes the SmoothECE and its associated diagrams, incorporating uncertainty quantification via bootstrapping.",
+        "Extensions are provided showing that the concept of SmoothECE generalizes to a broader class of metrics on the prediction space, including under specific conditions the consistency with respect to the \u21131 metric.",
+        "Experimental results on datasets such as ImageNet (using ResNet32) and meteorological data indicate that SmoothECE achieves lower calibration error (e.g., smECE = 0.138 \u00b1 0.016) compared to classical measures (e.g., ECE15 = 0.161)."
+    ]
+}

@@ -1,0 +1,460 @@
+{
+  "questions": [
+    {
+      "question": "How does JaxMARL\u2019s PPO compare to Q-Learning in SMAX environments in terms of training time and normalized score?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Evaluate and compare PPO (Proximal Policy Optimization) and Q-Learning for multi-agent reinforcement learning (MARL) in the SMAX (StarCraft Multi-Agent Challenge in JAX) environment, focusing on training efficiency and performance.\n    - **Simulator:**\n    JaxMARL, a JAX-based MARL library that enables large-scale parallelization and efficient GPU-accelerated training.\n    - **Algorithm used:**\n        - PPO Algorithm Used: Multi-Agent PPO (MAPPO)\n        - Q-Learning Algorithm Used: QMIX\n    - **Objective:** \n        - Compare training time required for both algorithms to reach convergence.\n        - Analyze normalized score to evaluate policy effectiveness in cooperative multi-agent tasks.\n\n2. **Running Enviornment:** \n    - SMAX: A JAX-based reimplementation of the StarCraft Multi-Agent Challenge (SMAC), designed for multi-agent micromanagement tasks.\n    -  9 SMAX tasks, excluding the two maps with more than 10 units.\n\n3. **Comparative Evaluation:**  \n   - Compare PPO and Q-Learning on multiple SMAX tasks, ensuring fair comparisons by running experiments under the same computational resources.\n\n4. **Evaluation Metrics:**\n    - Training Time (Minutes): Measure the time required for each algorithm to reach a predefined convergence criterion (e.g., stable performance over multiple evaluations).\n    - Normalized Score:\n    Normalize performance across different SMAX scenarios by scaling scores relative to the best-performing algorithm in each scenario.\n        - Calculation: Normalized\u00a0Score = Algorithm\u00a0Score/max (Best\u00a0Score\u00a0in\u00a0Scenario) \n        - Metrics used for scoring:\n            - Inter-Quartile Mean (IQM): Robust measure of central tendency for performance across multiple seeds.\n            - Mean Episode Reward: Measures the cumulative reward obtained per episode.",
+      "expected_outcome": "- Training Time: PPO is expected to train 6\u00d7 faster than Q-Learning in SMAX.\n\n- Normalized Score: PPO is expected to outperform Q-Learning in most SMAX scenarios due to better stability in training and more effective policy optimization.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "simulator": "JaxMARL with the SMAX environment remains constant across experiments",
+            "computational_resources": "Same hardware acceleration and computational setup as detailed in the Appendix"
+          },
+          "independent_variables": {
+            "algorithm": [
+              "MAPPO (for PPO)",
+              "QMIX (for Q-Learning)"
+            ],
+            "SMAX_task": "9 specific SMAX maps (selected by excluding the 2 maps with more than 10 units)"
+          },
+          "dependent_variables": {
+            "training_time": "Measured in minutes required to reach the convergence criterion",
+            "normalized_score": "Calculated as the algorithm score divided by the maximum score per SMAX scenario (using IQM and Mean Episode Reward for evaluation)"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "convergence_criterion": "The exact threshold or definition of 'stable performance' for convergence is not explicitly defined",
+            "SMAX_task_selection": "While 9 tasks are used, the specific maps or criteria for their selection (aside from excluding maps with >10 units) is not detailed",
+            "normalization_method": "The procedure for normalizing scores across different scenarios (beyond the formula provided) could be further elaborated"
+          },
+          "possible_modifications": {
+            "modification_1": [
+              "Explicitly define the convergence threshold (e.g., performance over a set number of episodes) for better reproducibility"
+            ],
+            "modification_2": [
+              "Include additional independent variables such as varying hyperparameters for each algorithm to assess robustness"
+            ],
+            "modification_3": [
+              "Mask or vary additional performance metrics (e.g., variance or error bars in the normalized score) to explore their impact on the outcome"
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "Simulator: JaxMARL with SMAX environment",
+            "Algorithms: MAPPO for PPO and QMIX for Q-Learning",
+            "SMAX Tasks: 9 specific maps (excluding maps with >10 units)",
+            "Evaluation Metrics: Training Time (in minutes) and Normalized Score (using IQM and Mean Episode Reward)",
+            "Computational Resources: Same hardware and configuration across experiments as detailed in the Appendix"
+          ],
+          "setup_steps": [
+            "Define the problem setup and task objective for comparing PPO and Q-Learning",
+            "Configure and initialize the JaxMARL simulator with the SMAX environment",
+            "Select and prepare the 9 chosen SMAX maps",
+            "Set up the two algorithms: MAPPO for PPO and QMIX for Q-Learning, ensuring proper hyperparameter configuration",
+            "Run the experiments under identical computational resources",
+            "Measure training time until convergence and compute normalized scores across scenarios",
+            "Aggregate evaluation metrics using methods such as the Inter-Quartile Mean and Mean Episode Reward"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Convergence Criterion Definition",
+              "description": "The process of determining when an algorithm has reached a stable performance level is not explicitly defined, adding complexity to measuring training time."
+            },
+            {
+              "source": "Score Normalization Procedure",
+              "description": "Although a formula is provided for normalized score calculation, details on scaling and handling variations across different SMAX scenarios add complexity."
+            },
+            {
+              "source": "Algorithm Specific Tuning",
+              "description": "Different algorithms (MAPPO vs QMIX) may require algorithm-specific hyperparameter tuning and adjustments, increasing the overall setup complexity."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Convergence Criterion: The exact threshold or definition of 'stable performance' is not explicitly provided.",
+            "SMAX Task Selection: While 9 tasks are used, the specific criteria or identities of these maps (aside from excluding maps with >10 units) are ambiguous.",
+            "Normalization Method: The detailed procedure for normalizing scores across various scenarios is not fully elaborated beyond the provided formula."
+          ],
+          "ambiguous_setup_steps": [
+            "Defining and implementing the convergence criterion: Which performance metric thresholds or episode counts signal convergence is unclear.",
+            "Selection criteria for specific SMAX maps: Additional details on how the remaining maps are chosen after exclusion are not specified.",
+            "Execution of score normalization: The method for handling outlier results or variance across seeds may require further clarification."
+          ],
+          "possible_modifications": {
+            "modification_1": [
+              "Explicitly define the convergence threshold, such as a specific performance metric maintained over a fixed number of episodes, to improve reproducibility."
+            ],
+            "modification_2": [
+              "Include additional independent variables, like varying hyperparameters for each algorithm, to assess robustness across different settings."
+            ],
+            "modification_3": [
+              "Provide more detailed instructions or mask certain performance metrics (such as variance or error bar reporting) to explore their impact on the comparison outcome."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Consider restricting available computational resources (for example, using fewer GPUs or lower-performance hardware) to explore how resource limitations affect training efficiency and normalized scores."
+            ],
+            "time_constraints": [
+              "Explicitly define the convergence threshold (e.g., requiring stable performance over a set number of episodes) to tighten the measurement of training time differences between PPO and Q-Learning.",
+              "Reduce the allowed optimization iterations to more clearly expose differences in time efficiency between the two algorithms."
+            ],
+            "money_constraints": []
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic training dynamics and random initialization",
+          "description": "Reinforcement learning experiments, particularly with algorithms like PPO and Q-Learning, are sensitive to random seeds, initialization, and stochastic gradient updates. In this experiment, variability in randomly sampled episodes, differing starting conditions, and potential instability in gradient updates (e.g., from stochastic choices in learning) can lead to fluctuations in training time and normalized score across runs.",
+          "impact": "These random variations can manifest as error bars in performance metrics (such as IQM and Mean Episode Reward) and may skew the apparent advantages of one algorithm over the other, leading to uncertainty in the comparative results.",
+          "possible_modifications": [
+            "Increase the number of runs (seeds) to average out the randomness and provide tighter error bars.",
+            "Implement controlled randomization by fixing seed values across experiments to isolate algorithm performance from stochastic noise.",
+            "Use additional uncertainty quantification measures, such as confidence intervals or bootstrapped error estimates, to explicitly account for training variability."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Ambiguous convergence criterion and task selection bias",
+          "description": "The experiment does not define a precise threshold for 'stable performance' (the convergence criterion), and the selection of 9 specific SMAX maps (after excluding maps with >10 units) might introduce a bias if these maps are not representative of the overall environment. This one-time methodological decision could systematically favor one algorithm if, for example, its performance characteristics align better with the chosen convergence definition or map characteristics.",
+          "impact": "This type of systematic uncertainty can result in consistent over- or under-estimation of training efficiency and normalized scores for one algorithm relative to the other. It compromises the reproducibility of the experiment when varying the mapping selection or convergence conditions.",
+          "possible_modifications": [
+            "Explicitly define the convergence threshold, e.g., requiring stable performance over a fixed number of episodes, to remove ambiguity in measuring training time.",
+            "Diversify the selection of SMAX tasks by either randomly sampling maps from the full set or validating the chosen set\u2019s representativeness of the overall environment.",
+            "Provide detailed normalization procedures and consider additional performance metrics (such as variance or additional robust statistical measures) to further mitigate bias."
+          ]
+        }
+      }
+    },
+    {
+      "question": "How much faster is JaxMARL compared to PyMARL (when JaxMARL running 1024 training runs and MyMARL running 1 training runs) on the MPE Simple Spread task using QMIX?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Measure the training time difference between JaxMARL and PyMARL on the MPE-Simple Spread task.\n    - **Simulator:**\n    - JaxMARL (JAX-accelerated)\n    - PyMARL (PyTorch-based)\n    - **Algorithm used:**\n        - Q-Learning (QMIX)\n    - **Objective:** \n        - Quantify the speedup factor of JaxMARL when executing 1024 training runs compared to a single run in PyMARL.\n\n2. **Running Enviornment:** \n    - MPE Simple Spread Enviornmrnt (a JAX-based MARL enviornment)\n\n3. **Comparative Evaluation:**  \n    - Train QMIX using JaxMARL for 1024 independent training runs and PyMARL for a single training run.\n    - Measure the total time required to complete these training runs under each framework.\n    - Compute the speedup factor based on total training time.\n\n4. **Evaluation Metrics:**\n    - Training Time (Minutes): Measure the time required for each algorithm to reach a predefined training runs.",
+      "expected_outcome": "- JaxMARL completes 1024 training runs in less time than PyMARL takes for a single run, achieving a 21,500\u00d7 speedup (the speedup factor may varies as the GPU used varies)",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "environment": [
+              "MPE Simple Spread"
+            ],
+            "algorithm": [
+              "QMIX"
+            ]
+          },
+          "independent_variables": {
+            "framework": [
+              "JaxMARL",
+              "PyMARL"
+            ],
+            "number_of_training_runs": [
+              "1024 for JaxMARL",
+              "1 for PyMARL"
+            ]
+          },
+          "dependent_variables": {
+            "total_training_time": "Measured as the total time (in minutes) required to complete the training runs, from which a speedup factor is computed"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "hardware_details": "The exact type of GPU or compute resource used is not specified, yet the expected outcome mentions that the speedup factor may vary based on GPU used.",
+            "training_run_definition": "It is unclear what constitutes a single 'training run' (e.g., number of episodes or iterations), and whether all runs are directly comparable.",
+            "hyperparameter_settings": "Precise hyperparameters for the QMIX algorithm in both frameworks are not detailed, potentially affecting the training time outcomes.",
+            "consistency_of_framework_settings": "The experiment compares 1024 runs in JaxMARL against 1 run in PyMARL without clarifying if the training configurations (other than the number of runs) are identical."
+          },
+          "possible_modifications": {
+            "modification_hardware_spec": [
+              "Explicitly state the GPU model and computing resources used for each framework to ensure comparability."
+            ],
+            "modification_run_definition": [
+              "Define what a 'training run' entails (e.g., number of iterations/episodes) for both frameworks."
+            ],
+            "modification_hyperparameters": [
+              "Detail the hyperparameter settings for QMIX used in both JaxMARL and PyMARL to reduce ambiguity."
+            ],
+            "modification_framework_configuration": [
+              "Ensure that all other training configurations (e.g., batch size, learning rate) are identical across frameworks or clearly state differences."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "JaxMARL framework (JAX-accelerated)",
+            "PyMARL framework (PyTorch-based)",
+            "MPE Simple Spread environment (JAX-based MARL environment)",
+            "QMIX algorithm for decentralized training",
+            "Training runs scheduler (1024 runs for JaxMARL vs 1 run for PyMARL)",
+            "Time measurement unit (training time measured in minutes)",
+            "Hardware/Compute resource (GPU; details unspecified)"
+          ],
+          "setup_steps": [
+            "Configure the MPE Simple Spread environment in both JaxMARL and PyMARL",
+            "Set up the QMIX algorithm for both frameworks",
+            "Schedule 1024 independent training runs for JaxMARL and a single training run for PyMARL",
+            "Run the training sessions and record the total time for each framework",
+            "Compute the speedup factor based on the measured training times"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Framework Integration",
+              "description": "Coordinating the differences between JAX-based (JaxMARL) and PyTorch-based (PyMARL) implementations introduces complexity."
+            },
+            {
+              "source": "Scalability of Runs",
+              "description": "Executing 1024 runs for one framework versus a single run for the other adds scheduling and evaluation intricacies."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Hardware details: The exact GPU model or compute resource used is not specified",
+            "Training run definition: What qualifies as a 'training run' (e.g., number of episodes or iterations) is unclear",
+            "Hyperparameter settings: Specific settings for the QMIX algorithm in both frameworks are not detailed",
+            "Framework configuration: It is not clarified if other training configurations (e.g., batch size, learning rate) are identical across both frameworks"
+          ],
+          "ambiguous_setup_steps": [
+            "Simulator configuration: Uncertainty exists if the MPE Simple Spread environment is set up identically in both frameworks",
+            "Timing measurement: The protocol for recording training time (e.g., measurement approach, averaging over runs) is not explicitly described"
+          ],
+          "possible_modifications": {
+            "modification_hardware_spec": [
+              "Explicitly state the GPU model and the overall computing resources used for both JaxMARL and PyMARL experiments"
+            ],
+            "modification_run_definition": [
+              "Define what constitutes a 'training run' (e.g., number of episodes or iterations) for both frameworks to ensure consistency"
+            ],
+            "modification_hyperparameters": [
+              "Detail and standardize the hyperparameter settings for the QMIX algorithm in both JaxMARL and PyMARL"
+            ],
+            "modification_framework_configuration": [
+              "Ensure that all other training configurations (such as batch size, learning rate, etc.) are identical or clearly documented if they differ"
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Explicitly specify the GPU model and complete compute resource details for both JaxMARL and PyMARL to ensure that differences in hardware do not skew speedup measurements."
+            ],
+            "time_constraints": [
+              "Define clearly the timing measurement protocol (e.g., start/stop criteria, averaging over runs) and establish what constitutes a single 'training run' (e.g., a fixed number of episodes or iterations) for both frameworks."
+            ],
+            "framework_configuration": [
+              "Standardize and document the hyperparameter settings for the QMIX algorithm across JaxMARL and PyMARL to eliminate performance differences due to configuration.",
+              "Ensure that the MPE Simple Spread environment is identically configured in both frameworks.",
+              "Clarify whether the 1024 runs for JaxMARL and the single run for PyMARL are directly comparable beyond just the number of runs."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Stochastic variability in execution and scheduling",
+          "description": "The training time measurements can vary due to inherent randomness in training runs (e.g., differences in random seed initialization, runtime scheduling delays, or transient hardware performance variations). Even when running 1024 independent training runs, the measured time for each run can fluctuate, leading to random noise in the aggregated training time.",
+          "impact": "Results in variability in the computed speedup factor, as the total training time may differ across runs due to stochastic factors unrelated to the underlying framework efficiency.",
+          "possible_modifications": [
+            "Report error bars by averaging over multiple seeds or repeated experiments for both frameworks.",
+            "Control random seed initialization across runs and ensure that scheduling conditions are as constant as possible.",
+            "Standardize timing measurement protocols (e.g., start/stop criteria) to reduce noise in the recorded training times."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Inconsistent experimental configurations and hardware details",
+          "description": "The experiment compares 1024 training runs in JaxMARL to a single run in PyMARL without clarifying that all other training configurations (e.g., number of episodes per run, hyperparameters, batch sizes) or the hardware details (e.g., GPU model) are identical. This introduces a systematic bias since differences in setup\u2014not the inherent efficiency of the frameworks\u2014could skew the measured speedup factor.",
+          "impact": "Leads to potential over- or under-estimation of the speedup factor due to confounding factors such as differing GPU performance, undefined training run structures, and non-standardized hyperparameter settings across the two frameworks.",
+          "possible_modifications": [
+            "Explicitly state the GPU model and complete compute resource details for both JaxMARL and PyMARL.",
+            "Define what constitutes a 'training run' (e.g., number of episodes or iterations) and ensure consistency across both frameworks.",
+            "Detail and standardize hyperparameter settings (batch size, learning rate, etc.) and other training configurations to eliminate systematic biases."
+          ]
+        }
+      }
+    },
+    {
+      "question": "How does the performance of JaxMARL in the MPE Simple Spread environment compare to its original CPU-based counterpart in terms of steps-per-second under random actions?",
+      "method": "1. **Problem Setup:** \n    - **Task:** \n    Measure and compare the execution speed (steps-per-second) of JaxMARL and its original CPU-based implementation across different levels of parallelization.\n    - **Simulator:**\n        - JaxMARL (JAX-based, GPU-accelerated)\n        - Original CPU-Based Implementations: MPE (Multi-Agent Particle Environment) from PettingZoo\n    - **Objective:** \n    Evaluate the speed improvements achieved by JaxMARL across different parallelization levels (parallel enviornment number = 1, 100 , 10k )\n\n2. **Running Enviornment:** \n    - MPE Simple Spread Enviornmrnt (a JAX-based MARL enviornment)\n    - Hardware: a single NVIDIA A100 GPU and AMD EPYC 7763 64-core\n processor\n\n3. **Comparative Evaluation:**  \n    - Measure steps-per-second for 1 environment, 100 environments, and 10,000 environments using JaxMARL.\n    - Compare these values with the original CPU-based implementation to determine the performance gain.\n\n4. **Evaluation Metrics:**\n    - Steps Per Second: Measure how many simulation steps can be processed per second for different parallelization levels.",
+      "expected_outcome": "- JaxMARL achieves a significant speedup over the original CPU-based implementation, with performance scaling efficiently as the number of parallel environments increases.",
+      "design_complexity": {
+        "design_complexity": {
+          "constant_variables": {
+            "hardware": [
+              "NVIDIA A100 GPU",
+              "AMD EPYC 7763 64-core processor"
+            ],
+            "environment": [
+              "MPE Simple Spread Environment"
+            ],
+            "evaluation_metric": [
+              "steps-per-second"
+            ]
+          },
+          "independent_variables": {
+            "implementation": [
+              "JaxMARL",
+              "Original CPU-based Implementation"
+            ],
+            "parallel_environments": [
+              "1",
+              "100",
+              "10,000"
+            ]
+          },
+          "dependent_variables": {
+            "performance": "Steps-per-second measured under random actions for each configuration"
+          }
+        }
+      },
+      "design_ambiguity": {
+        "design_ambiguity": {
+          "ambiguous_variables": {
+            "random_actions": "The paper does not explicitly detail how random actions are generated or whether the random seed is controlled, which could affect reproducibility.",
+            "original_CPU_based_implementation": "The specific details regarding the configuration or version of the CPU-based implementation are not explicitly mentioned.",
+            "parallelization_details": "The method of vectorizing or the precise handling of multiple environment instances (e.g., synchronization overhead) is not fully described."
+          },
+          "possible_modifications": {
+            "add_simulation_duration": [
+              "Include a variable for total simulation steps or run duration to ensure consistency across experiments."
+            ],
+            "mask_or_control_random_seed": [
+              "Explicitly control or mask the random seed to explore its impact on performance variability."
+            ],
+            "extend_parallelization_range": [
+              "Introduce additional parallel environment counts or alternative hardware setups to broaden the evaluation."
+            ]
+          }
+        }
+      },
+      "experiment_setup_complexity": {
+        "experiment_setup_complexity": {
+          "components": [
+            "JaxMARL simulator (JAX-based, GPU-accelerated)",
+            "Original CPU-based implementation (using PettingZoo MPE)",
+            "MPE Simple Spread environment",
+            "Parallelization mechanism (handling 1, 100, and 10,000 environments)",
+            "Hardware components (NVIDIA A100 GPU, AMD EPYC 7763 64-core processor)",
+            "Evaluation metric (steps-per-second)"
+          ],
+          "setup_steps": [
+            "Install and configure JaxMARL with JAX and GPU support",
+            "Set up the original CPU-based simulation environment using PettingZoo MPE",
+            "Integrate the MPE Simple Spread environment with both implementations",
+            "Configure parallel execution for varying numbers of environment instances (1, 100, 10,000)",
+            "Execute simulations under random actions for each configuration",
+            "Collect and compare performance data (steps-per-second) between JaxMARL and the CPU-based implementation"
+          ],
+          "optional_other_sources_of_complexity": [
+            {
+              "source": "Parallelization handling",
+              "description": "Managing and synchronizing a large number of parallel environment instances (especially at 10,000) introduces significant complexity in resource allocation and overhead management."
+            },
+            {
+              "source": "Hardware heterogeneity",
+              "description": "Differences in performance measurement may arise from using both GPU and CPU resources, necessitating careful calibration of experiments."
+            },
+            {
+              "source": "Interfacing different implementations",
+              "description": "Coordinating two distinct execution models (JAX-based GPU simulation vs. CPU-based simulation) can introduce integration complexities and potential discrepancies in how each handles simulation steps."
+            }
+          ]
+        }
+      },
+      "experiment_setup_ambiguity": {
+        "experiment_setup_ambiguity": {
+          "ambiguous_components": [
+            "Random actions generator",
+            "Original CPU-based implementation configuration",
+            "Parallelization mechanism details"
+          ],
+          "ambiguous_setup_steps": [
+            "Specification of how random actions are generated, including control of random seeds and distribution parameters",
+            "Detailed configuration of the original CPU-based implementation (e.g., version or specific optimizations used)",
+            "Exact method for spawning and synchronizing multiple environment instances (e.g., handling of vectorized operations and potential synchronization overhead)"
+          ],
+          "possible_modifications": {
+            "add_simulation_duration": [
+              "Include explicit settings for total simulation steps or run duration to ensure consistency across experiments."
+            ],
+            "mask_or_control_random_seed": [
+              "Explicitly control or mask the random seed generation process to explore its impact on performance variability."
+            ],
+            "extend_parallelization_range": [
+              "Broaden the evaluation by introducing additional counts of parallel environments or alternative hardware configurations to provide a more comprehensive performance analysis."
+            ]
+          }
+        }
+      },
+      "experiment_constraints": {
+        "experiment_constraints": {
+          "resource_constraints": {},
+          "time_constraints": {},
+          "money_constraints": {},
+          "possible_modifications": {
+            "resource_constraints": [
+              "Tighten hardware resource availability by reducing the number of available GPU cores or memory. For example, restrict the parallel environments to a lower count (e.g., simulate 100 environments instead of 10,000) to mimic a resource-constrained setting."
+            ],
+            "time_constraints": [
+              "Limit the total simulation duration or number of simulation steps to force faster run times, thereby evaluating performance under stricter time limits."
+            ],
+            "money_constraints": [
+              "Consider using less expensive or less powerful hardware setups to assess the trade-off between cost and performance, though no explicit monetary constraints were provided in the original setup."
+            ]
+          }
+        }
+      },
+      "random_uncertainty": {
+        "random_uncertainty": {
+          "source": "Random actions generation and seed control",
+          "description": "The experiment uses random actions without clearly specified seed or distribution details. This introduces random uncertainty because the randomness can lead to variability in simulation steps-per-second outcomes. The lack of explicit control over the random actions generator may lead to instability during gradient updates and inconsistent performance measurements.",
+          "impact": "Variations in recorded performance metrics, making it harder to compare JaxMARL and the CPU-based implementation reliably. The error bars reported might partially reflect this uncertainty, but true reproducibility may be impacted.",
+          "possible_modifications": [
+            "Explicitly control or mask the random seed generation process to ensure consistent random actions across experiments.",
+            "Include experiments with multiple seed settings and report averaged results with standard deviations or confidence intervals.",
+            "Standardize the method used to generate random actions to reduce unpredictability in performance measurements."
+          ]
+        }
+      },
+      "systematic_uncertainty": {
+        "systematic_uncertainty": {
+          "source": "Configuration differences in implementation and parallelization handling",
+          "description": "Differences in how JaxMARL (JAX-based, GPU-accelerated) and the original CPU-based implementation handle parallelization, synchronization, and environment management can introduce systematic bias. For example, the detailed configuration of the CPU-based implementation is not fully specified, and the parallelization overhead (especially at high counts like 10,000) might consistently favor one implementation over the other.",
+          "impact": "A consistent performance advantage or disadvantage may be introduced regardless of true algorithmic improvements, affecting the validity of direct comparisons in steps-per-second.",
+          "possible_modifications": [
+            "Standardize the configuration and execution details (e.g., vectorization methods, synchronization protocols) between the two implementations as much as possible.",
+            "Extend the evaluation by including additional parallelization counts or alternative hardware setups to better isolate the systematic bias.",
+            "Perform a detailed calibration of the simulation parameters (such as simulation duration and setup steps) to ensure a fair baseline across both environments."
+          ]
+        }
+      }
+    }
+  ]
+}

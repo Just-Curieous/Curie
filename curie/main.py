@@ -28,7 +28,7 @@ def parse_args():
                         help="Task configuration file for advanced developers.")
     
     # these arguments will overwrite the ones in the task_config file if provided
-    parser.add_argument("--workspace_name", "-w", type=str, default=None, required=False,
+    parser.add_argument("--codebase_dir", "-c", type=str, default=None, required=False,
                         help="Workspace name (starter code dir) to be used in the experiment.")
 
     parser.add_argument("--dataset_dir", "-d", type=str, default=None, required=False,
@@ -182,7 +182,7 @@ def execute_experiment_in_container(container_name, config_file, logger):
     organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
     # Command to run inside container
     container_command = (
-        "source setup/env.sh && "
+        "source setup/env.sh && " 
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
@@ -305,7 +305,7 @@ def main():
     args = parse_args()
     
     # Load and update configuration
-    task_config = load_and_update_config(args.task_config, args.workspace_name, args.dataset_dir)
+    task_config = load_and_update_config(args.task_config, args.codebase_dir, args.dataset_dir)
     if task_config is None:
         return
         
