@@ -8,6 +8,18 @@ import sys
 import os
 import re
 
+# Load the JSON configuration
+config_path = os.path.join(os.path.dirname(__file__), 'configs', 'user_logging_config.json')
+if not os.path.exists(config_path):
+    raise FileNotFoundError(f"Configuration file not found: {config_path}")
+with open(config_path, 'r') as f:
+    _LOG_CFG = json.load(f)
+
+# Helper to check filters
+_message_filters = _LOG_CFG.get('message_filters', [])
+_action_patterns = [(re.compile(p['pattern']), p['action']) for p in _LOG_CFG.get('action_patterns', [])]
+_agent_markers = [(re.compile(m['pattern']), m['group']) for m in _LOG_CFG.get('agent_markers', [])]
+
 def _add_suffix(filename, suffix):
     """
     Adds a suffix to the filename before the file extension.
@@ -89,29 +101,45 @@ class ColorFormatter(logging.Formatter):
         return formatted
     
 class UserFormatter(logging.Formatter):
-    """Formatter for user-friendly logs."""
+    """Formatter for user-friendly logs with dynamic action and agent name."""
+    # Class-level current agent name, defaults to 'logger'
+    current_agent = 'logger'
+
     def format(self, record):
-        # Extract agent name and action from the message
         message = record.getMessage()
-        agent_name = record.name.split('.')[-1]
-        
-        # Try to extract action and methodology
-        action_match = re.search(r'Action:\s*(.*?)(?:\n|$)', message)
-        methodology_match = re.search(r'Methodology:\s*(.*?)(?:\n|$)', message)
-        
-        action = action_match.group(1) if action_match else "General"
-        methodology = methodology_match.group(1) if methodology_match else _clean_message(message)
-        
-        # Format the output
+
+        # 1. Filter out unwanted messages
+        for substr in _message_filters:
+            if substr in message:
+                return ''  # Skip logging this record entirely
+
+        # 2. Check for agent marker lines and update the current agent
+        for pattern, group_idx in _agent_markers:
+            m = pattern.search(message)
+            if m:
+                UserFormatter.current_agent = m.group(group_idx).lower()
+                # We treat marker lines as metadata, not to be output
+                return ''
+
+        # 3. Determine action based on message content
+        action = 'General'
+        for pattern, act_name in _action_patterns:
+            if pattern.search(message):
+                action = act_name
+                break
+
+        # 4. Clean and format methodology (reuse existing logic or customize)
+        methodology = message.strip()
+
+        # 5. Build the final formatted string
         formatted = (
-            f"🤖 {agent_name}\n"
+            f"🤖 {UserFormatter.current_agent}\n"
             f"📝 Action: {action}\n"
             f"🔍 {methodology}\n"
             f"{'─' * 50}"
         )
-        
         return formatted
- 
+
 def init_logger(log_filename, level=logging.INFO):
     """
     Initializes and configures a logger with filename indication.
