@@ -100,6 +100,21 @@ class ColorFormatter(logging.Formatter):
     
         return formatted
     
+class ContentFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        if not msg.strip():
+            return False
+        
+        for substr in _message_filters:
+            if substr in msg:
+                return False
+            
+        for pattern, _ in _agent_markers:
+            if pattern.search(msg):
+                return False
+        return True
+
 class UserFormatter(logging.Formatter):
     """Formatter for user-friendly logs with dynamic action and agent name."""
     # Class-level current agent name, defaults to 'logger'
@@ -108,12 +123,12 @@ class UserFormatter(logging.Formatter):
     def format(self, record):
         message = record.getMessage()
 
-        # 1. Filter out unwanted messages
-        for substr in _message_filters:
-            if substr in message:
-                return ''  # Skip logging this record entirely
+        # # Filter out unwanted messages
+        # for substr in _message_filters:
+        #     if substr in message:
+        #         return ''  # Skip logging this record entirely
 
-        # 2. Check for agent marker lines and update the current agent
+        # Check for agent marker lines and update the current agent
         for pattern, group_idx in _agent_markers:
             m = pattern.search(message)
             if m:
@@ -121,17 +136,17 @@ class UserFormatter(logging.Formatter):
                 # We treat marker lines as metadata, not to be output
                 return ''
 
-        # 3. Determine action based on message content
+        # Determine action based on message content
         action = 'General'
         for pattern, act_name in _action_patterns:
             if pattern.search(message):
                 action = act_name
                 break
 
-        # 4. Clean and format methodology (reuse existing logic or customize)
+        # Clean and format methodology (reuse existing logic or customize)
         methodology = message.strip()
 
-        # 5. Build the final formatted string
+        # Build the final formatted string
         formatted = (
             f"🤖 {UserFormatter.current_agent}\n"
             f"📝 Action: {action}\n"
@@ -191,12 +206,14 @@ def init_logger(log_filename, level=logging.INFO):
 
     # User File Handler (Logs all levels, but with clean, concise, reader-friendly format)
     user_formatter = UserFormatter()
-    user_file = _add_suffix(log_filename, "_user")
+    user_file = _add_suffix(log_filename, "user")
     user_handler = logging.StreamHandler(sys.stdout)
     user_handler.setLevel(logging.INFO)
+    user_handler.addFilter(ContentFilter())  
     user_handler.setFormatter(user_formatter)
     user_file_handler = logging.FileHandler(user_file, mode='a')
     user_file_handler.setLevel(logging.INFO)
+    user_file_handler.addFilter(ContentFilter())
     user_file_handler.setFormatter(user_formatter)
 
     # Add handlers to logger
