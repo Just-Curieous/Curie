@@ -6,6 +6,7 @@ from urllib.error import URLError
 import logging
 import sys
 import os
+import re
 
 def _add_suffix(filename, suffix):
     """
@@ -20,6 +21,53 @@ def _add_suffix(filename, suffix):
     """
     name, ext = os.path.splitext(filename)
     return f"{name}_{suffix}{ext}"
+
+def _format_json_to_markdown(json_str):
+    """
+    Converts JSON string to a more readable markdown format.
+    
+    Args:
+        json_str (str): JSON string to format.
+    
+    Returns:
+        str: Formatted markdown string.
+    """
+    try:
+        data = json.loads(json_str)
+        if isinstance(data, dict):
+            return "\n".join([f"- **{k}**: {v}" for k, v in data.items()])
+        elif isinstance(data, list):
+            return "\n".join([f"- {item}" for item in data])
+        return str(data)
+    except:
+        return json_str
+    
+def _clean_message(message):
+    """
+    Cleans and formats the log message for better readability.
+    
+    Args:
+        message (str): Original log message.
+    
+    Returns:
+        str: Cleaned and formatted message.
+    """
+    # Remove timestamps
+    message = re.sub(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', '', message)
+    
+    # Convert JSON to markdown if present
+    if '{' in message and '}' in message:
+        json_match = re.search(r'\{.*\}', message)
+        if json_match:
+            json_str = json_match.group(0)
+            markdown = _format_json_to_markdown(json_str)
+            message = message.replace(json_str, f"\n{markdown}")
+    
+    # Remove file paths and line numbers
+    message = re.sub(r'File ".*", line \d+', '', message)
+    
+    return message.strip()
+
 
 class ColorFormatter(logging.Formatter):
     GREY = '\033[38;5;240m'
@@ -38,6 +86,30 @@ class ColorFormatter(logging.Formatter):
             f"{record.getMessage()}"
         )
     
+        return formatted
+    
+class UserFormatter(logging.Formatter):
+    """Formatter for user-friendly logs."""
+    def format(self, record):
+        # Extract agent name and action from the message
+        message = record.getMessage()
+        agent_name = record.name.split('.')[-1]
+        
+        # Try to extract action and methodology
+        action_match = re.search(r'Action:\s*(.*?)(?:\n|$)', message)
+        methodology_match = re.search(r'Methodology:\s*(.*?)(?:\n|$)', message)
+        
+        action = action_match.group(1) if action_match else "General"
+        methodology = methodology_match.group(1) if methodology_match else _clean_message(message)
+        
+        # Format the output
+        formatted = (
+            f"🤖 {agent_name}\n"
+            f"📝 Action: {action}\n"
+            f"🔍 {methodology}\n"
+            f"{'─' * 50}"
+        )
+        
         return formatted
  
 def init_logger(log_filename, level=logging.INFO):
@@ -90,7 +162,7 @@ def init_logger(log_filename, level=logging.INFO):
     verbose_file_handler.setFormatter(verbose_formatter)
 
     # User File Handler (Logs all levels, but with clean, concise, reader-friendly format)
-    user_formatter = logging.Formatter(fmt="%(name)s - %(message)s")
+    user_formatter = UserFormatter()
     user_file = _add_suffix(log_filename, "_user")
     user_handler = logging.StreamHandler(sys.stdout)
     user_handler.setLevel(logging.INFO)
