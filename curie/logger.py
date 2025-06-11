@@ -7,18 +7,21 @@ import logging
 import sys
 import os
 import re
+import codecs
 
 # Load the JSON configuration
-config_path = os.path.join(os.path.dirname(__file__), 'configs', 'user_logging_config.json')
+config_path = os.path.join(os.path.dirname(__file__), 'configs', 'log_config.json')
 if not os.path.exists(config_path):
     raise FileNotFoundError(f"Configuration file not found: {config_path}")
 with open(config_path, 'r') as f:
     _LOG_CFG = json.load(f)
 
-# Helper to check filters
-_message_filters = _LOG_CFG.get('message_filters', [])
+# Extract configuration parameters
+_user_message_filters = _LOG_CFG.get('user_message_filters', [])
 _action_patterns = [(re.compile(p['pattern']), p['action']) for p in _LOG_CFG.get('action_patterns', [])]
 _agent_markers = [(re.compile(m['pattern']), m['group']) for m in _LOG_CFG.get('agent_markers', [])]
+_colors = {k: codecs.decode(v, 'unicode_escape') for k, v in _LOG_CFG.get('colors', {}).items()}
+_formatters = _LOG_CFG.get('formatters', {})
 
 def _add_suffix(filename, suffix):
     """
@@ -82,20 +85,27 @@ def _clean_message(message):
 
 
 class ColorFormatter(logging.Formatter):
-    GREY = '\033[38;5;240m'
-    RESET = '\033[0m'
+    def __init__(self, datefmt=None):
+        super().__init__(datefmt=datefmt)
+        console_config = _formatters.get('console', {})
+        self.GREY = _colors.get('grey')
+        self.RESET = _colors.get('reset')
+        self.format_str = console_config.get('format')
+        self.datefmt = datefmt or console_config.get('datefmt')
     
     def format(self, record):
         # Store original time string
         asctime = self.formatTime(record, self.datefmt)
         
         # Format with grey colors
-        formatted = (
-            f"{self.GREY}{asctime}{self.RESET} - "
-            f"{record.name} - "
-            f"{self.GREY}{record.filename}{self.RESET} - "
-            f"{record.levelname} - "
-            f"{record.getMessage()}"
+        formatted = self.format_str.format(
+            GREY=self.GREY,
+            RESET=self.RESET,
+            asctime=asctime,
+            name=record.name,
+            filename=record.filename,
+            levelname=record.levelname,
+            message=record.getMessage()
         )
     
         return formatted
@@ -105,35 +115,39 @@ class ContentFilter(logging.Filter):
         msg = record.getMessage()
         if not msg.strip():
             return False
-        
-        for substr in _message_filters:
+
+        for substr in _user_message_filters:
             if substr in msg:
                 return False
             
-        for pattern, _ in _agent_markers:
-            if pattern.search(msg):
-                return False
         return True
 
 class UserFormatter(logging.Formatter):
     """Formatter for user-friendly logs with dynamic action and agent name."""
     # Class-level current agent name, defaults to 'logger'
-    current_agent = 'logger'
+    _current_agent = 'logger'
+
+    @classmethod
+    def get_current_agent(cls):
+        return cls._current_agent
+
+    @classmethod
+    def set_current_agent(cls, agent):
+        cls._current_agent = agent
+
+    def __init__(self):
+        super().__init__()
+        self.format_str = _formatters.get('user', {}).get('format', '')
+        self.sep = '─' * 50
 
     def format(self, record):
         message = record.getMessage()
-
-        # # Filter out unwanted messages
-        # for substr in _message_filters:
-        #     if substr in message:
-        #         return ''  # Skip logging this record entirely
 
         # Check for agent marker lines and update the current agent
         for pattern, group_idx in _agent_markers:
             m = pattern.search(message)
             if m:
-                UserFormatter.current_agent = m.group(group_idx).lower()
-                # We treat marker lines as metadata, not to be output
+                UserFormatter.set_current_agent(m.group(group_idx).lower())
                 return ''
 
         # Determine action based on message content
@@ -143,15 +157,15 @@ class UserFormatter(logging.Formatter):
                 action = act_name
                 break
 
-        # Clean and format methodology (reuse existing logic or customize)
+        # Clean and format methodology
         methodology = message.strip()
 
-        # Build the final formatted string
-        formatted = (
-            f"🤖 {UserFormatter.current_agent}\n"
-            f"📝 Action: {action}\n"
-            f"🔍 {methodology}\n"
-            f"{'─' * 50}"
+        # Build the final formatted string using the format from config
+        formatted = self.format_str.format(
+            agent=UserFormatter.get_current_agent(),
+            action=action,
+            methodology=methodology,
+            sep=self.sep
         )
         return formatted
 
@@ -175,9 +189,7 @@ def init_logger(log_filename, level=logging.INFO):
         logger.handlers.clear()
 
     # Console Handler (Info and higher)
-    console_formatter = ColorFormatter(
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    console_formatter = ColorFormatter()
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
     console_handler.setFormatter(console_formatter)
@@ -192,11 +204,11 @@ def init_logger(log_filename, level=logging.INFO):
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(console_formatter)
 
-
     # Verbose File Handler (All details, all levels)
+    verbose_config = _formatters.get('verbose', {})
     verbose_formatter = logging.Formatter(
-        fmt="%(asctime)s - %(name)s - %(filename)s:%(lineno)d - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        fmt=verbose_config.get('format'),
+        datefmt=verbose_config.get('datefmt')
     )
     name, ext = os.path.splitext(log_filename)
     verbose_file_name = f"{name}_verbose{ext}"
