@@ -76,7 +76,11 @@ def _clean_message(message):
         if json_match:
             json_str = json_match.group(0)
             markdown = _format_json_to_markdown(json_str)
-            message = message.replace(json_str, f"\n{markdown}")
+            # Add a newline before the formatted JSON if it's not already there
+            if not message.startswith('\n'):
+                message = message.replace(json_str, f"\n{markdown}")
+            else:
+                message = message.replace(json_str, markdown)
     
     # Remove file paths and line numbers
     message = re.sub(r'File ".*", line \d+', '', message)
@@ -138,11 +142,12 @@ class UserFormatter(logging.Formatter):
     def __init__(self):
         super().__init__()
         self.format_str = _formatters.get('user', {}).get('format', '')
+        self.change_agent_format = _formatters.get('user', {}).get('change_agent_format', '')
         self.sep = '─' * 50
 
     def format(self, record):
         message = record.getMessage()
-
+  
         # Check for agent marker lines and update the current agent
         for pattern, group_idx in _agent_markers:
             m = pattern.search(message)
@@ -153,12 +158,31 @@ class UserFormatter(logging.Formatter):
         # Determine action based on message content
         action = 'General'
         for pattern, act_name in _action_patterns:
-            if pattern.search(message):
+            m = pattern.search(message)
+            if m:
                 action = act_name
+                if action == 'change agent':
+                    return self.change_agent_format.format(
+                        from_agent=m.group(1),
+                        to_agent=m.group(2)
+                    )
                 break
+
+        if action == 'global step':
+            # e.g. methodology == "Global Step 1", only return one line of the Global Step
+            return message.split('\n')[0]
 
         # Clean and format methodology
         methodology = message.strip()
+        
+
+        # if methodology starts with "Event:" or "Message: ", keep it and put the json after it in to markdown format
+        if methodology.startswith('Event:') or methodology.startswith('Message:'):
+            methodology = _clean_message(methodology)
+
+        # if the action is "Messaging xxx.txt to the agent", empty the methodology
+        if action.startswith('Messaging') and action.endswith('to the agent'):
+            methodology = 'Sending prompt to the agent...'
 
         # Build the final formatted string using the format from config
         formatted = self.format_str.format(
@@ -168,6 +192,28 @@ class UserFormatter(logging.Formatter):
             sep=self.sep
         )
         return formatted
+
+    def _format_json_content(self, data, indent=0):
+        """Format JSON content in a more readable way."""
+        if isinstance(data, dict):
+            items = []
+            for key, value in data.items():
+                if isinstance(value, (dict, list)):
+                    formatted_value = self._format_json_content(value, indent + 2)
+                    items.append(f"{' ' * indent}📌 {key}:\n{formatted_value}")
+                else:
+                    items.append(f"{' ' * indent}📌 {key}: {value}")
+            return "\n".join(items)
+        elif isinstance(data, list):
+            items = []
+            for item in data:
+                if isinstance(item, (dict, list)):
+                    formatted_item = self._format_json_content(item, indent + 2)
+                    items.append(f"{' ' * indent}• \n{formatted_item}")
+                else:
+                    items.append(f"{' ' * indent}• {item}")
+            return "\n".join(items)
+        return str(data)
 
 def init_logger(log_filename, level=logging.INFO):
     """
@@ -220,11 +266,11 @@ def init_logger(log_filename, level=logging.INFO):
     user_formatter = UserFormatter()
     user_file = _add_suffix(log_filename, "user")
     user_handler = logging.StreamHandler(sys.stdout)
-    user_handler.setLevel(logging.INFO)
+    user_handler.setLevel(logging.DEBUG)
     user_handler.addFilter(ContentFilter())  
     user_handler.setFormatter(user_formatter)
     user_file_handler = logging.FileHandler(user_file, mode='a')
-    user_file_handler.setLevel(logging.INFO)
+    user_file_handler.setLevel(logging.DEBUG)
     user_file_handler.addFilter(ContentFilter())
     user_file_handler.setFormatter(user_formatter)
 
