@@ -85,20 +85,20 @@ def process_plan(plan_data):
         print(f"👦 Analyzing plan {i+1}/{len(plan_data)}.")
         
         # list out all .txt files in the workspace directory
-        plan_results = ["Here is the experimental plan", f"{plan}\n",
+        plan_results = [f"Here is the experimental plan: {plan}\n",
                 "Here are the actual results of the experiments: \n"]
 
-        workspace_dir = plan["workspace_dir"] 
-        # control_group = plan["control_group"]
-        # experimental_group = plan["experimental_group"]
+        workspace_dir = plan["workspace_dir"]  
         banned_keywords = ['Warning:', '\x00']
         
         if workspace_dir != '' and os.path.exists(workspace_dir):
             log_files = []
             workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
+            print(f"👦 Workspace dir list: {workspace_dir_list}")
             for workspace_dir in workspace_dir_list:
-                log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
-                log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
+                if os.path.exists(workspace_dir):
+                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
+                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
             
             print(f"👦 Found log files {log_files}")
             for file in log_files:

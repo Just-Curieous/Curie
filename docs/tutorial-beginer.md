@@ -46,7 +46,7 @@ sudo gunzip /data/*.gz
 
 ## ❓ Get your question ready
 
-You should provide as many details as you can to your question. 
+You should provide **as many details as** you can to your question. 
 ```python
 import curie
 result = curie.experiment(
