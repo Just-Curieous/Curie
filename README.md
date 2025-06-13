@@ -14,13 +14,14 @@ Curie helps answer your curiosity through end-to-end experimentation automation,
 Our mission is to empower scientists to move research at the speed of thought.
 
 <p align="center">
-  <img src="./docs/static/img/curie-overview.png" width="600px"/>
+  <!-- <img src="./docs/static/img/curie-overview.png" width="600px"/> -->
+  <img src="./docs/static/img/research-lifecyle.png" width="600px"/>
 </p> 
-<p align="center">Curie Overview.</p>
+<p align="center">Curie’s Role in the Scientific Research Lifecycle</p>
 
 
 ## 🗞️ News
-- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? → [📄 Paper](https://arxiv.org/abs/2505.24785) | [🗂️ Dataset](https://huggingface.co/datasets/Just-Curieous/EXP-Bench)
+- **[2025/06]** We published **EXP-Bench**: Can AI Conduct AI Research Experiments? → [📄 Paper](https://arxiv.org/abs/2505.24785) | [🗂️ Dataset](https://huggingface.co/datasets/Just-Curieous/EXP-Bench) | [📰 Blog](https://www.just-curieous.com/machine-learning/research/2025-06-11-exp-bench-can-ai-conduct-ai-research-experiments.html)
 - **[2025/05]** We launched an **AutoML feature** to help researcher find the optimal ML solution → [📢 Blog](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html)
 - **[2025/02]** We published **Curie**: Toward Rigorous and Automated Scientific Experimentation with AI Agents → [📄 Paper](https://arxiv.org/abs/2502.16069) | [📰 Blog](https://www.just-curieous.com/)
 
@@ -28,7 +29,10 @@ Our mission is to empower scientists to move research at the speed of thought.
 ## Key Features
 - 🚀 Automated Experimentation – From hypothesis formulation, experiment implementation, experiment execution, result analysis and finding reflection.
 - 📊 Rigor Enhancement - Built-in verification modules enforce methodical procedure, agent reliability and reproducibility.
-- 🔬 Broad Applicability – Supports ML research, system analysis, and scientific discovery.
+- 🔬 Broad Applicability – Supports [**ML Engineering**](https://www.just-curieous.com/machine-learning/research/2025-05-27-automl-co-scientist.html), [system analysis](./docs/example_logs/sorting_example/research_1748830453_20250602021413_iter1.md), and scientific discovery.
+- 💻 Use Your Starter Code – Supports working on arbitrary user's starter code.
+- 📂 Bring Your Own Dataset – Supports working on arbitrary user's datasets.
+- 🧾 Automatic, Insightful Reporting - See a sample report [here](./benchmark/mle_bench/histopathologic-cancer-detection/histopathologic-cancer-detection_20250519225201_iter1.md)
 
 
 ## Table of Contents 
