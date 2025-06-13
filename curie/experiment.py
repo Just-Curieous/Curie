@@ -20,6 +20,7 @@ DEFAULT_TASK_CONFIG = {
     "is_user_interrupt_allowed": False,
     "timeout": 600,
     "max_coding_iterations": 25,
+    "max_global_steps": 20,
     "supervisor_system_prompt_filename": "prompts/simple/simple-supervisor.txt",
     "control_worker_system_prompt_filename": "prompts/simple/simple-control-worker.txt",
     "patcher_system_prompt_filename": "prompts/simple/simple-patcher.txt",
@@ -59,8 +60,10 @@ def docker_image_exists(image: str) -> bool:
 
 def build_docker_image(image_name: str, dockerfile: str) -> None:
     """Build Docker image if it doesn't exist."""
+    sudo_available = shutil.which("sudo") is not None
+
     command = [
-        "sudo", "docker", "build",
+        f"{'sudo ' if sudo_available else ''}docker", "build",
         "--no-cache", "--progress=plain",
         "-t", image_name,
         "-f", dockerfile,
@@ -82,6 +85,13 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
         logger.info(f"Start building Docker image {image_name} from {docker_filename} ... ")
         build_docker_image(image_name, docker_filename)
     
+    if 'dataset_dir' in task_config and task_config['dataset_dir'] is not None:
+        dataset_name = f"{task_config['job_name']}_dataset"
+        dataset_dir = os.path.abspath(task_config['dataset_dir']).rstrip('/')
+        mount_dataset = ["-v",  f"{dataset_dir}:/workspace/{dataset_name}:ro"]
+    else:
+        mount_dataset = []
+    
     base_dir = os.getcwd()
     api_key_dir = os.path.join(os.getcwd(), '.setup')
     command = [
@@ -89,7 +99,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
         "-v", f"{api_key_dir}:/curie/setup/",
         "-v", f"{base_dir}/logs:/logs",
-        "-v", f"{base_dir}/workspace:/workspace",
+        "-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
         "-v", f"/:/all:ro",
         "--network=host",
         "-d",
@@ -201,10 +211,10 @@ def create_config_file(question_file: str, unique_id: str, iteration: int, task_
     })
         
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
-    send_question_telemetry(question_file)
     
     with open(config_filename, "w") as f:
         json.dump(task_config, f, indent=4)
+    send_question_telemetry(question_file)
     send_question_telemetry(config_filename)
     
     logger = init_logger(log_filename)
@@ -225,7 +235,8 @@ def prepare_question_file(task_config: Dict[str, Any], question_text: Optional[s
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         with open(question_file, 'w') as f:
             f.write(question_text)
-        return question_file
+        task_config["question"] = question_file
+        return question_file, task_config
     except Exception as e:
         print(f"Error writing question to file: {e}")
         print("Please give permission to write to `workspace/`.")
@@ -261,10 +272,8 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
     dataset_dir = os.path.abspath(dataset_dir) if dataset_dir else ''
     env_requirements = os.path.abspath(env_requirements) if env_requirements else ''
     
-    # check if workspace_name is a valid path
     if codebase_dir and not os.path.exists(os.path.abspath(codebase_dir)):
         raise ValueError(f"Codebase directory {codebase_dir} is not a valid path.")
-    # check if dataset_dir is a valid path
     if dataset_dir and not os.path.exists(os.path.abspath(dataset_dir)):
         raise ValueError(f"Dataset directory {dataset_dir} is not a valid path.") 
     if env_requirements and not os.path.exists(os.path.abspath(env_requirements)):
@@ -278,30 +287,36 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
     elif code_instructions:
         with open(os.path.join(codebase_dir, "description.md"), "w") as f:
             f.write(f"Code Instructions:\n{code_instructions}")
-    
-    # check if requirements.txt exists in the codebase_dir
+
     if codebase_dir and os.path.exists(os.path.join(codebase_dir, "requirements.txt")):
         env_requirements = os.path.join(codebase_dir, "requirements.txt")
         print(f"Found requirements.txt in the codebase directory {codebase_dir}. Using it as the environment requirements file.")
     
     if task_config is None:
-        task_config = DEFAULT_TASK_CONFIG
-        task_config['workspace_name'] = os.path.abspath(codebase_dir) if codebase_dir else task_config['workspace_name']
-        task_config['dataset_dir'] = os.path.abspath(dataset_dir) if dataset_dir else task_config['dataset_dir']
-        task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else task_config['env_requirements']
-        return task_config
+        task_config = DEFAULT_TASK_CONFIG.copy()
 
-    task_config['workspace_name'] = os.path.abspath(codebase_dir) if codebase_dir else ''
-    task_config['dataset_dir'] = os.path.abspath(dataset_dir) if dataset_dir else ''
-    task_config['env_requirements'] = os.path.abspath(env_requirements) if env_requirements else ''
-    # fill up the unspecified fields in the task config with DEFAULT_TASK_CONFIG
+    # Update paths with absolute paths if provided
+    path_updates = {
+        'workspace_name': codebase_dir,
+        'dataset_dir': dataset_dir,
+        'env_requirements': env_requirements
+    }
+
+    for key, path in path_updates.items():
+        task_config[key] = os.path.abspath(path) if path else task_config.get(key, '')
+
+    # Fill missing fields from defaults
     for key, value in DEFAULT_TASK_CONFIG.items():
         if key not in task_config:
             task_config[key] = value
-    # force override the docker image and dockerfile name
-    task_config['max_global_steps'] = max_global_steps
-    task_config['docker_image'] = "curie-pip-image"
-    task_config['dockerfile_name'] = "ExpDockerfile_pip" 
+
+    # Set required overrides
+    task_config.update({
+        'max_global_steps': max_global_steps,
+        'docker_image': "curie-pip-image",
+        'dockerfile_name': "ExpDockerfile_pip"
+    })
+
     return task_config
 
 def validate_input(question_file: Optional[str], 
@@ -338,7 +353,7 @@ def experiment(api_keys: Optional[Dict[str, str]] = None,
     validate_input(question_file, question)
         
     # Prepare question file
-    question_file = prepare_question_file(task_config, question, question_file)
+    question_file, task_config = prepare_question_file(task_config, question, question_file)
     
     # Run iterations
     iterations = 1
