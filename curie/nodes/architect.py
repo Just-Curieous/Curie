@@ -4,19 +4,36 @@ from langchain_core.messages import SystemMessage
 from scheduler import SchedNode
 import model
 import settings
+import json
 
 class Architect(BaseNode):
 
     def __init__(self, sched_node: SchedNode, config: NodeConfig, State, store, metadata_store, memory, tools: list):
         super().__init__(sched_node, config, State, store, metadata_store, memory, tools)  # Call parent class's __init__
+        # read the config file
+        with open(self.node_config.config_filename, 'r') as file:
+            self.config = json.load(file)
+        
         self.create_transition_objs()
+        
 
-    def create_transition_objs(self):
-        # TODO: simplify this init message.
-        intro_message = "This is the question to answer, analyze the user's question and mentioned or referenced files (e.g., .txt, .md, .pdf). \
-            Use `read_file_contents` for non-PDF files and `query_pdf` for PDFs to extract relevant information that informs your experimental design. \
-            Make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool:\n"
-        self.node_config.transition_objs["no_plan"] = lambda: {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
+    def create_transition_objs(self): 
+        def create_intro_message(question, data_analysis): 
+            intro_message = f"This is the question to answer. {question}\
+                If there are files explicitly mentioned in the question, \
+                Use `read_file_contents` for non-PDF files and `query_pdf` for PDFs to extract relevant information that informs your experimental design. \
+                 Make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool. {data_analysis}\n"
+            
+            return intro_message 
+        
+        
+        self.node_config.transition_objs["no_plan"] = lambda: {"messages": create_intro_message(self.sched_node.get_question(), self.sched_node.get_data_analysis()), \
+                                                               "next_agent": "supervisor", "prev_agent": "supervisor"}
+
+        self.node_config.transition_objs["data_analyzer"] = lambda: {
+            "messages": "Please analyze the dataset to inform the experimental design.",
+            "next_agent": "data_analyzer"
+        }
 
         self.node_config.transition_objs["get_user_input_first"] = lambda: {
             "messages": "[User input requested]", 
@@ -29,7 +46,6 @@ class Architect(BaseNode):
             "control_work": {"messages": assignment_messages, "next_agent": "control_worker"},
             "experimental_work": {"messages": [], "next_agent": "control_worker"}
         }
-
         self.node_config.transition_objs["experimental_has_work"] = lambda assignment_messages: {
             "control_work": {"messages": assignment_messages, "next_agent": "control_worker"},
             "experimental_work": {"messages": self.sched_node.assign_worker("experimental"), "next_agent": "worker"}
@@ -49,7 +65,16 @@ class Architect(BaseNode):
 
         # Zero, if no plan exists at all, we need to re-prompt the architect to force it to create a plan:
         if self.sched_node.is_no_plan_exists():
-            return self.node_config.transition_objs["no_plan"]()
+            # Get data analysis results if available
+            data_analysis = self.sched_node.get_data_analysis()
+            
+            intro_message = f"This is the question to answer.\
+                If there are files explicitly mentioned in the question, \
+                Use `read_file_contents` for non-PDF files and `query_pdf` for PDFs to extract relevant information that informs your experimental design. \
+                Make sure to formulate it in terms of an experimental plan(s) using the 'write_new_exp_plan' tool. {data_analysis}\n \n"
+             
+            
+            return {"messages": intro_message + self.sched_node.get_question(), "next_agent": "supervisor", "prev_agent": "supervisor"}
         # print("state['is_user_input_done']: ", state["is_user_input_done"])
         if not state["is_user_input_done"]:
             return self.node_config.transition_objs["get_user_input_first"]()
