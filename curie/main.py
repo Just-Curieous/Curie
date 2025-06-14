@@ -245,6 +245,7 @@ def run_prune_commands():
 def prepare_question_file(task_config, question_text, question_file):
     """Create a question file from question text."""
     if question_file is not None:
+        question_file = os.path.abspath(question_file)
         with open(question_file, 'r') as f:
             question_text = f.read()
         task_config["question"] = question_file
@@ -258,6 +259,7 @@ def prepare_question_file(task_config, question_text, question_file):
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         with open(question_file, 'w') as f:
             f.write(question_text)
+        question_file = os.path.abspath(question_file)
         task_config["question"] = question_file
         return question_file, task_config
     except Exception as e:
