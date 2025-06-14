@@ -86,9 +86,11 @@ class AllNodes():
         worker, control_worker = self.create_worker_nodes()
         self.workers = [worker]
         self.control_workers = [control_worker]
-        if config_dict['dataset_dir'] is not None:
+        if config_dict['dataset_dir'] != '':
             curie_logger.info(f"🔍 Creating data analyzer node for analyzing {config_dict['dataset_dir']}")
             self.data_analyzer = self.create_data_analyzer_node()
+        else:
+            self.data_analyzer = None
         self.validators = self.create_validators() # list of validators
         self.user_input_nodes = self.create_user_input_nodes()
 
@@ -406,7 +408,7 @@ def build_graph(State, config_filename):
     graph_builder.add_node(supervisor_name, supervisor_graph)
     
     # Add data analyzer node
-    if config.get('dataset_dir') is not None:
+    if config.get('dataset_dir') != '':
         data_analyzer_graph = all_nodes.get_data_analyzer_subgraph()
         data_analyzer_name = all_nodes.get_data_analyzer_node().get_name()
         graph_builder.add_node(data_analyzer_name, data_analyzer_graph)
@@ -432,7 +434,7 @@ def build_graph(State, config_filename):
         graph_builder.add_node(node.get_name(), user_input_subgraphs[index])
     
     # Add graph edges
-    if config.get('dataset_dir') is not None:
+    if config.get('dataset_dir') != '':
         graph_builder.add_edge(START, data_analyzer_name)
         graph_builder.add_edge(data_analyzer_name, "scheduler")
         graph_builder.add_edge( supervisor_name, "scheduler")
@@ -573,7 +575,7 @@ def main():
         graph, metadata_store, config = build_graph(State, config_filename)
 
         # Read question from file
-        exp_plan_filename = f"../{config['exp_plan_filename']}"
+        exp_plan_filename = f"/all{config['exp_plan_filename']}"
         valid, user_input = get_question(exp_plan_filename) 
         # if not valid:
         #     curie_logger.error(f"⚠️ Invalid question. Please input a valid research question.\n{user_input}")

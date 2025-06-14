@@ -727,7 +727,7 @@ class SchedNode():
         return env_path
 
     def get_packages_to_install(self):
-        with open('/'+self.config['exp_plan_filename'], "r") as file:  
+        with open('/all'+self.config['exp_plan_filename'], "r") as file:  
             question = file.read() 
         with open("/curie/prompts/exp-env-manager.txt", "r") as file:
             system_prompt = file.read() 
