@@ -170,7 +170,7 @@ class CodeAgentTool(BaseTool):
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
 
             # write to a file
-            prompt_file = f"../logs/tmp_prompt.txt"
+            prompt_file = f"../logs/tmp_coding_prompt.txt"
             with open(prompt_file, "w") as file:
                 file.write(prompt)
 
@@ -338,7 +338,7 @@ class PatcherAgentTool(BaseTool):
             curie_logger.info(f"👋👋 Trigger Coding Patch Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
             # write to a file
-            prompt_file = f"../logs/tmp_prompt.txt"
+            prompt_file = f"../logs/tmp_coding_prompt.txt"
             with open(prompt_file, "w") as file:
                 file.write(prompt)
 
@@ -1946,3 +1946,110 @@ class UserInputRouterWriteTool(BaseTool):
         self.metadata_store.put(sched_namespace, memory_id, wrote_list)
 
         return "Successfully recorded the evaluation."
+
+class DataAgentInput(BaseModel):
+    pass
+
+class DataAgentTool(BaseTool):
+    name: str = "dataagent_openhands"
+    description: str = "Data processing agent that can generate/modify data workflow scripts for a given experimentation plan."
+    args_schema: Type[BaseModel] = DataAgentInput
+    config: Optional[dict] = None
+
+    def __init__(self, config_dict: dict):
+        super().__init__()
+        self.config = config_dict
+    
+    class Config:
+        arbitrary_types_allowed = True  # Allow non-Pydantic types like InMemoryStore
+
+    def _run(
+        self, 
+        run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str: 
+
+        try:
+            in_docker_dataset_dir = f"/workspace/{self.config['job_name']}_dataset"
+
+            if not os.path.exists(in_docker_dataset_dir):
+                curie_logger.error(f"Dataset directory {in_docker_dataset_dir} does not exist.")
+                return f"Dataset directory {in_docker_dataset_dir} does not exist."
+            curie_logger.info(f"🔍 Dataset directory {in_docker_dataset_dir} exists.")
+            
+            prompt = self.config["question"]
+            workspace_dir = self.config["workspace_dir"] if 'workspace_dir' in self.config else f"/workspace/{self.config['job_name']}_data_analysis"
+            
+            utils.setup_openhands_credential() 
+            prompt_file_key = "data_prompt_filename"
+            default_prompt_file =  "prompts/data-coding.txt"
+            data_agent_prompt = self.config.get(prompt_file_key, default_prompt_file)
+
+            system_prompt = load_system_prompt(
+                data_agent_prompt,
+                workspace_dir=workspace_dir
+            )
+            data_max_iterations = self.config.get("max_coding_iterations", 30)
+
+            exp_log_dir_parts = self.config["log_filename"].split("/")[:-1]
+            exp_log_dir = "/".join(exp_log_dir_parts)
+
+            prompt += f"\n\nDataset directory: {in_docker_dataset_dir} (Dataset is downloaded. Do not create synthetic data.)."
+            prompt = f'''{system_prompt}\n{prompt}'''
+            curie_logger.info(f"👋👋 Trigger Data Processing Agent.")
+            curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/data_analysis_logging.txt")
+
+            # write to a file
+            prompt_file = f"../logs/tmp_data_coding_prompt.txt"
+            with open(prompt_file, "w") as file:
+                file.write(prompt)
+
+            openhands_dir = self.config["base_dir"] + "/workspace"
+
+            sudo_available = shutil.which("sudo") is not None
+            chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {workspace_dir}"
+
+            output = shell_tool.run({
+                "commands": [
+                    f"export LOG_ALL_EVENTS=true; "
+                    f"{chmod_cmd}; "
+                    f"export WORKSPACE_BASE={openhands_dir}; "
+                    f"export SANDBOX_TIMEOUT=600; " # FIXME: hardcoded timeout
+                    f"/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python "
+                    f"-m openhands.core.main "
+                    f"-f {prompt_file} "
+                    f"--config-file ../workspace/config.toml "
+                    f"--max-iterations {data_max_iterations} "
+                    f"2>&1 | tee -a /{exp_log_dir}/data_analysis_logging.txt; "
+                ]
+            })
+            # openhands_log = self.extract_dataagent_output_snippet(
+            #     f"/{exp_log_dir}/data_analysis_logging.txt"
+            # )
+            # curie_logger.info(f"💻 Data Processing Agent Results: {openhands_log}")
+        except BaseException as e:
+            curie_logger.error(f"Error for data processing agent: {repr(e)}")
+            return f"Failed to generate code for prompt: {prompt}\nError: {repr(e)}"
+    
+        _collect_openhands_cost()
+        
+        # try to read the data_analysis.txt file
+        with open(f"{workspace_dir}/data_analysis.txt", "r") as file:
+            data_analysis = file.read()
+            curie_logger.info(f"💻 Data Analysis: {data_analysis}")
+
+        with open(f"/{exp_log_dir}/data_analysis_results.txt", "w") as file:
+            file.write(data_analysis)
+        
+        return f"""
+                The Data Processing Agent has completed. Here is the data analysis:
+                {data_analysis}
+                """.strip()
+    
+    def extract_dataagent_output_snippet(self, filename: str) -> str:
+        """
+            Extracts bottom 10% of text within the log filename. 
+        """
+        with open(filename, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
+            return "".join(bottom_10_percent)

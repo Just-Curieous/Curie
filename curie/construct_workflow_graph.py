@@ -26,6 +26,7 @@ from nodes.exec_validator import setup_exec_validator_logging
 
 from nodes.architect import Architect
 from nodes.technician import Technician
+from nodes.data_analyzer import DataAnalyzer
 from nodes.base_node import NodeConfig
 from nodes.llm_validator import LLMValidator
 from nodes.patcher import Patcher
@@ -85,12 +86,18 @@ class AllNodes():
         worker, control_worker = self.create_worker_nodes()
         self.workers = [worker]
         self.control_workers = [control_worker]
+        if config_dict['dataset_dir'] != '':
+            curie_logger.info(f"🔍 Creating data analyzer node for analyzing {config_dict['dataset_dir']}")
+            self.data_analyzer = self.create_data_analyzer_node()
+        else:
+            self.data_analyzer = None
         self.validators = self.create_validators() # list of validators
         self.user_input_nodes = self.create_user_input_nodes()
 
         # Create sched tool, passing in other agent's transition funcs as a dict
         config_dict["transition_funcs"] = {
             "supervisor": lambda state: self.architect.transition_handle_func(state),
+            "data_analyzer": lambda: self.data_analyzer.transition_handle_func() if self.data_analyzer else None,
             "worker": lambda: self.workers[0].transition_handle_func(),
             "control_worker": lambda: self.control_workers[0].transition_handle_func(),
             "llm_verifier": lambda: self.validators[0].transition_handle_func(),
@@ -105,6 +112,8 @@ class AllNodes():
     def instantiate_subgraphs(self):
         self.sched_subgraph = self.sched_node.create_SchedNode_subgraph(self.sched_tool)
         self.architect_subgraph = self.architect.create_subgraph()
+        if self.data_analyzer:
+            self.data_analyzer_subgraph = self.data_analyzer.create_subgraph()
         self.worker_subgraph = self.workers[0].create_subgraph()
         self.control_worker_subgraph = self.control_workers[0].create_subgraph()
         self.validator_subgraphs = [validator.create_subgraph() for validator in self.validators]
@@ -119,6 +128,9 @@ class AllNodes():
     def get_worker_subgraphs(self):
         return self.worker_subgraph, self.control_worker_subgraph
     
+    def get_data_analyzer_subgraph(self):
+        return self.data_analyzer_subgraph
+    
     def get_validator_subgraphs(self):
         return self.validator_subgraphs
 
@@ -127,6 +139,9 @@ class AllNodes():
 
     def get_architect_node(self):
         return self.architect
+    
+    def get_data_analyzer_node(self):
+        return self.data_analyzer
 
     def get_worker_node(self):
         return self.workers[0]
@@ -209,6 +224,23 @@ class AllNodes():
         control_worker = Technician(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
 
         return worker, control_worker
+
+    def create_data_analyzer_node(self):
+        node_config = NodeConfig(
+            name="data_analyzer",
+            node_icon="🔍",
+            log_filename=self.log_filename, 
+            config_filename=self.config_filename,
+            system_prompt_key="data_analyzer_system_prompt_filename",
+            default_system_prompt_filename="prompts/data-analyzer.txt"
+        )
+        
+        with open(self.config_filename, 'r') as file:
+            config_dict = json.load(file) 
+        dataagent_tool = tool.DataAgentTool(config_dict)
+        tools = [dataagent_tool]
+        return DataAnalyzer(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
 
     def create_validators(self):
         # Create LLM validator: 
@@ -375,6 +407,12 @@ def build_graph(State, config_filename):
     supervisor_name = all_nodes.get_architect_node().get_name()
     graph_builder.add_node(supervisor_name, supervisor_graph)
     
+    # Add data analyzer node
+    if config.get('dataset_dir') != '':
+        data_analyzer_graph = all_nodes.get_data_analyzer_subgraph()
+        data_analyzer_name = all_nodes.get_data_analyzer_node().get_name()
+        graph_builder.add_node(data_analyzer_name, data_analyzer_graph)
+    
     # Add worker nodes
     experimental_worker, control_worker = all_nodes.get_worker_subgraphs()
     experimental_worker_name = all_nodes.get_worker_node().get_name()
@@ -396,9 +434,14 @@ def build_graph(State, config_filename):
         graph_builder.add_node(node.get_name(), user_input_subgraphs[index])
     
     # Add graph edges
-    graph_builder.add_edge(START, supervisor_name)
-    graph_builder.add_edge(supervisor_name, "scheduler")
-    # graph_builder.add_conditional_edges("supervisor", router, ["scheduler", END])
+    if config.get('dataset_dir') != '':
+        graph_builder.add_edge(START, data_analyzer_name)
+        graph_builder.add_edge(data_analyzer_name, "scheduler")
+        graph_builder.add_edge( supervisor_name, "scheduler")
+    else:
+        graph_builder.add_edge(START, supervisor_name)
+        graph_builder.add_edge(supervisor_name, "scheduler")
+
     graph_builder.add_edge(experimental_worker_name, "scheduler")
     graph_builder.add_edge(control_worker_name, "scheduler")
     
@@ -434,7 +477,7 @@ def get_question(question_file_path: str) -> str:
 def validate_question(question: str) -> bool:
     with open('prompts/parse-input.txt', 'r') as file:
         parse_input_prompt = file.read().strip()
- 
+
         # validate question, if it's feasible to answer through experimentation
         # if not just return the answer via LLM call,  and prompt the user to input a researchß question
         messages = [SystemMessage(content=parse_input_prompt),
@@ -459,7 +502,7 @@ def stream_graph_updates(graph, user_input: str, config: dict):
         graph: Compiled LangGraph workflow
         user_input (str): User's input question
     """
-    max_global_steps = config.get("max_global_steps", 50)
+    max_global_steps = config.get("max_global_steps", 20)
     max_global_steps += settings.CONCLUDER_BUFFER_STEPS
     is_user_input_done = not config.get("is_user_interrupt_allowed", False) # true == no interrupt (at the architect plan design stage)
     # Prior to user-input interrupt:
@@ -532,7 +575,7 @@ def main():
         graph, metadata_store, config = build_graph(State, config_filename)
 
         # Read question from file
-        exp_plan_filename = f"../{config['exp_plan_filename']}"
+        exp_plan_filename = f"/all{config['exp_plan_filename']}"
         valid, user_input = get_question(exp_plan_filename) 
         # if not valid:
         #     curie_logger.error(f"⚠️ Invalid question. Please input a valid research question.\n{user_input}")

@@ -33,6 +33,8 @@ def parse_args():
 
     parser.add_argument("--dataset_dir", "-d", type=str, default=None, required=False,
                         help="Dataset directory to be used in the experiment.")
+    parser.add_argument("--env_requirements", "-e", type=str, default=None, required=False,
+                        help="Environment requirements file to be used in the experiment.")
 
     parser.add_argument("--question", "-q", type=str, required=False,
                         help="Question to run")
@@ -63,7 +65,7 @@ def get_workspace_name(task_config):
         DEFAULT_JOB_NAME
     )
 
-def create_config_file(question_file, unique_id, iteration, task_config):
+def create_config_file(question_file, unique_id, iteration, task_config, env_requirements):
     """Create experiment configuration file and set up logging."""
     work_name = get_workspace_name(task_config)
     
@@ -85,7 +87,7 @@ def create_config_file(question_file, unique_id, iteration, task_config):
         "log_filename": log_filename,
         "exp_plan_filename": question_file,
         "base_dir": base_dir,
-        # "workspace_name": work_name
+        "env_requirements": env_requirements,
     })
         
     os.makedirs(os.path.dirname(config_filename), exist_ok=True)
@@ -115,8 +117,9 @@ def docker_image_exists(image):
 
 def build_docker_image(image_name, dockerfile):
     """Build Docker image if it doesn't exist."""
+    sudo_available = shutil.which("sudo") is not None
     command = [
-        "sudo", "docker", "build",
+        f"{'sudo ' if sudo_available else ''}docker", "build",
         "--no-cache", "--progress=plain",
         "-t", image_name,
         "-f", dockerfile,
@@ -139,6 +142,13 @@ def run_docker_container(unique_id, iteration, task_config, logger):
         build_docker_image(image_name, docker_filename)
     
     base_dir = task_config['base_dir']
+    if 'dataset_dir' in task_config and task_config['dataset_dir'] is not None:
+        dataset_name = f"{task_config['job_name']}_dataset"
+        dataset_dir = os.path.abspath(task_config['dataset_dir']).rstrip('/')
+        mount_dataset = ["-v",  f"{dataset_dir}:/workspace/{dataset_name}:ro"]
+    else:
+        mount_dataset = []
+    
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
@@ -146,11 +156,11 @@ def run_docker_container(unique_id, iteration, task_config, logger):
         "-v", f"{base_dir}/benchmark:/benchmark:ro",
         "-v", f"{base_dir}/logs:/logs",
         "-v", f"{base_dir}/starter_file:/starter_file:ro",
-        "-v", f"{base_dir}/workspace:/workspace",
-        "-v", f"/:/all:ro",
-        "--network=host",
-        "-d",
-    ]
+        "-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
+            "-v", f"/:/all:ro",
+            "--network=host",
+            "-d",
+        ]
     
     # Add GPU support if available
     has_gpu = shutil.which("nvidia-smi") is not None and subprocess.call(
@@ -232,26 +242,36 @@ def run_prune_commands():
     
     prune_openhands_docker()
 
-def prepare_question_file(task_config, question_text):
+def prepare_question_file(task_config, question_text, question_file):
     """Create a question file from question text."""
+    if question_file is not None:
+        question_file = os.path.abspath(question_file)
+        with open(question_file, 'r') as f:
+            question_text = f.read()
+        task_config["question"] = question_file
+        return question_file, task_config
+    
     q_file = get_workspace_name(task_config)
     question_file = f'workspace/{q_file}_{int(time.time())}.txt'
+    task_config["question"] = question_file
     
     try:
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         with open(question_file, 'w') as f:
             f.write(question_text)
-        return question_file
+        question_file = os.path.abspath(question_file)
+        task_config["question"] = question_file
+        return question_file, task_config
     except Exception as e:
         print(f"Error writing question to file: {e}")
         print("Please give permission to write to `workspace/`.")
         sys.exit(1)
 
-def execute_curie(question_filename, unique_id, iteration, task_config):
+def execute_curie(question_filename, unique_id, iteration, task_config, env_requirements):
     """Execute a single Curie iteration."""
     # Create configuration file and get logger
     task_config, config_filename, logger = create_config_file(
-        question_filename, unique_id, iteration, task_config)
+        question_filename, unique_id, iteration, task_config, env_requirements)
 
     # Run Docker container for this iteration
     container_name = None
@@ -288,13 +308,13 @@ def validate_question_input(question_file, question):
         return False
     return True
 
-def run_iterations(question_file, iterations, task_config):
+def run_iterations(question_file, iterations, task_config, env_requirements):
     """Run the specified number of iterations for the given question file."""
     for iteration in range(1, iterations + 1):
         start_time = time.time()
         unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
         
-        execute_curie(question_file, unique_id, iteration, task_config)
+        execute_curie(question_file, unique_id, iteration, task_config, env_requirements)
         
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -314,10 +334,10 @@ def main():
         return
     
     # Prepare question file
-    question_file = args.question_file if args.question_file else prepare_question_file(task_config, args.question)
+    question_file, task_config = prepare_question_file(task_config, args.question, args.question_file)
     
     # Run iterations
-    run_iterations(question_file, args.iterations, task_config)
+    run_iterations(question_file, args.iterations, task_config, args.env_requirements)
 
 if __name__ == "__main__":
     main()

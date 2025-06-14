@@ -66,6 +66,7 @@ class SchedNode():
             "patch_verifier_assignment_dict": "patch_verifier",
             "analyzer_assignment_dict": "analyzer",
             "concluder_assignment_dict": "concluder",
+            "data_analysis": "data_analysis",
         }
 
         def create_assignment_dict(memory_ids, metadata_store, sched_namespace):
@@ -90,7 +91,9 @@ class SchedNode():
             # Records calls to redo_exp_partition by supervisor.
             "supervisor_redo_partition_list",  # [{"plan_id": ..., "group": ..., "partition_name": ..., "error_feedback": ...}, ...]
             "standby_exp_plan_list",  
-            "user_router_wrote_list",  
+            "user_router_wrote_list",
+            # Stores the data analysis results
+            "data_analysis",  
         ]
 
 
@@ -489,7 +492,7 @@ class SchedNode():
             return True
         else:
             return False
-
+    
     def check_exp_termination_condition(self):
         """
         If all control and experimental groups are done for all plans, return True. Otherwise, return False.
@@ -541,6 +544,8 @@ class SchedNode():
             memory_id = "analyzer_assignment_dict"
         elif entity_name == "concluder":
             memory_id = "concluder_assignment_dict"
+        elif entity_name == "data_analyzer":
+            memory_id = "data_analyzer_assignment_dict"
         elif entity_name == "experimental":
             memory_id = str("worker_assignment_dict")
         elif "control" in entity_name:
@@ -608,7 +613,8 @@ class SchedNode():
     def init_new_plan(self, plan_ids: list):
         import concurrent.futures
 
-        new_dataset_dir = self.copy_dataset_to_workspace()
+        # new_dataset_dir = self.copy_dataset_to_workspace()
+        new_dataset_dir = f"/workspace/{self.config['job_name']}_dataset"
         self.get_packages_to_install()
 
         def process_plan(plan_id):
@@ -690,7 +696,7 @@ class SchedNode():
 
         # FIXME: some use cases may need old versions of Python 
         env_path = os.path.join(work_dir, env_name)
-        if not os.path.exists(env_path) and self.config["env_requirements"] == "":
+        if not os.path.exists(env_path) and self.config["env_requirements"] is None:
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
@@ -701,7 +707,7 @@ class SchedNode():
         
         elif os.path.exists(env_path):
             self.curie_logger.info(f"Environment is pre-built at {env_path}. Skipping creation.")
-        elif self.config["env_requirements"] != "":
+        elif self.config["env_requirements"] is not None and os.path.exists(self.config["env_requirements"]):
             
             command = ["micromamba", "create", "-p", env_path, "python=3.12", "-y", "--quiet"]
             subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -721,7 +727,7 @@ class SchedNode():
         return env_path
 
     def get_packages_to_install(self):
-        with open('/'+self.config['exp_plan_filename'], "r") as file:  
+        with open('/all'+self.config['exp_plan_filename'], "r") as file:  
             question = file.read() 
         with open("/curie/prompts/exp-env-manager.txt", "r") as file:
             system_prompt = file.read() 
@@ -752,7 +758,6 @@ class SchedNode():
             old_starter_file_dir = None
         
         if not os.path.exists(new_starter_file_dir):
-            
             try:
                 if old_starter_file_dir and os.path.exists(old_starter_file_dir): 
                     # This will copy only the contents of old_starter_file_dir into new_starter_file_dir, not the directory itself.
@@ -782,7 +787,7 @@ class SchedNode():
         except FileNotFoundError:
             existing_content = ""   
 
-        with open(filename, "w") as file:
+        with open(filename, "a") as file:
             file.write(text_to_add)
             file.write(existing_content)
 
@@ -791,9 +796,9 @@ class SchedNode():
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         plan["dataset_dir"] = new_dataset_dir
         self.store.put(self.plan_namespace, plan_id, plan) 
-        description_file = os.path.join(plan["workspace_dir"], "description.md") 
-        self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}. \
-                                All dataset files are downloaded. Do not create synthetic data.\n")
+        # description_file = os.path.join(plan["workspace_dir"], "description.md") 
+        # self.write_at_beginning(description_file,f"\nDataset directory: {plan['dataset_dir']}. \
+        #                         All dataset files are downloaded. Do not create synthetic data.\n")
         
     def add_workspace_to_plan(self, plan_id: str):
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
@@ -819,6 +824,17 @@ class SchedNode():
     def get_concluder_terminate_message(self):
         return "Your task: Some results are incomplete, but you must conclude the experiment now (make sure to set 'is_conclude' to True; 'concluder_log_message' must also make it clear that we must conclude now). Analyze the results per the instructions and provide a detailed breakdown of what the user could do on their own (e.g. propose follow-up experiments)."
 
+    def get_data_analysis(self):
+        """Get the data analysis results from memory."""
+        memory_id = "data_analysis"
+        try:
+            analysis = self.metadata_store.get(self.sched_namespace, memory_id).dict()["value"]
+            self.curie_logger.info(f"Data analysis: {analysis}")
+            return analysis
+        except:
+            self.curie_logger.info(f"No data analysis found.")
+            return ''
+        
 class SchedInput(BaseModel):
     state: Annotated[dict, InjectedState] # For scheduler, we are guaranteed that the prev_agent will either be supervisor or worker. 
 
@@ -901,6 +917,8 @@ class SchedTool(BaseTool):
             return handlers["user_input_router"](state)
         if "user_input" == prev_agent:
             return handlers["user_input"](state)
+        if "data_analyzer" == prev_agent:
+            return handlers["data_analyzer"]()
         
         # Get the appropriate handler or raise an error if not found
         handler = handlers.get(prev_agent)
