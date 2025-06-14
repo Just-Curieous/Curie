@@ -20,6 +20,9 @@ def filter_logging(log_data):
     print(f"after filtering: {len(filtered_log_data)}")
     return filtered_log_data
 
+def safe_join(data_list, separator=''):
+    return separator.join(item or "" for item in data_list) 
+
 def summarize_logging_parallel_threads(log_file):
     """
     Parallelized version using ThreadPoolExecutor.
@@ -29,7 +32,7 @@ def summarize_logging_parallel_threads(log_file):
         log_data = file.readlines()
     
     filtered_log_data = filter_logging(log_data)
-    content = "".join(filtered_log_data)
+    content = safe_join(filtered_log_data)
     
     # Create chunks with their indices to maintain order
     chunks = []
@@ -72,7 +75,7 @@ def summarize_logging_parallel_threads(log_file):
                 summaries[chunk_idx] = f"Error processing chunk: {exc}"
     
     # Join all summaries, filtering out None values
-    summarize_content = "\n".join([s for s in summaries if s is not None])
+    summarize_content = safe_join([s for s in summaries if s is not None])
     print(f"👧 Completed summarizing log file: {log_file}")
     return summarize_content
 
@@ -85,20 +88,22 @@ def process_plan(plan_data):
         print(f"👦 Analyzing plan {i+1}/{len(plan_data)}.")
         
         # list out all .txt files in the workspace directory
-        plan_results = ["Here is the experimental plan", f"{plan}\n",
+        plan_results = [f"Here is the experimental plan: {plan}\n",
                 "Here are the actual results of the experiments: \n"]
 
-        workspace_dir = plan["workspace_dir"] 
-        # control_group = plan["control_group"]
-        # experimental_group = plan["experimental_group"]
+        workspace_dir = plan["workspace_dir"]  
         banned_keywords = ['Warning:', '\x00']
-        
+
         if workspace_dir != '' and os.path.exists(workspace_dir):
+            # TODO: need to retrive all the results more smartly later. 
             log_files = []
             workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
+            print(f"👦 Workspace dir list: {workspace_dir_list}")
             for workspace_dir in workspace_dir_list:
-                log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
-                log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
+                if os.path.exists(workspace_dir):
+                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
+                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
+                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.json')]
             
             print(f"👦 Found log files {log_files}")
             for file in log_files:
@@ -106,16 +111,11 @@ def process_plan(plan_data):
                     # remove duplicate lines in f.read() 
                     lines = f.readlines()
                     for line in lines: 
-                        # if 'Epoch ' in line:
-                        #     if '100%' not in line:
-                        #         continue
-                        #     else:
-                        #         plan_results.append(line)
                         
                         if not any(keyword in line for keyword in banned_keywords):
                             plan_results.append(''.join(c for c in line if c in string.printable))
-        # FIXME: need to retrive all the results more smartly later. remove redundant lines.
-        plan_results_str = "".join(plan_results)
+
+        plan_results_str = safe_join(plan_results)
         messages = [SystemMessage(content="Understand the experiment plan and \
                                     extract the complete raw results with the experiment setup. \
                                     No need to analyze the results. \
@@ -151,7 +151,7 @@ def extract_raw_results(log_file, plans):
                 raw_results[index] = raw_result
                  
     # summarize the results
-    all_results = "\n".join(results) 
+    all_results = safe_join(results) 
     num_tries = 0
     while num_tries < 3:
         try:
@@ -175,7 +175,7 @@ def extract_raw_results(log_file, plans):
         file.write("\n\033[1;36m╔══════════════════════╗\033[0m\n")  # Cyan bold
         file.write("\033[1;33m║     Raw Results      ║\033[0m\n")  # Yellow bold
         file.write("\033[1;36m╚══════════════════════╝\033[0m\n")  # Cyan bold
-        raw_results = "\n".join(raw_results)
+        raw_results = safe_join(raw_results '\n')
         file.write(raw_results)
 
     return all_results, fig_names, caption_list, results_file_name
@@ -287,7 +287,7 @@ def generate_report(config, plans):
     all_logging.append("Here are the summarized logs from the experiment: \n")
     all_logging.append(summarize_log_content)
 
-    all_logging = "\n".join(all_logging)
+    all_logging = safe_join(all_logging, '\n')
 
     with open("/curie/prompts/exp-reporter.txt", "r") as file:
         system_prompt = file.read() 
