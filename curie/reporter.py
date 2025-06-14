@@ -175,7 +175,7 @@ def extract_raw_results(log_file, plans):
         file.write("\n\033[1;36m╔══════════════════════╗\033[0m\n")  # Cyan bold
         file.write("\033[1;33m║     Raw Results      ║\033[0m\n")  # Yellow bold
         file.write("\033[1;36m╚══════════════════════╝\033[0m\n")  # Cyan bold
-        raw_results = safe_join(raw_results '\n')
+        raw_results = safe_join(raw_results, '\n')
         file.write(raw_results)
 
     return all_results, fig_names, caption_list, results_file_name
