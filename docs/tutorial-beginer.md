@@ -131,7 +131,8 @@ If you’d like to monitor progress partway through Curie’s experimentation—
 
 ```python
 curie.generate_report(api_keys=key_dict,
-                    input_dir_path='/abs/path/logs/research_20250605231023_iter1/')
+                    log_dir='/abs/path/logs/research_20250605231023_iter1/',
+                    workspace_dir='/abs/path/workspace/')
 ```
 
 5. **Customize the agent to your workload.**
