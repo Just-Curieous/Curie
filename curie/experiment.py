@@ -85,7 +85,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
         logger.info(f"Pulling Docker image {image_name}...")
         subprocess.run(["docker", "pull", image_name], check=True)
     
-    if 'dataset_dir' in task_config and task_config['dataset_dir'] is not None:
+    if 'dataset_dir' in task_config and task_config['dataset_dir'] != '':
         dataset_name = f"{task_config['job_name']}_dataset"
         dataset_dir = os.path.abspath(task_config['dataset_dir']).rstrip('/')
         mount_dataset = ["-v",  f"{dataset_dir}:/workspace/{dataset_name}:ro"]
@@ -97,6 +97,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
+        # "-v", f"{base_dir}/curie:/curie", # for local development
         "-v", f"{api_key_dir}:/curie/setup/",
         "-v", f"{base_dir}/logs:/logs",
         "-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
@@ -113,7 +114,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
         
     command += ["--name", container_name, image_name]
 
-    logger.info(f"Running command: {' '.join(command)}")
+    logger.info(f"💻 Running command: {' '.join(command)}")
     subprocess.run(command, check=True) 
     return container_name
 
@@ -124,13 +125,7 @@ def execute_experiment_in_container(container_name: str, config_file: str, logge
     organization_id = os.environ.get("ORGANIZATION") if os.environ.get("ORGANIZATION") else "014482"
     # Command to run inside container
     container_command = (
-        "source setup/env.sh && "
-        # "cd / && "
-        # "git clone https://github.com/Just-Curieous/Curie && "
-        # "cd Curie && "
-        # "cp -r curie/* /curie && "
-        # "rm -rf Curie && "
-        # "cd /curie && "
+        "source setup/env.sh && " 
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"

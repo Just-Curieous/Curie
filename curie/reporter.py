@@ -93,20 +93,20 @@ def process_plan(plan_data):
 
         workspace_dir = plan["workspace_dir"]  
         banned_keywords = ['Warning:', '\x00']
-        print(f"📁📁📁 Workspace dir: {workspace_dir}")
+
 
         if workspace_dir != '' and os.path.exists(workspace_dir):
             # TODO: need to retrive all the results more smartly later. 
             log_files = []
             workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
-            # print(f"📁 Workspace dir list: {workspace_dir_list}")
+
             for workspace_dir in workspace_dir_list:
                 if os.path.exists(workspace_dir):
                     log_files += [os.path.join(workspace_dir, file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
                     log_files += [os.path.join(workspace_dir, file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
                     log_files += [os.path.join(workspace_dir, file) for file in os.listdir(workspace_dir) if file.endswith('.json')]
             
-            print(f"📃 Found log files {log_files}")
+            print(f"📃📃📃 Found log files {log_files}")
             for file in log_files:
                 with open(file, 'r') as f:
                     # remove duplicate lines in f.read() 
