@@ -14,7 +14,7 @@ from curie.docker_setup import ensure_docker_installed
 # Constants
 DEFAULT_TASK_CONFIG = {
     "job_name": "default_research",
-    "docker_image": "curie-pip-image",
+    "docker_image": "amberljc/curie:latest",
     "dockerfile_name": "ExpDockerfile_pip", 
     "benchmark_specific_context": "none",
     "is_user_interrupt_allowed": False,
@@ -58,18 +58,18 @@ def docker_image_exists(image: str) -> bool:
         print(f"Error checking Docker image: {e}")
         return False
 
-def build_docker_image(image_name: str, dockerfile: str) -> None:
-    """Build Docker image if it doesn't exist."""
-    sudo_available = shutil.which("sudo") is not None
+# def build_docker_image(image_name: str, dockerfile: str) -> None:
+#     """Build Docker image if it doesn't exist."""
+#     sudo_available = shutil.which("sudo") is not None
 
-    command = [
-        f"{'sudo ' if sudo_available else ''}docker", "build",
-        "--no-cache", "--progress=plain",
-        "-t", image_name,
-        "-f", dockerfile,
-        "."
-    ]
-    subprocess.run(command, check=True)
+#     command = [
+#         f"{'sudo ' if sudo_available else ''}docker", "build",
+#         "--no-cache", "--progress=plain",
+#         "-t", image_name,
+#         "-f", dockerfile,
+#         "."
+#     ] 
+#     subprocess.run(command, check=True)
 
 def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, Any], logger: Any) -> str:
     """Run a Docker container for the experiment."""
@@ -82,8 +82,8 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
     if docker_image_exists(image_name):
         logger.info(f"Using existing Docker image: {image_name}")
     else:
-        logger.info(f"Start building Docker image {image_name} from {docker_filename} ... ")
-        build_docker_image(image_name, docker_filename)
+        logger.info(f"Pulling Docker image {image_name}...")
+        subprocess.run(["docker", "pull", image_name], check=True)
     
     if 'dataset_dir' in task_config and task_config['dataset_dir'] is not None:
         dataset_name = f"{task_config['job_name']}_dataset"
@@ -125,12 +125,12 @@ def execute_experiment_in_container(container_name: str, config_file: str, logge
     # Command to run inside container
     container_command = (
         "source setup/env.sh && "
-        "cd / && "
-        "git clone https://github.com/Just-Curieous/Curie && "
-        "cd Curie && "
-        "cp -r curie/* /curie && "
-        "rm -rf Curie && "
-        "cd /curie && "
+        # "cd / && "
+        # "git clone https://github.com/Just-Curieous/Curie && "
+        # "cd Curie && "
+        # "cp -r curie/* /curie && "
+        # "rm -rf Curie && "
+        # "cd /curie && "
         '''eval "$(micromamba shell hook --shell bash)" && '''
         "micromamba activate curie && "
         f"sed -i '474i \\                    \"organization\": \"{organization_id}\",' /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/lib/python3.12/site-packages/litellm/llms/azure/azure.py &&"
@@ -202,6 +202,7 @@ def create_config_file(question_file: str, unique_id: str, iteration: int, task_
 
     # Update task configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    question_file = os.path.join(base_dir, question_file)
     task_config.update({
         "unique_id": unique_id,
         "iteration": iteration,
@@ -229,7 +230,7 @@ def prepare_question_file(task_config: Dict[str, Any], question_text: Optional[s
             question_text = f.read()
     
     q_file = get_workspace_name(task_config)
-    question_file = f'workspace/{q_file}_{int(time.time())}.txt'
+    question_file = os.path.join('workspace', f'{q_file}_{int(time.time())}.txt')
     
     try:
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
@@ -313,7 +314,7 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
     # Set required overrides
     task_config.update({
         'max_global_steps': max_global_steps,
-        'docker_image': "curie-pip-image",
+        'docker_image': "amberljc/curie:latest",
         'dockerfile_name': "ExpDockerfile_pip"
     })
 
