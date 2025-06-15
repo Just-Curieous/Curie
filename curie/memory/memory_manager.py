@@ -33,7 +33,7 @@ class MemoryManager:
         # Example heuristic: keep first system prompt, last 20 msgs, &
         # a rolling summary every N msgs.
         system = [m for m in msgs if isinstance(m, SystemMessage)][:1]
-        tail   = msgs[-10:]
+        tail   = msgs[-20:]
         summary_slot = self._summarize(msgs)
         self._store[key] = system + summary_slot + tail
 
@@ -55,7 +55,7 @@ class CurieMemoryManager(MemoryManager):
         # We might orphan it. Let's just do a simple tail-based prune instead to be safe.
         if messages and isinstance(messages[-1], ToolMessage):
             system = [m for m in messages if isinstance(m, SystemMessage)][:1]
-            tail = messages[-15:]
+            tail = messages[-10:]
             if system and system[0] in tail:
                 return tail
             return system + tail
