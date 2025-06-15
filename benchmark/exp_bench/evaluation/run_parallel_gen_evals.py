@@ -54,7 +54,8 @@ def main(
         # "evaluation/setup/env-amazon-nova-pro.sh",
         # "evaluation/setup/env-openhands-o3-mini.sh",
         # "evaluation/setup/env-deepseek-r1.sh",
-        "evaluation/setup/env-claude-haiku-35.sh",
+        #"evaluation/setup/env-claude-haiku-35.sh",
+        "evaluation/setup/env_llm_config.sh",
         # "evaluation/setup/env-claude-sonnet-37.sh",
         # Add more LLM configs as needed
     ]

@@ -1,0 +1,104 @@
+# ===== Plotting Templates =====
+
+# === Global Styling Guidelines ===
+# • Use a serif font for all text (e.g. Times New Roman).
+# • Set a consistent figure size and DPI for publication quality.
+# • Apply bold fontweight to titles and axis labels.
+# • Enable a light grid beneath data (dashed or dotted, with moderate alpha).
+# • Use zorder and edgecolor to make bars/lines stand out.
+# • Rotate x-tick labels if needed for readability.
+# • Annotate data points or bars with value labels where appropriate.
+# • Always call tight_layout() before saving or displaying.
+
+# 0. Importing Libraries and Global Settings
+"""
+import matplotlib.pyplot as plt
+
+# Global rcParams
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif']  = ['Times New Roman', 'DejaVu Serif']
+plt.rcParams['figure.figsize'] = (7, 5)
+plt.rcParams['figure.dpi'] = 300
+
+cb_set2 = ['#66c2a5','#fc8d62','#8da0cb',
+           '#e78ac3','#a6d854','#ffd92f']
+
+tableau10 = ['#4e79a7','#f28e2b','#e15759',
+             '#76b7b2','#59a14f','#edc948',
+             '#b07aa1','#ff9da7','#9c755f','#bab0ac']
+
+viridis = plt.cm.viridis(np.linspace(0,1,6))
+
+carbon_blue = ['#edf5ff','#d0e2ff','#a6c8ff',
+               '#78a9ff','#4589ff','#0f62fe']
+
+# Choose your color palette
+# current_palette = cb_set2
+# current_palette = tableau10
+# current_palette = viridis
+# current_palette = carbon_blue
+
+plt.rcParams['axes.prop_cycle'] = plt.cycler(color=current_palette)
+"""
+
+# 1. Line Plot
+"""
+# Plot
+plt.plot(x, y, linewidth=2, zorder=3)
+
+# Styling
+plt.xlabel('X Label', fontweight='bold')
+plt.ylabel('Y Label', fontweight='bold')
+plt.grid(True, linestyle='--', alpha=0.6, zorder=0)
+plt.legend(['Series Name'], loc='best', frameon=False)
+plt.tight_layout()
+"""
+
+# 2. Single Bar Chart
+"""
+plt.bar(x, y, width=0.6, edgecolor='k', zorder=3)
+
+plt.xlabel('Categories', fontweight='bold')
+plt.ylabel('Values', fontweight='bold')
+plt.grid(axis='y', linestyle=':', alpha=0.6, zorder=0)
+plt.xticks(rotation=45)
+# Optionally add value labels:
+for xi, yi in zip(x, y):
+    plt.text(xi, yi + max(y)*0.01, f'{yi}', ha='center', va='bottom', fontweight='bold')
+plt.tight_layout()
+"""
+
+# 3. Grouped Bar Chart
+"""
+import numpy as np
+
+plt.figure(figsize=(10, 6), dpi=300)
+
+# Compute positions
+indices     = np.arange(len(groups))
+bar_width   = 0.35
+pos1        = indices - bar_width/2
+pos2        = indices + bar_width/2
+
+# Plot groups
+plt.bar(pos1, values1, width=bar_width, label='Group A', edgecolor='k', zorder=3)
+plt.bar(pos2, values2, width=bar_width, label='Group B', edgecolor='k', zorder=3)
+
+# Styling
+plt.xlabel('Groups', fontweight='bold')
+plt.ylabel('Measurements', fontweight='bold')
+plt.xticks(indices, groups, rotation=45)
+plt.legend(loc='best', frameon=False)
+plt.grid(axis='y', linestyle='--', alpha=0.5, zorder=0)
+
+# Annotate bars
+for xpos, yval in zip(np.concatenate([pos1, pos2]), np.concatenate([values1, values2])):
+    plt.text(xpos, yval + max(max(values1), max(values2))*0.01,
+             f'{yval}', ha='center', va='bottom', fontweight='bold')
+
+plt.tight_layout()
+"""
+
+# === Usage Tip ===
+# Insert the relevant template into your script, replace x, y, groups, values1, values2, etc.
+# Adjust figure size, DPI, colors, and labels to match your journal or presentation requirements.

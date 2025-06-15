@@ -13,6 +13,33 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, print_exception_and_traceback, _collect_inspectai_cost
 
 from helper.logger import init_logger
+
+def _query_curie(config, task_prompt, task_counter, github_workspace_path, curie_log_path):
+    curie_code_dir = "/exp_bench/curie"       
+
+    prompts_dir = "/workspace/curie_prompts"
+    os.makedirs(prompts_dir, exist_ok=True)
+    remote_prompt = f"{os.getpid()}_{config['paper_id']}_task_{task_counter}.txt"
+    prompt_path   = os.path.join(prompts_dir, remote_prompt)
+    with open(prompt_path, "w") as f:
+        f.write(task_prompt)
+
+    env_prefix = f"PYTHONPATH=$PYTHONPATH:{curie_code_dir} "
+
+    cmd = (
+        f"PYTHONPATH=$PYTHONPATH:/exp_bench/curie "      
+        f"python -u /exp_bench/curie/entry_point.py "
+        f"--base_dir {config['base_dir']} "
+        f"--prompt_path {prompt_path} "
+        f"--code_repo_path {github_workspace_path} "
+        f"--max_timeout_in_seconds {int(config['max_duration_per_task_in_hours']*3600)} "
+        f"2>&1 | tee -a {curie_log_path}"
+    )
+    
+    bench_logger.info('🤖️ Running command: ' + cmd)
+    subprocess.run(cmd, shell=True, check=True)
+
+
 def setup_gen_setup_logging(log_filename: str):
     global bench_logger 
     bench_logger = init_logger(log_filename)
@@ -39,8 +66,8 @@ def generate_patch(repo_path, config, task_counter):
     # Get absolute path of the patch file:
     patch_file = os.path.abspath(patch_file)
     original_dir = os.getcwd()
-    os.system(f"git config --global --add safe.directory {repo_path}")
-    os.chdir(repo_path) 
+    os.system(f'git diff -G"." -- . ":(exclude)setup_apis_exp/**" '
+    f'| grep -v \'^diff --git\' | grep -v \'^index\' > {patch_file}') 
     os.system("git config core.fileMode false")
 
     # Add new files in the main repo
@@ -209,7 +236,7 @@ def generate_task_prompt(task_data: dict, config: dict, task_counter: int):
 
     eval_gen_prompt_filename = config["eval_gen_prompt"]
 
-    if config["agent_name"] in ["openhands", "inspectai"]:
+    if config["agent_name"] in ["openhands", "inspectai","curie"]:
         output_path = get_agent_relative_output_path(config, task_counter)
         output_script_name = "/workspace/reproduce_exp_bench.sh"
         additional_info = "The code repo is available in /workspace. LLM related credentials (if needed) are available in /workspace/setup_apis_exp/"
@@ -303,6 +330,8 @@ def _query_agent(config, task_prompt, task_counter, github_workspace_path):
             call_oh_with_prompt(task_prompt, temp_prompt_path, config, github_workspace_path, agent_log_path, max_duration_per_task_in_seconds=config["max_duration_per_task_in_hours"] * 3600, iterations=30)
         elif config["agent_name"] == "inspectai":
             _query_inspectai(config, task_prompt, task_counter, github_workspace_path, agent_log_path)
+        elif config["agent_name"] == "curie":
+            _query_curie(config, task_prompt, task_counter, github_workspace_path, agent_log_path)
         else:
             raise ValueError(f"Agent {config['agent_name']} not supported")
 
@@ -343,7 +372,7 @@ def _query_agent(config, task_prompt, task_counter, github_workspace_path):
 
 def query_agent(config: dict, task_prompt: str, repo_path: str, task_counter: int):
     start_time = time.time()
-    if config["agent_name"] in ["openhands", "inspectai"]:
+    if config["agent_name"] in ["openhands", "inspectai","curie"]:
         _query_agent(config, task_prompt, task_counter, repo_path)
         # Calculate agent cost:
         agent_cost_path = get_agent_cost_relative_log_path(config, task_counter)
@@ -353,6 +382,8 @@ def query_agent(config: dict, task_prompt: str, repo_path: str, task_counter: in
             _collect_openhands_cost(f"task {task_counter}", filename_suffix, filename2=agent_cost_path, mode="eval_gen")
         elif config["agent_name"] == "inspectai":
             _collect_inspectai_cost(agent_log_filepath, agent_cost_path, mode="eval_gen")
+        # elif config["agent_name"] == "curie":
+        #     _collect_inspectai_cost(agent_log_filepath, agent_cost_path, mode="eval_gen")
     else:
         # Raise warning:
         print(f"Agent {config["agent_name"]} not supported")

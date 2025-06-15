@@ -11,7 +11,7 @@ def create_config(
     llm_config_filename: str,
     conference_params: Tuple[str, str],  # (tasks_folder, paper_details)
     agent_name: str,
-    base_config_path: str = "evaluation/configs/parallel_eval_judge_config_template.json",
+    base_config_path: str = "evaluation/configs/parallel_eval_gen_config_template_curie_agent.json",
     do_exec_check: bool = False,
     max_duration_per_task_in_hours: float = 1,
 ) -> Dict[str, Any]:
@@ -45,13 +45,14 @@ def main():
     do_exec_check = True
 
     # Example parameter lists - modify these according to your needs
-    max_durations = [0.25, 0.5, 1, 2, 4, 8]  # List of durations to evaluate
+    max_durations = [0.5]  # List of durations to evaluate , 0.25, 1, 2, 4, 8
 
     llm_configs = [
         # "evaluation/setup/env-amazon-nova-pro.sh",
         # "evaluation/setup/env-openhands-o3-mini.sh",
         # "evaluation/setup/env-deepseek-r1.sh",
-        "evaluation/setup/env-claude-haiku-35.sh",
+        #"evaluation/setup/env-claude-haiku-35.sh",
+        "evaluation/setup/env_llm_config.sh",
         # "evaluation/setup/env-claude-sonnet-37.sh",
         # Add more LLM configs as needed
     ]
@@ -66,6 +67,7 @@ def main():
     agent_names = [
         # "openhands",
         "inspectai",
+        #"curie",
         # Add more agent names as needed
     ]
     
