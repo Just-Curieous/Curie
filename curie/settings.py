@@ -23,3 +23,8 @@ AGENT_LIST.extend(list_control_worker_names()) # add control worker agents to th
 
 # Do not override the following variables:
 CONCLUDER_BUFFER_STEPS = 15
+
+# --------------------------------------------------------------------------------
+#                                 MEMORY SETTINGS
+# --------------------------------------------------------------------------------
+SUMMARIZER_MIN_MESSAGES = 15

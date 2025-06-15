@@ -5,6 +5,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from abc import ABC, abstractmethod
+from memory.memory_manager import CurieMemoryManager
 
 import os
 import json
@@ -15,6 +16,7 @@ import tool
 import settings
 from logger import init_logger
 from scheduler import SchedNode
+from utils import count_tokens
 
 class NodeConfig(BaseModel):
     name: str = Field(
@@ -61,6 +63,7 @@ class BaseNode(ABC):
         self.tools = tools
         self.sched_namespace = self.sched_node.sched_namespace
         self.plan_namespace = self.sched_node.plan_namespace
+        self.memory_manager = CurieMemoryManager()
     
     def get_name(self):
         return self.node_config.name
@@ -127,53 +130,23 @@ class BaseNode(ABC):
                 content=system_prompt,
             )
 
-            # can filter out early tool messages from state["messages"]
-            # need to retain the plan messages from state["messages"]
-            # remove the duplicated human messages from state["messages"]
+            # Use memory manager to get and prune messages
+            original_messages = state["messages"]
+            original_token_count = count_tokens(original_messages)
+
+            self.memory_manager.replace(self.plan_namespace, original_messages)
+            self.memory_manager.prune_and_summarize(self.plan_namespace)
+            messages = self.memory_manager.get(self.plan_namespace)
             
-            # TODO: check for high similarity between messages, repeatly summarize the messages
-            # If there are too many messages, prune older ToolMessages to avoid context overflow
-            messages = state["messages"]
-            # unique_msg_contents = {} # content -> index
-            if len(messages) > 50:
-                # Keep track of tool messages to potentially remove
-                tool_messages = []
-                to_remove = set()
-                
-                for i, msg in enumerate(messages):
-                    # prune the first half of the messages
-                    if i < min(20, len(messages) // 4):
-                        continue
-                    if len(messages) - i < min(30, len(messages) // 3):
-                        break
-
-                    # content = msg.content
-                    # # remove duplicate messages
-                    # if content not in unique_msg_contents:
-                    #     unique_msg_contents[content] = i
-                    # else:
-                    #     to_remove.add(unique_msg_contents[content])
-                    #     unique_msg_contents[content] = i
-
-                    if isinstance(msg, ToolMessage):
-                        tool_messages.append(i)
-                        tool_messages.append(i-1) # corresponding ai message
-
-                if tool_messages:
-                    to_remove.update(tool_messages)
-                    
-                filtered_messages = [msg for i, msg in enumerate(messages) if i not in to_remove] 
-            else:
-                filtered_messages = messages
-            
+            managed_token_count = count_tokens(messages)
 
             # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
             # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
-            self.curie_logger.debug(f"🏦 {self.node_config.node_icon} number of saved messages: {len(state['messages'])} --> {len(filtered_messages)}")
+            self.curie_logger.debug(f"🏦 {self.node_config.node_icon} number of saved messages: {len(original_messages)} --> {len(messages)}")
+            self.curie_logger.debug(f"🏦 {self.node_config.node_icon} token count: {original_token_count} --> {managed_token_count} (Reduction: {original_token_count - managed_token_count})")
 
-            state["messages"] = filtered_messages
-            messages = state["messages"]
-
+            state["messages"] = messages
+            
             # Ensure the system prompt is included at the start of the conversation
             if not any(isinstance(msg, SystemMessage) for msg in messages):
                 messages.insert(0, system_message)
@@ -200,6 +173,9 @@ class BaseNode(ABC):
                 self.curie_logger.info(f'Concise response: {concise_msg}')
 
             self.curie_logger.debug(f"Full response from {self.node_config.name.upper()} {self.node_config.node_icon}: {response}")
+            
+            # Update memory with the new response
+            self.memory_manager.push(self.plan_namespace, response)
 
             return {"messages": [response], "prev_agent": self.node_config.name}
             # need to change 'add_messages' if you want to permanently update the message state.
