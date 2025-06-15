@@ -85,7 +85,7 @@ def process_plan(plan_data):
     i, plan = plan_data
     
     try:
-        print(f"👦 Analyzing plan {i+1}/{len(plan_data)}.")
+        print(f"👦 Analyzing plan {i+1}.")
         
         # list out all .txt files in the workspace directory
         plan_results = [f"Here is the experimental plan: {plan}\n",
@@ -93,19 +93,20 @@ def process_plan(plan_data):
 
         workspace_dir = plan["workspace_dir"]  
         banned_keywords = ['Warning:', '\x00']
+        print(f"📁📁📁 Workspace dir: {workspace_dir}")
 
         if workspace_dir != '' and os.path.exists(workspace_dir):
             # TODO: need to retrive all the results more smartly later. 
             log_files = []
             workspace_dir_list = [plan["workspace_dir"], os.path.join(plan["workspace_dir"], "results")]
-            print(f"👦 Workspace dir list: {workspace_dir_list}")
+            # print(f"📁 Workspace dir list: {workspace_dir_list}")
             for workspace_dir in workspace_dir_list:
                 if os.path.exists(workspace_dir):
-                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
-                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
-                    log_files += [os.path.abspath(file) for file in os.listdir(workspace_dir) if file.endswith('.json')]
+                    log_files += [os.path.join(workspace_dir, file) for file in os.listdir(workspace_dir) if file.endswith('.log')]
+                    log_files += [os.path.join(workspace_dir, file) for file in os.listdir(workspace_dir) if file.endswith('.txt')]
+                    log_files += [os.path.join(workspace_dir, file) for file in os.listdir(workspace_dir) if file.endswith('.json')]
             
-            print(f"👦 Found log files {log_files}")
+            print(f"📃 Found log files {log_files}")
             for file in log_files:
                 with open(file, 'r') as f:
                     # remove duplicate lines in f.read() 
@@ -166,6 +167,7 @@ def extract_raw_results(log_file, plans):
             continue
 
     results_file_name = log_file.replace(".log", "_all_results.txt")
+    print(f'Output results to {results_file_name}')
     with open(f'{results_file_name}', 'w') as file:
         file.write("\033[1;36m╔══════════════════════════╗\033[0m\n")  # Cyan bold
         file.write("\033[1;33m║     Summarized Results   ║\033[0m\n")  # Yellow bold
