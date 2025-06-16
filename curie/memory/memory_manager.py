@@ -46,7 +46,7 @@ class MemoryManager:
 
 
 class CurieMemoryManager(MemoryManager):
-    def __init__(self, max_messages: int = 15, summarize_llm=None):
+    def __init__(self, max_messages: int = 30, summarize_llm=None):
         super().__init__(max_messages)
         self.summarize_llm = summarize_llm or create_model()
 
