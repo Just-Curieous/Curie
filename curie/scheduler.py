@@ -767,6 +767,8 @@ class SchedNode():
                                             Starter files from {old_starter_file_dir.replace('/all/', '')} copied successfully!")
                 else:
                     self.curie_logger.info(f"Created 📁 {new_starter_file_dir}. No starter files to copy.")
+                    os.makedirs(new_starter_file_dir, exist_ok=True)
+                    
                 # FIXME: install environment for each plan_id -- too slow.
                 env_path = self.init_coding_env(new_starter_file_dir)
                 self.curie_logger.info(f"Micromamba environment created at {env_path}")
