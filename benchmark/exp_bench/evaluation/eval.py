@@ -15,29 +15,48 @@ from helper.utils import load_system_prompt, load_prompt_from_file, _collect_ope
 from helper.logger import init_logger
 
 def _query_curie(config, task_prompt, task_counter, github_workspace_path, curie_log_path):
-    curie_code_dir = "/exp_bench/curie"       
-
-    prompts_dir = "/workspace/curie_prompts"
-    os.makedirs(prompts_dir, exist_ok=True)
-    remote_prompt = f"{os.getpid()}_{config['paper_id']}_task_{task_counter}.txt"
-    prompt_path   = os.path.join(prompts_dir, remote_prompt)
+    curie_agent_dir = "curie"
+    base_dir = config["base_dir"]
+    
+    prompt_filename = f"{os.getpid()}_{str(config['paper_id'])}_task_index_{task_counter}_iter_{config['iteration']}_duration_{config['max_duration_per_task_in_hours']}_agent_prompt.txt"
+    prompt_path = os.path.join(curie_agent_dir, prompt_filename)
     with open(prompt_path, "w") as f:
         f.write(task_prompt)
 
-    env_prefix = f"PYTHONPATH=$PYTHONPATH:{curie_code_dir} "
+    unique_env_filename = f"env_{os.getpid()}_{str(config['paper_id'])}_task_index_{task_counter}_iter_{config['iteration']}_duration_{config['max_duration_per_task_in_hours']}.sh"
+    model_env_path = os.path.join(curie_agent_dir, unique_env_filename)
 
-    cmd = (
-        f"PYTHONPATH=$PYTHONPATH:/exp_bench/curie "      
-        f"python -u /exp_bench/curie/entry_point.py "
-        f"--base_dir {config['base_dir']} "
+    env_contents = f"""
+export BASE_DIR={base_dir}
+export PROMPT_PATH={prompt_path}
+export CODE_REPO_PATH={github_workspace_path}
+export MAX_TIMEOUT_IN_SECONDS={int(config['max_duration_per_task_in_hours'] * 3600)}
+"""
+    with open(config["llm_config_filename"], 'r') as f:
+        env_contents += f.read()
+
+    with open(model_env_path, "w") as f:
+        f.write(env_contents)
+
+    command = (
+        f"python curie/entry_point.py "
+        f"--base_dir {base_dir} "
         f"--prompt_path {prompt_path} "
         f"--code_repo_path {github_workspace_path} "
-        f"--max_timeout_in_seconds {int(config['max_duration_per_task_in_hours']*3600)} "
+        f"--max_timeout_in_seconds {int(config['max_duration_per_task_in_hours'] * 3600)} "
         f"2>&1 | tee -a {curie_log_path}"
     )
-    
-    bench_logger.info('🤖️ Running command: ' + cmd)
-    subprocess.run(cmd, shell=True, check=True)
+
+    bench_logger.info("🤖️ Running command: " + command)
+
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+    bench_logger.info("🤖️ stdout:\n" + result.stdout)
+    if result.stderr:
+        bench_logger.error("stderr:\n" + result.stderr)
+    if result.returncode != 0:
+        bench_logger.error(f"Command failed with return code {result.returncode}")
+
 
 
 def setup_gen_setup_logging(log_filename: str):
