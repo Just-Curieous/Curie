@@ -119,7 +119,7 @@ def docker_image_exists(image):
 def build_docker_image(image_name, dockerfile):
     """Build Docker image if it doesn't exist."""
     command = [
-        "sudo", "docker", "build",
+        "docker", "build",
         "--no-cache", "--progress=plain",
         "-t", image_name,
         "-f", dockerfile,

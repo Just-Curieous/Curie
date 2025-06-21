@@ -3,6 +3,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import tiktoken
 import time
 import os
+import litellm  
+litellm.drop_params = True
 from openai import BadRequestError
 from typing import List, Dict, Any
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
