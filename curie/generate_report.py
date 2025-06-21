@@ -17,14 +17,15 @@ def write_api_keys_to_env(api_keys: Dict[str, str]) -> None:
             f.write(f'export {key}="{value}"\n')
 
 
-def generate_report(input_dir_path="/home/amberljc/dev/Curie/logs/istar_20250605231023_iter1/", 
-                    api_keys: Optional[Dict[str, str]] = None):
+def generate_report(log_dir: str,
+                    api_keys: Dict[str, str],
+                    workspace_dir: Optional[str] = None):
     """
     Run a Docker container with exp-agent-image, activate micromamba environment,
     and execute the report generation code.
     
     Args:
-        input_dir_path (str): Path to the input directory containing the JSON config file
+        log_dir (str): Path to the input directory containing the JSON config file
         api_keys (Optional[Dict[str, str]]): Dictionary of API keys to be written to env.sh
     
     Returns:
@@ -35,12 +36,12 @@ def generate_report(input_dir_path="/home/amberljc/dev/Curie/logs/istar_20250605
         write_api_keys_to_env(api_keys)
 
     # check if the input_dir_path is a valid directory
-    if not os.path.exists(input_dir_path):
-        raise ValueError(f"Input directory {input_dir_path} does not exist")
+    if not os.path.exists(log_dir):
+        raise ValueError(f"Input directory {log_dir} does not exist")
     # check if json file exists
-    json_files = [f for f in os.listdir(input_dir_path) if f.endswith('.json') and 'config' in f]
+    json_files = [f for f in os.listdir(log_dir) if f.endswith('.json') and 'config' in f]
     if len(json_files) == 0:
-        raise ValueError(f"No JSON file found in {input_dir_path}. Please input the correct log directory.")
+        raise ValueError(f"No JSON file found in {log_dir}. Please input the correct log directory.")
     config_file = json_files[0]
     config_file = os.path.basename(config_file)
 
@@ -76,20 +77,23 @@ report_filename = generate_report(config, plans)
         temp_file.write(python_code)
         temp_python_file = temp_file.name
     
-    path_name = os.path.abspath(input_dir_path).split('/')[-1]
-    print(f'Report will be saved to {input_dir_path}. Please wait 2~5 minutes for the report to be generated...')
+    path_name = os.path.abspath(log_dir).split('/')[-1]
+    print(f'✍️ Report will be saved to {log_dir}. Please wait 2~5 minutes for the report to be generated...')
     
     api_key_dir = os.path.join(os.getcwd(), '.setup')
-    
+    workspace_dir = workspace_dir if workspace_dir else os.path.join(os.getcwd(), 'workspace')
+    print(f'cwd: {os.getcwd()}')
     try:
         # Docker command to run the container
         docker_cmd = [
             'docker', 'run',
             '--rm',  # Remove container after execution
-            '-v', f'{input_dir_path}:/tmp_logs',  # Mount input directory
+            '-v', f'{log_dir}:/tmp_logs',  # Mount input directory
             '-v', f'{temp_python_file}:/curie/script.py',  # Mount the Python script
             '-v', f'{api_key_dir}:/curie/setup/',  # Mount API keys directory
-            'curie-pip-image',
+            # '-v', f'{os.path.join(os.getcwd(), 'curie')}:/curie/',
+            '-v', f'{workspace_dir}:/workspace/',
+            'amberljc/curie:latest',
             'bash', '-c',
             f'mkdir -p /logs/{path_name} && '
             f'touch /logs/{path_name}/{config_file.replace(".json", ".log")} && '
@@ -100,14 +104,12 @@ report_filename = generate_report(config, plans)
             f'mv /logs/{path_name}/* /tmp_logs'
         ]
         
-        # print(f"Running Docker command: {' '.join(docker_cmd)}")
-        
         # Execute the Docker command
         result = subprocess.run(
             docker_cmd,
             capture_output=True,
             text=True,
-            timeout=1000 
+            timeout=1200 
         )
         
         return result.returncode, result.stdout, result.stderr
@@ -127,16 +129,17 @@ report_filename = generate_report(config, plans)
 def main():
     """Command-line interface for generating reports."""
     parser = argparse.ArgumentParser(description='Generate experiment reports from Curie logs.')
-    parser.add_argument('--input-dir', '-i', 
-                      default="/home/amberljc/dev/Curie/logs/istar_20250605231023_iter1/",
+    parser.add_argument('--log-dir', '-i',  
                       help='Path to the corresponding log directory.')
     parser.add_argument('--api-keys', '-k',
                       type=json.loads,
                       help='JSON string containing API keys')
+    parser.add_argument('--workspace-dir', '-w',
+                      help='Path to the workspace directory.')
     
     args = parser.parse_args()
     
-    return_code, stdout, stderr = generate_report(args.input_dir, args.api_keys)
+    return_code, stdout, stderr = generate_report(args.log_dir, args.api_keys, args.workspace_dir)
     
     print(f"Return code: {return_code}")
     print(f"STDOUT:\n{stdout}")

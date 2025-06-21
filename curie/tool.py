@@ -1977,7 +1977,12 @@ class DataAgentTool(BaseTool):
             curie_logger.info(f"🔍 Dataset directory {in_docker_dataset_dir} exists.")
             
             prompt = self.config["question"]
-            workspace_dir = self.config["workspace_dir"] if 'workspace_dir' in self.config else f"/workspace/{self.config['job_name']}_data_analysis"
+            workspace_dir = f"/workspace/{self.config['job_name']}_data_analysis"
+            # mkdir if not exists
+            if not os.path.exists(workspace_dir):
+                os.makedirs(workspace_dir)
+                curie_logger.info(f"🔍 Data analysis workspace directory: {workspace_dir}")
+
             
             utils.setup_openhands_credential() 
             prompt_file_key = "data_prompt_filename"
