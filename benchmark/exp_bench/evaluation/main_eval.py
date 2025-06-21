@@ -112,7 +112,7 @@ def run_docker_container(unique_id, iteration, task_config):
     bench_logger.info(f"Building Docker image for iteration {iteration}...")
     
     image_name = task_config["docker_image"]
-    docker_filename = task_config["base_dir"] + task_config["dockerfile_name"]
+    docker_filename = os.path.join(task_config["base_dir"], task_config["dockerfile_name"])
 
     context_dir = "." # of task_config["agent_name"] != "inspectai" else "./inspect_agent"
 
@@ -122,7 +122,7 @@ def run_docker_container(unique_id, iteration, task_config):
         # FIXME: enable auto rebuild if the docker image or its dependencies are changed
         bench_logger.info(f"Start building Docker image {image_name} ... ") 
         command = [
-            "sudo", "docker", "build",
+            "docker", "build",
             "--no-cache", "--progress=plain",
             "-t",  image_name,
             "-f",  docker_filename,
