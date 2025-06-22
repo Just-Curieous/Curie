@@ -63,8 +63,13 @@ class BaseNode(ABC):
         self.tools = tools
         self.sched_namespace = self.sched_node.sched_namespace
         self.plan_namespace = self.sched_node.plan_namespace
-        self.memory_manager = CurieMemoryManager()
-    
+        
+        self.memory_manager_enabled = getattr(settings, "ENABLE_MEMORY_MANAGER", True)
+        if self.memory_manager_enabled:
+            self.memory_manager = CurieMemoryManager(max_messages=20)
+        else:
+            self.memory_manager = None
+
     def get_name(self):
         return self.node_config.name
 
@@ -130,20 +135,22 @@ class BaseNode(ABC):
                 content=system_prompt,
             )
 
-            # Use memory manager to get and prune messages
-            original_messages = state["messages"]
-            original_token_count = count_tokens(original_messages)
+            messages = state["messages"]
+            if self.memory_manager_enabled:
+                # Use memory manager to get and prune messages
+                original_messages = state["messages"]
+                original_token_count = count_tokens(original_messages)
 
-            self.memory_manager.replace(self.plan_namespace, original_messages)
-            self.memory_manager.prune_and_summarize(self.plan_namespace)
-            messages = self.memory_manager.get(self.plan_namespace)
-            
-            managed_token_count = count_tokens(messages)
+                self.memory_manager.replace(self.plan_namespace, original_messages)
+                self.memory_manager.prune_and_summarize(self.plan_namespace)
+                messages = self.memory_manager.get(self.plan_namespace)
+                
+                managed_token_count = count_tokens(messages)
 
-            # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
-            # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
-            self.curie_logger.debug(f"🏦 {self.node_config.node_icon} number of saved messages: {len(original_messages)} --> {len(messages)}")
-            self.curie_logger.debug(f"🏦 {self.node_config.node_icon} token count: {original_token_count} --> {managed_token_count} (Reduction: {original_token_count - managed_token_count})")
+                # self.curie_logger.info(f"❕❕❕ before filtering (len: {len(state['messages'])} messages): {state['messages']}")
+                # self.curie_logger.info(f"❕❕❕ after filtering (len: {len(filtered_messages)} messages ): {filtered_messages}")
+                self.curie_logger.info(f"🏦 {self.node_config.node_icon} number of saved messages: {len(original_messages)} --> {len(messages)}")
+                self.curie_logger.info(f"🏦 {self.node_config.node_icon} token count: {original_token_count} --> {managed_token_count} (Reduction: {original_token_count - managed_token_count})")
 
             state["messages"] = messages
             
@@ -175,7 +182,8 @@ class BaseNode(ABC):
             self.curie_logger.debug(f"Full response from {self.node_config.name.upper()} {self.node_config.node_icon}: {response}")
             
             # Update memory with the new response
-            self.memory_manager.push(self.plan_namespace, response)
+            if self.memory_manager_enabled:
+                self.memory_manager.push(self.plan_namespace, response)
 
             return {"messages": [response], "prev_agent": self.node_config.name}
             # need to change 'add_messages' if you want to permanently update the message state.

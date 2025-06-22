@@ -27,4 +27,6 @@ CONCLUDER_BUFFER_STEPS = 15
 # --------------------------------------------------------------------------------
 #                                 MEMORY SETTINGS
 # --------------------------------------------------------------------------------
+ENABLE_MEMORY_MANAGER = False
 SUMMARIZER_MIN_MESSAGES = 15
+LOG_PRUNED_MESSAGES = False
