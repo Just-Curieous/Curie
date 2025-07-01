@@ -2038,17 +2038,21 @@ class DataAgentTool(BaseTool):
         _collect_openhands_cost()
         
         # try to read the data_analysis.txt file
-        with open(f"{workspace_dir}/data_analysis.txt", "r") as file:
-            data_analysis = file.read()
-            curie_logger.info(f"💻 Data Analysis: {data_analysis}")
+        if os.path.exists(f"{workspace_dir}/data_analysis.txt"):
+            with open(f"{workspace_dir}/data_analysis.txt", "r") as file:
+                data_analysis = file.read()
+                curie_logger.info(f"💻 Data Analysis: {data_analysis}")
 
-        with open(f"/{exp_log_dir}/data_analysis_results.txt", "w") as file:
-            file.write(data_analysis)
+            with open(f"/{exp_log_dir}/data_analysis_results.txt", "w") as file:
+                file.write(data_analysis)
         
-        return f"""
-                The Data Processing Agent has completed. Here is the data analysis:
-                {data_analysis}
-                """.strip()
+            return f"""
+                    The Data Processing Agent has completed. Here is the data analysis:
+                    {data_analysis}
+                    """.strip()
+        else:
+            curie_logger.error(f"Data analysis file {workspace_dir}/data_analysis.txt failed to be created. Continue to next step.")
+            return f"No data analysis."
     
     def extract_dataagent_output_snippet(self, filename: str) -> str:
         """

@@ -58,19 +58,6 @@ def docker_image_exists(image: str) -> bool:
         print(f"Error checking Docker image: {e}")
         return False
 
-# def build_docker_image(image_name: str, dockerfile: str) -> None:
-#     """Build Docker image if it doesn't exist."""
-#     sudo_available = shutil.which("sudo") is not None
-
-#     command = [
-#         f"{'sudo ' if sudo_available else ''}docker", "build",
-#         "--no-cache", "--progress=plain",
-#         "-t", image_name,
-#         "-f", dockerfile,
-#         "."
-#     ] 
-#     subprocess.run(command, check=True)
-
 def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, Any], logger: Any) -> str:
     """Run a Docker container for the experiment."""
     rand_uuid = uuid.uuid4()
@@ -197,7 +184,7 @@ def create_config_file(question_file: str, unique_id: str, iteration: int, task_
 
     # Update task configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    question_file = os.path.join(base_dir, question_file)
+
     task_config.update({
         "unique_id": unique_id,
         "iteration": iteration,
@@ -210,6 +197,7 @@ def create_config_file(question_file: str, unique_id: str, iteration: int, task_
     
     with open(config_filename, "w") as f:
         json.dump(task_config, f, indent=4)
+
     send_question_telemetry(question_file)
     send_question_telemetry(config_filename)
     
@@ -231,6 +219,8 @@ def prepare_question_file(task_config: Dict[str, Any], question_text: Optional[s
         os.makedirs(os.path.dirname(question_file), exist_ok=True)
         with open(question_file, 'w') as f:
             f.write(question_text)
+        question_file = os.path.abspath(question_file)
+        print(f"❓ Question file created: {question_file}")
         task_config["question"] = question_file
         return question_file, task_config
     except Exception as e:
