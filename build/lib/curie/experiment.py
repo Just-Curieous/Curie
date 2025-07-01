@@ -87,7 +87,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
         "-v", f"{base_dir}/curie:/curie", # for local development
         "-v", f"{api_key_dir}:/curie/setup/",
         "-v", f"{base_dir}/logs:/logs",
-        #"-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
+        "-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
         "-v", f"/:/all:ro",
         "--network=host",
         "-d",
@@ -185,11 +185,14 @@ def create_config_file(question_file: str, unique_id: str, iteration: int, task_
     # Update task configuration
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+    #add question file
+    question_in_container = os.path.join("/workspace", os.path.basename(question_file))
+
     task_config.update({
         "unique_id": unique_id,
         "iteration": iteration,
         "log_filename": log_filename,
-        "exp_plan_filename": question_file,
+        "exp_plan_filename": question_in_container,#question_file,
         "base_dir": base_dir,
     })
         
@@ -242,9 +245,8 @@ def execute_curie(question_filename: str, unique_id: str, iteration: int, task_c
     finally:
         # Clean up Docker container after each iteration
         if container_name:
-            pass
-            #cleanup_docker_container(container_name)
-        #run_prune_commands()
+            cleanup_docker_container(container_name)
+        run_prune_commands()
     
     send_question_telemetry(task_config['log_filename'])
 

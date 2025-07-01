@@ -115,6 +115,8 @@ def execute_experiment_in_container(container_name: str, config_file: str, logge
     container_command = (
         "source setup/env.sh && "
         "cd / && "
+        "echo '✅ ENV VARS:' && "
+        " env | grep -E 'API_KEY|AZURE' && "
         "git clone https://github.com/Just-Curieous/Curie && "
         "cd Curie && "
         "cp -r curie/* /curie && "

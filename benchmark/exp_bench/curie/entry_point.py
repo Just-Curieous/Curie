@@ -31,7 +31,7 @@ def main():
         "workspace_base": "/workspace",
         "dockerfile_name": "Dockerfile",
         "docker_image": "exp-agent-image",
-        "model_name": "gpt-4o-mini"
+        "model_name": "o3-mini"
     }
     tmp_cfg = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
     json.dump(cfg, tmp_cfg)
