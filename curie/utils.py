@@ -349,7 +349,7 @@ def load_system_prompt(prompt_path, **kwargs):
         template = f.read()
     return template.format(**kwargs)
 
-def count_tokens(messages):
+def count_tokens(messages: List[Dict[str, Any]]) -> int:
     """Counts the number of tokens in a list of messages."""
     if not messages:
         return 0
@@ -360,7 +360,7 @@ def count_tokens(messages):
     num_tokens = 0
     for message in messages:
         # every message follows <|start|>{role/name}\n{content}<|end|>\n
-        num_tokens += 4  
+        num_tokens += PROTOCOL_OVERHEAD_TOKENS  
         for key, value in message.dict().items():
             if value and key != "type":
                 num_tokens += len(encoding.encode(str(value)))
