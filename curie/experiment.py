@@ -30,7 +30,7 @@ DEFAULT_TASK_CONFIG = {
     "workspace_name": "", # to be filled up by the user
     "dataset_dir": "", # to be filled up by the user
     "env_requirements": "", # to be filled up by the user
-    "code_instructions": "", # to be filled up by the user
+    "code_instructions": "", # to be filled up automatically by curie
 }
 
 DEFAULT_JOB_NAME = "default_research"
@@ -270,9 +270,10 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
                         Please specify the codebase directory by `codebase_dir=''`.")
     elif codebase_dir and not (code_instructions or os.path.exists(os.path.join(codebase_dir, "description.md"))):
         print("[Recommendation] Please specify the code instructions by `code_instructions=''`.")
-    elif code_instructions:
-        with open(os.path.join(codebase_dir, "description.md"), "w") as f:
-            f.write(f"Code Instructions:\n{code_instructions}")
+    
+    # elif code_instructions:
+    #    with open(os.path.join(codebase_dir, "description.md"), "w") as f:
+    #        f.write(f"Code Instructions:\n{code_instructions}")
 
     if codebase_dir and os.path.exists(os.path.join(codebase_dir, "requirements.txt")):
         env_requirements = os.path.join(codebase_dir, "requirements.txt")
@@ -316,6 +317,29 @@ def validate_input(question_file: Optional[str],
         raise ValueError(f"Question file {question_file} does not exist.") 
     return 
 
+def split_code_instruction_from_question(codebase_dir: str, question: Optional[str]) -> Optional[str]:
+    if question is None or "<CODE INSTRUCTION>" not in question:
+        return None
+
+    try:
+        parts = question.split("<CODE INSTRUCTION>", 1)
+        question_only = parts[0].strip()
+        code_instruction = parts[1].strip()
+
+        os.makedirs(codebase_dir, exist_ok=True)
+        desc_path = os.path.join(codebase_dir, "description.md")
+        with open(desc_path, "w") as f:
+            f.write(code_instruction)
+
+        globals()["__curie_cleaned_question__"] = question_only 
+        question = question_only
+
+        return desc_path
+    except Exception as e:
+        print(f"[ERROR] Failed to process code instruction: {e}")
+        return None
+
+
 def experiment(api_keys: Optional[Dict[str, str]] = None, 
                dataset_dir: Optional[str] = None, 
                codebase_dir: Optional[str] = None, 
@@ -331,6 +355,7 @@ def experiment(api_keys: Optional[Dict[str, str]] = None,
         write_api_keys_to_env(api_keys)
     ensure_docker_installed()
     # Load and update configuration
+    code_instructions = split_code_instruction_from_question(codebase_dir, question)
     task_config = prepare_config(task_config, codebase_dir, dataset_dir, code_instructions, max_global_steps, env_requirements)
     
     print(f"Curie is running with the following configuration: {task_config}")
