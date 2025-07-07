@@ -46,6 +46,9 @@ sudo gunzip /data/*.gz
 
 ## ❓ Get your question ready
 
+Generally question input are divided into two parts, the first part is your question, which includes the idea, task, intro of the network structure and other general requirements. The seconde part will be the code instructions, which includes the description of the function for important files, output format and other detailed 
+code implementation details. The two part will be seperated by the signal word `<CODE INSTRUCTION>`, please refer to the sample question regarding how to seperate question and code instruction properly in `sample_question.txt` under folder `docs`.
+
 You should provide **as many details as** you can to your question. 
 ```python
 import curie

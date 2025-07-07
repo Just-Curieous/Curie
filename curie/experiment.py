@@ -269,7 +269,7 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
         raise ValueError("Code instructions file is provided but codebase directory is not provided. \
                         Please specify the codebase directory by `codebase_dir=''`.")
     elif codebase_dir and not (code_instructions or os.path.exists(os.path.join(codebase_dir, "description.md"))):
-        print("[Recommendation] Please specify the code instructions by `code_instructions=''`.")
+        print("[Recommendation] Please also specify the code instructions in the question.")
     
     # elif code_instructions:
     #    with open(os.path.join(codebase_dir, "description.md"), "w") as f:
