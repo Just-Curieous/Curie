@@ -84,7 +84,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
-        "-v", f"{base_dir}/curie:/curie", # for local development 
+        # "-v", f"{base_dir}/curie:/curie", # for local development 
         "-v", f"{api_key_dir}:/curie/setup/",
         "-v", f"{base_dir}/logs:/logs",
         "-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
