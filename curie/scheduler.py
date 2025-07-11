@@ -97,7 +97,9 @@ class SchedNode():
             # Stores clarification data
             "clarification_data",
             # Stores the enriched question after clarification
-            "enriched_question",  
+            "enriched_question",
+            # Stores final summary data
+            "final_check_data",
         ]
 
 
@@ -151,7 +153,12 @@ class SchedNode():
                 } # next_agent: worker_1
             else:
                 new_dict = response.copy()
-                new_dict["messages"] = [HumanMessage(content=str(response["messages"]), name="scheduler")]
+                # Handle cases where response doesn't have a "messages" key
+                if "messages" in response:
+                    new_dict["messages"] = [HumanMessage(content=str(response["messages"]), name="scheduler")]
+                else:
+                    # For transitions that only specify next_agent, use a generic message
+                    new_dict["messages"] = [HumanMessage(content=f"Transitioning to {response.get('next_agent', 'unknown')}", name="scheduler")]
                 new_dict["prev_agent"] = "sched_node"
                 new_dict["remaining_steps_display"] = state["remaining_steps"]
                 # print(new_dict)
@@ -937,6 +944,10 @@ class SchedTool(BaseTool):
             return handlers["clarification"](state)
         if "clarification_router" == prev_agent:
             return handlers["clarification_router"](state)
+        if "final_summary" == prev_agent:
+            return handlers["final_summary"](state)
+        if "final_assistant" == prev_agent:
+            return handlers["final_assistant"](state)
         if "data_analyzer" == prev_agent:
             return handlers["data_analyzer"]()
         

@@ -66,6 +66,11 @@ class TokenCounter:
         Returns:
             int: The number of tokens in the text string.
         """
+        # Safety check for non-string inputs
+        if not isinstance(string, str):
+            curie_logger.error(f"Error in token counting: expected string but got {type(string)}: {string}")
+            return 0
+        
         # if "claude" in self.model_name:
         #     vo = anthropic.Client()
         #     num_tokens = vo.count_tokens(string)
