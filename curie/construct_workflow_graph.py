@@ -33,6 +33,7 @@ from nodes.patcher import Patcher
 from nodes.analyzer import Analyzer
 from nodes.concluder import Concluder
 from nodes.user_input import UserInput, UserInputRouter
+from nodes.clarification import Clarification, ClarificationRouter
 from reporter import generate_report
 
 if len(sys.argv) < 2:
@@ -93,6 +94,7 @@ class AllNodes():
             self.data_analyzer = None
         self.validators = self.create_validators() # list of validators
         self.user_input_nodes = self.create_user_input_nodes()
+        self.clarification_nodes = self.create_clarification_nodes()
 
         # Create sched tool, passing in other agent's transition funcs as a dict
         config_dict["transition_funcs"] = {
@@ -106,6 +108,8 @@ class AllNodes():
             "concluder": lambda state: self.validators[3].transition_handle_func(state),
             "user_input": lambda state: self.user_input_nodes[0].transition_handle_func(state),
             "user_input_router": lambda state: self.user_input_nodes[1].transition_handle_func(state),
+            "clarification": lambda state: self.clarification_nodes[0].transition_handle_func(state),
+            "clarification_router": lambda state: self.clarification_nodes[1].transition_handle_func(state),
         }
         self.sched_tool = sched.SchedTool(self.store, self.metadata_store, config_dict)
 
@@ -118,6 +122,7 @@ class AllNodes():
         self.control_worker_subgraph = self.control_workers[0].create_subgraph()
         self.validator_subgraphs = [validator.create_subgraph() for validator in self.validators]
         self.user_input_subgraphs = [user_input.create_subgraph() for user_input in self.user_input_nodes]
+        self.clarification_subgraphs = [clarification.create_subgraph() for clarification in self.clarification_nodes]
     
     def get_sched_subgraph(self):
         return self.sched_subgraph
@@ -137,6 +142,9 @@ class AllNodes():
     def get_user_input_subgraphs(self):
         return self.user_input_subgraphs
 
+    def get_clarification_subgraphs(self):
+        return self.clarification_subgraphs
+
     def get_architect_node(self):
         return self.architect
     
@@ -154,6 +162,9 @@ class AllNodes():
 
     def get_user_input_nodes(self):
         return self.user_input_nodes
+
+    def get_clarification_nodes(self):
+        return self.clarification_nodes
 
     def create_sched_node(self, config_dict):
         return sched.SchedNode(self.store, self.metadata_store, self.State, config_dict)
@@ -349,6 +360,34 @@ class AllNodes():
 
         return [user_input, user_input_router]
 
+    def create_clarification_nodes(self):
+        # Create Clarification node
+        node_config = NodeConfig(
+            name="clarification",
+            node_icon="🔍",
+            log_filename=self.log_filename,
+            config_filename=self.config_filename,
+            system_prompt_key="clarification_system_prompt_filename",
+            default_system_prompt_filename="prompts/clarification.txt"
+        )
+        tools = []
+        clarification = Clarification(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        # Create Clarification Router node
+        node_config = NodeConfig(
+            name="clarification_router",
+            node_icon="🔀",
+            log_filename=self.log_filename,
+            config_filename=self.config_filename,
+            system_prompt_key="clarification_router_system_prompt_filename",
+            default_system_prompt_filename="prompts/clarification-router.txt"
+        )
+        # No tools needed for clarification router
+        tools = []
+        clarification_router = ClarificationRouter(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
+
+        return [clarification, clarification_router]
+
     def get_all_nodes(self):
         return self.nodes
 
@@ -433,14 +472,35 @@ def build_graph(State, config_filename):
     for index, node in enumerate(user_input_nodes):
         graph_builder.add_node(node.get_name(), user_input_subgraphs[index])
     
+    # Add clarification nodes
+    clarification_subgraphs = all_nodes.get_clarification_subgraphs()
+    clarification_nodes = all_nodes.get_clarification_nodes()
+    for index, node in enumerate(clarification_nodes):
+        graph_builder.add_node(node.get_name(), clarification_subgraphs[index])
+    
     # Add graph edges
-    if config.get('dataset_dir') != '':
-        graph_builder.add_edge(START, data_analyzer_name)
-        graph_builder.add_edge(data_analyzer_name, "scheduler")
-        graph_builder.add_edge( supervisor_name, "scheduler")
+    # Check if clarification is enabled
+    if config.get('enable_clarification', False):
+        # Start with clarification
+        graph_builder.add_edge(START, "clarification")
+        graph_builder.add_edge("clarification", "scheduler")
+        graph_builder.add_edge("clarification_router", "scheduler")
+        
+        # Then proceed to data analyzer or supervisor based on dataset
+        if config.get('dataset_dir') != '':
+            graph_builder.add_edge(data_analyzer_name, "scheduler")
+            graph_builder.add_edge(supervisor_name, "scheduler")
+        else:
+            graph_builder.add_edge(supervisor_name, "scheduler")
     else:
-        graph_builder.add_edge(START, supervisor_name)
-        graph_builder.add_edge(supervisor_name, "scheduler")
+        # Original workflow without clarification
+        if config.get('dataset_dir') != '':
+            graph_builder.add_edge(START, data_analyzer_name)
+            graph_builder.add_edge(data_analyzer_name, "scheduler")
+            graph_builder.add_edge(supervisor_name, "scheduler")
+        else:
+            graph_builder.add_edge(START, supervisor_name)
+            graph_builder.add_edge(supervisor_name, "scheduler")
 
     graph_builder.add_edge(experimental_worker_name, "scheduler")
     graph_builder.add_edge(control_worker_name, "scheduler")
@@ -449,6 +509,9 @@ def build_graph(State, config_filename):
         graph_builder.add_edge(node.get_name(), "scheduler")
 
     for _, node in enumerate(user_input_nodes):
+        graph_builder.add_edge(node.get_name(), "scheduler")
+    
+    for _, node in enumerate(clarification_nodes):
         graph_builder.add_edge(node.get_name(), "scheduler")
     
     graph_builder.add_conditional_edges("scheduler", lambda state: state["next_agent"])
