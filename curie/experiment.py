@@ -317,27 +317,51 @@ def validate_input(question_file: Optional[str],
         raise ValueError(f"Question file {question_file} does not exist.") 
     return 
 
-def split_code_instruction_from_question(codebase_dir: str, question: Optional[str]) -> Optional[str]:
-    if question is None or "<CODE INSTRUCTION>" not in question:
-        return None
+def split_code_instruction_from_question(codebase_dir: str, question: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """
+    Splits <CODE_INSTRUCTION>...</CODE_INSTRUCTION> section into description.md and returns:
+    - path to description.md (or None if no tag found)
+    - cleaned question without the code instruction part
+    """
+
+    if question is None:
+        return None, question
 
     try:
-        parts = question.split("<CODE INSTRUCTION>", 1)
-        question_only = parts[0].strip()
-        code_instruction = parts[1].strip()
+        start_tag = "<CODE_INSTRUCTION>"
+        end_tag = "</CODE_INSTRUCTION>"
 
+        start_idx = question.find(start_tag)
+        end_idx = question.find(end_tag)
+
+        if start_idx == -1 and end_idx == -1:
+            return None, question  # no code block at all
+        elif start_idx == -1:
+            raise ValueError("Missing opening tag <CODE_INSTRUCTION>.")
+        elif end_idx == -1:
+            raise ValueError("Missing closing tag </CODE_INSTRUCTION>.")
+        elif end_idx < start_idx:
+            raise ValueError("Closing tag </CODE_INSTRUCTION> appears before opening tag <CODE_INSTRUCTION>.")
+
+        # Extract code instruction
+        code_instruction = question[start_idx + len(start_tag):end_idx].strip()
+
+        # Remove code instruction block from question
+        question_before = question[:start_idx].strip()
+        question_after = question[end_idx + len(end_tag):].strip()
+        question_only = f"{question_before}\n\n{question_after}".strip()
+
+        # Write description.md
         os.makedirs(codebase_dir, exist_ok=True)
         desc_path = os.path.join(codebase_dir, "description.md")
         with open(desc_path, "w") as f:
             f.write(code_instruction)
 
-        globals()["__curie_cleaned_question__"] = question_only 
-        question = question_only
+        return desc_path, question_only
 
-        return desc_path
     except Exception as e:
         print(f"[ERROR] Failed to process code instruction: {e}")
-        return None
+        return None, question
 
 
 def experiment(api_keys: Optional[Dict[str, str]] = None, 
@@ -355,7 +379,8 @@ def experiment(api_keys: Optional[Dict[str, str]] = None,
         write_api_keys_to_env(api_keys)
     ensure_docker_installed()
     # Load and update configuration
-    code_instructions = split_code_instruction_from_question(codebase_dir, question)
+    code_instructions, question_only = split_code_instruction_from_question(codebase_dir, question)
+    question = question_only
     task_config = prepare_config(task_config, codebase_dir, dataset_dir, code_instructions, max_global_steps, env_requirements)
     
     print(f"Curie is running with the following configuration: {task_config}")
