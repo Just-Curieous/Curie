@@ -17,7 +17,7 @@ def list_control_worker_names() -> list:
         worker_names.append(f"control_worker_{i}")
     return worker_names
 
-AGENT_LIST = ["supervisor", "clarification", "clarification_router", "final_summary", "final_assistant"]
+AGENT_LIST = ["supervisor", "clarification", "clarification_router"]
 AGENT_LIST.extend(list_worker_names()) # add worker agents to the agent list
 AGENT_LIST.extend(list_control_worker_names()) # add control worker agents to the agent list
 

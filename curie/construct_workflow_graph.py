@@ -34,7 +34,6 @@ from nodes.analyzer import Analyzer
 from nodes.concluder import Concluder
 from nodes.user_input import UserInput, UserInputRouter
 from nodes.clarification import Clarification, ClarificationRouter
-from nodes.final_summary import FinalSummary, FinalAssistant
 from reporter import generate_report
 
 if len(sys.argv) < 2:
@@ -96,7 +95,6 @@ class AllNodes():
         self.validators = self.create_validators() # list of validators
         self.user_input_nodes = self.create_user_input_nodes()
         self.clarification_nodes = self.create_clarification_nodes()
-        self.final_summary_nodes = self.create_final_summary_nodes()
 
         # Create sched tool, passing in other agent's transition funcs as a dict
         config_dict["transition_funcs"] = {
@@ -112,8 +110,6 @@ class AllNodes():
             "user_input_router": lambda state: self.user_input_nodes[1].transition_handle_func(state),
             "clarification": lambda state: self.clarification_nodes[0].transition_handle_func(state),
             "clarification_router": lambda state: self.clarification_nodes[1].transition_handle_func(state),
-            "final_summary": lambda state: self.final_summary_nodes[0].transition_handle_func(state),
-            "final_assistant": lambda state: self.final_summary_nodes[1].transition_handle_func(state),
         }
         self.sched_tool = sched.SchedTool(self.store, self.metadata_store, config_dict)
 
@@ -127,7 +123,6 @@ class AllNodes():
         self.validator_subgraphs = [validator.create_subgraph() for validator in self.validators]
         self.user_input_subgraphs = [user_input.create_subgraph() for user_input in self.user_input_nodes]
         self.clarification_subgraphs = [clarification.create_subgraph() for clarification in self.clarification_nodes]
-        self.final_summary_subgraphs = [final_summary.create_subgraph() for final_summary in self.final_summary_nodes]
     
     def get_sched_subgraph(self):
         return self.sched_subgraph
@@ -150,9 +145,6 @@ class AllNodes():
     def get_clarification_subgraphs(self):
         return self.clarification_subgraphs
 
-    def get_final_summary_subgraphs(self):
-        return self.final_summary_subgraphs
-
     def get_architect_node(self):
         return self.architect
     
@@ -173,9 +165,6 @@ class AllNodes():
 
     def get_clarification_nodes(self):
         return self.clarification_nodes
-
-    def get_final_summary_nodes(self):
-        return self.final_summary_nodes
 
     def create_sched_node(self, config_dict):
         return sched.SchedNode(self.store, self.metadata_store, self.State, config_dict)
@@ -399,33 +388,6 @@ class AllNodes():
 
         return [clarification, clarification_router]
 
-    def create_final_summary_nodes(self):
-        # Create Final Summary node
-        node_config = NodeConfig(
-            name="final_summary",
-            node_icon="📋",
-            log_filename=self.log_filename,
-            config_filename=self.config_filename,
-            system_prompt_key="final_summary_system_prompt_filename",
-            default_system_prompt_filename="prompts/final-summary.txt"
-        )
-        tools = []
-        final_summary = FinalSummary(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
-
-        # Create Final Assistant node
-        node_config = NodeConfig(
-            name="final_assistant",
-            node_icon="🤖",
-            log_filename=self.log_filename,
-            config_filename=self.config_filename,
-            system_prompt_key="final_assistant_system_prompt_filename",
-            default_system_prompt_filename="prompts/final-assistant.txt"
-        )
-        tools = []
-        final_assistant = FinalAssistant(self.sched_node, node_config, self.State, self.store, self.metadata_store, self.memory, tools)
-
-        return [final_summary, final_assistant]
-
     def get_all_nodes(self):
         return self.nodes
 
@@ -516,12 +478,6 @@ def build_graph(State, config_filename):
     for index, node in enumerate(clarification_nodes):
         graph_builder.add_node(node.get_name(), clarification_subgraphs[index])
     
-    # Add final summary nodes
-    final_summary_subgraphs = all_nodes.get_final_summary_subgraphs()
-    final_summary_nodes = all_nodes.get_final_summary_nodes()
-    for index, node in enumerate(final_summary_nodes):
-        graph_builder.add_node(node.get_name(), final_summary_subgraphs[index])
-    
     # Add graph edges
     # Check if clarification is enabled
     if config.get('enable_clarification', False):
@@ -556,9 +512,6 @@ def build_graph(State, config_filename):
         graph_builder.add_edge(node.get_name(), "scheduler")
     
     for _, node in enumerate(clarification_nodes):
-        graph_builder.add_edge(node.get_name(), "scheduler")
-    
-    for _, node in enumerate(final_summary_nodes):
         graph_builder.add_edge(node.get_name(), "scheduler")
     
     graph_builder.add_conditional_edges("scheduler", lambda state: state["next_agent"])

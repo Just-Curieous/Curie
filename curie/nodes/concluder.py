@@ -22,32 +22,7 @@ class Concluder(BaseNode):
             "next_agent": "concluder"
         }
 
-        def get_termination_target():
-            # Check if final summary is enabled
-            import json
-            try:
-                with open(self.node_config.config_filename, 'r') as file:
-                    config = json.load(file)
-                if config.get('enable_final_summary', False):
-                    # Check if final summary has already been completed in this session
-                    try:
-                        final_summary_completed = self.metadata_store.get(self.sched_namespace, "final_summary_completed").dict()["value"]
-                        if final_summary_completed:
-                            # Final summary has been completed in this session
-                            self.curie_logger.info("Final summary already completed in this session. Terminating experiment.")
-                            return {"next_agent": END}
-                    except:
-                        # final_summary_completed flag doesn't exist, so final_summary hasn't been run yet
-                        pass
-                    
-                    self.curie_logger.info("Routing to final_summary for experiment summary.")
-                    return {"next_agent": "final_summary"}
-            except:
-                pass
-            # Default to END if final summary is not enabled
-            return {"next_agent": END}
-        
-        self.node_config.transition_objs["terminate"] = lambda: get_termination_target()
+        self.node_config.transition_objs["terminate"] = lambda: {"next_agent": END}
 
         intro_message = '''
 All partitions for all experimental plans have completed, with results produced and analyzed. A next-step suggestion is appended. Conclude the experiment if you believe it provides a rigorous and comprehensive answer. Report all neccessary experiment results/numbers for the conclusion. Otherwise, if results are insufficient or further questions remain, create a new experimental plan.\n

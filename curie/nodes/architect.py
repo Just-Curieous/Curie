@@ -40,17 +40,7 @@ class Architect(BaseNode):
             "next_agent": "user_input"
         }
 
-        def get_termination_target():
-            # Check if final summary is enabled
-            try:
-                if self.config.get('enable_final_summary', False):
-                    return {"next_agent": "final_summary"}
-            except:
-                pass
-            # Default to END if final summary is not enabled
-            return {"next_agent": END}
-        
-        self.node_config.transition_objs["is_terminate"] = lambda: get_termination_target()
+        self.node_config.transition_objs["is_terminate"] = lambda: {"next_agent": END}
 
         self.node_config.transition_objs["control_has_work"] = lambda assignment_messages: {
             "control_work": {"messages": assignment_messages, "next_agent": "control_worker"},
