@@ -219,7 +219,12 @@ def git_clone_repo(github_url, base_dir="workspace", suffix=""):
     # Clone without specifying destination (git will create repo_name folder)
     subprocess.run(["git", "clone", github_url, expected_path], check=True)
 
-    subprocess.run(["chmod", "777", "-R", expected_path], check=True)
+    try:
+        subprocess.run(["chmod", "777", "-R", expected_path], check=True)
+    except Exception as e:
+        print(f"WARNING: chmod failed for {expected_path}: {e}")
+        if 'bench_logger' in globals():
+            bench_logger.warning(f"WARNING: chmod failed for {expected_path}: {e}")
 
     # Make sure submodules are cloned too:
     ret_val = convert_ssh_submodules_to_https(expected_path)
@@ -483,6 +488,7 @@ def mask_repo(task_data: dict, repo_path: str):
         dir_path, just_filename = os.path.split(actual_source)
         # Check if source is a valid file:
         if os.path.isfile(actual_source): 
+            print(f"[mask] 删除文件: {actual_source}")
             print("Masking file:", actual_source)
             bench_logger.info("Masking file: " + actual_source)
             # Remove file from git tracking:

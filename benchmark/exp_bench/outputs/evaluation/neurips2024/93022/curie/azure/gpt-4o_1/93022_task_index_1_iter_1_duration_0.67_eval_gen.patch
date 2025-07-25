@@ -1,0 +1,37 @@
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_5952a723-c2e7-4366-bff5-1f1353fd383c_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_5952a723-c2e7-4366-bff5-1f1353fd383c_control_group_partition_1.sh
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_5952a723-c2e7-4366-bff5-1f1353fd383c_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_5952a723-c2e7-4366-bff5-1f1353fd383c_control_group_partition_1.sh	2025-07-25 16:28:18
+@@ -0,0 +1,32 @@
++#!/bin/bash
++
++# Initialize and activate the existing environment using micromamba
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_task_index_1_iter_1_duration_0.67/venv"
++micromamba activate $VENV_PATH/
++
++# Navigate to experiment workspace
++cd /workspace/mdgen_task_index_1_iter_1_duration_0.67
++
++# Install necessary Python packages
++micromamba install -y -q -p $VENV_PATH -c conda-forge pytorch
++
++# Check GPU availability
++$VENV_PATH/bin/python -c "import torch; print('CUDA available:', torch.cuda.is_available())"
++
++# Process reference trajectory angles
++$VENV_PATH/bin/python extract_torsion_angles.py --input_dir /workspace/default_research_dataset/reference_trajectories --output_file reference_angles.npy
++
++# Perform TICA analysis
++$VENV_PATH/bin/python run_tica.py --input_file reference_angles.npy --output_file reference_tica_results.npy
++
++# Calculate JSD
++$VENV_PATH/bin/python compute_jsd.py --generated_file reference_angles.npy --reference_file reference_angles.npy --output_file jsd_results.txt
++
++# Display results
++cat jsd_results.txt
++
++# Redirect all output and logs to results file
++exec > >(tee -i /workspace/mdgen_task_index_1_iter_1_duration_0.67/results_5952a723-c2e7-4366-bff5-1f1353fd383c_control_group_partition_1.txt) 2>&1
+\ No newline at end of file

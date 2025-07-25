@@ -1,153 +1,279 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import subprocess
+import time
+import re
+import argparse
+import shutil
+import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Tuple, Union
-import tempfile
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from helper.logger import init_logger
+bench_logger = init_logger("logs/curie_bench.log")
+import evaluation.eval as eval_mod
+eval_mod.bench_logger = bench_logger
+from evaluation.eval import git_clone_repo, mask_repo, generate_task_prompt
 
-def create_config(
-    llm_config_filename: str,
-    conference_params: Tuple[str, str],  # (tasks_folder, paper_details)
-    agent_name: str,
-    base_config_path: str = "evaluation/configs/parallel_eval_gen_config_template_curie_agent.json",
-    max_papers: int = 50,
-    parallelization_factor: int = 8,
-    max_duration_per_task_in_hours: float = 0.5,
-) -> Dict[str, Any]:
-    """Create a configuration dictionary based on the template and provided parameters."""
-    with open(base_config_path, 'r') as f:
-        config = json.load(f)
-    
-    tasks_folder, paper_details = conference_params
-    
-    # Update the specified parameters
-    config["llm_config_filename"] = llm_config_filename
-    config["input_conference_tasks_folder"] = tasks_folder
-    config["input_conference_paper_details_filename"] = paper_details
-    config["agent_name"] = agent_name
-    config["max_papers"] = max_papers
-    config["parallelization_factor"] = parallelization_factor
-    config["max_duration_per_task_in_hours"] = max_duration_per_task_in_hours
-    config["mode"] = "generate"
-    
-    return config
+def parse_llm_model_name(llm_config_path):
+    model_keys = ["MODEL_NAME", "LLM_MODEL", "MODEL"]
+    with open(llm_config_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("export "):
+                parts = line[len("export "):].split("=", 1)
+                if len(parts) == 2:
+                    key = parts[0].strip()
+                    value = parts[1].strip().strip('"').strip("'")
+                    if key in model_keys:
+                        return value
+    return "unknown-llm"
 
-def run_evaluation(config: Dict[str, Any], temp_dir: str) -> None:
-    """Run a single evaluation with the given configuration."""
-    # Create a temporary config file
-    config_path = os.path.join(temp_dir, "temp_config.json")
-    with open(config_path, 'w') as f:
-        json.dump(config, f, indent=4)
-    
-    # Run the parallel evaluation script
-    cmd = ["python", "evaluation/parallel_eval.py", f"--task_config={config_path}"]
-    subprocess.run(cmd, check=True)
-
-def main(
-    max_duration_per_task_in_hours: float = 0.5,
-    specific_tasks: List[Tuple[str, str, int, float]] = None  # List of (conference_name, paper_id, task_index, duration_hours)
-):
-    # Example parameter lists - modify these according to your needs
-    llm_configs = [
-        # "evaluation/setup/env-amazon-nova-pro.sh",
-        # "evaluation/setup/env-openhands-o3-mini.sh",
-        # "evaluation/setup/env-deepseek-r1.sh",
-        #"evaluation/setup/env-claude-haiku-35.sh",
-        "evaluation/setup/env_llm_config.sh",
-        # "evaluation/setup/env-claude-sonnet-37.sh",
-        # Add more LLM configs as needed
-    ]
-    
-    # Each tuple contains (tasks_folder, paper_details)
-    all_conference_params = [
-        ("outputs/logs/iclr2024/", "logs/iclr2024/iclr2024_withcode_popularity_stars-100.json"),
-        ("outputs/logs/neurips2024/", "logs/neurips2024/neurips_abs_2024_withcode_popularity_stars-100.json"),
-        # Add more conference parameter pairs as needed
-    ]
-    
-    agent_names = [
-        # "openhands",
-        #"inspectai",
-        "curie",
-        # Add more agent names as needed
-    ]
-
-    # Filter conference_params based on specific_tasks if provided
-    if specific_tasks:
-        # Extract unique conference names from specific tasks
-        target_conferences = set(task[0] for task in specific_tasks)
-        # Filter conference_params to only include those in target_conferences
-        conference_params = [
-            params for params in all_conference_params 
-            if any(conf in params[0] for conf in target_conferences)
-        ]
+def get_standard_output_name(md_filename, paper_id):
+    m = re.match(r".*?_task_index_(\d+)_iter_(\d+)_duration_([0-9.]+)", md_filename)
+    if m:
+        task_index, iter_num, duration = m.groups()
+        return f"{paper_id}_task_index_{task_index}_iter_{iter_num}_duration_{duration}_eval_gen.json", \
+               f"{paper_id}_task_index_{task_index}_iter_{iter_num}_duration_{duration}_eval_gen.patch"
     else:
-        conference_params = all_conference_params
+        base = os.path.splitext(md_filename)[0]
+        return base + ".json", base + ".patch"
 
-    # Create a temporary directory for config files
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Run evaluations for each combination of parameters
-        for llm_config in llm_configs:
-            for conf_params in conference_params:
-                for agent_name in agent_names:
-                    print(f"\nRunning evaluation with:")
-                    print(f"LLM Config: {llm_config}")
-                    print(f"Tasks Folder: {conf_params[0]}")
-                    print(f"Paper Details: {conf_params[1]}")
-                    print(f"Agent Name: {agent_name}")
-                    if not specific_tasks:
-                        print(f"Max Duration per Task: {max_duration_per_task_in_hours} hours")
-                    else:
-                        print("Using per-task durations from specific tasks")
-                        print(f"Specific Tasks: {specific_tasks}")
-                    
-                    config = create_config(
-                        llm_config_filename=llm_config,
-                        conference_params=conf_params,
-                        agent_name=agent_name,
-                        max_duration_per_task_in_hours=max_duration_per_task_in_hours
-                    )
-
-                    # Add specific tasks to config if provided
-                    if specific_tasks:
-                        # Filter tasks for current conference
-                        conf_name = next(conf for conf in target_conferences if conf in conf_params[0])
-                        current_conf_tasks = [
-                            (paper_id, task_idx, duration) 
-                            for (task_conf, paper_id, task_idx, duration) in specific_tasks 
-                            if task_conf == conf_name
-                        ]
-                        if current_conf_tasks:
-                            config["specific_tasks"] = current_conf_tasks
-                    
-                    try:
-                        run_evaluation(config, temp_dir)
-                    except subprocess.CalledProcessError as e:
-                        print(f"Error running evaluation: {e}")
-                        continue
+def get_github_url_from_paper_details(paper_id, paper_details_path):
+    """与run_parallel_gen_evals.py一致，查找github_url，优先code_url，其次reproduce_eval.code"""
+    with open(paper_details_path, "r") as f:
+        for line in f:
+            record = json.loads(line)
+            if str(record.get("id")) == str(paper_id):
+                if record.get("code_url"):
+                    return record["code_url"]
+                elif record.get("reproduce_eval") and record["reproduce_eval"].get("code"):
+                    return record["reproduce_eval"]["code"]
+    return None
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Run parallel generation evaluations")
-    parser.add_argument("--max_duration", type=float, default=0.5,
-                      help="Maximum duration per task in hours (used when specific_tasks is not provided)")
-    parser.add_argument("--specific_tasks", type=str, default=None,
-                      help="JSON string of list of tuples: [(conference_name, paper_id, task_index, duration_hours), ...]")
-    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--max_duration", type=float, default=0.5)
+    parser.add_argument("--specific_tasks", type=str, default=None)
+    parser.add_argument("--llm_config", type=str, default="evaluation/setup/env_llm_config.sh")
     args = parser.parse_args()
-    
-    # Parse specific tasks if provided
     specific_tasks = None
+    paper_id = None
     if args.specific_tasks:
         specific_tasks = json.loads(args.specific_tasks)
-        # Validate format
-        if not all(len(task) == 4 for task in specific_tasks):
-            raise ValueError("Each task must be a tuple of (conference_name, paper_id, task_index, duration_hours)")
-    
-    main(
-        max_duration_per_task_in_hours=args.max_duration,
-        specific_tasks=specific_tasks
-    )
+        if specific_tasks and len(specific_tasks[0]) > 1:
+            paper_id = int(specific_tasks[0][1])
+    if paper_id is None:
+        raise ValueError("未能从--specific_tasks参数中解析出paper_id")
+    llm_config_path = args.llm_config
+    duration = args.max_duration
+
+    # 1. clone+mask+copy repo
+    paper_details_path = "logs/neurips2024/neurips_abs_2024_withcode_popularity_stars-100.json"
+    def get_github_url_from_paper_details(paper_id, paper_details_path):
+        with open(paper_details_path, "r") as f:
+            for line in f:
+                record = json.loads(line)
+                if str(record.get("id")) == str(paper_id):
+                    if record.get("code_url"):
+                        return record["code_url"]
+                    elif record.get("reproduce_eval") and record["reproduce_eval"].get("code"):
+                        return record["reproduce_eval"]["code"]
+        return None
+    github_url = get_github_url_from_paper_details(paper_id, paper_details_path)
+    if not github_url:
+        raise ValueError(f"未找到paper_id={paper_id}的github_url")
+    task_index = "1"
+    # 提取repo名
+    repo_name = os.path.splitext(os.path.basename(github_url))[0]
+    suffix = f"_task_index_{task_index}_iter_1_duration_{duration}"
+    workspace_dir_name = f"{repo_name}{suffix}"
+    # 读取 task_data
+    paper_tasks_filename = f"outputs/logs/neurips2024/{paper_id}/{paper_id}_complete_final.json"
+    with open(paper_tasks_filename, "r") as f:
+        paper_tasks_complete = json.load(f)
+    task_data = paper_tasks_complete["questions"][0]
+    # clone repo
+    from evaluation.eval import git_clone_repo, mask_repo, generate_task_prompt
+    repo_path = git_clone_repo(github_url, base_dir="workspace", suffix=suffix)
+    import time
+    time.sleep(1)
+    if not os.path.exists(repo_path):
+        print(f"[错误] clone目录未找到: {repo_path}")
+        import sys
+        sys.exit(1)
+    else:
+        print(f"[检查通过] clone目录存在: {repo_path}")
+    # mask
+    is_mask_fail, failed_masked_sources = mask_repo(task_data, repo_path)
+    if is_mask_fail:
+        print(f"Masking failed for files: {failed_masked_sources}")
+    # copy到Curie根目录workspace
+    dst = os.path.join("workspace", os.path.basename(repo_path))
+    abs_dst = os.path.abspath(os.path.join("../../workspace", os.path.basename(repo_path)))
+    os.makedirs(os.path.dirname(abs_dst), exist_ok=True)
+    if os.path.exists(abs_dst):
+        shutil.rmtree(abs_dst)
+    shutil.copytree(repo_path, abs_dst)
+    print(f"已复制mask好的repo到: {abs_dst}")
+
+    # 2. 解析llm_config生成key_dict
+    def parse_llm_keys(llm_config_path):
+        key_map = {
+            'MODEL': None,
+            'AZURE_API_VERSION': None,
+            'AZURE_API_KEY': None,
+            'ORGANIZATION': None,
+            'AZURE_API_BASE': None
+        }
+        with open(llm_config_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('export '):
+                    parts = line[len('export '):].split('=', 1)
+                    if len(parts) == 2:
+                        k, v = parts[0].strip(), parts[1].strip().strip('"').strip("'")
+                        if k in key_map:
+                            key_map[k] = v
+        return key_map
+    key_dict = parse_llm_keys(llm_config_path)
+    llm_name = key_dict.get('MODEL', 'llm')
+
+    # 3. 用generate_task_prompt生成真实prompt（agent_name=local）
+    config = {
+        "agent_name": "local",
+        "eval_gen_prompt": "evaluation/prompts/eval_gen_prompt.txt",
+        "paper_id": paper_id,
+        "iteration": 1,
+        "max_duration_per_task_in_hours": float(duration),
+        "output_folder": "outputs/tmp_prompt_gen"
+    }
+    task_prompt = generate_task_prompt(task_data, config, 1)
+
+    # 4. 生成run_task.py到Curie根目录，所有字段用真实内容
+    run_task_content = f'''import curie
+key_dict = {json.dumps(key_dict, ensure_ascii=False, indent=4)}
+
+result = curie.experiment(
+    api_keys=key_dict,
+    question={json.dumps(task_prompt, ensure_ascii=False)},
+    task_config={{
+        "job_name": "default_research",
+        "docker_image": "amberljc/curie:latest",
+        "dockerfile_name": "ExpDockerfile_pip",
+        "benchmark_specific_context": "none",
+        "is_user_interrupt_allowed": False,
+        "timeout": 600,
+        "max_coding_iterations": 10,
+        "max_global_steps": 10,
+        "supervisor_system_prompt_filename": "prompts/simple/simple-supervisor.txt",
+        "control_worker_system_prompt_filename": "prompts/simple/simple-control-worker.txt",
+        "patcher_system_prompt_filename": "prompts/simple/simple-patcher.txt",
+        "llm_verifier_system_prompt_filename": "prompts/simple/simple-llm-verifier.txt",
+        "coding_prompt_filename": "prompts/simple/simple-coding.txt",
+        "worker_system_prompt_filename": "prompts/simple/simple-worker.txt",
+        "workspace_name": "{dst}",
+        "dataset_dir": "",
+        "env_requirements": "",
+        "code_instructions": ""
+    }}
+)
+'''
+    run_task_path = os.path.abspath(os.path.join("../../run_task.py"))
+    with open(run_task_path, "w") as f:
+        f.write(run_task_content)
+    print(f"已生成 run_task.py 到: {run_task_path}")
+
+    # ====== 生成 run_task.py 并运行 ======
+    run_task_py_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+    run_task_py_path = os.path.join(run_task_py_dir, 'run_task.py')
+    if os.path.exists(run_task_py_path):
+        print("开始执行 run_task.py ...")
+        process = subprocess.Popen(['python', 'run_task.py'], cwd=run_task_py_dir)
+        while True:
+            ret = process.poll()
+            if ret is not None:
+                print(f"run_task.py 执行完毕，返回码: {ret}")
+                break
+            else:
+                print("run_task.py 仍在运行，等待中...")
+                time.sleep(30)
+    else:
+        print(f"未找到 run_task.py: {run_task_py_path}")
+
+    # ====== 日志后处理：提取md生成output和patch ======
+    import re
+    import glob
+    log_prefix = os.path.basename(repo_path)
+    LOGS_GLOB = os.path.abspath(os.path.join("../../logs", f"{log_prefix}*_iter1"))
+    log_dirs = glob.glob(LOGS_GLOB)
+    OUTPUT_BASE = os.path.join("outputs/evaluation/neurips2024", str(paper_id), "curie", llm_name)
+    os.makedirs(OUTPUT_BASE, exist_ok=True)
+    # 直接用主流程参数生成标准名
+    iter_num = 1  # 目前只支持单iter
+    def get_standard_output_name():
+        return f"{paper_id}_task_index_{task_index}_iter_{iter_num}_duration_{duration}_eval_gen.json", \
+               f"{paper_id}_task_index_{task_index}_iter_{iter_num}_duration_{duration}_eval_gen.patch"
+    for log_dir in log_dirs:
+        for file in os.listdir(log_dir):
+            if not file.endswith(".md"):
+                continue
+            file_path = os.path.join(log_dir, file)
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            # 提取 Experiment Design
+            design_match = re.search(r"### Experiment Design\s*([\s\S]*?)(^### |^## |\Z)", content, re.MULTILINE)
+            design = design_match.group(1).strip() if design_match else ""
+            # 提取 Conclusion and Future Work
+            conclusion_match = re.search(r"## Conclusion and Future Work\s*([\s\S]*?)(^## |\Z)", content, re.MULTILINE)
+            conclusion = conclusion_match.group(1).strip() if conclusion_match else ""
+            json_name, patch_name = get_standard_output_name()
+            out_json_path = os.path.join(OUTPUT_BASE, json_name)
+            out_patch_path = os.path.join(OUTPUT_BASE, patch_name)
+            if design and conclusion:
+                result = {"design": design, "conclusion": conclusion}
+                os.makedirs(os.path.dirname(out_json_path), exist_ok=True)
+                with open(out_json_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, indent=2, ensure_ascii=False)
+                print(f"已提取: {file_path} -> {out_json_path}")
+                # 生成patch（mask后repo和agent后repo）
+                try:
+                    with open(out_patch_path, "w", encoding="utf-8") as pf:
+                        result = subprocess.run(["diff", "-urN", repo_path, abs_dst], stdout=pf, check=False)
+                    if result.returncode == 2:
+                        print(f"生成patch失败: diff 命令错误，返回码2")
+                    elif result.returncode == 1:
+                        print(f"已生成patch: {out_patch_path}（有差异）")
+                    else:
+                        print(f"已生成patch: {out_patch_path}（无差异）")
+                except Exception as e:
+                    print(f"生成patch失败: {e}")
+                # 生成config文件
+                config_name = json_name.replace(".json", "_config_config.json")
+                out_config_path = os.path.join(OUTPUT_BASE, config_name)
+                config_to_save = {
+                    "input_conference_tasks_folder": f"outputs/logs/neurips2024",
+                    "input_conference_paper_details_filename": "logs/neurips2024/neurips_abs_2024_withcode_popularity_stars-100.json",
+                    "iterations": 1,
+                    "parallelization_factor": 6,
+                    "llm_config_filename": llm_config_path,
+                    "agent_name": "curie",
+                    "max_duration_per_task_in_hours": float(duration),
+                    "max_papers": 3,
+                    "mode": "generate",
+                    "docker_image": "exp-bench-image",
+                    "dockerfile_name": "ExpDockerfile_default",
+                    "eval_gen_prompt": "evaluation/prompts/eval_gen_prompt.txt",
+                    "eval_judge_prompt": "evaluation/prompts/eval_judge_prompt.txt",
+                    "paper_id": paper_id,
+                    "task_index": int(task_index),
+                    "iteration": 1,
+                    "llm_name": llm_name,
+                    "output_folder": OUTPUT_BASE
+                }
+                with open(out_config_path, "w", encoding="utf-8") as f:
+                    json.dump(config_to_save, f, indent=2, ensure_ascii=False)
+                print(f"已生成config: {out_config_path}")
+            else:
+                print(f"未找到design/conclusion: {file_path}")

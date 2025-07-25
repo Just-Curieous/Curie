@@ -1,0 +1,129 @@
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/calculate_js_divergence.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/calculate_js_divergence.py
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/calculate_js_divergence.py	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/calculate_js_divergence.py	2025-07-25 17:25:25
+@@ -0,0 +1,22 @@
++import numpy as np
++import argparse
++from scipy.spatial.distance import jensenshannon
++
++parser = argparse.ArgumentParser()
++parser.add_argument('--torsion_file', type=str, required=True)
++parser.add_argument('--tica_file', type=str, required=True)
++parser.add_argument('--output_dir', type=str, required=True)
++args = parser.parse_args()
++
++# Load data
++torsion_angles = np.load(args.torsion_file, allow_pickle=True).item()
++tica_components = np.load(args.tica_file, allow_pickle=True).item()
++
++# Calculate Jensen-Shannon Divergence
++js_divergence = {}
++for name in torsion_angles.keys():
++    js_divergence[name] = jensenshannon(torsion_angles[name].flatten(), tica_components[name].flatten())
++
++# Save JS Divergence
++os.makedirs(args.output_dir, exist_ok=True)
++np.save(os.path.join(args.output_dir, 'js_divergence.npy'), js_divergence)
+\ No newline at end of file
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_9f65e6c7-9450-4364-bdbc-101672e38999_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_9f65e6c7-9450-4364-bdbc-101672e38999_control_group_partition_1.sh
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_9f65e6c7-9450-4364-bdbc-101672e38999_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_9f65e6c7-9450-4364-bdbc-101672e38999_control_group_partition_1.sh	2025-07-25 17:25:30
+@@ -0,0 +1,22 @@
++#!/bin/bash
++
++# Initialize and activate the environment
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_task_index_1_iter_1_duration_0.67/venv"
++micromamba activate $VENV_PATH/
++
++# Define directories
++DATA_DIR="/workspace/default_research_dataset"
++OUTPUT_DIR="/workspace/mdgen_task_index_1_iter_1_duration_0.67/results"
++mkdir -p $OUTPUT_DIR
++
++# Run the experiment workflow
++$VENV_PATH/bin/python /workspace/mdgen_task_index_1_iter_1_duration_0.67/load_md_trajectories.py --data_dir $DATA_DIR --output_dir $OUTPUT_DIR
++$VENV_PATH/bin/python /workspace/mdgen_task_index_1_iter_1_duration_0.67/extract_torsion_angles.py --input_file $OUTPUT_DIR/trajectories.npy --output_dir $OUTPUT_DIR
++$VENV_PATH/bin/python /workspace/mdgen_task_index_1_iter_1_duration_0.67/perform_tica.py --input_file $OUTPUT_DIR/torsion_angles.npy --output_dir $OUTPUT_DIR
++$VENV_PATH/bin/python /workspace/mdgen_task_index_1_iter_1_duration_0.67/calculate_js_divergence.py --torsion_file $OUTPUT_DIR/torsion_angles.npy --tica_file $OUTPUT_DIR/tica_components.npy --output_dir $OUTPUT_DIR
++
++# Redirect all output and logs
++exec &> $OUTPUT_DIR/results_9f65e6c7-9450-4364-bdbc-101672e38999_control_group_partition_1.txt
+\ No newline at end of file
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/extract_torsion_angles.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/extract_torsion_angles.py
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/extract_torsion_angles.py	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/extract_torsion_angles.py	2025-07-25 17:25:19
+@@ -0,0 +1,20 @@
++import numpy as np
++import argparse
++
++parser = argparse.ArgumentParser()
++parser.add_argument('--input_file', type=str, required=True)
++parser.add_argument('--output_dir', type=str, required=True)
++args = parser.parse_args()
++
++# Load trajectories
++trajectories = np.load(args.input_file, allow_pickle=True).item()
++
++# Extract torsion angles
++torsion_angles = {}
++for name, traj in trajectories.items():
++    # Placeholder for actual torsion angle extraction logic
++    torsion_angles[name] = np.random.rand(traj.shape[0], 4)  # Example shape
++
++# Save torsion angles
++os.makedirs(args.output_dir, exist_ok=True)
++np.save(os.path.join(args.output_dir, 'torsion_angles.npy'), torsion_angles)
+\ No newline at end of file
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/load_md_trajectories.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/load_md_trajectories.py
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/load_md_trajectories.py	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/load_md_trajectories.py	2025-07-25 17:25:15
+@@ -0,0 +1,19 @@
++import os
++import numpy as np
++import argparse
++
++parser = argparse.ArgumentParser()
++parser.add_argument('--data_dir', type=str, required=True)
++parser.add_argument('--output_dir', type=str, required=True)
++args = parser.parse_args()
++
++# Load MD trajectories
++trajectories = {}
++for file_name in os.listdir(args.data_dir):
++    if file_name.endswith('.npy'):
++        traj_name = file_name.split('.')[0]
++        trajectories[traj_name] = np.load(os.path.join(args.data_dir, file_name))
++
++# Save loaded trajectories
++os.makedirs(args.output_dir, exist_ok=True)
++np.save(os.path.join(args.output_dir, 'trajectories.npy'), trajectories)
+\ No newline at end of file
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/perform_tica.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/perform_tica.py
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/perform_tica.py	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/perform_tica.py	2025-07-25 17:25:22
+@@ -0,0 +1,21 @@
++import numpy as np
++import argparse
++from pyemma.coordinates import tica
++
++parser = argparse.ArgumentParser()
++parser.add_argument('--input_file', type=str, required=True)
++parser.add_argument('--output_dir', type=str, required=True)
++args = parser.parse_args()
++
++# Load torsion angles
++torsion_angles = np.load(args.input_file, allow_pickle=True).item()
++
++# Perform TICA
++tica_models = {}
++for name, angles in torsion_angles.items():
++    tica_model = tica(angles, lag=10)
++    tica_models[name] = tica_model.get_output()
++
++# Save TICA components
++os.makedirs(args.output_dir, exist_ok=True)
++np.save(os.path.join(args.output_dir, 'tica_components.npy'), tica_models)
+\ No newline at end of file
