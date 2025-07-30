@@ -93,7 +93,11 @@ class SchedNode():
             "standby_exp_plan_list",  
             "user_router_wrote_list",
             # Stores the data analysis results
-            "data_analysis",  
+            "data_analysis",
+            # Stores clarification data
+            "clarification_data",
+            # Stores the enriched question after clarification
+            "enriched_question",  
         ]
 
 
@@ -818,6 +822,16 @@ class SchedNode():
         self.store.put(self.plan_namespace, plan_id, plan)
 
     def get_question(self):
+        # First check if there's an enriched question from clarification
+        try:
+            enriched_question = self.metadata_store.get(self.sched_namespace, "enriched_question")
+            enriched_question = enriched_question.dict()["value"]
+            if enriched_question:
+                return enriched_question
+        except:
+            pass
+        
+        # Otherwise, return the original question
         memory_id = str("question")
         question = self.metadata_store.get(self.sched_namespace, memory_id)
         question = question.dict()["value"]
@@ -919,6 +933,10 @@ class SchedTool(BaseTool):
             return handlers["user_input_router"](state)
         if "user_input" == prev_agent:
             return handlers["user_input"](state)
+        if "clarification" == prev_agent:
+            return handlers["clarification"](state)
+        if "clarification_router" == prev_agent:
+            return handlers["clarification_router"](state)
         if "data_analyzer" == prev_agent:
             return handlers["data_analyzer"]()
         
