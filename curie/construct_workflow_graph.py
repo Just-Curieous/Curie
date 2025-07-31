@@ -98,8 +98,8 @@ class AllNodes():
         config_dict["transition_funcs"] = {
             "supervisor": lambda state: self.architect.transition_handle_func(state),
             "data_analyzer": lambda: self.data_analyzer.transition_handle_func() if self.data_analyzer else None,
-            "worker": lambda: self.workers[0].transition_handle_func(),
-            "control_worker": lambda: self.control_workers[0].transition_handle_func(),
+            "worker": lambda state: self.workers[0].transition_handle_func(state),
+            "control_worker" : lambda state: self.control_workers[0].transition_handle_func(state),
             "llm_verifier": lambda: self.validators[0].transition_handle_func(),
             "patch_verifier": lambda: self.validators[1].transition_handle_func(),
             "analyzer": lambda: self.validators[2].transition_handle_func(),

@@ -42,7 +42,7 @@ class SchedNode():
         log_filename = f'../{config["log_filename"]}'
         self.curie_logger = init_logger(log_filename)
  
-        self.workspace_dirname = ( self.config["workspace_name"] or 
+        self.workspace_dirname = ( self.config["codebase_dir"] or 
                           self.config["job_name"] or 
                           "project" )   
         self.setup_sched()
@@ -563,7 +563,7 @@ class SchedNode():
                 raise FileNotFoundError(f"Dataset directory does not exist: {self.config['dataset_dir']}. Please check the path.")            
 
             workspace_dir = "/workspace/" 
-            dataset_dir_name = (os.path.basename(self.config["workspace_name"]) or 
+            dataset_dir_name = (os.path.basename(self.config["codebase_dir"]) or 
                                 os.path.basename(self.config["job_name"]) or
                                 "project" ) + "_dataset"
             new_dataset_dir = os.path.join(workspace_dir, dataset_dir_name)
@@ -743,15 +743,15 @@ class SchedNode():
             self.packages_to_install = []
     
     def create_workspace_dir(self, plan_id: str):
-        # If we are running a question from Curie benchmark (specified in config["workspace_name"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
+        # If we are running a question from Curie benchmark (specified in config["codebase_dir"]), copy its associated starter files from ../starter_file and move it to ../workspace. 
         # Otherwise, if running a question not from Curie benchmark, we assume that starter_file does not exist, and we do not copy. We still create the new_starter_file_dir folder but leave it empty. 
         
-        workspace_base_name = (os.path.basename(self.config["workspace_name"]) or
+        workspace_base_name = (os.path.basename(self.config["codebase_dir"]) or
                                os.path.basename(self.config["job_name"]) or
                                "project" )
         new_starter_file_dir = f"../workspace/{workspace_base_name}_{plan_id}"
-        if self.config["workspace_name"] != "":
-            old_starter_file_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/')) 
+        if self.config["codebase_dir"] != "":
+            old_starter_file_dir = os.path.join('/all', self.config["codebase_dir"].lstrip('/')) 
             new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
         else:
             new_starter_file_dir = os.path.abspath(new_starter_file_dir)  
@@ -813,7 +813,7 @@ class SchedNode():
         """
         plan = self.store.get(self.plan_namespace, plan_id).dict()["value"]
         # FIXME
-        plan["question"] = plan["question"].replace(f"/starter_file/{self.config['workspace_name']}", self.get_workspace_dirname(plan_id))
+        plan["question"] = plan["question"].replace(f"/starter_file/{self.config['codebase_dir']}", self.get_workspace_dirname(plan_id))
 
         self.store.put(self.plan_namespace, plan_id, plan)
 
@@ -908,9 +908,9 @@ class SchedTool(BaseTool):
         
         # Handle special case for worker which has a prefix
         if "control_worker" in prev_agent:
-            return handlers["control_worker"]()
+            return handlers["control_worker"](state)
         if "worker" in prev_agent:
-            return handlers["worker"]()
+            return handlers["worker"](state)
         if "concluder" == prev_agent:
             return handlers["concluder"](state)
         if "supervisor" == prev_agent:

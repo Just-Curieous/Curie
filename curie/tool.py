@@ -166,6 +166,40 @@ class CodeAgentTool(BaseTool):
             if dataset_dir:
                 prompt += f"\n\nDataset directory: {dataset_dir} (Dataset is downloaded. Do not create synthetic data.)."
             prompt = f'''{system_prompt}\n{prompt}'''
+
+            # Append description.md to the prompt of the coding agent
+            if self.config and "codebase_dir" in self.config and self.config["codebase_dir"]:
+                # In Docker container, the host filesystem is mounted at /all
+                description_path = os.path.join(self.config["codebase_dir"], "description.md")
+                # Try the original path first, then try with /all prefix for Docker container
+                if not os.path.exists(description_path):
+                    description_path = os.path.join("/all", self.config["codebase_dir"].lstrip('/'), "description.md")
+                if os.path.exists(description_path):
+                    with open(description_path, "r", encoding="utf-8") as f:
+                        code_instruction = f.read()
+                    prompt += (
+                        "\n\n# The following is the user's code_instruction. Please pay special attention to any requirements about the results file path and format.\n"
+                        f"{code_instruction}\n"
+                        "Instructions for results files:\n"
+                        "Carefully read the experiment plan and any user-provided description to determine what results files the user expects (including file names, formats, and content requirements).\n"
+                        "For each plan, generate all required results files in the corresponding workspace directory (e.g., {workspace_dir}).\n"
+                        "After running your workflow, for every results file you generate (including all user-required and default results), output a line in the following format:\n"
+                        "RESULTS_PATH: <absolute path to the results file>\n"
+                        "If you generate multiple results files, output multiple lines, each starting with RESULTS_PATH:.\n"
+                        "If no special results file is required, output: RESULTS_PATH: none.\n"
+                        "If the user only specified the results file format but not the folder, save the results file under the default results folder for each plan.\n"
+                        "Do not mock or simulate results; always generate real results using the actual workflow.\n"
+                        "The following is an example of the results file path you will use:\n"
+                        "\nExample output:\n"
+                        "RESULTS_PATH: /workspace/custom_results.json\n"
+                        "RESULTS_PATH: /workspace/analysis_report.csv\n"
+                        "RESULTS_PATH: none\n"
+                    )
+                else:
+                    prompt += ("\n\n# No description.md file detected. Please use the default results file path and format.\n")
+            else:
+                prompt += ("\n\n# No codebase directory found in config. Please use the default results file path and format.\n")
+
             curie_logger.info(f"👋👋 Trigger Coding Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
 
@@ -207,11 +241,21 @@ class CodeAgentTool(BaseTool):
     
         _collect_openhands_cost()
 
-        return f"""
+        # Parse RESULTS_PATH information from the agent's output
+        results_paths = self.parse_results_paths(openhands_log)
+        curie_logger.info(f"Successfully parsed custom_results_paths {results_paths}")
+        
+        results_paths_info = ""
+        if results_paths:
+            results_paths_info = f"\n\n📁 Custom Results Files Detected:\n" + "\n".join([f"  - {path}" for path in results_paths])
+        else:
+            results_paths_info = "\n\n📁 No custom results paths detected. Using default results file."
+        # return custom_results_paths to workflow
+        return results_paths, f"""
                 The Code Agent has completed. Here's a snippet from the last 10% of the logs —
                 use it with the workflow script and results file to evaluate success.
                 Re-run the Code Agent with feedback if necessary.
-                {openhands_log}
+                {openhands_log}{results_paths_info}
                 """.strip()
     
     def extract_codeagent_output_snippet(self, filename: str) -> str:
@@ -221,8 +265,47 @@ class CodeAgentTool(BaseTool):
 
         with open(filename, "r", encoding="utf-8") as f:
             lines = f.readlines()
-            bottom_10_percent = lines[-max(1, len(lines) // 10):]  # Extract bottom 10% of the file
-            return "".join(bottom_10_percent)
+            
+            # First, search for RESULTS_PATH in the entire log
+            results_path_lines = []
+            for line in lines:
+                if 'RESULTS_PATH' in line:
+                    results_path_lines.append(line.strip())
+            
+            #! Add debug logging
+            curie_logger.info(f"Found {len(results_path_lines)} RESULTS_PATH lines in {filename}")
+            for i, line in enumerate(results_path_lines):
+                curie_logger.info(f"RESULTS_PATH line {i+1}: {line}")
+            
+            # Get the bottom 10% as before
+            bottom_10_percent = lines[-max(1, len(lines) // 10):]
+            
+            # Combine RESULTS_PATH lines with bottom 10%
+            if results_path_lines:
+                combined_lines = results_path_lines + [''] + bottom_10_percent
+                return "".join(combined_lines)
+            else:
+                return "".join(bottom_10_percent)
+
+    def parse_results_paths(self, log_content: str) -> list[str]:
+        """
+        Parse RESULTS_PATH information from the agent's output log.
+        Returns a list of results file paths, or empty list if none found.
+        """
+        results_paths = []
+        lines = log_content.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            idx = line.find('RESULTS_PATH')
+            if idx != -1:
+                # extract the path after "RESULTS_PATH"
+                after = line[idx + len('RESULTS_PATH'):]
+                after = after.lstrip(':= ').strip()
+                if after and after.lower() != 'none':
+                    results_paths.append(after)
+        
+        return results_paths
 
 class PatcherAgentInput(BaseModel):
     plan_id: str = Field(
@@ -333,7 +416,7 @@ class PatcherAgentTool(BaseTool):
 
             )
             
-            exp_log_dir = f"logs/{self.config['workspace_name']}_{self.config['unique_id']}_iter{self.config['iteration']}"
+            exp_log_dir = f"logs/{self.config['codebase_dir']}_{self.config['unique_id']}_iter{self.config['iteration']}"
             prompt = f'''{system_prompt}\n{prompt}'''
             curie_logger.info(f"👋👋 Trigger Coding Patch Agent.")
             curie_logger.info(f"🕒 This may take awhile... See log file for details: {exp_log_dir}/openhands_{plan_id}_{group}_{partition_name}_logging.txt")
@@ -525,7 +608,7 @@ class QueryPDFTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> dict: 
         if plan_id is None or workspace_dir is None:
-            pdf_dir = '/starter_file/' + self.config["workspace_name"]
+            pdf_dir = '/starter_file/' + self.config["codebase_dir"]
             pdf_path = os.path.join(pdf_dir, pdf_path)
         else:
             # this assume the pdf is put under the outer workspace dir
@@ -534,7 +617,7 @@ class QueryPDFTool(BaseTool):
         
         if not os.path.exists(pdf_path):
             target = os.path.basename(pdf_path) 
-            root_dir = os.path.join('/all', self.config["workspace_name"].lstrip('/').rstrip('/'))
+            root_dir = os.path.join('/all', self.config["codebase_dir"].lstrip('/').rstrip('/'))
             # Recursively walk through directory
             for root, dirs, files in os.walk(root_dir):
                 if target in files:
@@ -753,7 +836,7 @@ class NewExpPlanStoreWriteTool(BaseTool):
             Example modified plan: # this is the only plan format ever saved in long term store. 
             {...all fields except for control and experimental group, 
                 "question": "What is the best instance type for a CPU workload?", # original user_input
-                "workspace_dir": /workspace/{config["workspace_name"]}_{plan_id},
+                "workspace_dir": /workspace/{config["codebase_dir"]}_{plan_id},
                 "control_group": {
                     "partition_1": {
                         "independent_vars": [{
@@ -1750,7 +1833,7 @@ class AnalyzerWriteInput(BaseModel):
     )
     no_change: bool = Field(
         ...,
-        description="No change means that after analyzing the partition’s results, you determine that the existing plan and partitions remain valid, requiring no modifications or new plan creation."
+        description="No change means that after analyzing the partition's results, you determine that the existing plan and partitions remain valid, requiring no modifications or new plan creation."
     )
     analyzer_log_message: str = Field(
         ...,
@@ -1977,6 +2060,8 @@ class DataAgentTool(BaseTool):
             curie_logger.info(f"🔍 Dataset directory {in_docker_dataset_dir} exists.")
             
             prompt = self.config["question"]
+            prompt = prompt.split('/')[-1]
+            prompt = f"/workspace/{prompt}"
             workspace_dir = f"/workspace/{self.config['job_name']}_data_analysis"
             # mkdir if not exists
             if not os.path.exists(workspace_dir):
@@ -2038,21 +2123,62 @@ class DataAgentTool(BaseTool):
         _collect_openhands_cost()
         
         # try to read the data_analysis.txt file
-        if os.path.exists(f"{workspace_dir}/data_analysis.txt"):
-            with open(f"{workspace_dir}/data_analysis.txt", "r") as file:
-                data_analysis = file.read()
-                curie_logger.info(f"💻 Data Analysis: {data_analysis}")
-
-            with open(f"/{exp_log_dir}/data_analysis_results.txt", "w") as file:
-                file.write(data_analysis)
+        max_retries = 3
+        retry_delay = 2  # seconds
         
-            return f"""
-                    The Data Processing Agent has completed. Here is the data analysis:
-                    {data_analysis}
-                    """.strip()
-        else:
-            curie_logger.error(f"Data analysis file {workspace_dir}/data_analysis.txt failed to be created. Continue to next step.")
-            return f"No data analysis."
+        for attempt in range(max_retries):
+            if os.path.exists(f"{workspace_dir}/data_analysis.txt"):
+                try:
+                    with open(f"{workspace_dir}/data_analysis.txt", "r") as file:
+                        data_analysis = file.read()
+                        curie_logger.info(f"💻 Data Analysis: {data_analysis}")
+
+                    with open(f"/{exp_log_dir}/data_analysis_results.txt", "w") as file:
+                        file.write(data_analysis)
+                
+                    return f"""
+                            The Data Processing Agent has completed. Here is the data analysis:
+                            {data_analysis}
+                            """.strip()
+                except Exception as e:
+                    curie_logger.error(f"Error reading data_analysis.txt on attempt {attempt + 1}: {e}")
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(retry_delay)
+                        continue
+            else:
+                curie_logger.warning(f"Data analysis file {workspace_dir}/data_analysis.txt not found on attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    import time
+                    time.sleep(retry_delay)
+                    continue
+        
+        possible_paths = [
+            f"{workspace_dir}/data_analysis.txt",
+            f"{workspace_dir}/analysis.txt",
+            f"{workspace_dir}/data_analysis_results.txt",
+            f"/{exp_log_dir}/data_analysis.txt"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                curie_logger.info(f"Found data analysis file at alternative location: {path}")
+                try:
+                    with open(path, "r") as file:
+                        data_analysis = file.read()
+                    
+                    with open(f"/{exp_log_dir}/data_analysis_results.txt", "w") as file:
+                        file.write(data_analysis)
+                    
+                    return f"""
+                            The Data Processing Agent has completed. Here is the data analysis:
+                            {data_analysis}
+                            """.strip()
+                except Exception as e:
+                    curie_logger.error(f"Error reading alternative file {path}: {e}")
+        
+        curie_logger.error(f"Data analysis file {workspace_dir}/data_analysis.txt failed to be created after {max_retries} attempts. Continue to next step.")
+        return f"No data analysis."
     
     def extract_dataagent_output_snippet(self, filename: str) -> str:
         """

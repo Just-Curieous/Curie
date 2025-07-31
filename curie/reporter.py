@@ -6,6 +6,7 @@ from multiprocessing import Process, Queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Tuple 
 import string
+import mimetypes
 
 # write a lab report
  
@@ -79,6 +80,19 @@ def summarize_logging_parallel_threads(log_file):
     print(f"👧 Completed summarizing log file: {log_file}")
     return summarize_content
 
+def is_text_file(filepath):
+    mime, _ = mimetypes.guess_type(filepath)
+    return mime and (mime.startswith('text') or mime in ['application/json', 'application/xml'])
+
+def process_result_file(filepath, max_size=2*1024*1024):
+    if not os.path.exists(filepath):
+        return f"[Missing file] {filepath}"
+    if is_text_file(filepath) and os.path.getsize(filepath) < max_size:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        return f"[Text results file: {filepath}]:\n{content[:10000]}..."
+    else:
+        return f"[Non-text or large results file: {filepath}] (size: {os.path.getsize(filepath)//1024} KB)"
 
 def process_plan(plan_data):
     """Process a single plan and return the results"""
@@ -90,6 +104,16 @@ def process_plan(plan_data):
         # list out all .txt files in the workspace directory
         plan_results = [f"Here is the experimental plan: {plan}\n",
                 "Here are the actual results of the experiments: \n"]
+
+        # Read user specified results paths and append results for generating report.
+        custom_results_paths = plan.get("custom_results_paths", [])
+        print(f"[DEBUG] custom_results_paths from plan = {custom_results_paths}")
+        
+        for path in custom_results_paths:
+            try:
+                plan_results.append(process_result_file(path))
+            except Exception as e:
+                print(f"Reporter Failed to read custom results file {path}: {e}")
 
         workspace_dir = plan["workspace_dir"]  
         banned_keywords = ['Warning:', '\x00']
@@ -119,6 +143,8 @@ def process_plan(plan_data):
         plan_results_str = safe_join(plan_results)
         messages = [SystemMessage(content="Understand the experiment plan and \
                                     extract the complete raw results with the experiment setup. \
+                                    Include user-specified/custom results.\
+                                    For large or non-text files, do not output full content—just show file name, type, size, and a brief description or summary if possible. \
                                     No need to analyze the results. \
                                     Ignore the intermediate steps. NEVER fake the results."),
                     HumanMessage(content=plan_results_str)]

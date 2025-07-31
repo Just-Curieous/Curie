@@ -27,7 +27,7 @@ DEFAULT_TASK_CONFIG = {
     "llm_verifier_system_prompt_filename": "prompts/simple/simple-llm-verifier.txt",
     "coding_prompt_filename": "prompts/simple/simple-coding.txt",
     "worker_system_prompt_filename": "prompts/simple/simple-worker.txt",
-    "workspace_name": "", # to be filled up by the user
+    "codebase_dir": "", # to be filled up by the user
     "dataset_dir": "", # to be filled up by the user
     "env_requirements": "", # to be filled up by the user
     "code_instructions": "", # to be filled up automatically by curie
@@ -84,7 +84,7 @@ def run_docker_container(unique_id: str, iteration: int, task_config: Dict[str, 
     command = [
         "docker", "run",
         "-v", "/var/run/docker.sock:/var/run/docker.sock",
-        # "-v", f"{base_dir}/curie:/curie", # for local development 
+        # "-v", f"{base_dir}/curie:/curie", # for local development
         "-v", f"{api_key_dir}:/curie/setup/",
         "-v", f"{base_dir}/logs:/logs",
         "-v", f"{base_dir}/workspace:/workspace"] + mount_dataset + [
@@ -163,7 +163,7 @@ def run_prune_commands() -> None:
 def get_workspace_name(task_config: Dict[str, Any]) -> str:
     """Extract workspace name from task config."""
     return (
-        (os.path.basename(task_config.get('workspace_name', '')) or '' ) or 
+        (os.path.basename(task_config.get('codebase_dir', '')) or '' ) or 
         task_config.get('job_name', '') or 
         DEFAULT_JOB_NAME
     )
@@ -284,7 +284,7 @@ def prepare_config(task_config: Optional[Dict[str, Any]] = None,
 
     # Update paths with absolute paths if provided
     path_updates = {
-        'workspace_name': codebase_dir,
+        'codebase_dir': codebase_dir,
         'dataset_dir': dataset_dir,
         'env_requirements': env_requirements
     }
@@ -315,7 +315,54 @@ def validate_input(question_file: Optional[str],
         raise ValueError("Please provide only one of either a question file or a question.")
     elif question_file is not None and not os.path.exists(question_file):
         raise ValueError(f"Question file {question_file} does not exist.") 
-    return 
+    return True
+
+def split_code_instruction_from_question(codebase_dir: str, question: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """
+    Splits <CODE_INSTRUCTION>...</CODE_INSTRUCTION> section into description.md and returns:
+    - path to description.md (or None if no tag found)
+    - cleaned question without the code instruction part
+    """
+
+    if question is None:
+        return None, question
+
+    try:
+        start_tag = "<CODE_INSTRUCTION>"
+        end_tag = "</CODE_INSTRUCTION>"
+
+        start_idx = question.find(start_tag)
+        end_idx = question.find(end_tag)
+
+        if start_idx == -1 and end_idx == -1:
+            return None, question  # no code block at all
+        elif start_idx == -1:
+            raise ValueError("Missing opening tag <CODE_INSTRUCTION>.")
+        elif end_idx == -1:
+            raise ValueError("Missing closing tag </CODE_INSTRUCTION>.")
+        elif end_idx < start_idx:
+            raise ValueError("Closing tag </CODE_INSTRUCTION> appears before opening tag <CODE_INSTRUCTION>.")
+
+        # Extract code instruction
+        code_instruction = question[start_idx + len(start_tag):end_idx].strip()
+
+        # Remove code instruction block from question
+        question_before = question[:start_idx].strip()
+        question_after = question[end_idx + len(end_tag):].strip()
+        question_only = f"{question_before}\n\n{question_after}".strip()
+
+        # Write description.md
+        os.makedirs(codebase_dir, exist_ok=True)
+        desc_path = os.path.join(codebase_dir, "description.md")
+        with open(desc_path, "w") as f:
+            f.write(code_instruction)
+
+        return desc_path, question_only
+
+    except Exception as e:
+        print(f"[ERROR] Failed to process code instruction: {e}")
+        return None, question
+
 
 def split_code_instruction_from_question(codebase_dir: str, question: Optional[str]) -> tuple[Optional[str], Optional[str]]:
     """
