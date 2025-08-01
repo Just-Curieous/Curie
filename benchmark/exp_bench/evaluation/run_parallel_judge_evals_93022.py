@@ -28,6 +28,7 @@ def create_config(
     config["agent_name"] = agent_name
     config["do_exec_check"] = do_exec_check
     config["max_duration_per_task_in_hours"] = int(max_duration_per_task_in_hours) if float(max_duration_per_task_in_hours).is_integer() else float(max_duration_per_task_in_hours)
+    config["mode"] = "judge"  # Ensure mode is judge
     return config
 
 def run_evaluation(config: Dict[str, Any], temp_dir: str) -> None:
@@ -44,30 +45,20 @@ def run_evaluation(config: Dict[str, Any], temp_dir: str) -> None:
 def main():
     do_exec_check = True
 
-    # Example parameter lists - modify these according to your needs
-    max_durations = [0.25, 0.5, 0.67,1, 2, 4, 8]  # List of durations to evaluate
+    # Configuration specifically for neurips 93022
+    max_durations = [0.67]  # Use same duration as generation phase
 
     llm_configs = [
-        # "evaluation/setup/env-amazon-nova-pro.sh",
-        # "evaluation/setup/env-openhands-o3-mini.sh",
-        # "evaluation/setup/env-deepseek-r1.sh",
         "evaluation/setup/env_llm_config.sh",
-        # "evaluation/setup/env-claude-sonnet-37.sh",
-        # Add more LLM configs as needed
     ]
     
-    # Each tuple contains (tasks_folder, paper_details)
+    # Only process neurips2024
     conference_params = [
-        # ("outputs/logs/iclr2024/", "logs/iclr2024/iclr2024_withcode_popularity_stars-100.json"),
         ("outputs/logs/neurips2024/", "logs/neurips2024/neurips_abs_2024_withcode_popularity_stars-100.json"),
-        # Add more conference parameter pairs as needed
     ]
     
     agent_names = [
-        # "openhands",
-        # "inspectai",
         "curie",
-        # Add more agent names as needed
     ]
     
     # Create a temporary directory for config files
@@ -77,7 +68,7 @@ def main():
             for conf_params in conference_params:
                 for agent_name in agent_names:
                     for duration in max_durations:
-                        print(f"\nRunning evaluation with:")
+                        print(f"\nRunning judge evaluation for neurips 93022 with:")
                         print(f"LLM Config: {llm_config}")
                         print(f"Tasks Folder: {conf_params[0]}")
                         print(f"Paper Details: {conf_params[1]}")
@@ -91,6 +82,20 @@ def main():
                             do_exec_check=do_exec_check,
                             max_duration_per_task_in_hours=duration
                         )
+                        
+                        # Use correct judge config template, no need to manually add config items
+                        
+                        # Add specific_tasks to process all tasks (0-7) for 93022
+                        config["specific_tasks"] = [
+                            ["93022", 0, 0.67],
+                            ["93022", 1, 0.67],
+                            ["93022", 2, 0.67],
+                            ["93022", 3, 0.67],
+                            ["93022", 4, 0.67],
+                            ["93022", 5, 0.67],
+                            ["93022", 6, 0.67],
+                            ["93022", 7, 0.67]
+                        ]
                         
                         try:
                             run_evaluation(config, temp_dir)

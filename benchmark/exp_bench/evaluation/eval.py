@@ -488,7 +488,7 @@ def mask_repo(task_data: dict, repo_path: str):
         dir_path, just_filename = os.path.split(actual_source)
         # Check if source is a valid file:
         if os.path.isfile(actual_source): 
-            print(f"[mask] 删除文件: {actual_source}")
+            print(f"[mask] Delete file: {actual_source}")
             print("Masking file:", actual_source)
             bench_logger.info("Masking file: " + actual_source)
             # Remove file from git tracking:

@@ -1,0 +1,34 @@
+diff -urN workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/control_experiment_51dc7bbb-e59c-48e7-bd92-6977a004fb1b_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/control_experiment_51dc7bbb-e59c-48e7-bd92-6977a004fb1b_control_group_partition_1.sh
+--- workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/control_experiment_51dc7bbb-e59c-48e7-bd92-6977a004fb1b_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/control_experiment_51dc7bbb-e59c-48e7-bd92-6977a004fb1b_control_group_partition_1.sh	2025-07-30 00:35:25
+@@ -0,0 +1,29 @@
++#!/bin/bash
++
++# Initialize and activate the environment
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/venv"
++micromamba activate $VENV_PATH/
++
++# Check GPU availability
++$VENV_PATH/bin/python -c "import torch; print(torch.cuda.is_available())"
++
++# Model Setup: Train MDGEN on tetrapeptide MD data
++$VENV_PATH/bin/python /workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/train.py
++
++# Trajectory Generation: Run peptide simulations
++$VENV_PATH/bin/python /workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/scripts/run_peptide_sim.py
++
++# Feature Extraction: Analyze peptide TPS
++$VENV_PATH/bin/python /workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/scripts/analyze_peptide_tps.py
++
++# Evaluation: Analyze peptide design
++$VENV_PATH/bin/python /workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/scripts/analyze_peptide_design.py
++
++# Redirect all output and logs
++exec > >(tee -i /workspace/mdgen_20250730_003350_task_index_1_iter_1_duration_0.67/results_51dc7bbb-e59c-48e7-bd92-6977a004fb1b_control_group_partition_1.txt)
++exec 2>&1
++
++# End of script
+\ No newline at end of file

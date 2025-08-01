@@ -1,0 +1,154 @@
+diff -urN workspace/mdgen_task_index_4_iter_1_duration_0.67/control_experiment_c3c47541-645b-4006-99aa-0455f375a418_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_4_iter_1_duration_0.67/control_experiment_c3c47541-645b-4006-99aa-0455f375a418_control_group_partition_1.sh
+--- workspace/mdgen_task_index_4_iter_1_duration_0.67/control_experiment_c3c47541-645b-4006-99aa-0455f375a418_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_4_iter_1_duration_0.67/control_experiment_c3c47541-645b-4006-99aa-0455f375a418_control_group_partition_1.sh	2025-07-31 17:12:32
+@@ -0,0 +1,40 @@
++#!/bin/bash
++
++# Setup the environment
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_task_index_4_iter_1_duration_0.67/venv"
++micromamba activate $VENV_PATH/
++
++# Install necessary packages
++micromamba install -y -q -p $VENV_PATH torch matplotlib
++
++# Define paths
++DATA_DIR="/workspace/default_research_dataset"
++CHECKPOINT_PATH="/workspace/mdgen_task_index_4_iter_1_duration_0.67/mdgen/model_checkpoint.pth"
++OUTPUT_DIR="/workspace/mdgen_task_index_4_iter_1_duration_0.67/upsampled_trajectories"
++RESULTS_DIR="/workspace/mdgen_task_index_4_iter_1_duration_0.67/results"
++RESULTS_FILE="/workspace/mdgen_task_index_4_iter_1_duration_0.67/results_c3c47541-645b-4006-99aa-0455f375a418_control_group_partition_1.txt"
++
++# Create directories if they don't exist
++mkdir -p $OUTPUT_DIR
++mkdir -p $RESULTS_DIR
++
++# Run trajectory upsampling
++$VENV_PATH/bin/python /workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_upsampling.py \
++    --data_dir $DATA_DIR \
++    --checkpoint_path $CHECKPOINT_PATH \
++    --output_dir $OUTPUT_DIR >> $RESULTS_FILE 2>&1
++
++# Run trajectory analysis
++$VENV_PATH/bin/python /workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_analysis.py \
++    --data_dir $OUTPUT_DIR \
++    --results_dir $RESULTS_DIR >> $RESULTS_FILE 2>&1
++
++# Verify results
++if [ -f "$RESULTS_FILE" ]; then
++    echo "Results captured in $RESULTS_FILE"
++else
++    echo "Failed to capture results"
++fi
+diff -urN workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_analysis.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_analysis.py
+--- workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_analysis.py	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_analysis.py	2025-07-31 17:12:27
+@@ -0,0 +1,55 @@
++import argparse
++import os
++import matplotlib.pyplot as plt
++
++# Define the function to analyze trajectories
++
++def analyze_trajectories(data_dir, results_dir):
++    # Iterate over the files in the data directory
++    for file_name in os.listdir(data_dir):
++        if file_name.endswith('.pdb') or file_name.endswith('.xtc'):
++            file_path = os.path.join(data_dir, file_name)
++            # Load the trajectory
++            trajectory = load_trajectory(file_path)
++            # Compute autocorrelation functions
++            autocorrelation = compute_autocorrelation(trajectory)
++            # Compute dynamic content
++            dynamic_content = compute_dynamic_content(trajectory)
++            # Generate plots
++            plot_results(autocorrelation, dynamic_content, results_dir, file_name)
++
++# Define helper functions to load trajectories, compute metrics, and plot results
++
++def load_trajectory(file_path):
++    # Placeholder for loading trajectory
++    pass
++
++def compute_autocorrelation(trajectory):
++    # Placeholder for computing autocorrelation
++    pass
++
++def compute_dynamic_content(trajectory):
++    # Placeholder for computing dynamic content
++    pass
++
++def plot_results(autocorrelation, dynamic_content, results_dir, file_name):
++    # Placeholder for plotting results
++    plt.figure()
++    plt.plot(autocorrelation, label='Autocorrelation')
++    plt.plot(dynamic_content, label='Dynamic Content')
++    plt.legend()
++    plt.title(f'Results for {file_name}')
++    plt.savefig(os.path.join(results_dir, f'{file_name}_results.pdf'))
++
++# Main function to parse arguments and call the analysis function
++
++def main():
++    parser = argparse.ArgumentParser(description='Analyze trajectories')
++    parser.add_argument('--data_dir', type=str, required=True, help='Directory containing trajectories')
++    parser.add_argument('--results_dir', type=str, required=True, help='Directory to save analysis results')
++    args = parser.parse_args()
++
++    analyze_trajectories(args.data_dir, args.results_dir)
++
++if __name__ == '__main__':
++    main()
+diff -urN workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_upsampling.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_upsampling.py
+--- workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_upsampling.py	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_4_iter_1_duration_0.67/trajectory_upsampling.py	2025-07-31 17:16:54
+@@ -0,0 +1,47 @@
++import argparse
++import os
++import torch
++
++# Define the function to upsample trajectories
++
++def upsample_trajectories(data_dir, checkpoint_path, output_dir):
++    # Load the model
++    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
++    model = torch.load(checkpoint_path)
++    model.to(device)
++    model.eval()
++
++    # Iterate over the files in the data directory
++    for file_name in os.listdir(data_dir):
++        if file_name.endswith('.pdb') or file_name.endswith('.xtc'):
++            file_path = os.path.join(data_dir, file_name)
++            # Load the trajectory
++            trajectory = load_trajectory(file_path)
++            # Upsample the trajectory
++            upsampled_trajectory = model.upsample(trajectory)
++            # Save the upsampled trajectory
++            save_trajectory(upsampled_trajectory, output_dir, file_name)
++
++# Define helper functions to load and save trajectories
++
++def load_trajectory(file_path):
++    # Placeholder for loading trajectory
++    pass
++
++def save_trajectory(trajectory, output_dir, file_name):
++    # Placeholder for saving trajectory
++    pass
++
++# Main function to parse arguments and call the upsampling function
++
++def main():
++    parser = argparse.ArgumentParser(description='Upsample trajectories using MDGEN model')
++    parser.add_argument('--data_dir', type=str, required=True, help='Directory containing subsampled trajectories')
++    parser.add_argument('--checkpoint_path', type=str, required=True, help='Path to the MDGEN model checkpoint')
++    parser.add_argument('--output_dir', type=str, required=True, help='Directory to save upsampled trajectories')
++    args = parser.parse_args()
++
++    upsample_trajectories(args.data_dir, args.checkpoint_path, args.output_dir)
++
++if __name__ == '__main__':
++    main()

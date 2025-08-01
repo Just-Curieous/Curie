@@ -1,0 +1,35 @@
+diff -urN workspace/mdgen_task_index_2_iter_1_duration_0.67/control_experiment_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_2_iter_1_duration_0.67/control_experiment_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.sh
+--- workspace/mdgen_task_index_2_iter_1_duration_0.67/control_experiment_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_2_iter_1_duration_0.67/control_experiment_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.sh	2025-07-31 15:23:12
+@@ -0,0 +1,30 @@
++#!/bin/bash
++
++# Initialize and activate the environment
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_task_index_2_iter_1_duration_0.67/venv"
++micromamba activate $VENV_PATH/
++
++# Check GPU availability
++GPU_AVAILABLE=$(python -c "import torch; print(torch.cuda.is_available())")
++
++# Log GPU availability
++if [ "$GPU_AVAILABLE" = "True" ]; then
++    echo "GPU is available." >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++else
++    echo "GPU is not available." >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++fi
++
++# Run the peptide simulation script
++$VENV_PATH/bin/python /workspace/mdgen_task_index_2_iter_1_duration_0.67/scripts/run_peptide_sim.py --indir /workspace/default_research_dataset --outdir /workspace/mdgen_task_index_2_iter_1_duration_0.67/simulation_results --joblist /workspace/mdgen_task_index_2_iter_1_duration_0.67/splits/1k_4AA.csv --md_device CUDA >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++
++# Run the training and inference scripts
++$VENV_PATH/bin/python /workspace/mdgen_task_index_2_iter_1_duration_0.67/train.py >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++$VENV_PATH/bin/python /workspace/mdgen_task_index_2_iter_1_duration_0.67/tps_inference.py >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++$VENV_PATH/bin/python /workspace/mdgen_task_index_2_iter_1_duration_0.67/upsampling_inference.py >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++$VENV_PATH/bin/python /workspace/mdgen_task_index_2_iter_1_duration_0.67/design_inference.py --sim_ckpt /path/to/checkpoint --data_dir /workspace/default_research_dataset >> /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
++
++# Concatenate all logs
++cat /workspace/mdgen_task_index_2_iter_1_duration_0.67/results_cb0b25fd-bdbb-48ea-b18d-cd866e4fac50_control_group_partition_1.txt
+\ No newline at end of file

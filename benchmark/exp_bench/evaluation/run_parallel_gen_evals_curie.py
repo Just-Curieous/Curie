@@ -41,7 +41,7 @@ def get_standard_output_name(md_filename, paper_id):
         return base + ".json", base + ".patch"
 
 def get_github_url_from_paper_details(paper_id, paper_details_path):
-    """与run_parallel_gen_evals.py一致，查找github_url，优先code_url，其次reproduce_eval.code"""
+    """Consistent with run_parallel_gen_evals.py, find github_url, prioritize code_url, then reproduce_eval.code"""
     with open(paper_details_path, "r") as f:
         for line in f:
             record = json.loads(line)
@@ -60,12 +60,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     specific_tasks = None
     paper_id = None
+    task_index = "0"  # Default value
     if args.specific_tasks:
         specific_tasks = json.loads(args.specific_tasks)
         if specific_tasks and len(specific_tasks[0]) > 1:
             paper_id = int(specific_tasks[0][1])
+            if len(specific_tasks[0]) > 2:
+                task_index = str(specific_tasks[0][2])  # Extract task_index
     if paper_id is None:
-        raise ValueError("未能从--specific_tasks参数中解析出paper_id")
+        raise ValueError("Failed to parse paper_id from --specific_tasks parameter")
     llm_config_path = args.llm_config
     duration = args.max_duration
 
@@ -83,42 +86,41 @@ if __name__ == "__main__":
         return None
     github_url = get_github_url_from_paper_details(paper_id, paper_details_path)
     if not github_url:
-        raise ValueError(f"未找到paper_id={paper_id}的github_url")
-    task_index = "1"
-    # 提取repo名
+        raise ValueError(f"GitHub URL not found for paper_id={paper_id}")
+    # Extract repo name
     repo_name = os.path.splitext(os.path.basename(github_url))[0]
     suffix = f"_task_index_{task_index}_iter_1_duration_{duration}"
     workspace_dir_name = f"{repo_name}{suffix}"
-    # 读取 task_data
+    # Read task_data
     paper_tasks_filename = f"outputs/logs/neurips2024/{paper_id}/{paper_id}_complete_final.json"
     with open(paper_tasks_filename, "r") as f:
         paper_tasks_complete = json.load(f)
-    task_data = paper_tasks_complete["questions"][0]
+    task_data = paper_tasks_complete["questions"][int(task_index)]
     # clone repo
     from evaluation.eval import git_clone_repo, mask_repo, generate_task_prompt
     repo_path = git_clone_repo(github_url, base_dir="workspace", suffix=suffix)
     import time
     time.sleep(1)
     if not os.path.exists(repo_path):
-        print(f"[错误] clone目录未找到: {repo_path}")
+        print(f"[ERROR] Clone directory not found: {repo_path}")
         import sys
         sys.exit(1)
     else:
-        print(f"[检查通过] clone目录存在: {repo_path}")
+        print(f"[CHECK PASSED] Clone directory exists: {repo_path}")
     # mask
     is_mask_fail, failed_masked_sources = mask_repo(task_data, repo_path)
     if is_mask_fail:
         print(f"Masking failed for files: {failed_masked_sources}")
-    # copy到Curie根目录workspace
+    # Copy to Curie root directory workspace
     dst = os.path.join("workspace", os.path.basename(repo_path))
     abs_dst = os.path.abspath(os.path.join("../../workspace", os.path.basename(repo_path)))
     os.makedirs(os.path.dirname(abs_dst), exist_ok=True)
     if os.path.exists(abs_dst):
         shutil.rmtree(abs_dst)
     shutil.copytree(repo_path, abs_dst)
-    print(f"已复制mask好的repo到: {abs_dst}")
+    print(f"Copied masked repo to: {abs_dst}")
 
-    # 2. 解析llm_config生成key_dict
+    # 2. Parse llm_config to generate key_dict
     def parse_llm_keys(llm_config_path):
         key_map = {
             'MODEL': None,
@@ -140,7 +142,7 @@ if __name__ == "__main__":
     key_dict = parse_llm_keys(llm_config_path)
     llm_name = key_dict.get('MODEL', 'llm')
 
-    # 3. 用generate_task_prompt生成真实prompt（agent_name=local）
+    # 3. Use generate_task_prompt to generate real prompt (agent_name=local)
     config = {
         "agent_name": "local",
         "eval_gen_prompt": "evaluation/prompts/eval_gen_prompt.txt",
@@ -151,7 +153,7 @@ if __name__ == "__main__":
     }
     task_prompt = generate_task_prompt(task_data, config, 1)
 
-    # 4. 生成run_task.py到Curie根目录，所有字段用真实内容
+    # 4. Generate run_task.py to Curie root directory, all fields use real content
     run_task_content = f'''import curie
 key_dict = {json.dumps(key_dict, ensure_ascii=False, indent=4)}
 
@@ -183,51 +185,70 @@ result = curie.experiment(
     run_task_path = os.path.abspath(os.path.join("../../run_task.py"))
     with open(run_task_path, "w") as f:
         f.write(run_task_content)
-    print(f"已生成 run_task.py 到: {run_task_path}")
+    print(f"Generated run_task.py to: {run_task_path}")
 
-    # ====== 生成 run_task.py 并运行 ======
+    # ====== Generate run_task.py and run ======
     run_task_py_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
     run_task_py_path = os.path.join(run_task_py_dir, 'run_task.py')
     if os.path.exists(run_task_py_path):
-        print("开始执行 run_task.py ...")
+        print("Starting execution of run_task.py ...")
         process = subprocess.Popen(['python', 'run_task.py'], cwd=run_task_py_dir)
         while True:
             ret = process.poll()
             if ret is not None:
-                print(f"run_task.py 执行完毕，返回码: {ret}")
+                print(f"run_task.py execution completed, return code: {ret}")
                 break
             else:
-                print("run_task.py 仍在运行，等待中...")
+                print("run_task.py still running, waiting...")
                 time.sleep(30)
     else:
-        print(f"未找到 run_task.py: {run_task_py_path}")
+        print(f"run_task.py not found: {run_task_py_path}")
 
-    # ====== 日志后处理：提取md生成output和patch ======
+    # ====== Log post-processing: extract md to generate output and patch ======
     import re
     import glob
-    log_prefix = os.path.basename(repo_path)
-    LOGS_GLOB = os.path.abspath(os.path.join("../../logs", f"{log_prefix}*_iter1"))
+    
+    # Fix path matching issue: use more flexible matching pattern
+    repo_name = os.path.splitext(os.path.basename(github_url))[0]
+    LOGS_GLOB = os.path.abspath(os.path.join("../../logs", f"{repo_name}*_task_index_{task_index}_iter_1_duration_{duration}*_iter1"))
     log_dirs = glob.glob(LOGS_GLOB)
+    print(f"Searching log directory pattern: {LOGS_GLOB}")
+    print(f"Found log directories: {log_dirs}")
+    
     OUTPUT_BASE = os.path.join("outputs/evaluation/neurips2024", str(paper_id), "curie", llm_name)
     os.makedirs(OUTPUT_BASE, exist_ok=True)
-    # 直接用主流程参数生成标准名
-    iter_num = 1  # 目前只支持单iter
+    
+    # Use main process parameters to generate standard name directly
+    iter_num = 1  # Currently only supports single iter
     def get_standard_output_name():
         return f"{paper_id}_task_index_{task_index}_iter_{iter_num}_duration_{duration}_eval_gen.json", \
                f"{paper_id}_task_index_{task_index}_iter_{iter_num}_duration_{duration}_eval_gen.patch"
+    
     for log_dir in log_dirs:
+        print(f"Processing log directory: {log_dir}")
         for file in os.listdir(log_dir):
             if not file.endswith(".md"):
                 continue
             file_path = os.path.join(log_dir, file)
+            print(f"Processing file: {file_path}")
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            # 提取 Experiment Design
-            design_match = re.search(r"### Experiment Design\s*([\s\S]*?)(^### |^## |\Z)", content, re.MULTILINE)
+            
+            # Remove markdown code block markers
+            if content.startswith("```markdown"):
+                content = content[11:]  # Remove leading ```markdown
+            if content.endswith("```"):
+                content = content[:-3]  # Remove trailing ```
+            
+            # Fix regex: properly handle markdown format
+            design_match = re.search(r"## Experiment Design\s*([\s\S]*?)(^## |^# |\Z)", content, re.MULTILINE)
             design = design_match.group(1).strip() if design_match else ""
-            # 提取 Conclusion and Future Work
-            conclusion_match = re.search(r"## Conclusion and Future Work\s*([\s\S]*?)(^## |\Z)", content, re.MULTILINE)
+            
+            conclusion_match = re.search(r"# Conclusion and Future Work\s*([\s\S]*?)(^# |\Z)", content, re.MULTILINE)
             conclusion = conclusion_match.group(1).strip() if conclusion_match else ""
+            
+            print(f"Design length: {len(design)}")
+            print(f"Conclusion length: {len(conclusion)}")
             json_name, patch_name = get_standard_output_name()
             out_json_path = os.path.join(OUTPUT_BASE, json_name)
             out_patch_path = os.path.join(OUTPUT_BASE, patch_name)
@@ -236,20 +257,20 @@ result = curie.experiment(
                 os.makedirs(os.path.dirname(out_json_path), exist_ok=True)
                 with open(out_json_path, "w", encoding="utf-8") as f:
                     json.dump(result, f, indent=2, ensure_ascii=False)
-                print(f"已提取: {file_path} -> {out_json_path}")
-                # 生成patch（mask后repo和agent后repo）
+                print(f"Extracted: {file_path} -> {out_json_path}")
+                # Generate patch (masked repo and agent repo)
                 try:
                     with open(out_patch_path, "w", encoding="utf-8") as pf:
                         result = subprocess.run(["diff", "-urN", repo_path, abs_dst], stdout=pf, check=False)
                     if result.returncode == 2:
-                        print(f"生成patch失败: diff 命令错误，返回码2")
+                        print(f"Failed to generate patch: diff command error, return code 2")
                     elif result.returncode == 1:
-                        print(f"已生成patch: {out_patch_path}（有差异）")
+                        print(f"Generated patch: {out_patch_path} (with differences)")
                     else:
-                        print(f"已生成patch: {out_patch_path}（无差异）")
+                        print(f"Generated patch: {out_patch_path} (no differences)")
                 except Exception as e:
-                    print(f"生成patch失败: {e}")
-                # 生成config文件
+                    print(f"Failed to generate patch: {e}")
+                # Generate config file
                 config_name = json_name.replace(".json", "_config_config.json")
                 out_config_path = os.path.join(OUTPUT_BASE, config_name)
                 config_to_save = {
@@ -274,6 +295,6 @@ result = curie.experiment(
                 }
                 with open(out_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_to_save, f, indent=2, ensure_ascii=False)
-                print(f"已生成config: {out_config_path}")
+                print(f"Generated config: {out_config_path}")
             else:
-                print(f"未找到design/conclusion: {file_path}")
+                print(f"Design/conclusion not found: {file_path}")

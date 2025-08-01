@@ -1,4 +1,4 @@
-export MODEL="azure/gpt-4o"
+export MODEL="gpt-3.5-turbo"
 export AZURE_API_VERSION="2025-01-01-preview"
 export AZURE_API_KEY="bdef9bf150194da5b8ad860046aff989"
 export ORGANIZATION="327403"

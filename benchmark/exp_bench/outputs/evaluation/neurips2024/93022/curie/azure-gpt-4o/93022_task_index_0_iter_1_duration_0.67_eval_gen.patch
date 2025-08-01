@@ -1,0 +1,37 @@
+diff -urN workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_749f9d71-3feb-4b5c-9ea6-a7894ba5a079_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_749f9d71-3feb-4b5c-9ea6-a7894ba5a079_control_group_partition_1.sh
+--- workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_749f9d71-3feb-4b5c-9ea6-a7894ba5a079_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_1_iter_1_duration_0.67/control_experiment_749f9d71-3feb-4b5c-9ea6-a7894ba5a079_control_group_partition_1.sh	2025-07-25 21:27:04
+@@ -0,0 +1,33 @@
++#!/bin/bash
++
++# Activate the environment
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_task_index_1_iter_1_duration_0.67/venv"
++micromamba activate $VENV_PATH/
++
++# Define paths
++DATASET_DIR="/workspace/default_research_dataset"
++RESULTS_DIR="/workspace/mdgen_task_index_1_iter_1_duration_0.67/results_749f9d71-3feb-4b5c-9ea6-a7894ba5a079_control_group_partition_1.txt"
++SCRIPTS_DIR="/workspace/mdgen_task_index_1_iter_1_duration_0.67/scripts"
++
++# Load ground-truth MD trajectories
++$VENV_PATH/bin/python $SCRIPTS_DIR/prep_sims.py --split $DATASET_DIR/dataset.npy --sim_dir $DATASET_DIR --outdir $DATASET_DIR
++
++# Extract features
++$VENV_PATH/bin/python $SCRIPTS_DIR/analyze_peptide_design.py --pdbdir $DATASET_DIR
++$VENV_PATH/bin/python $SCRIPTS_DIR/analyze_upsampling.py --pdbdir $DATASET_DIR
++
++# Apply TICA via PyEMMA
++# Apply TICA via PyEMMA
++$VENV_PATH/bin/python $SCRIPTS_DIR/apply_tica.py --input_dir $DATASET_DIR --output_dir $DATASET_DIR
++
++# Calculate JSD
++$VENV_PATH/bin/python $SCRIPTS_DIR/calculate_jsd.py --ground_truth_dir $DATASET_DIR --generated_dir $DATASET_DIR --output_file $RESULTS_DIR
++
++# Save results
++cat $DATASET_DIR/*.pkl > $RESULTS_DIR
++
++# Ensure script is adaptable for experimental group
++# (This can be done by modifying the script to accept different dataset directories or parameters)

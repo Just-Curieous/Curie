@@ -134,8 +134,21 @@ def check_if_eval_is_done(task_config: dict, mode: str):
     iterations = task_config["iterations"] # number of iterations required
     paper_id = task_config["paper_id"]
 
-    # Check if all iterations for all tasks for the required paper for the requested agent+llm combo are done
-    for task_counter in range(task_counts):
+    # If specific_tasks is specified, only check the specified task_index
+    task_indices_to_check = []
+    if "specific_tasks" in task_config and task_config["specific_tasks"]:
+        # Extract task_index from specific_tasks
+        for task in task_config["specific_tasks"]:
+            if len(task) > 1 and task[0] == str(paper_id):
+                task_indices_to_check.append(task[1])  # task[1] is task_index
+    else:
+        # If specific_tasks is not specified, check all tasks
+        task_indices_to_check = list(range(task_counts))
+
+    print(f"Checking task indices: {task_indices_to_check}")
+
+    # Check if all iterations for specified tasks for the required paper for the requested agent+llm combo are done
+    for task_counter in task_indices_to_check:
         for iteration in range(1, iterations + 1):
             output_file = get_relative_output_path_eval(task_config, task_counter, iteration, mode)
             print(f"Checking if {output_file} exists")
@@ -156,7 +169,20 @@ def is_no_eval_gen_is_done(task_config: dict):
     if none found, return True. 
     """
     task_counts = get_task_count(task_config)
-    for task_counter in range(task_counts):
+    paper_id = task_config["paper_id"]
+    
+    # If specific_tasks is specified, only check the specified task_index
+    task_indices_to_check = []
+    if "specific_tasks" in task_config and task_config["specific_tasks"]:
+        # Extract task_index from specific_tasks
+        for task in task_config["specific_tasks"]:
+            if len(task) > 1 and task[0] == str(paper_id):
+                task_indices_to_check.append(task[1])  # task[1] is task_index
+    else:
+        # If specific_tasks is not specified, check all tasks
+        task_indices_to_check = list(range(task_counts))
+    
+    for task_counter in task_indices_to_check:
         for iteration in range(1, task_config["iterations"] + 1):
             output_file = get_relative_output_path_eval(task_config, task_counter, iteration, "generate")
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
@@ -170,7 +196,10 @@ def run_eval(config_filename):
         "python3", "evaluation/main_eval.py",
         f"--task_config={config_filename}",
     ]
-    subprocess.run(cmd1, check=True)
+    # Set environment variable to ensure Python can find the helper module
+    env = os.environ.copy()
+    env['PYTHONPATH'] = os.getcwd() + ':' + env.get('PYTHONPATH', '')
+    subprocess.run(cmd1, check=True, env=env)
 
 def run_pipeline(config_filename: str, record: dict):
     try:

@@ -1,0 +1,55 @@
+diff -urN workspace/mdgen_task_index_3_iter_1_duration_0.67/control_experiment_1195150d-af6c-4dd0-9d8f-233d2a1d5d92_control_group_partition_1.sh /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_3_iter_1_duration_0.67/control_experiment_1195150d-af6c-4dd0-9d8f-233d2a1d5d92_control_group_partition_1.sh
+--- workspace/mdgen_task_index_3_iter_1_duration_0.67/control_experiment_1195150d-af6c-4dd0-9d8f-233d2a1d5d92_control_group_partition_1.sh	1969-12-31 19:00:00
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_3_iter_1_duration_0.67/control_experiment_1195150d-af6c-4dd0-9d8f-233d2a1d5d92_control_group_partition_1.sh	2025-07-31 15:51:35
+@@ -0,0 +1,37 @@
++#!/bin/bash
++
++# Initialize and activate the environment
++export PATH="/openhands/micromamba/bin:$PATH"
++micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
++source ~/.bashrc
++export VENV_PATH="/workspace/mdgen_task_index_3_iter_1_duration_0.67_venv"
++micromamba activate $VENV_PATH/
++
++# Set paths
++DATASET_DIR="/workspace/default_research_dataset"
++RESULTS_DIR="/workspace/mdgen_task_index_3_iter_1_duration_0.67/results_1195150d-af6c-4dd0-9d8f-233d2a1d5d92_control_group_partition_1.txt"
++
++# Check GPU availability
++GPU_AVAILABLE=$($VENV_PATH/bin/python -c "import torch; print(torch.cuda.is_available())")
++
++# Log GPU availability
++if [ "$GPU_AVAILABLE" = "True" ]; then
++    echo "GPU is available." > "$RESULTS_DIR"
++else
++    echo "GPU is not available." > "$RESULTS_DIR"
++fi
++
++# Redirect all output to results file
++exec >> "$RESULTS_DIR" 2>&1
++
++# Run training with muted progress
++$VENV_PATH/bin/python /workspace/mdgen_task_index_3_iter_1_duration_0.67/train.py --mute_progress
++
++# Run inference
++$VENV_PATH/bin/python /workspace/mdgen_task_index_3_iter_1_duration_0.67/sim_inference.py --sim_ckpt /workspace/mdgen_task_index_3_iter_1_duration_0.67/checkpoint.pth --data_dir "$DATASET_DIR"
++
++# Analyze results
++$VENV_PATH/bin/python /workspace/mdgen_task_index_3_iter_1_duration_0.67/scripts/analyze_peptide_sim.py --pdbdir "$DATASET_DIR" --save --plot
++
++# Deactivate the environment
++micromamba deactivate
+diff -urN workspace/mdgen_task_index_3_iter_1_duration_0.67/train.py /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_3_iter_1_duration_0.67/train.py
+--- workspace/mdgen_task_index_3_iter_1_duration_0.67/train.py	2025-07-31 15:29:14
++++ /Users/crakeee/goodgood/iac-project/Curie/workspace/mdgen_task_index_3_iter_1_duration_0.67/train.py	2025-07-31 15:41:24
+@@ -67,8 +67,8 @@
+     logger=False
+ )
+ 
+-# torch.manual_seed(137)
+-# np.random.seed(137)
++torch.manual_seed(137)
++np.random.seed(137)
+ 
+ 
+ if args.validate:
