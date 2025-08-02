@@ -11,6 +11,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Any
+import tiktoken
 
 def get_all_price_per_1k_tokens() -> Dict[str, Dict[str, float]]:
     return {
@@ -347,4 +348,23 @@ def load_system_prompt(prompt_path, **kwargs):
     with open(prompt_path, "r") as f:
         template = f.read()
     return template.format(**kwargs)
+
+def count_tokens(messages: List[Dict[str, Any]]) -> int:
+    """Counts the number of tokens in a list of messages."""
+    if not messages:
+        return 0
+    
+    # an encoding for a model gpt-4
+    encoding = tiktoken.get_encoding("cl100k_base")
+    
+    num_tokens = 0
+    for message in messages:
+        # every message follows <|start|>{role/name}\n{content}<|end|>\n
+        num_tokens += PROTOCOL_OVERHEAD_TOKENS  
+        for key, value in message.dict().items():
+            if value and key != "type":
+                num_tokens += len(encoding.encode(str(value)))
+                if key == "name":
+                    num_tokens -= 1  # role is always required and always 1 token
+    return num_tokens
     
