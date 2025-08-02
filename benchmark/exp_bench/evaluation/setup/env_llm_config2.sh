@@ -1,0 +1,5 @@
+export MODEL="o3-mini"
+export AZURE_API_VERSION="2025-01-01-preview"
+export AZURE_API_KEY="bdef9bf150194da5b8ad860046aff989"
+export ORGANIZATION="327403"
+export AZURE_API_BASE="https://api.umgpt.umich.edu/azure-openai-api"
