@@ -39,6 +39,17 @@ def exec_validator(llm_verified_wrote_list):
                 assert False, "Error: verifier_log_message or patcher_log_message not found in item."
 
             result_file_contents = []
+            custom_results_paths = item.get("custom_results_paths", [])
+
+            if custom_results_paths:
+                for path in custom_results_paths:
+                    try:
+                        with open(path, "r") as file:
+                            file_content = file.read()
+                            result_file_contents.append(file_content)
+                            curie_logger.info(f"ExecVerifier: Successfully read content from user-specified results file {path}.")
+                    except Exception as e:
+                        curie_logger.info(f"ExecVerifier: Failed to read user-specified results file {path}: {e}")
 
             with open(control_experiment_results_filename, "r") as file:
                 file_content = file.read()  # Read the file content

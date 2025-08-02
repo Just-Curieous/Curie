@@ -1,6 +1,7 @@
 from nodes.base_node import BaseNode, NodeConfig
 from langgraph.graph import END
 from scheduler import SchedNode
+import ast
 
 class Technician(BaseNode):
 
@@ -24,7 +25,7 @@ class Technician(BaseNode):
             "next_agent": "llm_verifier"
         }
 
-    def transition_handle_func(self):
+    def transition_handle_func(self, state=None):
         """
             A worker has completed a run. 
             We will now:
@@ -66,6 +67,19 @@ class Technician(BaseNode):
         # Remove worker from worker assignment dict:
         self.sched_node.unassign_worker_all(self.node_config.name) # NOTE: a worker will only return to the supervisor once all its groups are done. 
 
+        custom_results_paths = []
+        if state is not None and "messages" in state:
+            for msg in reversed(state["messages"]):
+                # ToolNode returned ToolMessage
+                if hasattr(msg, "name") and msg.name == "codeagent_openhands":
+                    try:
+                        content = ast.literal_eval(msg.content)
+                        if isinstance(content, (list, tuple)):
+                            custom_results_paths = content[0]  # results_paths
+                    except Exception:
+                        pass
+                    break
+
         # Pass all assignments to llm_verifier:
         for assignment in assignments:
             plan_id, group, partition_name = assignment["plan_id"], assignment["group"], assignment["partition_name"]
@@ -77,6 +91,7 @@ class Technician(BaseNode):
                 "workspace_dir": self.sched_node.get_workspace_dirname(plan_id),
                 "control_experiment_filename": self.sched_node.get_control_experiment_filename(plan_id, group, partition_name),
                 "control_experiment_results_filename": self.sched_node.get_control_experiment_results_filename(plan_id, group, partition_name),
+                "custom_results_paths": custom_results_paths,
             }
             completion_messages.append(task_details)
             self.sched_node.assign_verifier("llm_verifier", task_details)
