@@ -176,7 +176,8 @@ If you use Curie in a research paper, please cite our work:
 ## Community and Support
 
 - [GitHub Issues](https://github.com/Just-Curieous/curie/issues) - Report bugs or request features
-- [Schedule a Meeting with Us](https://calendly.com/amberljc/30min) - Get help from our team
+- [Schedule a Meeting with Us](https://calendar.app.google/yMSqTLt8sYEGgeRA6) - Get help from our team
+- [Contact Us] Patrick (patkon@umich.edu)
 - [Join our Slack Community](https://join.slack.com/t/just-curieous/shared_invite/zt-313elxhhy-hpEK5r9kX9Xv1Pfxzt9CJQ)
 
 ## License
