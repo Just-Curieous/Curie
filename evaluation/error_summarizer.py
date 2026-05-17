@@ -46,6 +46,8 @@ class LLMLogEvaluator:
                 temperature=0.7,
                 max_tokens=500
             )
+            if not response.choices or response.choices[0].message is None:
+                raise ValueError("LLM returned empty or filtered response")
             return response.choices[0].message.content
         except Exception as e:
             return f"GPT analysis failed: {str(e)}"

@@ -106,6 +106,8 @@ class ExperimentVerifier:
             response_format={"type": "json_object"}
         )
 
+        if not response.choices or response.choices[0].message is None:
+            raise ValueError("LLM returned empty or filtered response")
         return json.loads(response.choices[0].message.content)
 
     @staticmethod
@@ -134,6 +136,8 @@ class ExperimentVerifier:
             temperature=0.7,
         )
 
+        if not response.choices or response.choices[0].message is None:
+            raise ValueError("LLM returned empty or filtered response")
         return response.choices[0].message.content
 
     def verify_experiment(self, log_file_path: str, 

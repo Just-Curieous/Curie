@@ -42,6 +42,8 @@ def analyze_log(log: str) -> str:
         stop=None
     )
 
+    if not response.choices or response.choices[0].message is None:
+        raise ValueError("LLM returned empty or filtered response")
     return response.choices[0].message.content
 
 def read_logging(log_file: str) -> str:
