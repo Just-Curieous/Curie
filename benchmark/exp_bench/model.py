@@ -53,6 +53,8 @@ def llm_query(paper: str, system_prompt: str,
                 stop=None
             )
 
+    if not response.choices or response.choices[0].message is None:
+        raise ValueError("LLM returned empty or filtered response")
     response_content = response.choices[0].message.content
     print("LLM query response: ", response_content)
     # Parse the response as JSON
@@ -112,6 +114,8 @@ def llm_query_plain(user_prompt: str, system_prompt: str,
                 stop=None
             )
 
+    if not response.choices or response.choices[0].message is None:
+        raise ValueError("LLM returned empty or filtered response")
     response_content = response.choices[0].message.content
     print("LLM query response: ", response_content)
     # Parse the response as JSON

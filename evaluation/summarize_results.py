@@ -29,6 +29,8 @@ def analyze_explanations(explanations: List) -> str:
         stop=None
     )
 
+    if not response.choices or response.choices[0].message is None:
+        raise ValueError("LLM returned empty or filtered response")
     return response.choices[0].message.content
 
 
