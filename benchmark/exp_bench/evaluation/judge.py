@@ -32,17 +32,27 @@ def run_command(cmd, cwd=None):
         bench_logger.error(f"Command failed with return code {result.returncode}")
     return result
 
-def extract_setup_scripts(task_data: dict, config: dict):
+def load_pinned_setup_scripts(config: dict, task_counter: int):
+    """Harbor parity: ground-truth source files at the pinned commit, from the task bundle.
+    Returns None (upstream behaviour: download from main/master) when not configured."""
+    filename = config.get("pinned_setup_scripts_filename")
+    if not filename:
+        return None
+    with open(filename, 'r') as f:
+        return json.load(f)[str(task_counter)]
+
+def extract_setup_scripts(task_data: dict, config: dict, task_counter: int = None):
+    pinned_contents = load_pinned_setup_scripts(config, task_counter) if task_counter is not None else None
     if "masked_source" in task_data:
         # Extract the setup scripts from the task data:
         setup_scripts = task_data["masked_source"]
         # Concatenate the setup scripts into a single string:
-        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts)
+        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts, pinned_contents)
     elif "source" in task_data:
         # Extract the setup scripts from the task data:
         setup_scripts = task_data["source"]
         # Concatenate the setup scripts into a single string:
-        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts)
+        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts, pinned_contents)
     else:
         concatenated_setup_scripts = ""
 
@@ -144,7 +154,7 @@ def generate_task_prompt(task_data: dict, config: dict, task_counter: int):
         "conclusion_error_analysis": "Error parsing response"
     }
 
-    concatenated_setup_scripts = extract_setup_scripts(task_data, config)
+    concatenated_setup_scripts = extract_setup_scripts(task_data, config, task_counter)
 
     prompt_content_template = load_prompt_from_file(eval_judge_setup_prompt_filename)
     task_setup_prompt = load_system_prompt(
@@ -654,7 +664,11 @@ def main(
     with open(config["input_paper_tasks_filename"], 'r') as f:
         paper_tasks_complete = json.load(f)
     tasks_list = []
+    # Harbor parity: judge only the selected task indices when "specific_tasks" is given.
+    selected = {int(spec[1]) for spec in config["specific_tasks"]} if "specific_tasks" in config else None
     for task_counter, task in enumerate(paper_tasks_complete["questions"]):
+        if selected is not None and task_counter not in selected:
+            continue
         # Check if eval_gen.json exists for this task:
         output_file = get_relative_output_path_eval(config, task_counter, config["iteration"], "generate")
         if not os.path.exists(output_file):

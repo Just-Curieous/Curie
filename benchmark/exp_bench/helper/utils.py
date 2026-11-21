@@ -214,12 +214,15 @@ def call_oh_with_prompt(full_prompt: str, temp_prompt_path: str, config: dict, g
     # print("Sudo is available:", sudo_available)
     chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {github_workspace_path}"
     # Compose command to run OpenHands. we use more iterations here since there may be a need to execute code too.
+    # Harbor parity: the OpenHands interpreter can be overridden for OpenHands versions
+    # that are not installed in a Python 3.12 poetry venv.
+    openhands_python = config.get("openhands_python", "/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python")
     command = f"""
     export LOG_ALL_EVENTS=true && \
     {chmod_cmd} && \
     export WORKSPACE_BASE={config["base_dir"] + "/" + github_workspace_path} && \
     export SANDBOX_TIMEOUT=600 && \
-    /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python \
+    {openhands_python} \
     -m openhands.core.main \
     -f {temp_prompt_path} \
     --config-file "workspace/config.toml" \
@@ -377,12 +380,14 @@ def get_model_name() -> str:
 def get_input_price_per_token() -> float:
     """Get the price per token for input text."""
     model_name = get_model_name()
-    return get_all_price_per_1k_tokens()[model_name]["input"] / 1000
+    # Harbor parity: models outside the table (e.g. served through an OpenAI-compatible
+    # proxy) get 0 cost instead of a KeyError; cost is only bookkeeping.
+    return get_all_price_per_1k_tokens().get(model_name, {"input": 0.0})["input"] / 1000
 
 def get_output_price_per_token() -> float:
     """Get the price per token for output text."""
     model_name = get_model_name()
-    return get_all_price_per_1k_tokens()[model_name]["output"] / 1000
+    return get_all_price_per_1k_tokens().get(model_name, {"output": 0.0})["output"] / 1000
 
 def parse_env_string(env_string):
     """Parse environment string and return a dictionary of key-value pairs."""
@@ -413,6 +418,16 @@ def parse_env_string(env_string):
                 env_vars[key] = value
                 
     return env_vars
+
+def _parse_toml_scalar(value: str):
+    if value.lower() in ("true", "false"):
+        return value.lower() == "true"
+    for cast in (int, float):
+        try:
+            return cast(value)
+        except ValueError:
+            pass
+    return value
 
 def categorize_variables(env_vars):
     """Categorize environment variables into config sections."""
@@ -456,6 +471,13 @@ def categorize_variables(env_vars):
     }
 
     for key, value in env_vars.items():
+        # Harbor parity: OH_<SECTION>__<KEY>=value sets [section] key = value in the
+        # OpenHands config.toml (e.g. OH_AGENT__CODEACT_ENABLE_BROWSING=false), so agent
+        # options can be aligned with the Harbor side. Unused unless such keys are set.
+        oh_match = re.match(r'^OH_([A-Z]+)__([A-Z0-9_]+)$', key)
+        if oh_match:
+            config.setdefault(oh_match.group(1).lower(), {})[oh_match.group(2).lower()] = _parse_toml_scalar(value)
+            continue
         # Check each pattern category
         for section, pattern_list in patterns.items():
             if any(re.match(pattern, key, re.IGNORECASE) for pattern in pattern_list):
@@ -526,7 +548,7 @@ def get_file_from_github(repo_url, file_path, branches=("main", "master")):
 
     raise Exception(f"File not found in branches {branches} for repo {repo_url}")
 
-def concatenate_setup_scripts(repo_url: str, setup_scripts: List[str]) -> str:
+def concatenate_setup_scripts(repo_url: str, setup_scripts: List[str], pinned_contents: Dict[str, Any] = None) -> str:
     """
     Concatenate setup scripts from a GitHub repository into a single string.
     
@@ -556,5 +578,13 @@ def concatenate_setup_scripts(repo_url: str, setup_scripts: List[str]) -> str:
     concatenated_setup_scripts = ""
     for script in setup_scripts:
         concatenated_setup_scripts += f"{script}:\n\n"
-        concatenated_setup_scripts += get_file_from_github(repo_url, script) + "\n\n"
+        if pinned_contents is not None:
+            # Harbor parity: file contents at the pinned commit, read from the task bundle
+            # (same text the Harbor adapter's judge receives) instead of main/master.
+            content = pinned_contents.get(script)
+            if content is None:
+                print(f"WARNING: no pinned content for {script}; using empty text (as the Harbor adapter does)")
+            concatenated_setup_scripts += (content or "") + "\n\n"
+        else:
+            concatenated_setup_scripts += get_file_from_github(repo_url, script) + "\n\n"
     return concatenated_setup_scripts

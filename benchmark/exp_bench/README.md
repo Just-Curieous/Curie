@@ -75,3 +75,11 @@ This is an optional script that will perform judging for all evaluation output c
 ```bash
 python evaluation/run_parallel_judge_evals.py
 ```
+## Harbor parity runs
+
+The `harbor-parity` branch adds `harbor_parity/`, which runs this harness on an explicit
+list of task ids with repositories pinned to fixed commits, an OpenAI-compatible judge
+endpoint and a configurable OpenHands version, for parity experiments against the
+[Harbor](https://github.com/harbor-framework/adapters) EXP-Bench adapter. See
+[harbor_parity/README.md](harbor_parity/README.md). Without its config keys the pipeline
+above behaves as before.

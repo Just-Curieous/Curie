@@ -1,0 +1,29 @@
+# Agent (OpenHands) LLM settings for Harbor parity runs.
+# Copy to evaluation/setup/env-parity-agent.sh (gitignored) and fill in.
+# helper/utils.py:setup_openhands_credential turns this into OpenHands' config.toml:
+#   MODEL -> [llm] model, *_API_KEY -> api_key, *_API_BASE -> base_url.
+# Use the same litellm model string as `harbor run -m` on the Harbor side; it also names
+# the output folder (outputs/evaluation/<conf>/<paper>/openhands/<MODEL with / : . -> ->).
+
+# OpenAI-compatible endpoint (e.g. the parity API https://app.ppapi.ai/v1):
+export MODEL="openai/<model-name>"
+export OPENAI_API_KEY="<api-key>"
+export OPENAI_API_BASE="https://app.ppapi.ai/v1"
+
+# Anthropic-compatible endpoint instead:
+# export MODEL="anthropic/<model-name>"
+# export ANTHROPIC_API_KEY="<api-key>"
+# export ANTHROPIC_API_BASE="https://app.ppapi.ai"
+
+# Native tool calling: Harbor's openhands agent always exports LLM_NATIVE_TOOL_CALLING=true
+# (default disable_tool_calls=False). OpenHands 0.27 otherwise uses native tool calling only
+# for a hard-coded list (gpt-4o, gpt-4o-mini, o1, o3-mini, claude-3.5/3.7 ...) and falls back to
+# prompt-based tools for any other model name. Keep this line for parity.
+export OH_LLM__NATIVE_TOOL_CALLING="true"
+
+# Optional OpenHands options written to config.toml as [section] key = value
+# (OH_<SECTION>__<KEY>), to align agent settings with the Harbor side once the OpenHands
+# version is fixed. Leave unset to keep upstream's settings. Examples:
+# export OH_AGENT__CODEACT_ENABLE_BROWSING="false"
+# export OH_AGENT__ENABLE_PROMPT_EXTENSIONS="false"
+# export OH_SANDBOX__ENABLE_AUTO_LINT="true"
