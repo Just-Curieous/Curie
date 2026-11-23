@@ -67,6 +67,8 @@ def get_model_context_length() -> int:
         "gemini-2.5-pro-preview-03-25": 200000,
     }
     model_name = get_model_name()
+    if model_name.startswith("claude-"):  # Harbor parity: 1M-token Claude judges, counted with tiktoken
+        return 650000
     return context_length_dict.get(model_name, 30000)
 
 class TokenCounter:
@@ -214,15 +216,12 @@ def call_oh_with_prompt(full_prompt: str, temp_prompt_path: str, config: dict, g
     # print("Sudo is available:", sudo_available)
     chmod_cmd = f"{'sudo ' if sudo_available else ''}chmod 777 -R {github_workspace_path}"
     # Compose command to run OpenHands. we use more iterations here since there may be a need to execute code too.
-    # Harbor parity: the OpenHands interpreter can be overridden for OpenHands versions
-    # that are not installed in a Python 3.12 poetry venv.
-    openhands_python = config.get("openhands_python", "/root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python")
     command = f"""
     export LOG_ALL_EVENTS=true && \
     {chmod_cmd} && \
     export WORKSPACE_BASE={config["base_dir"] + "/" + github_workspace_path} && \
     export SANDBOX_TIMEOUT=600 && \
-    {openhands_python} \
+    /root/.cache/pypoetry/virtualenvs/openhands-ai-*-py3.12/bin/python \
     -m openhands.core.main \
     -f {temp_prompt_path} \
     --config-file "workspace/config.toml" \
@@ -380,8 +379,6 @@ def get_model_name() -> str:
 def get_input_price_per_token() -> float:
     """Get the price per token for input text."""
     model_name = get_model_name()
-    # Harbor parity: models outside the table (e.g. served through an OpenAI-compatible
-    # proxy) get 0 cost instead of a KeyError; cost is only bookkeeping.
     return get_all_price_per_1k_tokens().get(model_name, {"input": 0.0})["input"] / 1000
 
 def get_output_price_per_token() -> float:
@@ -418,16 +415,6 @@ def parse_env_string(env_string):
                 env_vars[key] = value
                 
     return env_vars
-
-def _parse_toml_scalar(value: str):
-    if value.lower() in ("true", "false"):
-        return value.lower() == "true"
-    for cast in (int, float):
-        try:
-            return cast(value)
-        except ValueError:
-            pass
-    return value
 
 def categorize_variables(env_vars):
     """Categorize environment variables into config sections."""
@@ -471,13 +458,6 @@ def categorize_variables(env_vars):
     }
 
     for key, value in env_vars.items():
-        # Harbor parity: OH_<SECTION>__<KEY>=value sets [section] key = value in the
-        # OpenHands config.toml (e.g. OH_AGENT__CODEACT_ENABLE_BROWSING=false), so agent
-        # options can be aligned with the Harbor side. Unused unless such keys are set.
-        oh_match = re.match(r'^OH_([A-Z]+)__([A-Z0-9_]+)$', key)
-        if oh_match:
-            config.setdefault(oh_match.group(1).lower(), {})[oh_match.group(2).lower()] = _parse_toml_scalar(value)
-            continue
         # Check each pattern category
         for section, pattern_list in patterns.items():
             if any(re.match(pattern, key, re.IGNORECASE) for pattern in pattern_list):
@@ -579,12 +559,60 @@ def concatenate_setup_scripts(repo_url: str, setup_scripts: List[str], pinned_co
     for script in setup_scripts:
         concatenated_setup_scripts += f"{script}:\n\n"
         if pinned_contents is not None:
-            # Harbor parity: file contents at the pinned commit, read from the task bundle
-            # (same text the Harbor adapter's judge receives) instead of main/master.
-            content = pinned_contents.get(script)
-            if content is None:
-                print(f"WARNING: no pinned content for {script}; using empty text (as the Harbor adapter does)")
-            concatenated_setup_scripts += (content or "") + "\n\n"
+            concatenated_setup_scripts += (pinned_contents.get(script) or "") + "\n\n"
         else:
             concatenated_setup_scripts += get_file_from_github(repo_url, script) + "\n\n"
     return concatenated_setup_scripts
+
+def truncate_middle(text: str, max_tokens: int) -> str:
+    """Harbor parity: keep the head and tail of a log that would not fit the judge context
+    (upstream fails with a context-length error), as the Harbor adapter does."""
+    try:
+        counter = tiktoken.encoding_for_model(get_model_name())
+    except KeyError:
+        counter = tiktoken.get_encoding("cl100k_base")
+    if len(counter.encode(text, disallowed_special=())) <= max_tokens:
+        return text
+    encoding = tiktoken.get_encoding("cl100k_base")
+    tokens = encoding.encode(text, disallowed_special=())
+    half = max(max_tokens // 2, 1000)
+    return encoding.decode(tokens[:half]) + "\n\n... [log truncated to fit the judge context] ...\n\n" + encoding.decode(tokens[-half:])
+
+def call_claude_code_with_prompt(full_prompt: str, config: dict, github_workspace_path: str, log_path: str, max_duration_per_task_in_seconds: int = 3600):
+    """Harbor parity: run Claude Code with the install command, environment and flags of
+    Harbor's claude-code agent, in a sandbox container with the repository at /workspace
+    (like the OpenHands sandbox). The console stream is the monitor's input."""
+    name = f"exp-bench-claude-code-{os.getpid()}"
+    log_dir = log_path + ".claude-code"
+    os.makedirs(log_dir, exist_ok=True)
+    subprocess.run(["docker", "run", "-d", "--rm", "--name", name, "-w", "/workspace",
+                    "-v", f"{config['base_dir']}/{github_workspace_path}:/workspace",
+                    "-v", f"{config['base_dir']}/{log_dir}:/logs/agent",
+                    *config.get("sandbox_docker_args", []),
+                    config.get("sandbox_image", "nikolaik/python-nodejs:python3.12-nodejs22"), "sleep", "infinity"], check=True)
+    model = os.environ["MODEL"].split("/")[-1]
+    env = {"ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", ""), "ANTHROPIC_AUTH_TOKEN": "", "ANTHROPIC_MODEL": model,
+           "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "IS_SANDBOX": "1", "CLAUDE_CONFIG_DIR": "/logs/agent/sessions"}
+    if os.environ.get("ANTHROPIC_BASE_URL"):
+        env["ANTHROPIC_BASE_URL"] = os.environ["ANTHROPIC_BASE_URL"]
+        env.update({k: model for k in ("ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+                                       "ANTHROPIC_DEFAULT_FABLE_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL")})
+    docker_exec = ["docker", "exec", "-i", *[a for k, v in env.items() for a in ("-e", f"{k}={v}")], name, "bash", "-c"]
+    try:
+        subprocess.run(docker_exec + [
+            "command -v ps >/dev/null || (apt-get update -qq && apt-get install -y -qq procps); "
+            "set -euo pipefail; curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh"
+            f" | bash -s -- {config['claude_code_version']} && "
+            "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc && export PATH=\"$HOME/.local/bin:$PATH\" && claude --version && "
+            "mkdir -p $CLAUDE_CONFIG_DIR/debug $CLAUDE_CONFIG_DIR/projects/-app $CLAUDE_CONFIG_DIR/shell-snapshots "
+            "$CLAUDE_CONFIG_DIR/statsig $CLAUDE_CONFIG_DIR/todos $CLAUDE_CONFIG_DIR/skills"], check=True)
+        subprocess.run(docker_exec + [
+            'export PATH="$HOME/.local/bin:$PATH"; claude --verbose --output-format=stream-json '
+            f'{config.get("claude_code_flags", "--permission-mode=bypassPermissions")} --print 2>&1 | tee /logs/agent/claude-code.txt'],
+            input=full_prompt, text=True, timeout=max_duration_per_task_in_seconds)
+    except subprocess.TimeoutExpired:  # graded like any other run, as Harbor does after an agent timeout
+        print(f"Claude Code timed out after {max_duration_per_task_in_seconds} s", flush=True)
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+        if os.path.exists(f"{log_dir}/claude-code.txt"):
+            shutil.copyfile(f"{log_dir}/claude-code.txt", log_path)

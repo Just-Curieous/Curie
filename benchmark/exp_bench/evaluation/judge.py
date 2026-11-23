@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from concurrent.futures import ProcessPoolExecutor
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, print_exception_and_traceback, get_messages_needed, breakdown_message, concatenate_setup_scripts
+from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, print_exception_and_traceback, get_messages_needed, breakdown_message, concatenate_setup_scripts, truncate_middle, get_model_context_length
 from utils import get_relative_output_path_eval
 from exp_bench.model import llm_query_plain
 
@@ -32,27 +32,21 @@ def run_command(cmd, cwd=None):
         bench_logger.error(f"Command failed with return code {result.returncode}")
     return result
 
-def load_pinned_setup_scripts(config: dict, task_counter: int):
-    """Harbor parity: ground-truth source files at the pinned commit, from the task bundle.
-    Returns None (upstream behaviour: download from main/master) when not configured."""
-    filename = config.get("pinned_setup_scripts_filename")
-    if not filename:
-        return None
-    with open(filename, 'r') as f:
-        return json.load(f)[str(task_counter)]
-
 def extract_setup_scripts(task_data: dict, config: dict, task_counter: int = None):
-    pinned_contents = load_pinned_setup_scripts(config, task_counter) if task_counter is not None else None
+    pinned = None
+    if config.get("pinned_setup_scripts_filename"):  # Harbor parity: sources at the pinned commit
+        with open(config["pinned_setup_scripts_filename"]) as f:
+            pinned = json.load(f)[str(task_counter)]
     if "masked_source" in task_data:
         # Extract the setup scripts from the task data:
         setup_scripts = task_data["masked_source"]
         # Concatenate the setup scripts into a single string:
-        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts, pinned_contents)
+        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts, pinned)
     elif "source" in task_data:
         # Extract the setup scripts from the task data:
         setup_scripts = task_data["source"]
         # Concatenate the setup scripts into a single string:
-        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts, pinned_contents)
+        concatenated_setup_scripts = concatenate_setup_scripts(config["github_url"], setup_scripts, pinned)
     else:
         concatenated_setup_scripts = ""
 
@@ -120,7 +114,7 @@ def generate_task_prompt(task_data: dict, config: dict, task_counter: int):
     # Load the logs:
     oh_log_path = get_relative_log_path(config, task_counter)
     with open(oh_log_path, 'r') as f:
-        logs = f.read()
+        logs = truncate_middle(f.read(), get_model_context_length() - 20000)  # Harbor parity
 
     prompt_content_template = load_prompt_from_file(eval_judge_setup_monitor_prompt_filename)
     task_monitor_prompt = load_system_prompt(
@@ -664,10 +658,9 @@ def main(
     with open(config["input_paper_tasks_filename"], 'r') as f:
         paper_tasks_complete = json.load(f)
     tasks_list = []
-    # Harbor parity: judge only the selected task indices when "specific_tasks" is given.
-    selected = {int(spec[1]) for spec in config["specific_tasks"]} if "specific_tasks" in config else None
+    selected = {int(t[1]) for t in config.get("specific_tasks", [])}  # Harbor parity
     for task_counter, task in enumerate(paper_tasks_complete["questions"]):
-        if selected is not None and task_counter not in selected:
+        if selected and task_counter not in selected:
             continue
         # Check if eval_gen.json exists for this task:
         output_file = get_relative_output_path_eval(config, task_counter, config["iteration"], "generate")

@@ -157,11 +157,6 @@ def run_docker_container(unique_id, iteration, task_config):
     subprocess.run(command, check=True) 
     return container_name
 
-def _docker_exec_tty_flag():
-    """Upstream uses `docker exec -it`, which fails without a terminal (nohup, CI).
-    Keep -it when stdin is a terminal, otherwise drop the TTY."""
-    return "-it" if sys.stdin.isatty() else "-i"
-
 # Function to execute the experiment inside the Docker container
 def execute_experiment_in_container(container_name, task_config, config_filename):
     """
@@ -187,7 +182,7 @@ def execute_experiment_in_container(container_name, task_config, config_filename
         if "generate" == task_config["mode"]:
             # Run the experiment inside the container  
             subprocess.run([
-                "docker", "exec", _docker_exec_tty_flag(), container_name,
+                "docker", "exec", "-i", container_name,
                 "bash", "-c", (
                     # "source ~/.bashrc && "
                     # "ls -la exp-bench && "
@@ -200,7 +195,7 @@ def execute_experiment_in_container(container_name, task_config, config_filename
         elif "judge" == task_config["mode"]:
             # Run the experiment inside the container
             subprocess.run([
-                "docker", "exec", _docker_exec_tty_flag(), container_name,
+                "docker", "exec", "-i", container_name,
                 "bash", "-c", (
                     # "source ~/.bashrc && "
                     f"source {task_config["llm_judge_config_filename"]} && "
@@ -260,10 +255,6 @@ def execute_eval(unique_id, iteration, task_config):
             cleanup_docker_container(container_name)
         if task_config.get("prune_docker_after_paper", True):
             run_prune_commands()
-        else:
-            # Harbor parity option for shared Docker hosts: only remove OpenHands sandboxes,
-            # not every stopped container, dangling image, volume and build cache.
-            prune_openhands_docker()
         pass
     
 def main():
@@ -279,7 +270,6 @@ def main():
     print(f"EXP-Bench main eval is running with the following configuration: {task_config}")
     iterations = task_config.get("iterations", 1)
     unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
-    # Harbor parity: "iteration_list" runs only the given iterations (e.g. [2] for run 2).
     for iteration in task_config.get("iteration_list") or range(1, iterations + 1):
         # Perform the required operation for each iteration (to be provided later)
         # print(f"Iteration {iteration} ")

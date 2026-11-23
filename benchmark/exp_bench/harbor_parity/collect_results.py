@@ -1,34 +1,9 @@
-"""Turn upstream EXP-Bench judge outputs into Harbor reward values and compare with Harbor.
+"""Compare original-side and Harbor scores for the parity subset.
 
-Per task and run, the upstream ``*_eval_judge.json`` is converted with exactly the
-definitions of the Harbor adapter's ``tests/judge.py`` (``/logs/verifier/reward.json``):
-
-  design          = clamp(float(design_score), 0, 100) / 100   (non-numeric -> 0)
-  implementation  = clamp(float(setup_score), 0, 100) / 100     (non-numeric -> 0)
-  conclusion      = 1 if conclusion_score.strip().lower() == "correct" else 0
-  execution       = 1 if execution_success is True else 0
-  implementation_and_execution = implementation == 1 and execution == 1
-  all_correct     = design == 1 and implementation == 1 and conclusion == 1
-  all_correct_and_execution = all_correct and execution == 1
-  monitor_pass    = 0 if the log monitor flagged the run (upstream then writes
-                    setup_monitor_comprehensive_reason and zero scores), else 1
-  reward          = conclusion
-
-A missing judge file (or a Harbor trial without rewards) counts as 0 for every metric
-by default and is listed; use ``--missing exclude`` to drop such tasks from that run.
-
-Statistics, per metric (values in [0, 1], printed as percentages):
-  run mean        mean over tasks within one run
-  mean +/- SEM    mean of the run means, sample standard error (ddof=1) across runs
-  range overlap   whether [min, max] of the original run means and of the Harbor run
-                  means overlap
-  per-task MSE    mean over tasks of (original per-task mean - Harbor per-task mean)^2,
-                  where per-task means average that task's runs on each side
-
-Usage (from benchmark/exp_bench):
-  python harbor_parity/collect_results.py --agent-env evaluation/setup/env-parity-agent.sh \
-      --iterations 1 2 3 --harbor-jobs /path/to/jobs/run1 /path/to/jobs/run2 /path/to/jobs/run3 \
-      --out outputs/harbor_parity/parity_results.json
+Original-side eval_judge.json files are converted with the reward definitions of the
+adapter's tests/judge.py. Per metric: mean +/- sample SEM of the run means on each side,
+whether the [min, max] ranges of run means overlap, and the per-task MSE. A task without
+a result counts as 0 (--missing exclude drops it).
 """
 
 from __future__ import annotations
@@ -149,7 +124,7 @@ def harbor_task_id(result: dict, trial_dir: Path) -> str | None:
     return None
 
 
-def load_harbor(job_dirs: list[Path], task_ids: list[str], agent_timeout: str = "keep") -> list[dict]:
+def load_harbor(job_dirs: list[Path], task_ids: list[str]) -> list[dict]:
     """Each job directory is one run; a job with k trials per task gives k runs (ordered by
     trial start time)."""
     runs = []
@@ -165,12 +140,8 @@ def load_harbor(job_dirs: list[Path], task_ids: list[str], agent_timeout: str = 
             rewards = (result.get("verifier_result") or {}).get("rewards")
             note = ""
             exc_type = (result.get("exception_info") or {}).get("exception_type")
-            if exc_type == "AgentTimeoutError" and agent_timeout == "zero":
-                # Upstream never judges a timed-out task (call_oh_with_prompt raises), so this
-                # scores Harbor timeouts the way the original side ends up scoring them.
-                rewards, note = {m: 0.0 for m in METRICS}, "agent timeout scored as 0 (--harbor-agent-timeout zero)"
-            elif exc_type == "AgentTimeoutError":
-                note = "agent timeout (graded by Harbor)"
+            if exc_type == "AgentTimeoutError":
+                note = "agent timeout"
             if not rewards:
                 reward_json = result_path.parent / "verifier" / "reward.json"
                 if reward_json.exists():
@@ -292,7 +263,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--task-ids", nargs="+", default=[str(DEFAULT_TASK_IDS)])
     parser.add_argument("--original-root", default="outputs/evaluation")
-    parser.add_argument("--agent-name", default="openhands")
+    parser.add_argument("--agent-name", default="claude-code")
     model = parser.add_mutually_exclusive_group()
     model.add_argument("--agent-env", help="Agent env file used for generation (gives the output folder name).")
     model.add_argument("--model-id", help="Output folder model name, e.g. openai-gpt-4o-mini.")
@@ -300,9 +271,6 @@ def main() -> None:
     parser.add_argument("--iterations", type=int, nargs="*", default=[1], help="Original-side iterations (runs).")
     parser.add_argument("--harbor-jobs", type=Path, nargs="*", default=[], help="Harbor job directories (one run each).")
     parser.add_argument("--missing", choices=["zero", "exclude"], default="zero")
-    parser.add_argument("--harbor-agent-timeout", choices=["keep", "zero"], default="keep",
-                        help="Harbor grades runs that hit the agent timeout; upstream writes no output for them "
-                             "(counted as missing). 'zero' scores Harbor timeouts as 0 to match.")
     parser.add_argument("--out", type=Path, help="Write the full results (summary + per-task values) as JSON.")
     args = parser.parse_args()
     if args.iterations and not (args.agent_env or args.model_id):
@@ -311,7 +279,7 @@ def main() -> None:
 
     task_ids = read_task_ids(args.task_ids)
     original = load_original(args, task_ids) if args.iterations else []
-    harbor = load_harbor(args.harbor_jobs, task_ids, args.harbor_agent_timeout)
+    harbor = load_harbor(args.harbor_jobs, task_ids)
     summary = summarize(original, harbor, args.missing)
     print_report(summary, original, harbor)
     if args.out:

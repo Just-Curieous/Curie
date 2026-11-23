@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from concurrent.futures import ProcessPoolExecutor
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, print_exception_and_traceback, _collect_inspectai_cost
+from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, call_claude_code_with_prompt, print_exception_and_traceback, _collect_inspectai_cost
 
 from helper.logger import init_logger
 def setup_gen_setup_logging(log_filename: str):
@@ -145,11 +145,7 @@ def update_submodules(repo_path: str, shallow: bool = False):
 
         # Sync and update submodules
         os.system("git submodule sync")
-        if shallow:
-            # Harbor parity: same command as the Harbor adapter's prepare_workspace.sh.
-            os.system("git submodule update --init --recursive --depth 1 || git submodule update --init --recursive")
-        else:
-            os.system("git submodule update --init --recursive")
+        os.system("git submodule update --init --recursive --depth 1 || git submodule update --init --recursive" if shallow else "git submodule update --init --recursive")
 
         print("✅ Submodules synced and updated.")
     except Exception as e:
@@ -158,17 +154,10 @@ def update_submodules(repo_path: str, shallow: bool = False):
         os.chdir(original_dir)  # Change back to original dir
         print(f"↩️ Returned to original dir: {original_dir}")
 
-def git_clone_repo(github_url, base_dir="workspace", suffix="", commit=None, setup_apis_source="evaluation/setup", exclude_setup_apis=False):
+def git_clone_repo(github_url, base_dir="workspace", suffix="", commit=None, setup_apis_source="evaluation/setup"):
     """
     Clones the GitHub repo into base_dir/ (letting git decide the folder name),
     and returns the expected full path of the cloned repo.
-
-    Harbor parity options (the defaults keep the upstream behaviour):
-        commit: fetch only this commit, shallow, as the Harbor adapter's
-            prepare_workspace.sh does, instead of cloning the default branch HEAD.
-        setup_apis_source: directory copied into the repo as setup_apis_exp/.
-        exclude_setup_apis: add setup_apis_exp/ to .git/info/exclude so it stays out of
-            the judged git diff (as in the Harbor adapter).
     """
     # Get repo name from URL (e.g., 'repo.git' → 'repo')
     repo_name = os.path.splitext(os.path.basename(urlparse(github_url).path))[0]
@@ -181,16 +170,11 @@ def git_clone_repo(github_url, base_dir="workspace", suffix="", commit=None, set
         print(f"WARNING: Normal repo path already exists. Creating unique repo path with timestamp: {expected_path}")
         bench_logger.info(f"WARNING: Normal repo path already exists. Creating unique repo path with timestamp: {expected_path}")
 
-    if commit:
-        # Harbor parity: check out the pinned commit with the same shallow fetch as the
-        # Harbor adapter (git init + fetch --depth 1 <commit> + checkout FETCH_HEAD).
-        print(f"Fetching pinned commit {commit} of {github_url}")
-        bench_logger.info(f"Fetching pinned commit {commit} of {github_url}")
+    if commit:  # Harbor parity: shallow fetch of a pinned commit
         os.makedirs(expected_path)
-        subprocess.run(["git", "init", "-q", "."], cwd=expected_path, check=True)
-        subprocess.run(["git", "remote", "add", "origin", github_url], cwd=expected_path, check=True)
-        subprocess.run(["git", "fetch", "-q", "--depth", "1", "origin", commit], cwd=expected_path, check=True)
-        subprocess.run(["git", "checkout", "-q", "FETCH_HEAD"], cwd=expected_path, check=True)
+        for cmd in (["git", "init", "-q"], ["git", "remote", "add", "origin", github_url],
+                    ["git", "fetch", "-q", "--depth", "1", "origin", commit], ["git", "checkout", "-q", "FETCH_HEAD"]):
+            subprocess.run(cmd, cwd=expected_path, check=True)
     else:
         # Clone without specifying destination (git will create repo_name folder)
         subprocess.run(["git", "clone", github_url, expected_path], check=True)
@@ -204,7 +188,7 @@ def git_clone_repo(github_url, base_dir="workspace", suffix="", commit=None, set
 
     # Copy setup (containing credentialsfiles into cloned repo
     shutil.copytree(setup_apis_source, os.path.join(expected_path, "setup_apis_exp"), dirs_exist_ok=True)
-    if exclude_setup_apis:
+    if commit:  # Harbor parity: keep the credentials folder out of the judged diff
         with open(os.path.join(expected_path, ".git", "info", "exclude"), "a") as f:
             f.write("setup_apis_exp/\n")
 
@@ -234,7 +218,7 @@ def generate_task_prompt(task_data: dict, config: dict, task_counter: int):
 
     eval_gen_prompt_filename = config["eval_gen_prompt"]
 
-    if config["agent_name"] in ["openhands", "inspectai"]:
+    if config["agent_name"] in ["openhands", "inspectai", "claude-code"]:
         output_path = get_agent_relative_output_path(config, task_counter)
         output_script_name = "/workspace/reproduce_exp_bench.sh"
         additional_info = "The code repo is available in /workspace. LLM related credentials (if needed) are available in /workspace/setup_apis_exp/"
@@ -328,6 +312,8 @@ def _query_agent(config, task_prompt, task_counter, github_workspace_path):
             call_oh_with_prompt(task_prompt, temp_prompt_path, config, github_workspace_path, agent_log_path, max_duration_per_task_in_seconds=config["max_duration_per_task_in_hours"] * 3600, iterations=30)
         elif config["agent_name"] == "inspectai":
             _query_inspectai(config, task_prompt, task_counter, github_workspace_path, agent_log_path)
+        elif config["agent_name"] == "claude-code":
+            call_claude_code_with_prompt(task_prompt, config, github_workspace_path, agent_log_path, max_duration_per_task_in_seconds=config["max_duration_per_task_in_hours"] * 3600)
         else:
             raise ValueError(f"Agent {config['agent_name']} not supported")
 
@@ -368,7 +354,7 @@ def _query_agent(config, task_prompt, task_counter, github_workspace_path):
 
 def query_agent(config: dict, task_prompt: str, repo_path: str, task_counter: int):
     start_time = time.time()
-    if config["agent_name"] in ["openhands", "inspectai"]:
+    if config["agent_name"] in ["openhands", "inspectai", "claude-code"]:
         _query_agent(config, task_prompt, task_counter, repo_path)
         # Calculate agent cost:
         agent_cost_path = get_agent_cost_relative_log_path(config, task_counter)
@@ -477,13 +463,8 @@ def process_inputs(config: dict, task_data: dict, task_counter: int):
 
     print("Cloning GitHub repo...")
     bench_logger.info("Generating task prompt...")
-    repo_path = git_clone_repo(
-        config["github_url"],
-        suffix=f"_eval_task_index_{task_counter}_iter_{str(config["iteration"])}_duration_{config['max_duration_per_task_in_hours']}",
-        commit=config.get("pinned_commit"),  # Harbor parity; absent = upstream HEAD clone
-        setup_apis_source=config.get("setup_apis_source", "evaluation/setup"),
-        exclude_setup_apis=config.get("exclude_setup_apis_from_diff", False),
-    )
+    repo_path = git_clone_repo(config["github_url"], suffix=f"_eval_task_index_{task_counter}_iter_{str(config["iteration"])}_duration_{config['max_duration_per_task_in_hours']}",
+                               commit=config.get("pinned_commit"), setup_apis_source=config.get("setup_apis_source", "evaluation/setup"))
 
     print("Masking repo...")
     bench_logger.info("Masking repo...")
@@ -570,20 +551,6 @@ def process_task(args):
     # - Question prompt construction: hypothesis+method+agent_instruction
     # - Repo related: (1) clone repo, (2) remove scripts according to masked_source
     task_prompt, repo_path, is_mask_fail = process_inputs(config, task_data, task_counter)
-
-    if config.get("dry_run_stop_before_agent"):
-        # Harbor parity dry run: stop before the first LLM call; keep the prompt and the
-        # masked workspace state for inspection. Nothing is written to the eval_gen path.
-        dry_run_path = get_relative_log_path(config, task_counter).replace("_logs.txt", "_dry_run.json")
-        os.makedirs(os.path.dirname(dry_run_path), exist_ok=True)
-        status = subprocess.run("git -c core.fileMode=false status --short --ignored | head -50; git log -1 --format='%H %ci'", shell=True, capture_output=True, text=True, cwd=repo_path)
-        with open(dry_run_path, 'w') as f:
-            json.dump({"task_counter": task_counter, "repo_path": repo_path, "is_mask_fail": is_mask_fail,
-                       "pinned_commit": config.get("pinned_commit"), "git_status_and_head": status.stdout,
-                       "task_prompt": task_prompt}, f, indent=2)
-        print(f"Dry run: stopping before the agent call. Details in {dry_run_path}")
-        bench_logger.info(f"Dry run: stopping before the agent call. Details in {dry_run_path}")
-        return
 
     # Call LLM with appropriate prompts: use appropriate agent
     # - design+conclusion output file: if not saved in correct place repeat x runs
