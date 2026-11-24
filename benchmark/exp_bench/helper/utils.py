@@ -9,6 +9,7 @@ import requests
 import shutil
 import subprocess
 import time
+import uuid
 from pathlib import Path
 import toml
 from typing import List, Dict, Any
@@ -583,7 +584,7 @@ def call_claude_code_with_prompt(full_prompt: str, config: dict, github_workspac
     """Harbor parity: run Claude Code with the install command, environment and flags of
     Harbor's claude-code agent, in a sandbox container with the repository at /workspace
     (like the OpenHands sandbox). The console stream is the monitor's input."""
-    name = f"exp-bench-claude-code-{os.getpid()}"
+    name = f"exp-bench-claude-code-{uuid.uuid4().hex[:12]}"
     log_dir = log_path + ".claude-code"
     os.makedirs(log_dir, exist_ok=True)
     subprocess.run(["docker", "run", "-d", "--rm", "--name", name, "-w", "/workspace",
