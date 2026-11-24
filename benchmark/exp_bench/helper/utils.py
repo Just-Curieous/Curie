@@ -8,6 +8,7 @@ import traceback
 import requests
 import shutil
 import subprocess
+import time
 from pathlib import Path
 import toml
 from typing import List, Dict, Any
@@ -597,19 +598,25 @@ def call_claude_code_with_prompt(full_prompt: str, config: dict, github_workspac
         env["ANTHROPIC_BASE_URL"] = os.environ["ANTHROPIC_BASE_URL"]
         env.update({k: model for k in ("ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
                                        "ANTHROPIC_DEFAULT_FABLE_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL")})
-    docker_exec = ["docker", "exec", "-i", *[a for k, v in env.items() for a in ("-e", f"{k}={v}")], name, "bash", "-c"]
+    docker_exec = ["docker", "exec", "-i", *[a for k in env for a in ("-e", k)], name, "bash", "-c"]  # values via env, not argv
+    env = {**os.environ, **env}
     try:
-        subprocess.run(docker_exec + [
+        for attempt in range(3):  # network retries for the install
+            if subprocess.run(docker_exec + [
             "command -v ps >/dev/null || (apt-get update -qq && apt-get install -y -qq procps); "
             "set -euo pipefail; curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh"
             f" | bash -s -- {config['claude_code_version']} && "
             "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc && export PATH=\"$HOME/.local/bin:$PATH\" && claude --version && "
             "mkdir -p $CLAUDE_CONFIG_DIR/debug $CLAUDE_CONFIG_DIR/projects/-app $CLAUDE_CONFIG_DIR/shell-snapshots "
-            "$CLAUDE_CONFIG_DIR/statsig $CLAUDE_CONFIG_DIR/todos $CLAUDE_CONFIG_DIR/skills"], check=True)
+            "$CLAUDE_CONFIG_DIR/statsig $CLAUDE_CONFIG_DIR/todos $CLAUDE_CONFIG_DIR/skills"], env=env).returncode == 0:
+                break
+            time.sleep(30 * (attempt + 1))
+        else:
+            raise RuntimeError("Claude Code install failed")
         subprocess.run(docker_exec + [
             'export PATH="$HOME/.local/bin:$PATH"; claude --verbose --output-format=stream-json '
             f'{config.get("claude_code_flags", "--permission-mode=bypassPermissions")} --print 2>&1 | tee /logs/agent/claude-code.txt'],
-            input=full_prompt, text=True, timeout=max_duration_per_task_in_seconds)
+            input=full_prompt, text=True, env=env, timeout=max_duration_per_task_in_seconds)
     except subprocess.TimeoutExpired:  # graded like any other run, as Harbor does after an agent timeout
         print(f"Claude Code timed out after {max_duration_per_task_in_seconds} s", flush=True)
     finally:

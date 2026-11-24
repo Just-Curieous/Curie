@@ -172,9 +172,13 @@ def git_clone_repo(github_url, base_dir="workspace", suffix="", commit=None, set
 
     if commit:  # Harbor parity: shallow fetch of a pinned commit
         os.makedirs(expected_path)
-        for cmd in (["git", "init", "-q"], ["git", "remote", "add", "origin", github_url],
-                    ["git", "fetch", "-q", "--depth", "1", "origin", commit], ["git", "checkout", "-q", "FETCH_HEAD"]):
-            subprocess.run(cmd, cwd=expected_path, check=True)
+        subprocess.run(["git", "init", "-q"], cwd=expected_path, check=True)
+        subprocess.run(["git", "remote", "add", "origin", github_url], cwd=expected_path, check=True)
+        for attempt in range(5):  # network retries over HTTP/1.1, as the adapter does
+            if subprocess.run(["git", "-c", "http.version=HTTP/1.1", "fetch", "-q", "--depth", "1", "origin", commit], cwd=expected_path).returncode == 0:
+                break
+            time.sleep(10 * (attempt + 1))
+        subprocess.run(["git", "checkout", "-q", "FETCH_HEAD"], cwd=expected_path, check=True)
     else:
         # Clone without specifying destination (git will create repo_name folder)
         subprocess.run(["git", "clone", github_url, expected_path], check=True)
