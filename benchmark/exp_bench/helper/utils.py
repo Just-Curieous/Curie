@@ -587,10 +587,12 @@ def call_claude_code_with_prompt(full_prompt: str, config: dict, github_workspac
     name = f"exp-bench-claude-code-{uuid.uuid4().hex[:12]}"
     log_dir = log_path + ".claude-code"
     os.makedirs(log_dir, exist_ok=True)
+    has_gpu = shutil.which("nvidia-smi") is not None and subprocess.call(["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+    gpu_args = ["--gpus", config.get("sandbox_gpus", "all")] if has_gpu else []  # as upstream's OpenHands sandbox
     subprocess.run(["docker", "run", "-d", "--rm", "--name", name, "-w", "/workspace",
                     "-v", f"{config['base_dir']}/{github_workspace_path}:/workspace",
                     "-v", f"{config['base_dir']}/{log_dir}:/logs/agent",
-                    *config.get("sandbox_docker_args", []),
+                    *config.get("sandbox_docker_args", []), *gpu_args,
                     config.get("sandbox_image", "nikolaik/python-nodejs:python3.12-nodejs22"), "sleep", "infinity"], check=True)
     model = os.environ["MODEL"].split("/")[-1]
     env = {"ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", ""), "ANTHROPIC_AUTH_TOKEN": "", "ANTHROPIC_MODEL": model,

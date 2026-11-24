@@ -17,12 +17,14 @@ harness behaves as upstream.
 | Build arguments for version pins | `ExpDockerfile_default`, `build_image.sh` | The floating versions upstream installs no longer build the image. |
 | Selected iterations, optional docker prune, `docker exec -i` | `evaluation/main_eval.py` | Run 2 and 3 separately; keep other containers on shared hosts; run without a TTY. |
 
-Task list and records: `data/parity_task_ids.txt` (the adapter's parity subset) and
+Task list and records: `data/parity_task_ids.txt` (the adapter's parity subset, 57 tasks) and
 `data/exp_bench_tasks.json.gz` (the adapter's task bundle).
 
 ## Run
 
-From `benchmark/exp_bench` on a Linux x86_64 host with Docker and Python ≥ 3.12, without GPUs:
+From `benchmark/exp_bench` on a Linux x86_64 host with Docker, Python ≥ 3.12 and NVIDIA GPUs
+(each sandbox gets `--gpus 1`, as each parity task does on the Harbor side; `--sandbox-gpus`
+changes it):
 
 ```bash
 harbor_parity/build_image.sh

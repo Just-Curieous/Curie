@@ -162,6 +162,7 @@ def build_config(args, conference, paper_id, rec0, indices, iterations, model_id
         "claude_code_version": args.claude_code_version,
         "claude_code_flags": args.claude_code_flags,
         "sandbox_docker_args": ["--cpus", str(args.sandbox_cpus), "--memory", args.sandbox_memory],
+        "sandbox_gpus": args.sandbox_gpus,
     }
 
 
@@ -182,6 +183,7 @@ def main() -> None:
                         help="CLI flags of Harbor's claude-code agent for the same kwargs.")
     parser.add_argument("--sandbox-cpus", type=int, default=4, help="As cpus in the adapter's task.toml.")
     parser.add_argument("--sandbox-memory", default="16g", help="As memory_mb in the adapter's task.toml.")
+    parser.add_argument("--sandbox-gpus", default="1", help="docker run --gpus value on GPU hosts (the adapter's parity tasks use 1).")
     parser.add_argument("--docker-image", default="exp-bench-image")
     parser.add_argument("--output-root", default="outputs/evaluation")
     parser.add_argument("--source-cache", type=Path, default=SOURCE_CACHE_DIR)
