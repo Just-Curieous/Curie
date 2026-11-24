@@ -13,7 +13,7 @@ harness behaves as upstream.
 | Pinned repository commits | `evaluation/eval.py:git_clone_repo` | Upstream clones `HEAD`; the adapter pins each repository to the commit before its tasks were built. |
 | Ground-truth sources at the pinned commit | `evaluation/judge.py`, `helper/utils.py:concatenate_setup_scripts` | Upstream downloads them from `main`/`master` at judge time. |
 | OpenAI-compatible judge endpoint, Claude judges | `model.py` | Upstream supports Azure only. Claude models need a non-empty user turn, a strict JSON schema and no temperature; prompts are unchanged. |
-| Monitor log truncated to the judge context | `evaluation/judge.py`, `helper/utils.py:truncate_middle` | Upstream fails with a context-length error on long logs; same rule as the adapter. |
+| Monitor log truncated to the judge context; patch chunks leave room for the reference files | `evaluation/judge.py`, `helper/utils.py` | Upstream fails with a context-length error on long logs or when large reference files are added to full-size chunks; same rules as the adapter. |
 | Build arguments for version pins | `ExpDockerfile_default`, `build_image.sh` | The floating versions upstream installs no longer build the image. |
 | Selected iterations, optional docker prune, `docker exec -i` | `evaluation/main_eval.py` | Run 2 and 3 separately; keep other containers on shared hosts; run without a TTY. |
 

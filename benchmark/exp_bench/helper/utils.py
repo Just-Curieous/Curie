@@ -19,11 +19,11 @@ def setup_utils_logging(log_filename: str):
     global bench_logger 
     bench_logger = init_logger(log_filename)
 
-def get_messages_needed(msg: str):
+def get_messages_needed(msg: str, reserve: int = 0):
     """Get the number of messages needed to fit within the context length."""
     token_counter = TokenCounter()
     context_length = get_model_context_length()
-    max_tokens = context_length - 1000  # Reserve tokens for response
+    max_tokens = max(context_length - 1000 - reserve, 1000)  # Reserve tokens for response
     # Get number of distinct messages needed to not exceed context length:
     # 1. Count the number of tokens in the message
     # 2. Calculate the number of messages needed to fit within the context length
@@ -35,12 +35,12 @@ def get_messages_needed(msg: str):
     # print(f"Number of messages needed: {num_messages}")
     return num_messages
 
-def breakdown_message(msg: str, num_messages: int):
+def breakdown_message(msg: str, num_messages: int, reserve: int = 0):
     """Break down msg into a list of smaller msg based on num_messages."""
 
     token_counter = TokenCounter()
     context_length = get_model_context_length()
-    max_tokens = context_length - 10000  # Reserve tokens for response
+    max_tokens = max(context_length - 10000 - reserve, 1000)  # Reserve tokens for response
     # Split the message into smaller messages
     chunks = text_splitter_by_tokens(msg, max_tokens, token_counter)
     # messages = []

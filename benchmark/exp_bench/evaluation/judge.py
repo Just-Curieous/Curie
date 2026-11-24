@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from concurrent.futures import ProcessPoolExecutor
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, print_exception_and_traceback, get_messages_needed, breakdown_message, concatenate_setup_scripts, truncate_middle, get_model_context_length
+from helper.utils import load_system_prompt, load_prompt_from_file, _collect_openhands_cost, setup_openhands_credential, setup_utils_logging, safe_json_load, call_oh_with_prompt, print_exception_and_traceback, get_messages_needed, breakdown_message, concatenate_setup_scripts, truncate_middle, get_model_context_length, TokenCounter
 from utils import get_relative_output_path_eval
 from exp_bench.model import llm_query_plain
 
@@ -99,12 +99,14 @@ def generate_task_prompt(task_data: dict, config: dict, task_counter: int):
             setup_output_str = f.read()
 
     setup_output_strs = []
-    msg_needed = get_messages_needed(setup_output_str)
+    # Harbor parity: leave room for the reference files that every chunk repeats
+    reserve = TokenCounter().count_output_tokens(extract_setup_scripts(task_data, config, task_counter))
+    msg_needed = get_messages_needed(setup_output_str, reserve)
     if msg_needed > 1:
         # Split the setup output string into multiple strings:
         print(f"WARNING: MSG TOO LARGE. Breaking down setup output string into {msg_needed} parts")
         bench_logger.info(f"WARNING: MSG TOO LARGE. Breaking down setup output string into {msg_needed} parts")
-        setup_output_strs = breakdown_message(setup_output_str, msg_needed)
+        setup_output_strs = breakdown_message(setup_output_str, msg_needed, reserve)
         print(f"setup_output_strs: {[get_messages_needed(setup_output_strs[i]) for i in range(len(setup_output_strs))]}")
         # while True:
         #     x=1
