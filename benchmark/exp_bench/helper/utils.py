@@ -603,10 +603,16 @@ def call_claude_code_with_prompt(full_prompt: str, config: dict, github_workspac
                                        "ANTHROPIC_DEFAULT_FABLE_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL")})
     docker_exec = ["docker", "exec", "-i", *[a for k in env for a in ("-e", k)], name, "bash", "-c"]  # values via env, not argv
     env = {**os.environ, **env}
+    status = "install_failed"
     try:
         for attempt in range(3):  # network retries for the install
             if subprocess.run(docker_exec + [
-            "command -v ps >/dev/null || (apt-get update -qq && apt-get install -y -qq procps); "
+            # Harbor's claude-code install: the packages among curl, bash, nodejs, npm and procps
+            # the image lacks, the musl libraries on Alpine, then the pinned release.
+            'missing=""; for dep in curl:curl bash:bash node:nodejs npm:npm pgrep:procps; do '
+            'command -v "${dep%%:*}" >/dev/null 2>&1 || missing="$missing ${dep#*:}"; done; '
+            'if [ -n "$missing" ]; then export DEBIAN_FRONTEND=noninteractive; apt-get update && apt-get install -y $missing; fi; '
+            "if command -v apk >/dev/null 2>&1; then apk add --no-cache libgcc libstdc++; fi; "
             "set -euo pipefail; curl -fsSL https://downloads.claude.ai/claude-code-releases/bootstrap.sh"
             f" | bash -s -- {config['claude_code_version']} && "
             "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc && export PATH=\"$HOME/.local/bin:$PATH\" && claude --version && "
@@ -616,13 +622,31 @@ def call_claude_code_with_prompt(full_prompt: str, config: dict, github_workspac
             time.sleep(30 * (attempt + 1))
         else:
             raise RuntimeError("Claude Code install failed")
+        status = "no_result"
         subprocess.run(docker_exec + [
             'export PATH="$HOME/.local/bin:$PATH"; claude --verbose --output-format=stream-json '
             f'{config.get("claude_code_flags", "--permission-mode=bypassPermissions")} --print 2>&1 | tee /logs/agent/claude-code.txt'],
             input=full_prompt, text=True, env=env, timeout=max_duration_per_task_in_seconds)
     except subprocess.TimeoutExpired:  # graded like any other run, as Harbor does after an agent timeout
         print(f"Claude Code timed out after {max_duration_per_task_in_seconds} s", flush=True)
+        status = "timeout"
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True)
         if os.path.exists(f"{log_dir}/claude-code.txt"):
             shutil.copyfile(f"{log_dir}/claude-code.txt", log_path)
+            if status == "no_result":
+                status = claude_code_status(f"{log_dir}/claude-code.txt")
+        with open(f"{log_dir}/status.txt", "w") as f:  # read by harbor_parity/collect_results.py
+            f.write(status)
+
+def claude_code_status(stream_log: str) -> str:
+    """Harbor parity: subtype of the final result event of a Claude Code stream-json log."""
+    status = "no_result"
+    with open(stream_log, errors="replace") as f:
+        for line in f:
+            if '"type":"result"' in line:
+                try:
+                    status = json.loads(line).get("subtype") or status
+                except json.JSONDecodeError:
+                    pass
+    return status

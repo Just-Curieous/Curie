@@ -9,7 +9,7 @@ harness behaves as upstream.
 
 | Change | Where | Why |
 |---|---|---|
-| Claude Code agent (`agent_name: claude-code`) | `helper/utils.py:call_claude_code_with_prompt`, `evaluation/eval.py` | Upstream's OpenHands build (Feb 2025) cannot call current models. Same install command, environment and flags as Harbor's `claude-code` agent, run in a sandbox container with the repository at `/workspace`, as in the OpenHands sandbox. |
+| Claude Code agent (`agent_name: claude-code`) | `helper/utils.py:call_claude_code_with_prompt`, `evaluation/eval.py` | Upstream's OpenHands build (Feb 2025) cannot call current models. Same install procedure as Harbor's `claude-code` agent (installs whichever of curl, bash, nodejs, npm and procps the image lacks, then the pinned release), same environment and flags, in a sandbox container with the repository at `/workspace`, as in the OpenHands sandbox. |
 | Pinned repository commits | `evaluation/eval.py:git_clone_repo` | Upstream clones `HEAD`; the adapter pins each repository to the commit before its tasks were built. |
 | Ground-truth sources at the pinned commit | `evaluation/judge.py`, `helper/utils.py:concatenate_setup_scripts` | Upstream downloads them from `main`/`master` at judge time. |
 | OpenAI-compatible judge endpoint, Claude judges | `model.py` | Upstream supports Azure only. Claude models need a non-empty user turn, a strict JSON schema and no temperature; prompts are unchanged. |
@@ -38,7 +38,12 @@ python harbor_parity/collect_results.py --agent-env evaluation/setup/env-parity-
     --iterations 1 2 3 --harbor-jobs <harbor job dir per run> --out outputs/harbor_parity/parity_results.json
 ```
 
-Each task gets one attempt per iteration; `--retry` re-runs attempted tasks. Harbor side
+Each task gets one attempt per iteration. Rerun rule, the same as for the Harbor jobs: a
+run whose Claude Code stream ends with `success` or `error_max_turns`, or that hits the time
+limit, is a result (0 without an answer); any other run (API error, `error_during_execution`,
+no result event, setup failure) is an infrastructure failure. The launcher writes the status
+next to the agent log (`status.txt`); `collect_results.py` excludes infrastructure failures,
+lists them for a rerun (`--retry`) and lists scored runs without a judge result for regrading. Harbor side
 (adapter repository):
 
 ```bash

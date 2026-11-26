@@ -2,8 +2,13 @@
 
 Original-side eval_judge.json files are converted with the reward definitions of the
 adapter's tests/judge.py. Per metric: mean +/- sample SEM of the run means on each side,
-whether the [min, max] ranges of run means overlap, and the per-task MSE. A task without
-a result counts as 0 (--missing exclude drops it).
+whether the [min, max] ranges of run means overlap, and the per-task MSE.
+
+Rerun rule, the same on both sides: a run whose Claude Code stream ends with a result
+event of subtype success or error_max_turns, or that hit the agent time limit, is a result
+and is scored (0 without an answer). Anything else (API errors, error_during_execution, no
+result event, setup or build failures) is an infrastructure failure: it is excluded and
+listed for a rerun. A scored run without a judge result is listed for regrading.
 """
 
 from __future__ import annotations
@@ -30,6 +35,20 @@ METRICS = [
     "monitor_pass",
 ]
 TASK_ID_RE = re.compile(r"^(iclr2024|neurips2024)-(\d+)-(\d+)$")
+VALID_STATUSES = {"success", "error_max_turns", "timeout"}
+
+
+def stream_status(stream_log: Path) -> str:
+    """Subtype of the final result event of a Claude Code stream-json log."""
+    status = "no_result" if stream_log.exists() else "no_log"
+    if stream_log.exists():
+        for line in stream_log.read_text(errors="replace").splitlines():
+            if '"type":"result"' in line:
+                try:
+                    status = json.loads(line).get("subtype") or status
+                except json.JSONDecodeError:
+                    pass
+    return status
 
 
 # --------------------------------------------------------------------------- inputs
@@ -87,32 +106,37 @@ def rewards_from_judge(judged: dict) -> dict[str, float]:
 
 
 def load_original(args, task_ids: list[str]) -> list[dict]:
-    """One dict per iteration: {"label", "values": {task_id: rewards | None}, "notes": {...}}."""
+    """One dict per iteration: {"label", "values": {task_id: rewards | None}, "notes", "infra", "regrade"}."""
     model_id = args.model_id or model_identifier(Path(args.agent_env))
     root = Path(args.original_root)
     if not root.is_absolute():
         root = EXP_BENCH_DIR / root
     runs = []
     for iteration in args.iterations:
-        values, notes = {}, {}
+        values, notes, infra, regrade = {}, {}, [], []
         for task_id in task_ids:
             conference, paper_id, idx = TASK_ID_RE.match(task_id).groups()
+            stem = f"{paper_id}_task_index_{idx}_iter_{iteration}_duration_{args.duration}"
             folder = root / conference / paper_id / args.agent_name / model_id
-            judge = folder / f"{paper_id}_task_index_{idx}_iter_{iteration}_duration_{args.duration}_eval_judge.json"
-            gen = folder / f"{paper_id}_task_index_{idx}_iter_{iteration}_duration_{args.duration}_eval_gen.json"
-            if judge.exists():
+            agent_dir = root / "logs" / conference / paper_id / args.agent_name / model_id / f"{stem}_eval_gen_{args.agent_name}_logs.txt.claude-code"
+            status_file = agent_dir / "status.txt"
+            status = status_file.read_text().strip() if status_file.exists() else stream_status(agent_dir / "claude-code.txt")
+            judge = folder / f"{stem}_eval_judge.json"
+            values[task_id] = None
+            if status not in VALID_STATUSES:
+                infra.append(task_id)
+                notes[task_id] = f"infrastructure failure ({status}): rerun"
+            elif not judge.exists():
+                regrade.append(task_id)
+                notes[task_id] = f"agent {status}, no judge result: regrade"
+            else:
                 judged = json.loads(judge.read_text())
                 values[task_id] = rewards_from_judge(judged)
+                if status != "success":
+                    notes[task_id] = f"agent {status}"
                 if "setup_monitor_comprehensive_reason" in judged:
                     notes[task_id] = "log monitor flagged forbidden operations (all scores 0)"
-                elif "execution_success" not in judged:
-                    notes[task_id] = "judged without execution check"
-                if gen.exists() and "no_answer" in json.loads(gen.read_text()):
-                    notes[task_id] = "agent gave no answer (no_answer)"
-            else:
-                values[task_id] = None
-                notes[task_id] = "missing eval_judge.json" + ("" if gen.exists() else " and eval_gen.json")
-        runs.append({"label": f"original iter {iteration}", "values": values, "notes": notes})
+        runs.append({"label": f"original iter {iteration}", "values": values, "notes": notes, "infra": infra, "regrade": regrade})
     return runs
 
 
@@ -129,7 +153,7 @@ def load_harbor(job_dirs: list[Path], task_ids: list[str]) -> list[dict]:
     trial start time)."""
     runs = []
     for job_dir in job_dirs:
-        trials: dict[str, list[tuple[str, dict | None, str]]] = defaultdict(list)
+        trials: dict[str, list[tuple[str, dict | None, str, str]]] = defaultdict(list)
         for result_path in sorted(job_dir.glob("*/result.json")):
             result = json.loads(result_path.read_text())
             if "trial_name" not in result:
@@ -137,33 +161,38 @@ def load_harbor(job_dirs: list[Path], task_ids: list[str]) -> list[dict]:
             task_id = harbor_task_id(result, result_path.parent)
             if task_id is None:
                 continue
-            rewards = (result.get("verifier_result") or {}).get("rewards")
-            note = ""
             exc_type = (result.get("exception_info") or {}).get("exception_type")
-            if exc_type == "AgentTimeoutError":
-                note = "agent timeout"
-            if not rewards:
-                reward_json = result_path.parent / "verifier" / "reward.json"
-                if reward_json.exists():
-                    rewards = json.loads(reward_json.read_text())
-                else:
-                    note = f"no rewards ({exc_type or 'verifier did not run'})"
-            trials[task_id].append((result.get("started_at") or "", rewards or None, note))
+            status = "timeout" if exc_type == "AgentTimeoutError" else stream_status(result_path.parent / "agent" / "claude-code.txt")
+            rewards = (result.get("verifier_result") or {}).get("rewards")
+            if not rewards and (result_path.parent / "verifier" / "reward.json").exists():
+                rewards = json.loads((result_path.parent / "verifier" / "reward.json").read_text())
+            if status not in VALID_STATUSES:
+                kind = f"infrastructure failure ({exc_type or status}): rerun"
+            elif not rewards or "judge_pending" in rewards:
+                kind = f"agent {status}, no judge result ({exc_type or 'verifier'}): regrade"
+            else:
+                kind = "" if status == "success" else f"agent {status}"
+            trials[task_id].append((result.get("started_at") or "", rewards if kind in ("", f"agent {status}") else None, kind, status))
         n_attempts = max((len(v) for v in trials.values()), default=0)
         for attempt in range(max(n_attempts, 1)):
-            values, notes = {}, {}
+            values, notes, infra, regrade = {}, {}, [], []
             for task_id in task_ids:
                 attempts = sorted(trials.get(task_id, []), key=lambda t: t[0])
                 if attempt < len(attempts):
-                    _, rewards, note = attempts[attempt]
+                    _, rewards, note, _ = attempts[attempt]
                     values[task_id] = {m: float(rewards.get(m, 0.0)) for m in METRICS} if rewards else None
                     if note:
                         notes[task_id] = note
+                    if note.endswith(": rerun"):
+                        infra.append(task_id)
+                    elif note.endswith(": regrade"):
+                        regrade.append(task_id)
                 else:
                     values[task_id] = None
-                    notes[task_id] = "no trial"
+                    notes[task_id] = "no trial: rerun"
+                    infra.append(task_id)
             label = f"harbor {job_dir.name}" + (f" attempt {attempt + 1}" if n_attempts > 1 else "")
-            runs.append({"label": label, "values": values, "notes": notes})
+            runs.append({"label": label, "values": values, "notes": notes, "infra": infra, "regrade": regrade})
     return runs
 
 
@@ -257,6 +286,8 @@ def print_report(summary: dict, original: list[dict], harbor: list[dict]) -> Non
         for run in side:
             for task_id, note in run["notes"].items():
                 print(f"  note [{run['label']}] {task_id}: {note}")
+    for run in original + harbor:
+        print(f"{run['label']}: {len(run['infra'])} to rerun, {len(run['regrade'])} to regrade")
 
 
 def main() -> None:
@@ -270,7 +301,8 @@ def main() -> None:
     parser.add_argument("--duration", default="0.5", help="max_duration_per_task_in_hours as written in file names.")
     parser.add_argument("--iterations", type=int, nargs="*", default=[1], help="Original-side iterations (runs).")
     parser.add_argument("--harbor-jobs", type=Path, nargs="*", default=[], help="Harbor job directories (one run each).")
-    parser.add_argument("--missing", choices=["zero", "exclude"], default="zero")
+    parser.add_argument("--missing", choices=["exclude", "zero"], default="exclude",
+                        help="Runs without a valid scored result (default: excluded, as the adapter guide requires).")
     parser.add_argument("--out", type=Path, help="Write the full results (summary + per-task values) as JSON.")
     args = parser.parse_args()
     if args.iterations and not (args.agent_env or args.model_id):
@@ -291,6 +323,8 @@ def main() -> None:
             "original_per_task": per_task_table(original),
             "harbor_per_task": per_task_table(harbor),
             "notes": {r["label"]: r["notes"] for r in original + harbor},
+            "rerun": {r["label"]: r["infra"] for r in original + harbor},
+            "regrade": {r["label"]: r["regrade"] for r in original + harbor},
         }, indent=2))
         print(f"wrote {args.out}")
 
